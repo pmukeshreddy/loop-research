@@ -8,7 +8,7 @@ included in the recorded $0 additional API/search cost.
 
 Run artifacts and source snapshots are local, ignored by Git, and are not
 included in this repository. Paths below refer to the development workspace;
-the README documents how to produce your own runs.
+the [live-run guide](running.md) documents how to produce your own runs.
 
 ## Local implementation
 
@@ -92,8 +92,9 @@ The question now refers to the supplied corpus:
 > As of 2025-12-31, which company in the supplied corpus builds a humanoid robot
 > and announced Series A funding on February 13, 2025, with Google participating?
 
-After an actual human audit, record the decision with the `review` command in
-the README, using `--run-dir runs/live-delivery --task-id seed-0001-v0`.
+After an actual human audit, record the decision with the
+[review command](outputs.md#human-review), using
+`--run-dir runs/live-delivery --task-id seed-0001-v0`.
 
 Built-in Codex search was observed in isolated diagnostic sessions and in the
 live expansion search. There is no missing search capability requiring an
@@ -190,14 +191,10 @@ Local artifacts under `runs/real-expansion-v2/`:
 | `export/usage.jsonl`, `export/manifest.json` | Call-level usage and frozen run configuration |
 | `milestone-check.json` | Read-only deterministic replay results and resume verification |
 
-Reproduce with the exact configure/test/run commands in the README and a fresh
-directory, or resume this unchanged implementation with:
-
-```bash
-export PYTHONPATH="$PWD/src"
-.venv/bin/python -m webshaper run --config configs/real-expansion.json --run-dir runs/real-expansion-v2
-.venv/bin/python -m webshaper status --run-dir runs/real-expansion-v2
-```
+Reproduce with the [live-run commands](running.md#authentication-and-a-live-run)
+in a fresh directory. To resume this run under its unchanged implementation,
+use `runs/real-expansion-v2` as the run directory. Local test commands are in
+[development](development.md#tests).
 
 The separate model sessions are isolated, but same-model errors may be correlated.
 The dataset makes a corpus-scoped identification claim, not open-web completeness.
