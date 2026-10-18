@@ -110,6 +110,8 @@ def capture_citations(citations, observation, store, journal, call_id):
             docs[source.source_id] = {'source_id': source.source_id, 'url': url, 'title': source.title,
                  'published_at': str(source.published_at) if source.published_at else None,
                  'date_basis': source.date_basis, 'text': store.read(source)}
+            docs[source.source_id].update(date_status=source.date_status, date_evidence=source.date_evidence,
+                                          original_url=source.original_url, final_url=source.final_url)
             spans.append(cached['evidence'])
     return list(docs.values()), spans, errors
 

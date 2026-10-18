@@ -125,6 +125,7 @@ def answer_matches(answer, expected, bundle):
 def documents_for(sources, store, cutoff, retrospective=False):
     return [{"source_id": s.source_id, "url": s.url_or_local_origin, "title": s.title,
              "published_at": s.published_at.isoformat(), "date_basis": s.date_basis,
+             "date_status": s.date_status, "date_evidence": s.date_evidence,
              "retrieved_at": s.retrieved_at.isoformat(), "category": s.category, "text": store.read(s)}
             for s in eligible_sources(sources, cutoff, retrospective)]
 

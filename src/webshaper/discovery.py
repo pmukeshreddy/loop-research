@@ -210,27 +210,43 @@ def qualify_company(config, proposal, store, journal, gateway):
     if saved is not None:
         return saved
     urls = set(proposal["primary_urls"])
+    for prior in journal.records("company_source_searches"):
+        if prior["company_id"] == cid:
+            urls |= set(prior["response"]["urls"]) & set(prior["observed_urls"])
+    saved_urls = journal.get(cid + ":qualification:initial_urls")
+    if saved_urls is not None:
+        urls = set(saved_urls)
+    else:
+        journal.put(cid + ":qualification:initial_urls", sorted(urls))
     sources = []
     failure = None
-    for attempt in range(config.campaign.source_search_attempts):
-        key = cid + f":sources:{attempt}"
+    for attempt in range(-1, config.campaign.source_search_attempts):
+        key = cid + (":sources:cached" if attempt == -1 else f":sources:{attempt}")
         try:
-            response, observation = gateway.call_observed("generator", "company_sources", {
-                "company": proposal, "as_of": str(config.as_of), "existing_urls": sorted(urls),
-                "relationship_families": sorted(set(FAMILIES.values())),
-                "prior_feedback": failure,
-            }, CompanySources, key, web=True)
-            journal.record("company_source_searches", key, {"company_id": cid, "call_id": key,
-                            "response": response.model_dump(mode="json"), "observed_urls": sorted(observed_urls(observation))})
-            if observation.get("failure_code") or not any(action_kind(e) == "search" for e in completed_events(observation)):
-                raise ValueError("company_sources_missing_observed_search")
-            urls |= {urldefrag(u)[0] for u in response.urls} & observed_urls(observation)
+            if attempt >= 0:
+                payload = journal.get(key + ":input") or {
+                    "company": proposal, "as_of": str(config.as_of), "existing_urls": sorted(urls),
+                    "relationship_families": sorted(set(FAMILIES.values())), "prior_feedback": failure,
+                    "unusable_sources": [e for e in journal.records("errors") if e["identifier"] in urls],
+                    "captured_dates": [{"url": s.url_or_local_origin, "published_at": str(s.published_at),
+                                        "status": s.date_status} for s in sources],
+                }
+                journal.put(key + ":input", payload)
+                response, observation = gateway.call_observed("generator", "company_sources", payload, CompanySources, key, web=True)
+                journal.record("company_source_searches", key, {"company_id": cid, "call_id": key,
+                                "response": response.model_dump(mode="json"), "observed_urls": sorted(observed_urls(observation))})
+                if observation.get("failure_code") or not any(action_kind(e) == "search" for e in completed_events(observation)):
+                    raise ValueError("company_sources_missing_observed_search")
+                urls |= {urldefrag(u)[0] for u in response.urls} & observed_urls(observation)
             domains = sorted({urlsplit(u).hostname for u in urls})
             local_config = config.model_copy(update={"allowed_domains": domains, "crawl_depth": 0})
             sources = collect_sources(local_config, store, journal, [SourceInput(origin=u) for u in sorted(urls)])
-            if len([s for s in sources if s.published_at and (config.scope.allow_retrospective or s.published_at <= config.as_of)]) < config.campaign.min_primary_sources:
+            sources = list({s.source_id: s for s in sources}.values())
+            from .sources import eligible_sources
+            dated = eligible_sources(sources, config.as_of, config.scope.allow_retrospective)
+            if len(dated) < config.campaign.min_primary_sources:
                 raise ValueError("insufficient_dated_captured_sources")
-            graph_id, bundle, sources = generate_graph(local_config, sources, store, journal, gateway, key)
+            graph_id, bundle, sources = generate_graph(local_config, dated, store, journal, gateway, key)
             assessment = gateway.call("verifier", "company_assess", {
                 "company": proposal, "as_of": str(config.as_of), "documents": source_documents(sources, store),
                 "graph": bundle.model_dump(mode="json"),

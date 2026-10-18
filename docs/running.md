@@ -142,6 +142,11 @@ Configuration, local input contents, implementation, prompts and runtime are fro
 Changes require a new run directory. Original snapshots, failed captures and
 candidate versions remain available for audit.
 
+For a failed collection-only campaign after a parser upgrade, the explicit
+[repair continuation](company-campaign.md#collection-repair-and-bounded-pilot)
+re-extracts saved snapshots in a new directory and carries forward the entire
+usage ledger. The bounded repair pilot has its own recorded, authorized limits.
+
 Subscription limits pause the run without an external fallback. Only after the
 limit resets, explicitly retry those calls:
 

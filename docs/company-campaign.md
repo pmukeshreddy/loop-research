@@ -109,6 +109,55 @@ rejected. Prior usage is never reset. Passing the file is the explicit authoriza
 the pipeline never creates an extension or increases limits automatically.
 No extension was authorized for the initial campaign.
 
+## Collection repair and bounded pilot
+
+The [repair config](../configs/repair-pilot.json) keeps the full 50 × 5 campaign
+and all acceptance gates, but stops at five accepted questions across at least two
+companies, including an accepted expansion. It qualifies a small company window
+and tries question slots before discovering fifty companies. Failure to meet this
+pilot target is reported as a shortfall, even if bounded work finishes.
+
+The recorded [pilot plan](superpowers/plans/2026-10-18-collection-repair-pilot.md)
+allocates **15,000,000 tokens, 220 calls and 700 web actions**, concurrency one,
+including the old run's usage. The [explicit extension](../configs/repair-pilot-budget.json)
+adds to the original allowance; paid spending remains $0. This is a finite ceiling,
+not an estimate that guarantees five accepted questions. Source discovery has five
+usable actions per session; solving, alternative checks and shortcut sessions have
+nine, each with a reserved stop margin.
+
+To continue the collection-only failed run in this workspace:
+
+```bash
+.venv/bin/python -m webshaper doctor --config configs/repair-pilot.json
+.venv/bin/python -m webshaper run --config configs/repair-pilot.json --run-dir runs/company-repair-pilot-v1 --continue-from runs/company-campaign-v1 --budget-extension configs/repair-pilot-budget.json
+.venv/bin/python -m webshaper status --run-dir runs/company-repair-pilot-v1
+```
+
+Repeat the same run command to resume under the frozen implementation. For a
+fresh checkout without historical artifacts, omit `--continue-from` and choose a
+new directory. `--continue-from` opens the parent read-only, verifies and copies
+its raw snapshots, re-extracts date provenance, and inherits every completed call
+and its usage. It does not import accepted tasks or solver results; parents with
+graphs, candidates, validations or unresolved calls are rejected. Mode, cutoff,
+scope and campaign acceptance settings must match. Previous failed qualifications
+remain private audit records while repaired evidence is reassessed.
+
+Dates are attributed to metadata, matching article JSON-LD, semantic time tags or
+labeled visible publication dates. Modification, event and retrieval dates are
+not substitutes; conflicting or uncertain publication dates remain unresolved.
+Each source stores the method, supporting field/passage, original/final URLs and
+redirect chain. Redirects are bounded and destinations receive access and robots
+checks. Inaccessible pages prompt searches for alternative primary sources;
+restrictions are not bypassed. Captured successes and failures are checkpointed
+per URL so a growing discovery queue does not repeat completed collection work.
+
+`export/pilot_report.json` separates inherited usage, new usage, collection and
+qualification overhead, and question work including rejections. Per-accepted
+figures and the remaining-campaign extrapolation are unavailable until at least
+one question is accepted. Token figures there are observed usage; conservative
+reservations for uncertain calls are in `manifest.json` and `usage.jsonl`.
+Local budget exhaustion and subscription-limit pauses have distinct reason codes.
+
 ## Results and private artifacts
 
 `export/company_coverage.json` summarizes discovered/qualified/selected counts,

@@ -200,6 +200,39 @@
       "title": "ModelConfig",
       "type": "object"
     },
+    "PilotConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "accepted_questions": {
+          "default": 5,
+          "maximum": 250,
+          "minimum": 1,
+          "title": "Accepted Questions",
+          "type": "integer"
+        },
+        "minimum_companies": {
+          "default": 2,
+          "minimum": 2,
+          "title": "Minimum Companies",
+          "type": "integer"
+        },
+        "minimum_expanded": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Minimum Expanded",
+          "type": "integer"
+        },
+        "company_window": {
+          "default": 4,
+          "maximum": 20,
+          "minimum": 2,
+          "title": "Company Window",
+          "type": "integer"
+        }
+      },
+      "title": "PilotConfig",
+      "type": "object"
+    },
     "Scope": {
       "additionalProperties": false,
       "properties": {
@@ -451,6 +484,17 @@
       "anyOf": [
         {
           "$ref": "#/$defs/CampaignConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "pilot": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PilotConfig"
         },
         {
           "type": "null"

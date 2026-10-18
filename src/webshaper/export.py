@@ -296,6 +296,8 @@ def export_dataset(journal, config, root):
              "usage": usage, "cost_per_accepted_task_usd": usage["cost_usd"] / len(candidates) if candidates else None,
              "shared_background_sources": [], "partition_counts": dict(Counter(partition.get(c.task.task_id) for c in candidates))}
     write_jsonl(output / "budget_authorizations.jsonl", journal.records("budget_authorizations"))
+    for kind in ("inherited_runs", "source_repairs", "parent_errors", "parent_web_traces", "parent_company_qualifications"):
+        write_jsonl(output / (kind + ".jsonl"), journal.records(kind))
     if config.campaign:
         from .campaign import campaign_report
         coverage = campaign_report(journal, config, candidates, attempts, calls)
@@ -306,6 +308,10 @@ def export_dataset(journal, config, root):
         atomic_write(output / "company_coverage.json", json.dumps(coverage, indent=2, sort_keys=True))
         stats["campaign"] = {k: v for k, v in coverage.items() if k not in ("companies", "usage", "pause_reason")}
         stats["target_reached"] = coverage["target_reached"]
+    if config.pilot:
+        from .campaign import pilot_metrics
+        stats["pilot"] = pilot_metrics(config, journal, candidates, calls)
+        atomic_write(output / "pilot_report.json", json.dumps(stats["pilot"], indent=2, sort_keys=True))
     manifest = {"schema_version": SCHEMA_VERSION, "stats": stats, "data_mode": config.mode,
                 "research_mode": research_mode,
                 "configuration": config.model_dump(mode="json"), "frozen": journal.get("frozen"),

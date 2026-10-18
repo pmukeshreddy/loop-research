@@ -81,6 +81,7 @@ def normalize_extraction(response, source_ids):
 def source_documents(sources, store):
     return [{"source_id": s.source_id, "url": s.url_or_local_origin, "title": s.title,
              "published_at": str(s.published_at) if s.published_at else None,
+             "date_basis": s.date_basis, "date_status": s.date_status, "date_evidence": s.date_evidence,
              "text": store.read(s)} for s in sources]
 
 

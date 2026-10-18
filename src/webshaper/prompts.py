@@ -235,3 +235,13 @@ and learn from previous_failures. Construct useful seeds with constants that hav
 dependencies for requested_depth expansion layers; never add unsupported relationships merely to meet it.
 Company selection does not establish uniqueness on the wider web. State every relevant date/constraint
 explicitly; all existing open-web correctness and ambiguity checks remain mandatory."""
+PROMPTS["company_sources"] += """\nUse unusable_sources and captured_dates to seek DIFFERENT accessible
+primary announcements when a URL is blocked, undated, conflicting or too recent. Never bypass access
+restrictions, infer publication dates from a URL, or return the same unusable pages as a remedy. Reuse
+existing usable evidence. Prefer original dated investor/partner/company announcements that add missing
+founder, product and co-investment relationships, not general undated homepages. At least one other
+company sharing a constraint is needed to test whether an expansion dependency is necessary."""
+PROMPTS["extract"] += """\nPublication date_evidence is a deterministic transcription of captured metadata
+or labeled date passages. Treat it as provenance, distinct from event/effective dates. Quotes for claims
+must still be exact substrings of document text. Do not substitute publication for an explicitly different
+transaction/announcement date, and do not extract unsupported historical states from later pages."""

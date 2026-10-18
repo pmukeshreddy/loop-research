@@ -53,6 +53,8 @@ def main(argv=None):
     execute.add_argument("--retry-limited", action="store_true", help="explicitly retry subscription-limited calls after reset")
     execute.add_argument("--budget-extension", type=Path,
                          help="explicit additive subscription-usage authorization JSON; never changes $0 paid limit")
+    execute.add_argument("--continue-from", type=Path,
+                         help="new-directory collection repair: import discovery, re-extract snapshots and inherit ALL prior usage")
     doctor = sub.add_parser("doctor", help="verify CLI auth/flags without reading tokens")
     doctor.add_argument("--config", type=Path, required=True)
     doctor.add_argument("--probe-search", action="store_true", help="uses one bounded subscription session")
@@ -85,7 +87,7 @@ def main(argv=None):
         elif args.command == "run":
             from .models import BudgetExtension
             extension = BudgetExtension.model_validate_json(args.budget_extension.read_text()) if args.budget_extension else None
-            stats = run(load_config(args.config), args.run_dir, args.retry_limited, extension)
+            stats = run(load_config(args.config), args.run_dir, args.retry_limited, extension, args.continue_from)
             print(json.dumps(stats, indent=2, sort_keys=True))
             return 0 if stats["status"] == "completed" else (75 if stats["status"] == "paused" else 1)
         elif args.command == "status":
@@ -134,7 +136,7 @@ def main(argv=None):
             args.output.mkdir(parents=True, exist_ok=True)
             classes = [getattr(models, n) for n in ("Source", "Evidence", "Entity", "Fact", "Bundle", "Query",
                         "PublicTask", "Candidate", "Validation", "RunConfig", "SemanticAssessment", "SolverAnswer",
-                        "WebSolverAnswer", "AlternativeReview", "WebGrade", "CampaignConfig", "BudgetExtension")]
+                        "WebSolverAnswer", "AlternativeReview", "WebGrade", "CampaignConfig", "BudgetExtension", "PilotConfig")]
             from .discovery import CompanyDiscovery, CompanyAssessment, CompanySources
             classes.extend([Extraction, CompanyDiscovery, CompanyAssessment, CompanySources])
             for cls in classes:

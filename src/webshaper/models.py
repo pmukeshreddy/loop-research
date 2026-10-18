@@ -31,6 +31,14 @@ class Source(Record):
     category: Literal["primary", "secondary", "fixture"] = "primary"
     redistributable: bool = False
     date_basis: str = "unknown"
+    date_status: str = "legacy"
+    date_evidence: list[dict] = Field(default_factory=list)
+    original_url: str | None = None
+    final_url: str | None = None
+    redirect_chain: list[str] = Field(default_factory=list)
+    content_type: str = ""
+    extraction_version: str = "legacy"
+    outbound_links: list[str] = Field(default_factory=list)
 
 
 class Evidence(Record):
@@ -303,6 +311,19 @@ class BudgetExtension(Record):
         return self
 
 
+class PilotConfig(Record):
+    accepted_questions: int = Field(default=5, ge=1, le=250)
+    minimum_companies: int = Field(default=2, ge=2)
+    minimum_expanded: int = Field(default=1, ge=1)
+    company_window: int = Field(default=4, ge=2, le=20)
+
+    @model_validator(mode="after")
+    def feasible(self):
+        if self.minimum_companies > self.company_window or self.minimum_companies > self.accepted_questions:
+            raise ValueError("pilot needs enough companies and questions for its minimum")
+        return self
+
+
 class RunConfig(Record):
     schema_version: str = SCHEMA_VERSION
     mode: Literal["fixture", "live"] = "live"
@@ -328,9 +349,12 @@ class RunConfig(Record):
     shortcut_audit_rate: float = Field(default=0.1, ge=0, le=1)
     fixture_file: str | None = None
     campaign: CampaignConfig | None = None
+    pilot: PilotConfig | None = None
 
     @model_validator(mode="after")
     def isolation(self):
+        if self.pilot and (not self.campaign or self.pilot.accepted_questions > self.target_tasks):
+            raise ValueError("pilot requires a full campaign target")
         if self.campaign and (self.research_mode != "open_web"
                 or self.target_tasks != self.campaign.target_companies * self.campaign.questions_per_company
                 or self.layers < max(self.campaign.depth_targets) or self.concurrency != 1

@@ -172,3 +172,26 @@ checkpoint interruption exercise, with no remaining important issue found.
 The real campaign and its shortfalls are recorded in [run results](run-results.md#50-company-discovery-campaign--2026-10-18-utc).
 Its repeat run made zero additional calls, preserved usage and left 32 exported
 files byte-identical. Previous runs remain preserved. No training or RL was run.
+
+## Collection repair and pilot — 2026-10-18 UTC
+
+The original 26 captures were inspected before changing collection. Re-extraction
+resolves seven publication dates; fifteen remain missing, three unresolved and
+one conflicting. Five previously undated sources gain supported dates; CFAO's
+metadata and article time disagree and it now remains unresolved. Raw snapshots
+and original metadata stay in the prior run. The local audit is
+`runs/company-campaign-date-audit.json`.
+
+**162 tests pass** with `PYTHONPATH=src .venv/bin/pytest -q`; Ruff passes.
+Twenty-three focused repair tests cover real failure patterns using clearly
+labeled synthetic inputs, safe redirect handling, cached captures, inherited
+accounting and the pilot milestone. Regressions were observed failing before
+their fixes. Independent review reproduced and helped correct modification/event
+time attribution, related-content metadata and nested JSON-LD page identity.
+Follow-up review found no remaining material blocker. All fifteen Markdown
+documentation files' relative file targets resolve.
+
+The CLI preflight confirms official Codex 0.163.0, ChatGPT authentication and $0
+additional paid spending. It does not claim browsing was exercised by preflight.
+Real pilot results and observed browsing are reported separately in
+[run results](run-results.md); tests alone do not establish an accepted dataset.

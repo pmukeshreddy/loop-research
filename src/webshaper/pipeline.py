@@ -38,7 +38,9 @@ def frozen_config(config):
 
 def error_record(journal, stage, identifier, error, **extra):
     data = {"stage": stage, "identifier": identifier, "code": type(error).__name__,
-            "reason": str(error), **extra}
+            "reason": str(error), "category": getattr(error, "category", None) or (
+                "missing_dates" if stage == "source_date" else "insufficient_evidence" if stage == "company_qualification"
+                else "collection_error" if stage == "source_capture" else "pipeline_error"), **extra}
     journal.record("errors", digest(data), data)
 
 
@@ -55,6 +57,17 @@ def collect_sources(config, store, journal, inputs=None):
         if spec.origin in visited:
             continue
         visited.add(spec.origin)
+        capture_key = "capture:" + digest(spec)
+        capture = journal.get(capture_key)
+        if capture is not None:
+            if capture.get("source"):
+                source = Source.model_validate(capture["source"])
+                store.read(source)
+                sources.append(source)
+                if depth < config.crawl_depth:
+                    queue.extend((SourceInput(origin=url), depth + 1) for url in capture["links"]
+                                 if urlsplit(url).hostname in config.allowed_domains)
+            continue
         try:
             if spec.origin.startswith(("http://", "https://")):
                 if config.mode == "fixture":
@@ -63,14 +76,16 @@ def collect_sources(config, store, journal, inputs=None):
             else:
                 source, links = store.capture_local(spec)
             sources.append(source)
+            journal.put(capture_key, {"source": source.model_dump(mode="json"), "links": links})
             if source.published_at is None:
-                error_record(journal, "source_date", spec.origin, ValueError("publication_date_missing"))
+                error_record(journal, "source_date", spec.origin, ValueError("publication_date_" + source.date_status))
             if depth < config.crawl_depth:
                 queue.extend((SourceInput(origin=url), depth + 1) for url in links
                              if urlsplit(url).hostname in config.allowed_domains)
         except (ValueError, OSError, Exception) as error:
             # Retrieval/extraction errors are explicit records; never synthesize replacement text.
             error_record(journal, "source_capture", spec.origin, error)
+            journal.put(capture_key, {"source": None, "error": str(error), "category": getattr(error, "category", "collection_error")})
     journal.put(checkpoint, [s.model_dump(mode="json") for s in sources])
     return sources
 
@@ -255,11 +270,14 @@ def expand_layers(parent, config, store, journal, gateway):
     return parent
 
 
-def run(config, run_dir, retry_limited=False, budget_extension=None):
+def run(config, run_dir, retry_limited=False, budget_extension=None, continue_from=None):
     from .export import export_dataset, deduplicate
     from .fixtures import FixtureProvider
     run_dir = Path(run_dir)
     with run_lock(run_dir), Journal(run_dir / "run.sqlite", frozen_config(config), config.budget) as journal:
+        if continue_from is not None:
+            from .continuation import import_collection_run
+            import_collection_run(continue_from, run_dir, config, journal)
         if budget_extension is not None:
             journal.authorize_budget(budget_extension)
         if retry_limited:

@@ -65,6 +65,67 @@
       "default": "unknown",
       "title": "Date Basis",
       "type": "string"
+    },
+    "date_status": {
+      "default": "legacy",
+      "title": "Date Status",
+      "type": "string"
+    },
+    "date_evidence": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Date Evidence",
+      "type": "array"
+    },
+    "original_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Original Url"
+    },
+    "final_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Final Url"
+    },
+    "redirect_chain": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Redirect Chain",
+      "type": "array"
+    },
+    "content_type": {
+      "default": "",
+      "title": "Content Type",
+      "type": "string"
+    },
+    "extraction_version": {
+      "default": "legacy",
+      "title": "Extraction Version",
+      "type": "string"
+    },
+    "outbound_links": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Outbound Links",
+      "type": "array"
     }
   },
   "required": [

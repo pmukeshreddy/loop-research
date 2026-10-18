@@ -14,6 +14,100 @@ def accepted_finals(journal):
     return [c for c in deduplicate(finals)[0] if c.task.task_id not in rejected]
 
 
+def pilot_reached(finals, pilot):
+    return (len(finals) >= pilot.accepted_questions
+            and len({c.company_id for c in finals if c.company_id}) >= pilot.minimum_companies
+            and sum(c.layer >= 1 for c in finals) >= pilot.minimum_expanded)
+
+
+def pilot_metrics(config, journal, candidates, calls):
+    def usage(rows):
+        return {"calls": len(rows), "tokens": sum(r["tokens"] or 0 for r in rows),
+                "web_actions": sum(r["searches"] for r in rows),
+                "latency_seconds": sum(r["latency"] for r in rows)}
+    question_calls = [c for c in calls if ":slot:" in (c.get("call_id") or "")]
+    overhead_calls = [c for c in calls if c not in question_calls]
+    inherited = [c for c in calls if c["key"].startswith("inherited:")]
+    incremental = [c for c in calls if not c["key"].startswith("inherited:")]
+    accepted = len(candidates)
+    selected = len(journal.get("selected_companies") or [])
+    total = usage(calls)
+    question, overhead = usage(question_calls), usage(overhead_calls)
+    estimate = None
+    if accepted and selected:
+        remaining_questions = max(0, config.target_tasks - accepted)
+        remaining_companies = max(0, config.campaign.target_companies - selected)
+        estimate = {field: {"question_work": question[field] / accepted * remaining_questions,
+                            "company_overhead": overhead[field] / selected * remaining_companies}
+                    for field in ("calls", "tokens", "web_actions")}
+    return {"target": config.pilot.model_dump(mode="json"), "target_reached": pilot_reached(candidates, config.pilot),
+            "accepted_questions": accepted, "accepted_companies": len({c.company_id for c in candidates}),
+            "accepted_expansions": sum(c.layer >= 1 for c in candidates),
+            "total_usage_including_inherited": total, "inherited_usage": usage(inherited),
+            "incremental_usage": usage(incremental), "collection_and_qualification_overhead": overhead,
+            "question_work_including_rejections": question,
+            "total_usage_per_accepted": {k: v / accepted for k, v in total.items()} if accepted else None,
+            "question_usage_per_accepted": {k: v / accepted for k, v in question.items()} if accepted else None,
+            "remaining_campaign_estimate": estimate,
+            "estimate_caveat": "Linear extrapolation, not a guarantee; includes failed question work. With zero accepted questions, no empirical per-accepted or remaining-campaign estimate is possible."}
+
+
+def run_pilot_campaign(config, store, journal, gateway):
+    """Small qualification window, then round-robin depth slots; global campaign quotas stay intact."""
+    from .pipeline import error_record
+    pilot = config.pilot
+    selected = journal.get("selected_companies") or []
+    if pilot_reached(accepted_finals(journal), pilot):
+        journal.put("pilot_reached", True)
+        return
+    for batch in range(config.campaign.max_discovery_batches):
+        if len(selected) >= pilot.company_window:
+            break
+        try:
+            discover_batch(config, gateway, journal, batch)
+        except ValueError as error:
+            error_record(journal, "company_discovery_batch", f"discovery:{batch}", error)
+            journal.put(f"discovery:{batch}:done", True)
+        queue = journal.get(f"pilot:batch:{batch}:queue")
+        if queue is None:
+            known = {q["company_id"] for q in journal.records("company_qualifications")}
+            proposals = [p for p in journal.records("companies") if p["company_id"] not in known]
+            def ready_count(p):
+                urls = set(p["primary_urls"])
+                for previous in journal.records("company_source_searches"):
+                    if previous["company_id"] == p["company_id"]:
+                        urls |= set(previous["response"]["urls"]) & set(previous["observed_urls"])
+                return sum(bool((s := store.reusable(u)) and s.published_at
+                                and (config.scope.allow_retrospective or s.published_at <= config.as_of)) for u in urls)
+            queue = [p["company_id"] for p in sorted(diversity_order(proposals, selected), key=lambda p: -ready_count(p))]
+            journal.put(f"pilot:batch:{batch}:queue", queue)
+        proposals = {p["company_id"]: p for p in journal.records("companies")}
+        for cid in queue:
+            if len(selected) >= pilot.company_window:
+                break
+            company = qualify_company(config, proposals[cid], store, journal, gateway)
+            if company["qualified"] and cid not in {s["company_id"] for s in selected}:
+                selected.append(company)
+                journal.put("selected_companies", selected)
+            # Try complete generation as soon as two companies are available, not after fifty.
+            if len(selected) >= pilot.minimum_companies:
+                for slot in range(min(3, config.campaign.questions_per_company)):
+                    for entry in selected:
+                        run_slot(config, entry, slot, store, journal, gateway)
+                        if pilot_reached(accepted_finals(journal), pilot):
+                            journal.put("pilot_reached", True)
+                            return
+        if len(journal.records("companies")) >= config.campaign.max_company_candidates:
+            break
+    # Still exercise available evidence if only one company qualified; it cannot satisfy the pilot.
+    for slot in range(config.campaign.questions_per_company):
+        for company in selected:
+            run_slot(config, company, slot, store, journal, gateway)
+            if pilot_reached(accepted_finals(journal), pilot):
+                journal.put("pilot_reached", True)
+                return
+
+
 def run_slot(config, company, slot, store, journal, gateway):
     from .pipeline import expand_layers, generate_seed, load_graph
     cid = company["company_id"]
@@ -80,6 +174,8 @@ def run_slot(config, company, slot, store, journal, gateway):
 def run_campaign(config, store, journal, gateway):
     """One shared gateway/budget; give each selected company slot zero before later slots."""
     from .pipeline import error_record
+    if config.pilot:
+        return run_pilot_campaign(config, store, journal, gateway)
     selected = journal.get("selected_companies") or []
     for company in selected:
         run_slot(config, company, 0, store, journal, gateway)
