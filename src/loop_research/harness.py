@@ -3,6 +3,7 @@ from collections import Counter
 from contextlib import contextmanager
 import copy
 import fcntl
+import json
 import math
 from pathlib import Path
 import re
@@ -39,6 +40,8 @@ class Harness:
             self.git('config', 'user.email', 'harness@localhost')
             write_json(self.path / 'harness_state.json', {'entries': {}, 'seen': {}, 'usage': [], 'outcomes': []})
             self.commit('Initialize continual harness')
+        with self.transaction():
+            self._recover()
 
     def git(self, *args):
         return subprocess.check_output(['git', '-C', str(self.path), *args], text=True, stderr=subprocess.PIPE).strip()
@@ -74,16 +77,37 @@ class Harness:
         with self.lock:
             return read_json(self.path / 'harness_state.json')
 
-    def _save(self, state, message):
-        path = self.path / 'harness_state.json'
-        previous = path.read_bytes()
+    def _recover(self):
+        journal = self.path / '.git/transaction.json'
+        pending = read_json(journal)
+        if pending is None:
+            return
+        if self.head != pending['base'] and (self.git('rev-parse', 'HEAD^') != pending['base'] or
+                self.git('show', '-s', '--format=%B', 'HEAD') != pending['message'].strip()):
+            raise RuntimeError('Harness changed during an interrupted transaction')
+        self.git('restore', '--source=HEAD', '--staged', '--worktree', '--', 'harness_state.json')
+        if pending['record']:
+            path = 'edits/' + pending['record'] + '.json'
+            if self.git('ls-tree', '--name-only', 'HEAD', '--', path):
+                self.git('restore', '--source=HEAD', '--staged', '--worktree', '--', path)
+            else:
+                self.git('reset', '-q', 'HEAD', '--', path)
+                (self.path / path).unlink(missing_ok=True)
+        journal.unlink()
+
+    def _save(self, state, message, record=None):
+        journal = self.path / '.git/transaction.json'
+        write_json(journal, {'base': self.head, 'message': message, 'record': record['id'] if record else None})
         try:
-            write_json(path, state)
-            return self.commit(message)
+            if record:
+                write_json(self.path / 'edits' / (record['id'] + '.json'), record)
+            write_json(self.path / 'harness_state.json', state)
+            sha = self.commit(message)
         except BaseException:
-            path.write_bytes(previous)
-            self.git('reset', '-q', 'HEAD', '--', 'harness_state.json', 'edits')
+            self._recover()
             raise
+        journal.unlink()
+        return sha
 
     def _key(self, kind, id):
         if kind not in KINDS or not isinstance(id, str) or not re.fullmatch(r'[\w-]+', id):
@@ -121,11 +145,16 @@ class Harness:
         return [e for score, e in ranked if score > 0][:limit]
 
     def _edit(self, action, kind, id, title=None, content=None, *, trigger='agent', evidence=(), module=_UNSET,
-              expected_version=None, rollback_of=None, restore=None):
+              expected_version=None, rollback_of=None, restore=None, operation_id=None):
         key = self._key(kind, id)
         if not isinstance(trigger, str) or not trigger or not all(isinstance(r, str) for r in evidence):
             raise ValueError('Trigger and evidence run ids required')
         with self.transaction():
+            prior = self.edit_record(operation_id) if operation_id else None
+            if prior:
+                if prior['key'] != key or prior['action'] != action:
+                    raise ValueError('Refinement identity reused for a different edit')
+                return copy.deepcopy(prior['after']) if prior['after'] else True
             state = self.snapshot()
             before = state['entries'].get(key)
             if action == 'create' and before is not None:
@@ -137,7 +166,7 @@ class Harness:
             if action == 'delete' and before is None:
                 return False
             after = None
-            event_id = 'refine_' + uuid4().hex
+            event_id = operation_id or 'refine_' + uuid4().hex
             if action != 'delete':
                 if not isinstance(title, str) or not title.strip() or not isinstance(content, str) or not content.strip():
                     raise ValueError('Nonempty title and body required')
@@ -156,13 +185,7 @@ class Harness:
                 del state['entries'][key]
             record = {'id': event_id, 'trigger': trigger, 'evidence': list(evidence), 'action': action,
                       'key': key, 'before': before, 'after': after, 'created_at': stamp(), 'rollback_of': rollback_of}
-            record_path = self.path / 'edits' / (event_id + '.json')
-            write_json(record_path, record)
-            try:
-                self._save(state, f'{event_id}: {action} {key}\n\nTrigger: {trigger}\nEvidence: {", ".join(evidence)}')
-            except BaseException:
-                record_path.unlink(missing_ok=True)
-                raise
+            self._save(state, f'{event_id}: {action} {key}\n\nTrigger: {trigger}\nEvidence: {", ".join(evidence)}', record)
             return copy.deepcopy(after) if after else True
 
     def create(self, kind, title, content, *, id=None, **kwargs):
@@ -174,10 +197,17 @@ class Harness:
     def delete(self, kind, id, **kwargs):
         return self._edit('delete', kind, id, **kwargs)
 
-    def rollback(self, id):
+    def edit_record(self, id):
+        if not isinstance(id, str) or not re.fullmatch(r'refine_[a-f0-9]+', id):
+            raise ValueError('Invalid refinement identity')
+        return read_json(self.path / 'edits' / (id + '.json'))
+
+    def rollback(self, id, *, operation_id=None):
         if not isinstance(id, str) or not id:
             raise ValueError('Expected a refinement id or commit SHA')
         with self.transaction():
+            if operation_id and (prior := self.edit_record(operation_id)):
+                return copy.deepcopy(prior['after']) if prior['after'] else True
             try:
                 sha = self.git('rev-parse', '--verify', id + '^{commit}')
                 event_id = self.git('show', '-s', '--format=%s', sha).split(':', 1)[0]
@@ -191,11 +221,12 @@ class Harness:
             kind, ident = record['key'].split(':', 1)
             before = record['before']
             if before is None:
-                return self.delete(kind, ident, trigger='rollback ' + event_id, rollback_of=event_id)
+                return self.delete(kind, ident, trigger='rollback ' + event_id, rollback_of=event_id,
+                                   operation_id=operation_id)
             current = self.get(kind, ident)
             return self._edit('update' if current else 'create', kind, ident, before['title'], before['body'],
                               module=before['module'], trigger='rollback ' + event_id,
-                              evidence=before['evidence'], rollback_of=event_id, restore=before)
+                              evidence=before['evidence'], rollback_of=event_id, restore=before, operation_id=operation_id)
 
     def fork(self, commit):
         with self.transaction():
@@ -235,13 +266,24 @@ class Harness:
         with self.transaction():
             state = self.snapshot()
             uses = [use for use in state['usage'] if use['run_id'] == run_id]
-            for entry in state['entries'].values():
-                if any(use in entry['usage'] for use in uses):
-                    entry['outcomes'].append(copy.deepcopy(outcome))
+            prior = next((row for row in state['outcomes'] if row['run_id'] == run_id), None)
+            if prior and {key: prior[key] for key in ('ok', 'issues')} != report:
+                raise ValueError('Recorded self-check outcome changed during resume')
+            if prior:
+                outcome = prior
+            else:
+                for entry in state['entries'].values():
+                    if any(use in entry['usage'] for use in uses):
+                        entry['outcomes'].append(copy.deepcopy(outcome))
             if uses:
-                state['outcomes'].append(outcome)
-                self._save(state, 'Record self-check outcome ' + run_id)
-                import json
+                if prior is None:
+                    state['outcomes'].append(outcome)
+                    self._save(state, 'Record self-check outcome ' + run_id)
                 for event_id in {use['refinement_id'] for use in uses}:
                     commit = self.git('log', '--format=%H', '--', 'edits/' + event_id + '.json').splitlines()[-1]
-                    self.git('notes', '--ref=outcomes', 'append', '-m', json.dumps(outcome), commit)
+                    try:
+                        notes = self.git('notes', '--ref=outcomes', 'show', commit)
+                    except subprocess.CalledProcessError:
+                        notes = ''
+                    if json.dumps(outcome) not in notes.splitlines():
+                        self.git('notes', '--ref=outcomes', 'append', '-m', json.dumps(outcome), commit)

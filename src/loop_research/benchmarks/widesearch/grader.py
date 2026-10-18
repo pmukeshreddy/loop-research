@@ -6,6 +6,7 @@ from contextvars import ContextVar
 from dataclasses import asdict
 from io import StringIO
 import json
+import math
 from pathlib import Path
 import sys
 import threading
@@ -88,8 +89,16 @@ def error_breakdown(detail, evaluation):
         elif record.get("exist_flag_response") == 1 and pd.isna(record.get("exist_flag_gt")):
             result["wrong_additions"].append(entity)
         else:
-            columns = [col for col in evaluation["required"] if any(
-                record.get(f"{col}_{metric}", 1) < 1 for metric in evaluation["eval_pipeline"][col].get("metric", []))]
+            columns = []
+            for col in evaluation["required"]:
+                # The official alignment emits exact_match for matched keys,
+                # regardless of the key's preprocessing/alignment metric.
+                metrics = (["exact_match"] if col in evaluation["unique_columns"]
+                           else evaluation["eval_pipeline"][col].get("metric", []))
+                values = [record.get(f"{col}_{metric}") for metric in metrics]
+                if any(not isinstance(value, (int, float)) or not math.isfinite(value) or value < 1
+                       for value in values):
+                    columns.append(col)
             if columns:
                 result["partial_rows"].append({"entity": entity, "columns": columns})
     return result
@@ -105,6 +114,7 @@ class WideSearchBenchmark(WideSearchData):
         response = loader.WideSearchResponse(**submission) if submission is not None else None
         run_ctx.path.mkdir(parents=True, exist_ok=True)
         path = run_ctx.path / "alignment.csv"
+        path.unlink(missing_ok=True)
         token = _BACKEND.set(backend or CodexBackend(run_ctx))
         try:
             result = evaluator.evaluate_single_query(query, response, str(path))

@@ -145,7 +145,8 @@ def test_selected_skill_module_loads_into_full_python_worker(task, benchmark, ou
 
 
 def test_worker_cannot_read_grades_or_modify_trusted_evidence(ctx, task, benchmark, output, session_factory):
-    evidence = {"fetched": {}, "checks": [], "searches": [], "discoveries": [], "failures": []}
+    evidence = {"fetched": {}, "checks": [], "searches": [], "discoveries": [], "failures": [],
+                "fetches": [], "dropped_search_hits": []}
     ctx.save("evidence.json", evidence)
     ctx.save("self_check.json", {"ok": False, "issues": ["host-owned"]})
     ctx.save("grades.json", {"private": "SYNTHETIC_GRADE"})
@@ -307,3 +308,10 @@ time.sleep(30)
         time.sleep(.02)
     assert not status or status.startswith("Z"), "A worker descendant survived cancellation"
     assert not (ctx.path / "output.json").exists()
+
+
+def test_completed_research_archive_preserves_status_for_resume(ctx, task, benchmark, output, session_factory):
+    session = session_factory(lambda prompt, options: code_reply(final_code(output)))
+    session.status['iteration_limit'] = True
+    result = run_task(task, benchmark, session)
+    assert ctx.load('agent_result.json')['status'] == result.status == {'iteration_limit': True}

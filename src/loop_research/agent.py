@@ -21,6 +21,7 @@ class AgentResult(BaseModel):
     uncited: list[str]
     as_of_date: str
     date_source: str
+    status: dict[str, bool]
     repaired: bool = False
 
 
@@ -37,7 +38,7 @@ def parse_output(text, contract, backend):
                 "Do not research, add facts, rows, sources, or records. Remove malformed entries if needed.\n"
                 + contract.prompt + "\nJSON schema:\n" + json.dumps(contract.schema, ensure_ascii=False)
                 + "\nExisting content:\n" + text, purpose="repair")
-    return contract.empty, errors, True
+    raise ValueError("Output validation failed after repair:\n" + "\n".join(errors))
 
 
 def citation_check(output, ledger):
@@ -77,12 +78,21 @@ def citation_check(output, ledger):
     return failures
 
 
-def make_prompt(task, contract, entries):
-    asof = task.as_of_date
-    if asof is None:
-        fallback = task.raw.get("fallback_as_of_date")
-        asof = date.fromisoformat(fallback) if fallback else date.today()
-    source = "task" if task.as_of_date else "today_fallback"
+def make_prompt(task, contract, entries, *, as_of, date_archive=None):
+    identity = {"policy": as_of, "task_date": task.as_of_date.isoformat() if task.as_of_date else None}
+    archived = read_json(date_archive) if date_archive is not None else None
+    if archived is not None:
+        if any(archived[key] != value for key, value in identity.items()):
+            raise ValueError("Archived as-of date does not match task/config policy")
+        asof, source = date.fromisoformat(archived["as_of_date"]), archived["date_source"]
+    elif task.as_of_date is not None:
+        asof, source = task.as_of_date, "task"
+    elif as_of == "today":
+        asof, source = date.today(), "today"
+    else:
+        asof, source = date.fromisoformat(as_of), "config"
+    if date_archive is not None and archived is None:
+        write_json(date_archive, {**identity, "as_of_date": asof.isoformat(), "date_source": source})
     prompt = (f"TASK\n{task.question}\nSPEC\n{json.dumps(task.spec, ensure_ascii=False)}\n\n"
         f"AS-OF DATE\n{asof.isoformat()} (source: {source}). Honor all dates/periods in the task text.\n\n"
         f"RELEVANT HARNESS\n{json.dumps(entries, ensure_ascii=False)}\n\nTOOLS\n"
@@ -117,7 +127,8 @@ def run_task(task, benchmark, session):
     ctx.path.mkdir(parents=True, exist_ok=True)
     contract = benchmark.output_contract(task)
     entries = session.retrieve()
-    prompt, asof, source = make_prompt(task, contract, entries)
+    prompt, asof, source = make_prompt(task, contract, entries, as_of=ctx.config.agent.as_of,
+                                      date_archive=ctx.path / "as_of.json")
     (ctx.path / "prompt.txt").write_text(prompt)
     ctx.save("task.json", task.model_dump(mode="json"))
     with tempfile.TemporaryDirectory(prefix="lr-", dir="/tmp") as directory:
@@ -126,7 +137,7 @@ def run_task(task, benchmark, session):
                    "socket": str(work / "host.sock"), "timeout": budget.remaining(),
                    "result_path": str(work / "result.json")}
         write_json(work / "request.json", request)
-        with Server(work / "host.sock", session.dispatch), (ctx.path / "worker.log").open("a") as log:
+        with Server(work / "host.sock", session.dispatch, socket_timeout_s=ctx.config.bridge.socket_timeout_s), (ctx.path / "worker.log").open("a") as log:
             try:
                 process = ctx.run_process(isolated_command(work, [sys.executable, "-m", "loop_research.agent", str(work / "request.json")]),
                     cwd=work, env=worker_env(work), stdout=log, stderr=log,
@@ -151,11 +162,12 @@ def run_task(task, benchmark, session):
             raise
     session.output = output
     result = AgentResult(output=output, errors=errors, repaired=repaired,
-        uncited=citation_check(output, session.tools.evidence['fetched']), as_of_date=asof, date_source=source)
+        uncited=citation_check(output, session.tools.evidence['fetched']), as_of_date=asof, date_source=source,
+        status=session.status)
     ctx.save("output.json", output)
-    ctx.save("agent_result.json", result.model_dump())
     ctx.save("submission.json", benchmark.to_submission(task, output))
     session.tools.persist()
+    ctx.save("agent_result.json", result.model_dump())
     return result
 
 

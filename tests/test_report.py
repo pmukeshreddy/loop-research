@@ -1,5 +1,6 @@
 """Reporting fixtures are hand-written, never benchmark results."""
 import csv
+import json
 from pathlib import Path
 
 import pytest
@@ -7,16 +8,20 @@ import pytest
 from loop_research.archive import write_json
 
 
-def save_stream(root, run_id, config, *, learning=True, scores=(.2, None, .8), **changes):
+def save_stream(root, run_id, config, *, learning=True, scores=(.2, 0, .8), failed=(2,), **changes):
+    config = config.model_copy(deep=True)
+    config.models.judge = 'fixture-judge'
     tasks = [{
         'index': index, 'task_id': f'fixture-{index}', 'score': score,
         'primary_metric': 'fixture_metric' if score is not None else None, 'judge': 'codex/fixture-judge',
-        'error': 'fixture grader failure' if score is None else None,
+        'error': 'fixture grader failure' if index in failed else None,
+        'status': 'failed' if index in failed else 'succeeded',
         'harness_before': f'before-{index}', 'harness_after': f'after-{index}',
     } for index, score in enumerate(scores, 1)]
     manifest = {
         'run_id': run_id, 'benchmark': 'widesearch', 'learning': learning,
         'base_sha': 'fixture-base', 'task_ids': [row['task_id'] for row in tasks],
+        'as_of_date': '2026-10-18', 'task_digest': 'fixture-task-content-v1',
         'config': config.model_dump(), 'judge': 'codex/fixture-judge', 'tasks': tasks,
     }
     manifest.update(changes)
@@ -24,32 +29,34 @@ def save_stream(root, run_id, config, *, learning=True, scores=(.2, None, .8), *
     return manifest
 
 
-def test_report_keeps_failed_scores_missing_and_rolling_window_explicit(tmp_path, config):
+def test_report_includes_official_scores_for_failed_tasks_in_rolling_means(tmp_path, config):
     from loop_research.report import build_report
     config.stream.rolling_window = 2
     save_stream(tmp_path, 'fixture-learning', config)
     result = build_report(tmp_path)
     assert result == tmp_path / 'reports/summary.md'
     rows = list(csv.DictReader((tmp_path / 'reports/tasks.csv').open()))
-    assert [row['score'] for row in rows] == ['0.2', '', '0.8']
-    assert [row['rolling_mean'] for row in rows] == ['0.2', '0.2', '0.8']
-    assert [row['rolling_scored'] for row in rows] == ['1', '1', '1']
+    assert [row['score'] for row in rows] == ['0.2', '0', '0.8']
+    assert [row['rolling_mean'] for row in rows] == ['0.2', '0.1', '0.4']
+    assert [row['rolling_scored'] for row in rows] == ['1', '2', '2']
     assert rows[1]['status'] == 'failed' and rows[1]['error'] == 'fixture grader failure'
     assert rows[1]['source'] == 'reports/fixture-learning/stream.json'
     summary = result.read_text()
     assert 'fixture grader failure' in summary
+    assert 'Failures are excluded' not in summary
+    assert 'official empty-submission scores' in summary
     assert 'codex/fixture-judge' in summary
     assert 'fixture-learning/stream.json' in summary
     assert 'No comparable learning and no-learning streams' in summary
     assert (tmp_path / 'reports/learning_curve.png').read_bytes().startswith(b'\x89PNG\r\n\x1a\n')
 
 
-def test_report_compares_only_jointly_scored_tasks_from_the_same_start(tmp_path, config):
+def test_report_includes_scored_failures_in_paired_comparisons(tmp_path, config):
     from loop_research.report import build_report
-    save_stream(tmp_path, 'learn', config, scores=(.6, None, .8))
+    save_stream(tmp_path, 'learn', config, scores=(.6, .1, .8))
     save_stream(tmp_path, 'baseline', config, learning=False, scores=(.2, .4, .8))
     summary = build_report(tmp_path).read_text()
-    assert '| learn | baseline | 2 / 3 | 0.7 | 0.5 | 0.2 |' in summary
+    assert '| learn | baseline | 3 / 3 | 0.5 | 0.46666667 | 0.033333333 |' in summary
     assert 'jointly scored' in summary
     assert 'fixture grader failure' in summary
 
@@ -65,6 +72,9 @@ def test_report_refuses_incomparable_runs(tmp_path, config, difference):
         other['base_sha'] = 'different-base'
     elif difference == 'judge':
         other['judge'] = 'codex/different-judge'
+        other['config']['models']['judge'] = 'different-judge'
+        for task in other['tasks']:
+            task['judge'] = 'codex/different-judge'
     elif difference == 'benchmark':
         other['benchmark'] = 'wandr'
     elif difference == 'config':
@@ -84,15 +94,27 @@ def test_report_ignores_only_reporting_settings_for_comparisons(tmp_path, config
     assert '| learn | baseline | 1 / 1 | 0.6 | 0.2 | 0.4 |' in build_report(tmp_path).read_text()
 
 
-def test_report_empty_workspace_and_unscored_stream_are_explicit(tmp_path, config):
+def test_report_empty_workspace_and_interrupted_stream_are_explicit(tmp_path, config):
     from loop_research.report import build_report
     assert 'No stream reports are archived' in build_report(tmp_path).read_text()
-    save_stream(tmp_path, 'failed', config, scores=(None,))
+    save_stream(tmp_path, 'interrupted', config, scores=(), task_ids=['fixture-1', 'fixture-2'],
+                status='interrupted', phase='empty_grading', active_task_id='fixture-1',
+                error='fixture official empty grader failed')
     summary = build_report(tmp_path).read_text()
-    assert 'unavailable' in summary
-    rows = list(csv.DictReader((tmp_path / 'reports/tasks.csv').open()))
-    assert rows[0]['score'] == rows[0]['rolling_mean'] == ''
-    assert rows[0]['rolling_scored'] == '0'
+    assert 'Interrupted streams: 1.' in summary
+    assert '| interrupted | empty_grading | fixture-1 | 2 | fixture official empty grader failed |' in summary
+    assert list(csv.DictReader((tmp_path / 'reports/tasks.csv').open())) == []
+
+
+@pytest.mark.parametrize('score', [None, float('nan'), float('inf'), -float('inf'), True, '0.5'])
+def test_report_refuses_completed_rows_without_finite_numeric_scores(tmp_path, config, score):
+    from loop_research.report import build_report
+    manifest = save_stream(tmp_path, 'incomplete', config, scores=(.2,))
+    manifest['tasks'][0]['score'] = score
+    (tmp_path / 'reports/incomplete/stream.json').write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match='Invalid archived score.*incomplete/fixture-1'):
+        build_report(tmp_path)
+    assert not (tmp_path / 'reports/tasks.csv').exists()
 
 
 def test_curve_keeps_different_stream_metrics_on_separate_axes(tmp_path, config, monkeypatch):
@@ -129,3 +151,77 @@ def test_render_table_preserves_columns_values_and_clickable_citations():
     assert '[1](<https://example.org/a(b)>)' in table
     assert '[2](<https://example.org/b>)' in table
     assert render_table({'rows': []}) == 'No rows returned.'
+
+
+@pytest.mark.parametrize('scope', ['manifest', 'task'])
+@pytest.mark.parametrize('label', ['codex/default', 'codex/incorrect-model'])
+def test_report_refuses_judge_labels_inconsistent_with_config(tmp_path, config, scope, label):
+    from loop_research.report import build_report
+    manifest = save_stream(tmp_path, 'mislabelled', config, scores=(.2,))
+    record = manifest if scope == 'manifest' else manifest['tasks'][0]
+    record['judge'] = label
+    write_json(tmp_path / 'reports/mislabelled/stream.json', manifest)
+    with pytest.raises(ValueError, match='Archived judge label.*models.judge.*mislabelled'):
+        build_report(tmp_path)
+    assert not (tmp_path / 'reports/tasks.csv').exists()
+
+
+def test_report_identifies_all_model_roles_in_csv_summary_and_plot(tmp_path, config, monkeypatch):
+    import matplotlib.pyplot as plt
+    from loop_research.report import build_report
+    config.models.root = 'fixture-root-model'
+    config.models.sub = 'fixture-sub-model'
+    config.models.refine = 'fixture-refine-model'
+    save_stream(tmp_path, 'models', config, scores=(.2,))
+    figures = []
+    subplots = plt.subplots
+    def observe(*args, **kwargs):
+        figure, axes = subplots(*args, **kwargs)
+        figures.append(figure)
+        return figure, axes
+    monkeypatch.setattr(plt, 'subplots', observe)
+    summary = build_report(tmp_path).read_text()
+    row = next(csv.DictReader((tmp_path / 'reports/tasks.csv').open()))
+    assert row['root_model'] == 'fixture-root-model'
+    assert row['sub_model'] == 'fixture-sub-model'
+    assert row['refine_model'] == 'fixture-refine-model'
+    assert row['judge'] == 'codex/fixture-judge'
+    for model in ('fixture-root-model', 'fixture-sub-model', 'fixture-refine-model', 'codex/fixture-judge'):
+        assert model in summary
+        assert model in figures[0].axes[0].get_title()
+
+
+@pytest.mark.parametrize('difference', ['as_of_date', 'task_digest'])
+def test_report_requires_matching_resolved_date_and_task_content(tmp_path, config, difference):
+    from loop_research.report import build_report
+    config.agent.as_of = 'today'
+    save_stream(tmp_path, 'learn', config, scores=(.6,))
+    other = save_stream(tmp_path, 'baseline', config, learning=False, scores=(.2,))
+    other[difference] = '2026-10-19' if difference == 'as_of_date' else 'fixture-task-content-v2'
+    write_json(tmp_path / 'reports/baseline/stream.json', other)
+    summary = build_report(tmp_path).read_text()
+    assert 'No comparable learning and no-learning streams' in summary
+    assert '| learn | baseline |' not in summary
+
+
+@pytest.mark.parametrize('field', ['as_of_date', 'task_digest'])
+@pytest.mark.parametrize('value', ['missing', None, ''])
+def test_report_refuses_missing_comparison_provenance(tmp_path, config, field, value):
+    from loop_research.report import build_report
+    manifest = save_stream(tmp_path, 'incomplete-provenance', config, scores=(.2,))
+    if value == 'missing':
+        del manifest[field]
+    else:
+        manifest[field] = value
+    write_json(tmp_path / 'reports/incomplete-provenance/stream.json', manifest)
+    with pytest.raises(ValueError, match=f'Invalid archived {field}.*incomplete-provenance'):
+        build_report(tmp_path)
+    assert not (tmp_path / 'reports/tasks.csv').exists()
+
+
+def test_report_labels_resolved_as_of_date(tmp_path, config):
+    from loop_research.report import build_report
+    save_stream(tmp_path, 'dated', config, scores=(.2,), as_of_date='2026-09-01')
+    summary = build_report(tmp_path).read_text()
+    assert '| as-of date |' in summary
+    assert '| 2026-09-01 |' in summary

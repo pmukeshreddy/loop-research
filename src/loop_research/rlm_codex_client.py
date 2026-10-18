@@ -24,8 +24,10 @@ def transcript(prompt):
 
 
 class CodexLM(BaseLM):
-    def __init__(self, backend, model=None, purpose="root"):
-        super().__init__(model_name=model or f"codex-default-{purpose}")
+    def __init__(self, backend, model, purpose="root"):
+        if not isinstance(model, str) or not model.strip():
+            raise ValueError("An explicit model name is required")
+        super().__init__(model_name=model)
         self.transport, self.model, self.purpose = backend, model, purpose
         self.lock = threading.Lock()
         self.total = ModelUsageSummary(0, 0, 0)
@@ -56,6 +58,14 @@ class CodexLM(BaseLM):
 
 
 class CodexHandler(LMHandler):
+    def get_client(self, model=None, depth=0):
+        client = self.other_backend_client if depth > 0 else self.default_client
+        if client is None:
+            raise ValueError("A configured sub model is required for nested calls")
+        if model is not None and model != client.model_name:
+            raise ValueError(f"This call requires configured model {client.model_name!r}")
+        return client
+
     def get_usage_summary(self):
         # Upstream overwrites usage when root and sub clients name the same model.
         merged = {}
@@ -71,10 +81,12 @@ class CodexHandler(LMHandler):
 
 
 class CodexRLM(RLM):
-    def __init__(self, transport, *, root_model=None, sub_model=None, skill_modules=(), **kwargs):
+    def __init__(self, transport, *, root_model, sub_model, skill_modules=(), **kwargs):
+        if any(not isinstance(model, str) or not model.strip() for model in (root_model, sub_model)):
+            raise ValueError("Explicit root and sub model names are required")
         self.transport, self.root_model, self.sub_model = transport, root_model, sub_model
         self.skill_modules = skill_modules
-        super().__init__(backend="codex", backend_kwargs={"model_name": root_model or "codex-default-root"},
+        super().__init__(backend="codex", backend_kwargs={"model_name": root_model},
                          environment="local", **kwargs)
 
     @contextmanager
@@ -113,8 +125,10 @@ class CodexRLM(RLM):
                        "sub" if self.depth else "root").completion(message)
 
     def _subcall(self, prompt, model=None):
+        if model is not None and model != self.sub_model:
+            raise ValueError(f"Recursive calls require configured sub model {self.sub_model!r}")
         next_depth = self.depth + 1
-        chosen = model or self.sub_model
+        chosen = self.sub_model
         if next_depth >= self.max_depth:
             client = CodexLM(self.transport, chosen, "sub")
             start = time.monotonic()

@@ -1,4 +1,5 @@
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -6,6 +7,19 @@ from loop_research.archive import RunContext
 from loop_research.benchmarks import Task
 from loop_research.benchmarks.widesearch.data import WideSearchData
 from loop_research.config import Config
+
+
+@pytest.fixture(autouse=True)
+def forbid_live_codex(request, monkeypatch):
+    if request.node.get_closest_marker('live'):
+        return
+    popen = subprocess.Popen
+    def offline_only(command, *args, **kwargs):
+        words = command if isinstance(command, (list, tuple)) else str(command).split()
+        if words and Path(str(words[0])).name == 'codex' and 'exec' in words:
+            raise AssertionError('Live codex exec is forbidden in offline tests; inject a test backend')
+        return popen(command, *args, **kwargs)
+    monkeypatch.setattr(subprocess, 'Popen', offline_only)
 
 
 def load_config():

@@ -27,6 +27,9 @@ def test_constructor_does_not_supply_configuration_defaults():
     ("data", "seed"), ("data", "languages"),
     ("wandr", "seed"), ("wandr", "final_n_tasks"),
     ("harness", "retrieval_limit"), ("stream", "rolling_window"),
+    ("agent", "as_of"), ("codex", "retry_delay_cap_s"),
+    ("refine", "max_edits"), ("bridge", "socket_timeout_s"),
+    ("verify", "codex_timeout_s"), ("verify", "browser_timeout_s"),
 ])
 def test_missing_values_are_rejected(document, tmp_path, section, field):
     del document[section][field]
@@ -42,6 +45,9 @@ def test_missing_values_are_rejected(document, tmp_path, section, field):
     ("models", "root", ""), ("models", "sub", ""), ("models", "reasoning_effort", ""),
     ("models", "refine", False), ("models", "refine", ""),
     ("models", "judge", 123), ("models", "judge", ""),
+    ("models", "root", None), ("models", "sub", None),
+    ("models", "refine", None), ("models", "judge", None),
+    ("models", "root", "   "),
     ("codex", "bin", 1), ("codex", "bin", ""),
     ("codex", "max_concurrent", "4"), ("codex", "max_concurrent", True),
     ("codex", "max_concurrent", 1.5), ("codex", "max_concurrent", 0),
@@ -63,6 +69,11 @@ def test_missing_values_are_rejected(document, tmp_path, section, field):
     ("harness", "retrieval_limit", True), ("harness", "retrieval_limit", 1.5),
     ("stream", "rolling_window", 0), ("stream", "rolling_window", "10"),
     ("stream", "rolling_window", True), ("stream", "rolling_window", 1.5),
+    ("refine", "max_edits", 0), ("refine", "max_edits", True),
+    ("refine", "max_edits", 1.5), ("codex", "retry_delay_cap_s", 0),
+    ("codex", "retry_delay_cap_s", "60"), ("bridge", "socket_timeout_s", 0),
+    ("bridge", "socket_timeout_s", True), ("verify", "codex_timeout_s", 0),
+    ("verify", "browser_timeout_s", float("inf")),
 ])
 def test_invalid_values_are_rejected(document, section, field, value):
     document[section][field] = value
@@ -71,7 +82,7 @@ def test_invalid_values_are_rejected(document, section, field, value):
     assert any(tuple(item["loc"])[:2] == (section, field) for item in error.value.errors())
 
 
-@pytest.mark.parametrize("section", [None, "models", "codex", "rlm", "agent", "data", "wandr", "harness", "stream"])
+@pytest.mark.parametrize("section", [None, "models", "codex", "rlm", "agent", "data", "wandr", "harness", "stream", "refine", "bridge", "verify"])
 def test_unrecognized_settings_are_rejected(document, section):
     target = document if section is None else document[section]
     target["unexpected"] = True
@@ -79,7 +90,7 @@ def test_unrecognized_settings_are_rejected(document, section):
         Config.model_validate(document)
 
 
-@pytest.mark.parametrize("section", ["models", "codex", "rlm", "agent", "data", "wandr", "harness", "stream"])
+@pytest.mark.parametrize("section", ["models", "codex", "rlm", "agent", "data", "wandr", "harness", "stream", "refine", "bridge", "verify"])
 def test_missing_sections_are_rejected(document, section):
     del document[section]
     with pytest.raises(ValidationError) as error:
@@ -105,16 +116,17 @@ def test_removed_fields_are_rejected(document, section, field, value):
     assert (section, field) in {tuple(item["loc"]) for item in error.value.errors()}
 
 
-def test_config_accepts_explicit_null_models_and_unbounded_wandr_subset(document):
+def test_config_accepts_explicit_models_and_unbounded_wandr_subset(document):
     for key in ("gate", "reflect", "skills", "loop", "final"):
         document.pop(key, None)
-    document["models"] = {key: None for key in ("root", "sub", "refine", "judge", "reasoning_effort")}
+    document["models"] = {key: "fixture-" + key for key in ("root", "sub", "refine", "judge")}
+    document["models"]["reasoning_effort"] = None
     document["data"].pop("split", None)
     document["wandr"]["final_n_tasks"] = None
     document["harness"] = {"retrieval_limit": 10}
     document["stream"] = {"rolling_window": 10}
     loaded = Config.model_validate(document)
-    assert loaded.models.judge is loaded.models.refine is None
+    assert loaded.models.judge == "fixture-judge" and loaded.models.refine == "fixture-refine"
     assert loaded.wandr.final_n_tasks is None
     assert loaded.harness.retrieval_limit == loaded.stream.rolling_window == 10
 
@@ -140,8 +152,38 @@ def test_assignment_keeps_strict_validation(config):
         config.codex.max_concurrent = "4"
 
 
-@pytest.mark.parametrize("judge,label", [(None, "codex/default"), ("fixture-judge", "codex/fixture-judge")])
+@pytest.mark.parametrize("judge,label", [("fixture-judge", "codex/fixture-judge")])
 def test_judge_label_uses_judge_instead_of_root(config, judge, label):
     config.models.root = "fixture-root"
     config.models.judge = judge
     assert config.judge_label == label
+
+
+@pytest.mark.parametrize("policy", ["today", "2024-02-29"])
+def test_explicit_operational_settings_are_required_and_preserved(document, policy):
+    document["agent"]["as_of"] = policy
+    document["codex"]["retry_delay_cap_s"] = 2.5
+    document.update(refine={"max_edits": 3}, bridge={"socket_timeout_s": 1.5},
+                    verify={"codex_timeout_s": 4.5, "browser_timeout_s": 12.5})
+    loaded = Config.model_validate(document)
+    assert loaded.agent.as_of == policy
+    assert loaded.codex.retry_delay_cap_s == 2.5
+    assert loaded.refine.max_edits == 3
+    assert loaded.bridge.socket_timeout_s == 1.5
+    assert loaded.verify.codex_timeout_s == 4.5 and loaded.verify.browser_timeout_s == 12.5
+    for section, field in [("agent", "as_of"), ("codex", "retry_delay_cap_s"),
+                           ("refine", "max_edits"), ("bridge", "socket_timeout_s"),
+                           ("verify", "codex_timeout_s"), ("verify", "browser_timeout_s")]:
+        incomplete = loaded.model_dump()
+        del incomplete[section][field]
+        with pytest.raises(ValidationError) as error:
+            Config.model_validate(incomplete)
+        assert (section, field) in {tuple(item["loc"]) for item in error.value.errors()}
+
+
+@pytest.mark.parametrize("policy", [None, "", "yesterday", "2024-2-01", "2023-02-29", "2024-13-01", 20240101])
+def test_as_of_policy_rejects_invalid_calendar_dates(document, policy):
+    document["agent"]["as_of"] = policy
+    with pytest.raises(ValidationError) as error:
+        Config.model_validate(document)
+    assert ("agent", "as_of") in {tuple(item["loc"]) for item in error.value.errors()}

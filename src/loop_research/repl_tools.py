@@ -20,13 +20,20 @@ def normalized_url(url):
 class ResearchTools:
     def __init__(self, backend, ctx):
         self.backend, self.ctx = backend, ctx
-        self.cache = read_json(ctx.path / "tool_cache.json", {})
+        self.cache = {key: value for key, value in read_json(ctx.path / "tool_cache.json", {}).items()
+                      if value != "FETCH_FAILED"}
         self.ledger = set(read_json(ctx.path / "url_ledger.json", []))
         self.lock = threading.RLock()
         self.pending = {}
+        self.pending_fetches = {}
+        self.active_fetches = {}
         self.evidence = read_json(ctx.path / 'evidence.json', {
             'fetched': {}, 'checks': [], 'searches': [], 'discoveries': [], 'failures': []})
+        self.evidence.setdefault('fetches', [])
+        self.evidence.setdefault('dropped_search_hits', [])
         self.entities = {entity for d in self.evidence['discoveries'] for entity in d['entities']}
+        if ctx.cancellation is not None:
+            ctx.cancellation.add_done_callback(self._cancel_fetches)
 
     def persist(self):
         write_json(self.ctx.path / "tool_cache.json", self.cache)
@@ -37,42 +44,119 @@ class ResearchTools:
         with self.lock:
             return json.loads(json.dumps(self.evidence))
 
-    def _cached(self, key, call):
+    def _new_fetch(self, url, focus, source):
+        request = {'id': len(self.evidence['fetches']) + 1, 'url': url, 'focus': focus,
+                   'source': source, 'status': 'pending'}
+        self.evidence['fetches'].append(request)
+        self.active_fetches[request['id']] = request
+        return request
+
+    def _finish_fetch(self, request, status, *, reason=None, error=None):
+        request['status'] = status
+        self.active_fetches.pop(request['id'], None)
+        if reason is not None:
+            request['reason'] = reason
+            failure = {'operation': 'fetch', 'url': request['url'], 'request_id': request['id'],
+                       'source': request['source'], 'reason': reason}
+            if error is not None:
+                request['error'] = failure['error'] = error
+            self.evidence['failures'].append(failure)
+
+    def _record_fetch_attempt(self, key, event):
         with self.lock:
             self.ctx.check_cancelled()
-            if key in self.cache:
-                return self.cache[key]
+            request = self.pending_fetches[key]
+            attempts = request.setdefault('attempts', [])
+            attempt = next((item for item in attempts if item['call_id'] == event['call_id']), None)
+            if attempt is None:
+                attempt = {'request_id': request['id']}
+                attempts.append(attempt)
+            attempt.update(event)
+            if event['status'] == 'failed':
+                self.evidence['failures'].append({'operation': 'fetch', 'url': request['url'],
+                    'request_id': request['id'], 'source': 'backend', 'reason': 'backend_attempt_failed',
+                    **event})
+            self.persist()
+
+    def _cancel_fetches(self, cancellation):
+        if not cancellation.cancelled():
+            return
+        # Cancellation owns this final audit write. Completed backend calls must
+        # still pass check_cancelled before changing any evidence or cache state.
+        with self.lock:
+            pending = list(self.active_fetches.values())
+            for request in pending:
+                self._finish_fetch(request, 'cancelled', reason='cancelled', error='Run cancelled')
+            if pending:
+                self.persist()
+
+    def _cached(self, key, call):
+        operation, target, *options = json.loads(key)
+        with self.lock:
+            self.ctx.check_cancelled()
             pending = self.pending.get(key)
+            request = None
+            if operation == 'fetch':
+                source = 'cache' if key in self.cache else 'shared' if pending is not None else 'backend'
+                request = self._new_fetch(target, options[0], source)
+            if key in self.cache:
+                if request is not None:
+                    owner = next((item for item in reversed(self.evidence['fetches'])
+                        if item['source'] == 'backend' and item['status'] == 'succeeded'
+                        and item['url'] == target and item['focus'] == options[0]), None)
+                    if owner is not None:
+                        request['owner_id'] = owner['id']
+                    self._finish_fetch(request, 'succeeded')
+                    self.persist()
+                return self.cache[key]
             if pending is None:
                 future = self.pending[key] = Future()
-        if pending is not None:
-            return pending.result()
+                if request is not None:
+                    self.pending_fetches[key] = request
+            elif request is not None:
+                request['owner_id'] = self.pending_fetches[key]['id']
+            if request is not None:
+                self.persist()
         try:
-            result, urls = call()
+            result, urls = (pending.result(), []) if pending is not None else call()
             with self.lock:
                 self.ctx.check_cancelled()
-                self.cache[key] = result
-                self.ledger.update(urls)
+                failed = operation == 'fetch' and result == 'FETCH_FAILED'
+                if pending is None and not failed:
+                    self.cache[key] = result
+                    self.ledger.update(urls)
+                    if request is not None:
+                        self.evidence['fetched'].setdefault(target, []).append(result)
+                if request is not None:
+                    self._finish_fetch(request, 'failed' if failed else 'succeeded',
+                                       reason='fetch_failed' if failed else None)
                 self.persist()
-            future.set_result(result)
+            if pending is None:
+                future.set_result(result)
             return result
         except BaseException as exc:
             with self.lock:
-                if not isinstance(exc, CancelledError):
-                    try:
-                        self.ctx.check_cancelled()
-                    except CancelledError:
-                        pass
-                    else:
-                        operation, target, *_ = json.loads(key)
+                try:
+                    self.ctx.check_cancelled()
+                except CancelledError:
+                    pass
+                else:
+                    if request is not None:
+                        cancelled = isinstance(exc, CancelledError)
+                        self._finish_fetch(request, 'cancelled' if cancelled else 'failed',
+                                           reason='cancelled' if cancelled else 'backend_error', error=str(exc))
+                    elif pending is None:
                         self.evidence['failures'].append({'operation': operation, 'target': target, 'error': str(exc)})
-                        self.persist()
+                    self.persist()
             # Release every waiter even if the owner is interrupted.
-            future.set_exception(exc)
+            if pending is None:
+                future.set_exception(exc)
             raise
         finally:
-            with self.lock:
-                del self.pending[key]
+            if pending is None:
+                with self.lock:
+                    del self.pending[key]
+                    self.pending_fetches.pop(key, None)
 
     def search(self, query: str, k: int = 8) -> list[dict]:
         """Search the live web; return title, URL and snippet for up to k real hits."""
@@ -88,22 +172,33 @@ class ResearchTools:
             text = self.backend.complete(f"Search the live web for {query!r}. Return at most {k} results. "
                 "Use only URLs actually returned by web search. Never invent a URL or snippet.",
                 purpose="search", web=True, schema=schema, model=self.ctx.config.models.sub)
-            hits = json.loads(text)["results"]
-            result, urls = [], []
-            for hit in hits:
-                if not all(isinstance(hit.get(x), str) for x in ("title", "url", "snippet")):
-                    continue
-                try:
-                    url = normalized_url(hit["url"])
-                except ValueError:
+            response = json.loads(text)
+            if not isinstance(response, dict) or not isinstance(response.get('results'), list):
+                raise ValueError('Search response must contain a results list')
+            result, urls, dropped = [], [], []
+            for index, hit in enumerate(response['results']):
+                reason = None
+                if not isinstance(hit, dict):
+                    reason = 'malformed_hit'
+                elif not all(isinstance(hit.get(x), str) for x in ("title", "url", "snippet")):
+                    reason = 'malformed_fields'
+                else:
+                    try:
+                        url = normalized_url(hit["url"])
+                    except ValueError:
+                        reason = 'invalid_url'
+                    else:
+                        if len(result) == k:
+                            reason = 'excess_k'
+                if reason is not None:
+                    dropped.append({'query': query, 'index': index, 'hit': hit, 'reason': reason})
                     continue
                 urls.append(url)
                 result.append({x: hit[x] for x in ("title", "url", "snippet")})
-                if len(result) == k:
-                    break
             with self.lock:
                 self.ctx.check_cancelled()
                 self.evidence['searches'].append({'query': query, 'hits': len(result)})
+                self.evidence['dropped_search_hits'].extend(dropped)
             return result, urls
 
         return self._cached(key, call)
@@ -115,7 +210,21 @@ class ResearchTools:
 
     def fetch(self, url: str, focus: str = "") -> str:
         """Return model-rendered page text (not raw HTML), or FETCH_FAILED."""
-        url = normalized_url(url)
+        with self.lock:
+            self.ctx.check_cancelled()
+        try:
+            normalized = normalized_url(url)
+            if not isinstance(focus, str):
+                raise ValueError('Expected focus text')
+        except ValueError as exc:
+            with self.lock:
+                self.ctx.check_cancelled()
+                request = self._new_fetch(url if isinstance(url, str) else repr(url),
+                                          focus if isinstance(focus, str) else repr(focus), 'validation')
+                self._finish_fetch(request, 'failed', reason='validation_error', error=str(exc))
+                self.persist()
+            raise
+        url = normalized
         key = json.dumps(["fetch", url, " ".join(focus.split())])
 
         def call():
@@ -123,7 +232,8 @@ class ResearchTools:
                 f"Focus: {focus}\nCopy relevant page text as faithfully as possible in plain text. "
                 "Preserve wording, figures, context, qualifications and dates. Do not paraphrase, "
                 "infer missing text or invent quotations. If inaccessible, return exactly FETCH_FAILED.",
-                purpose="fetch", web=True, model=self.ctx.config.models.sub).strip()
+                purpose="fetch", web=True, model=self.ctx.config.models.sub,
+                on_attempt=lambda event: self._record_fetch_attempt(key, event)).strip()
             if not result:
                 result = "FETCH_FAILED"
             opened = []
@@ -135,12 +245,6 @@ class ResearchTools:
                         continue
             if url not in opened:
                 result = 'FETCH_FAILED'
-            with self.lock:
-                self.ctx.check_cancelled()
-                if result == 'FETCH_FAILED':
-                    self.evidence['failures'].append({'operation': 'fetch', 'url': url})
-                else:
-                    self.evidence['fetched'].setdefault(url, []).append(result)
             return result, [url] if result != "FETCH_FAILED" else []
 
         return self._cached(key, call)

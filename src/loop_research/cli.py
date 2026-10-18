@@ -109,7 +109,8 @@ def verify(ctx: typer.Context):
         else:
             rows.append((name, True, str(detail or "verified")))
     def codex(*args):
-        result = subprocess.run([config.codex.bin, *args], check=True, text=True, capture_output=True, timeout=30)
+        result = subprocess.run([config.codex.bin, *args], check=True, text=True, capture_output=True,
+                                timeout=config.verify.codex_timeout_s)
         return (result.stdout + result.stderr).strip()
     def flags():
         help_text = codex("exec", "--help")
@@ -156,15 +157,20 @@ def prepare_data(ctx: typer.Context):
 @app.command()
 def research(ctx: typer.Context,
              question: Annotated[str, typer.Argument(help="Research question to answer with a cited table.")],
-             columns: Annotated[list[str] | None, typer.Option("--columns", help="Output column; repeat for multiple columns.")] = None):
+             columns: Annotated[list[str], typer.Option("--columns", help="Output column; repeat for multiple columns.")],
+             keys: Annotated[list[str], typer.Option("--keys", help="Unique key column; repeat for composite keys.")],
+             language: Annotated[str, typer.Option("--language", help="Language for the research answer.")]):
     """Research one question and print its cited table and archive ID."""
     if not question.strip():
         raise typer.BadParameter("Question must not be empty", param_hint="QUESTION")
-    if columns is not None and (any(not column.strip() for column in columns) or len(set(columns)) != len(columns)):
-        raise typer.BadParameter("Columns must be nonempty and unique", param_hint="--columns")
+    from .research import validate_research_spec
+    try:
+        validate_research_spec(columns, keys, language)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
     from .stream import research as research_question
     from .report import render_table
-    result = research_question(*settings(ctx), question, columns or [])
+    result = research_question(*settings(ctx), question, columns, keys, language)
     typer.echo(render_table(result["output"]))
     check = result.get("self_check")
     if check is not None:
@@ -180,10 +186,12 @@ def research(ctx: typer.Context,
 @app.command()
 def stream(ctx: typer.Context,
            benchmark: Annotated[Benchmark, typer.Option(help="Pinned benchmark to research in deterministic order.")],
-           no_learning: Annotated[bool, typer.Option("--no-learning", help="Use the same starting harness without learning updates.")] = False):
+           no_learning: Annotated[bool, typer.Option("--no-learning", help="Use the same starting harness without learning updates.")] = False,
+           base: Annotated[str | None, typer.Option("--base", help="Start from this harness commit SHA.")] = None,
+           resume: Annotated[str | None, typer.Option("--resume", help="Resume this archived stream run ID.")] = None):
     """Research a benchmark stream and archive independent grading reports."""
     from .stream import stream as stream_tasks
-    result = stream_tasks(*settings(ctx), benchmark.value, no_learning=no_learning)
+    result = stream_tasks(*settings(ctx), benchmark.value, no_learning=no_learning, base=base, resume=resume)
     typer.echo("Archive: " + result["run_id"])
     typer.echo("Report: " + str(ctx.obj[0] / "reports" / result["run_id"] / "stream.json"))
 

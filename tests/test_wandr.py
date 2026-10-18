@@ -77,7 +77,8 @@ def test_submission_contract_hierarchy_repair_and_citations(wandr, fixture_task,
     assert parse_output('invalid', contract, replies)[0] == fixture_output
     assert replies.calls == 1
     replies.complete = lambda *a, **kw: 'invalid again'
-    assert parse_output('invalid', contract, replies)[0] == contract.empty
+    with pytest.raises(ValueError, match='Output validation failed after repair'):
+        parse_output('invalid', contract, replies)
 
 
 def test_release_and_canonical_instructions(wandr):
@@ -100,7 +101,7 @@ class FixtureVerdict(BaseModel):
     reasoning: str
 
 
-@pytest.mark.parametrize("judge", [None, "fixture-judge"])
+@pytest.mark.parametrize("judge", ["fixture-judge", "other-fixture-judge"])
 def test_judge_exact_sdk_schema_parser_usage_and_cache(ctx, verifier, monkeypatch, judge):
     from loop_research.benchmarks.wandr import grader
     from src.runtime.llm import LLMRequest, llm_completion
@@ -192,6 +193,7 @@ def test_error_breakdown_keeps_verdicts_and_unknown_rate():
 def test_empty_submission_uses_actual_official_zero_and_cached_result(ctx, wandr, monkeypatch):
     ctx.config.models.root = "fixture-root"
     ctx.config.models.judge = "fixture-judge"
+    ctx.config.codex.bin = str(ctx.root / 'forbidden-codex-model-call')
     task = wandr.load_tasks()[0]
     task_ctx = ctx.task(task.task_id)
     submission = wandr.to_submission(task, wandr.output_contract(task).empty)
@@ -203,6 +205,12 @@ def test_empty_submission_uses_actual_official_zero_and_cached_result(ctx, wandr
     assert len(result.metrics) == 14 and set(result.metrics.values()) == {0}
     assert result.errors['invalid_submission'] is True
     assert result.errors['excerpt_failure_rate'] is None
+    work = ctx.root / result.provenance['artifacts']
+    assert read_json(work / 'logs/reward.json') == result.metrics
+    assert set(path.name for path in (work / 'submission').iterdir()) == set(submission)
+    assert all(path.read_bytes() == b'' for path in (work / 'submission').iterdir())
+    assert not list(work.rglob('judge_cache/*.json'))
+    assert 'WANDR submission files must not be empty' in (work / 'worker.log').read_text()
     def forbidden(*args, **kwargs):
         raise AssertionError('Completed grade must not rerun the verifier')
     monkeypatch.setattr('loop_research.benchmarks.wandr.grader.subprocess.run', forbidden)
@@ -321,3 +329,15 @@ def test_unchanged_pipeline_all_judge_stages_and_metrics(ctx, verifier, monkeypa
     repeated = asyncio.run(pipeline.run_pipeline([task], ctx.path / 'pipeline', submission_paths={'fixture': submission}))
     assert len(repeated) == 2 and len(stages) == calls
     capsys.readouterr()
+
+
+def test_browser_readiness_uses_configured_timeout(wandr, monkeypatch):
+    wandr.config.verify.browser_timeout_s = 19
+    real_run = __import__('subprocess').run
+    def probe(command, **kwargs):
+        if command[0] == 'git':
+            return real_run(command, **kwargs)
+        assert kwargs['timeout'] == 19
+        return SimpleNamespace(returncode=0, stdout='fixture browser ready', stderr='')
+    monkeypatch.setattr('loop_research.benchmarks.wandr.grader.subprocess.run', probe)
+    assert wandr.verify()[1][1] is True

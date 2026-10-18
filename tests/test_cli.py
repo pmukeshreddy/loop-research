@@ -66,30 +66,27 @@ def test_research_uses_explicit_config_and_prints_cited_table(tmp_path, config, 
     cli = cli_module()
     config.data.seed = 73
     save_config(tmp_path, config, 'custom.yaml')
-    def research(root, settings, question, columns):
+    def research(root, settings, question, columns, keys, language):
         assert root == tmp_path and settings.data.seed == 73
         assert question == 'Find the fixture' and columns == ['entity', 'value']
+        assert keys == ['entity'] and language == 'zh'
         return {'run_id': 'research-fixture', 'output': output, 'self_check': {'ok': True, 'issues': []}}
     stream_module.research = research
     result = CliRunner().invoke(cli.app, ['--root', str(tmp_path), '--config', 'custom.yaml',
-        'research', 'Find the fixture', '--columns', 'entity', '--columns', 'value'])
+        'research', 'Find the fixture', '--columns', 'entity', '--columns', 'value', '--keys', 'entity', '--language', 'zh'])
     assert result.exit_code == 0, f'{result.output}\n{result.exception}'
     assert '| entity | value |' in result.stdout
     assert '[1](<https://example.org>)' in result.stdout
     assert 'Archive: research-fixture' in result.stdout
 
 
-def test_research_without_columns_passes_empty_selection(tmp_path, config, stream_module):
-    cli = cli_module()
-    save_config(tmp_path, config)
-    def research(root, settings, question, columns):
-        assert columns == []
-        return {'run_id': 'empty-fixture', 'output': {'rows': []}, 'self_check': {'ok': False, 'issues': ['fixture issue']}}
-    stream_module.research = research
-    result = CliRunner().invoke(cli.app, ['--root', str(tmp_path), 'research', 'Fixture question'])
-    assert result.exit_code == 0, f'{result.output}\n{result.exception}'
-    assert 'No rows returned.' in result.stdout
-    assert 'fixture issue' in result.stdout
+@pytest.mark.parametrize('missing', ['--columns', '--keys', '--language'])
+def test_research_requires_each_explicit_output_option(tmp_path, missing):
+    options = {'--columns': 'entity', '--keys': 'entity', '--language': 'en'}
+    args = [item for key, value in options.items() if key != missing for item in (key, value)]
+    result = CliRunner().invoke(cli_module().app, ['--root', str(tmp_path), 'research', 'Fixture question', *args])
+    assert result.exit_code == 2, f'{result.output}\n{result.exception}'
+    assert missing in result.output and not (tmp_path / 'runs').exists()
 
 
 def test_research_failure_keeps_archive_visible_and_returns_nonzero(tmp_path, config, stream_module):
@@ -98,7 +95,8 @@ def test_research_failure_keeps_archive_visible_and_returns_nonzero(tmp_path, co
         'run_id': 'failed-fixture', 'output': {'rows': []},
         'self_check': {'ok': False, 'issues': ['worker_error']}, 'error': 'fixture timeout',
     }
-    result = CliRunner().invoke(cli_module().app, ['--root', str(tmp_path), 'research', 'Fixture question'])
+    result = CliRunner().invoke(cli_module().app, ['--root', str(tmp_path), 'research', 'Fixture question',
+        '--columns', 'entity', '--keys', 'entity', '--language', 'en'])
     assert result.exit_code == 1
     assert 'Archive: failed-fixture' in result.stdout
     assert 'fixture timeout' in result.output
@@ -108,9 +106,10 @@ def test_research_failure_keeps_archive_visible_and_returns_nonzero(tmp_path, co
 def test_stream_routes_benchmark_and_learning_mode(tmp_path, config, stream_module, benchmark, no_learning):
     cli = cli_module()
     save_config(tmp_path, config)
-    def stream(root, settings, selected, no_learning=False):
+    def stream(root, settings, selected, no_learning=False, base=None, resume=None):
         assert root == tmp_path and selected == benchmark
         assert no_learning is (benchmark == 'wandr')
+        assert base is None and resume is None
         return {'run_id': 'stream-fixture'}
     stream_module.stream = stream
     args = ['--root', str(tmp_path), 'stream', '--benchmark', benchmark]
@@ -136,6 +135,24 @@ def test_stream_help_has_single_no_learning_switch():
     assert '--no-no-learning' not in result.stdout
 
 
+@pytest.mark.parametrize('options,base,resume', [(['--base', 'a' * 40], 'a' * 40, None),
+                                               (['--resume', 'stream-fixture'], None, 'stream-fixture')])
+def test_stream_forwards_explicit_lineage_options(tmp_path, config, stream_module, options, base, resume):
+    save_config(tmp_path, config)
+    def stream(root, settings, selected, *, no_learning, base, resume):
+        assert (base, resume) == expected
+        return {'run_id': 'stream-fixture'}
+    expected = (base, resume)
+    stream_module.stream = stream
+    result = CliRunner().invoke(cli_module().app, ['--root', str(tmp_path), 'stream', '--benchmark', 'widesearch', *options])
+    assert result.exit_code == 0, f'{result.output}\n{result.exception}'
+
+
+def test_stream_resume_requires_a_run_id():
+    result = CliRunner().invoke(cli_module().app, ['stream', '--benchmark', 'widesearch', '--resume'])
+    assert result.exit_code == 2
+
+
 def test_prepare_data_uses_both_pinned_adapters(tmp_path, config, monkeypatch):
     cli = cli_module()
     from loop_research.benchmarks.wandr.data import WandrData
@@ -156,9 +173,11 @@ def test_verify_checks_auth_sources_and_isolation_without_live_calls(tmp_path, c
     cli = cli_module()
     from loop_research import isolation
     from loop_research.benchmarks.wandr.grader import WandrBenchmark
+    config.verify.codex_timeout_s = 1.25
     save_config(tmp_path, config)
     required = '--sandbox --skip-git-repo-check --cd --output-last-message --output-schema --model --config --json --color --ephemeral --ignore-user-config read-only stdin'
     def command(args, **kwargs):
+        assert kwargs['timeout'] == 1.25
         assert args[1:] in (['--version'], ['exec', '--help'], ['login', 'status'])
         text = {'--version': 'codex fixture', 'exec': required,
                 'login': 'Logged in using ChatGPT' if authenticated else 'Logged in using an API key'}[args[1]]
