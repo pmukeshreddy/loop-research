@@ -3,7 +3,6 @@ from datetime import date
 import json
 import os
 from pathlib import Path
-import signal
 import subprocess
 import sys
 import tempfile
@@ -87,13 +86,16 @@ def make_prompt(task, contract, playbook):
         f"AS-OF DATE\n{asof.isoformat()} (source: {source}). Honor all dates/periods in the task text.\n\n"
         f"RESEARCH PLAYBOOK\n{playbook}\n\nTOOLS\n"
         "search(query, k=8): live web hits with title, url, snippet. Never invent URLs.\n"
+        "search_batched(queries, k=8): concurrent searches; one hit list per query, in input order.\n"
         "fetch(url, focus=''): model-rendered page text, not raw HTML; FETCH_FAILED on failure.\n"
+        "fetch_batched(urls, focus=''): concurrent fetches; one page text or FETCH_FAILED per URL, in input order.\n"
         "llm_query(prompt): stateless sub-model, no independent tools; give it fetched evidence.\n"
         "llm_query_batched(prompts): parallel sub-model calls over supplied evidence.\n"
         "Python imports: json, re, math, statistics, collections, itertools, datetime, decimal. "
         "Filesystem, network clients, shell, introspection and private attributes are unavailable.\n\n"
-        "METHOD\nGo wide: discover candidates and keep them in REPL variables. Go deep: "
-        "fill fields using parallel llm_query_batched calls on fetched pages. Verify every task "
+        "METHOD\nGo wide: use search_batched for independent discovery queries and keep candidates in REPL variables. "
+        "Go deep: fetch candidate pages with fetch_batched, then fill fields using parallel "
+        "llm_query_batched calls on fetched pages. Verify every task "
         "constraint for every entity. Cite every value using a verbatim quote from fetched text. "
         "Do not search for benchmark answer keys, grader outputs, or other runs.\n\n"
         f"OUTPUT CONTRACT\n{contract.prompt}\n{json.dumps(contract.schema, ensure_ascii=False)}\n"
@@ -120,23 +122,13 @@ def run_task(task, benchmark, library_dir, run_ctx):
         env = os.environ.copy()
         env["PYTHONPATH"] = str(Path(__file__).resolve().parents[1])
         with (run_ctx.path / "worker.log").open("a") as log:
-            process = subprocess.Popen([sys.executable, "-m", "loop_research.agent", str(tmp / "request.json")],
-                cwd=tmp, env=env, stdout=log, stderr=log, start_new_session=True)
-            finished = False
             try:
-                code = process.wait(timeout=budget.remaining())
-                finished = True
+                process = run_ctx.run_process([sys.executable, "-m", "loop_research.agent", str(tmp / "request.json")],
+                    cwd=tmp, env=env, stdout=log, stderr=log, start_new_session=True, timeout=budget.remaining())
             except subprocess.TimeoutExpired as exc:
                 raise TimeoutError("Task hard deadline exceeded") from exc
-            finally:
-                if not finished:
-                    try:
-                        os.killpg(process.pid, signal.SIGKILL)
-                    except ProcessLookupError:
-                        pass  # The worker may have exited between interruption and cleanup.
-                    process.wait()
-        if code:
-            raise RuntimeError(f"Research worker failed ({code}); see {run_ctx.path / 'worker.log'}")
+        if process.returncode:
+            raise RuntimeError(f"Research worker failed ({process.returncode}); see {run_ctx.path / 'worker.log'}")
         result = read_json(tmp / "result.json")
         budget.remaining()
         budget.count = count_codex_calls(run_ctx.path, exclude_purposes=("grade",))

@@ -163,8 +163,8 @@ class WandrBenchmark(WandrData):
         env = {k: v for k, v in os.environ.items() if 'API_KEY' not in k and not k.startswith(('OPENAI_', 'AZURE_OPENAI_', 'WANDR_'))}
         env['PYTHONPATH'] = str(Path(__file__).resolve().parents[3])
         with (work / 'worker.log').open('w') as log:
-            process = subprocess.run([sys.executable, '-m', __name__, str(work / 'request.json')],
-                                     env=env, stdout=log, stderr=subprocess.STDOUT)
+            process = run_ctx.run_process([sys.executable, '-m', __name__, str(work / 'request.json')],
+                                      env=env, stdout=log, stderr=subprocess.STDOUT)
         if process.returncode:
             raise RuntimeError(f'WANDR verifier failed; see {work / "worker.log"}')
         return GradeResult.model_validate(read_json(work / 'result.json'))

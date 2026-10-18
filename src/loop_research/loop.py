@@ -1,5 +1,8 @@
 """Resumable WideSearch learning and benchmark-independent run execution."""
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
+from dataclasses import replace
 from datetime import datetime
+from itertools import islice
 import math
 from pathlib import Path
 import random
@@ -86,6 +89,7 @@ def _research_ready(task, benchmark, ctx):
 
 def execute_task(task, benchmark, library, ctx, *, grade=True, research=True):
     """Reuse only validated complete research artifacts; journal the grader input."""
+    ctx.check_cancelled()
     ctx.path.mkdir(parents=True, exist_ok=True)
     if not _research_ready(task, benchmark, ctx):
         if not research:
@@ -101,6 +105,7 @@ def execute_task(task, benchmark, library, ctx, *, grade=True, research=True):
                        "library": (ctx.run_dir / "skills_sha.txt").read_text().strip()})
     if not grade:
         return None
+    ctx.check_cancelled()
     if ctx.load("grade_input.json") != {"identity": identity}:
         (ctx.path / "grade.json").unlink(missing_ok=True)
         (ctx.path / "completed.json").unlink(missing_ok=True)
@@ -118,13 +123,29 @@ def execute_task(task, benchmark, library, ctx, *, grade=True, research=True):
 
 
 def execute_run(ctx, tasks, benchmark, library, *, grade=True, research=True):
-    grades = {}
-    for task in tasks:
-        grades[task.task_id] = execute_task(task, benchmark, library, ctx.task(task.task_id), grade=grade, research=research)
+    ctx = replace(ctx, cancellation=Future())
+    remaining, pending, grades = iter(tasks), {}, {}
+    with ThreadPoolExecutor(max_workers=ctx.config.loop.parallel_tasks) as pool:
+        try:
+            while True:
+                for task in islice(remaining, ctx.config.loop.parallel_tasks - len(pending)):
+                    future = pool.submit(execute_task, task, benchmark, library, ctx.task(task.task_id),
+                                         grade=grade, research=research)
+                    pending[future] = task.task_id
+                if not pending:
+                    break
+                done, _ = wait(pending, return_when=FIRST_COMPLETED)
+                for future in done:
+                    grades[pending.pop(future)] = future.result()
+        except BaseException:
+            ctx.cancellation.cancel()
+            for future in pending:
+                future.cancel()
+            raise
     summary = ctx.load("run_summary.json")
     summary.update(status="complete" if grade else "researched", task_count=len(tasks))
     ctx.save("run_summary.json", summary)
-    return grades
+    return {task.task_id: grades[task.task_id] for task in tasks}
 
 
 def run_train(root, config, n):

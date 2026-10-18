@@ -95,6 +95,36 @@ def test_hard_call_budget(ctx):
         budget.remaining()
 
 
+def test_cancellation_interrupts_retry_backoff(ctx):
+    from concurrent.futures import CancelledError, Future, ThreadPoolExecutor
+    import threading
+    waiting, calls = threading.Event(), []
+
+    class Cancellation(Future):
+        def result(self, timeout=None):
+            waiting.set()
+            return super().result(timeout=timeout)
+
+    ctx.cancellation = Cancellation()
+    ctx.config.codex.max_retries = 1
+
+    def runner(*args, **kwargs):
+        calls.append(args)
+        return SimpleNamespace(returncode=1, stdout="", stderr="Fixture retry")
+
+    backend = CodexBackend(ctx, runner=runner, jitter=lambda: 0)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(backend.complete, "fixture", purpose="grade")
+        try:
+            assert waiting.wait(3), "Retry backoff does not wait on cancellation"
+            ctx.cancellation.cancel()
+            with pytest.raises(CancelledError):
+                future.result(timeout=3)
+            assert len(calls) == 1
+        finally:
+            ctx.cancellation.cancel()
+
+
 def _offline_codex_process(ctx, index, started, ready, release):
     def runner(command, **kwargs):
         started[index].set()

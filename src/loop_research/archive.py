@@ -1,11 +1,14 @@
-"""Atomic durable archive primitives. No benchmark imports."""
-from dataclasses import dataclass
+"""Run archives and cancellable worker processes. No benchmark imports."""
+from concurrent.futures import CancelledError, Future
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 import fcntl
 import hashlib
 import json
 import os
+import signal
+import subprocess
 import tempfile
 from .config import Config
 
@@ -65,6 +68,7 @@ class RunContext:
     run_id: str
     config: Config
     task_id: str | None = None
+    cancellation: Future | None = field(default=None, repr=False, compare=False)
 
     def __post_init__(self):
         self.root = self.root.resolve()
@@ -81,7 +85,53 @@ class RunContext:
         return self.run_dir / self.task_id if self.task_id else self.run_dir
 
     def task(self, task_id):
-        return RunContext(self.root, self.run_id, self.config, task_id)
+        return RunContext(self.root, self.run_id, self.config, task_id, self.cancellation)
+
+    def check_cancelled(self):
+        if self.cancellation is not None and self.cancellation.cancelled():
+            raise CancelledError("Run cancelled")
+
+    def run_process(self, command, *, input=None, capture_output=False, timeout=None, **kwargs):
+        """Run a child, terminating it and its owned process group on cancellation."""
+        self.check_cancelled()
+        if input is not None:
+            kwargs["stdin"] = subprocess.PIPE
+        if capture_output:
+            kwargs.update(stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        session = kwargs.pop("start_new_session", self.cancellation is not None)
+        process = subprocess.Popen(command, start_new_session=session, **kwargs)
+        finished = False
+
+        def stop():
+            if not finished:
+                try:
+                    if session:
+                        os.killpg(process.pid, signal.SIGKILL)
+                    else:
+                        process.kill()
+                except ProcessLookupError:
+                    pass  # The child may exit between cancellation and cleanup.
+
+        if self.cancellation is not None:
+            self.cancellation.add_done_callback(lambda _: stop())
+        stdout = stderr = None
+        try:
+            if capture_output or input is not None:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+                code = process.returncode
+            else:
+                code = process.wait(timeout=timeout)
+        except BaseException:
+            stop()
+            if capture_output or input is not None:
+                process.communicate()
+            else:
+                process.wait()
+            raise
+        finally:
+            finished = True
+        self.check_cancelled()
+        return subprocess.CompletedProcess(command, code, stdout, stderr)
 
     def save(self, name, value):
         write_json(self.path / name, value)
@@ -93,7 +143,7 @@ class RunContext:
         self.path.mkdir(parents=True, exist_ok=True)
         snapshot = self.config.model_dump()
         existing = self.load("config.json")
-        if existing is not None and existing != snapshot:
+        if existing is not None and Config.model_validate(existing).model_dump() != snapshot:
             raise ValueError("Cannot resume with changed configuration")
         if existing is None:
             self.save("config.json", snapshot)

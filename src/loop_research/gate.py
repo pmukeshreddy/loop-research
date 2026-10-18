@@ -14,8 +14,13 @@ def filter_edit(op, library, leakage_index, threshold):
         return "leakage: URL"
     if re.search(r"\d", text):
         return "leakage: numbers/dates are not general methods"
-    if any(entry in norm for entry in leakage_index):
-        return "leakage: gold cell/entity text"
+    for entry in leakage_index:
+        if re.search(r"[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af\uf900-\ufaff\U00020000-\U000323af]", entry):
+            matched = len(entry) >= 2 and entry in norm
+        else:
+            matched = re.search(r"(?<!\w)" + re.escape(entry) + r"(?!\w)", norm)
+        if matched:
+            return "leakage: gold cell/entity text"
     if op.op == "add":
         for skill in load_skills(library):
             if skill.status == "active" and SequenceMatcher(None, normalize_text(op.body or ""), normalize_text(skill.body)).ratio() > threshold:

@@ -64,6 +64,30 @@ def test_leakage_filter(library, text, index, expected):
     assert (reason is None) if expected is None else expected in reason
 
 
+@pytest.mark.parametrize("gold,text,leaked", [
+    ("art", "Compare partial results from different sources.", False),
+    ("art", "Compare art sources.", True),
+    ("land", "Compare island names with mainland sources.", False),
+    ("land", "Check the land record.", True),
+    ("new york", "Check New Yorkshire sources.", False),
+    ("new york", "Check Renew York sources.", False),
+    ("new york", "Check (NEW\nYORK) sources.", True),
+    ("café", "Check cafés and cafeteria sources.", False),
+    ("café", "Check café sources.", True),
+    ("a.b", "Check a-b sources.", False),
+    ("a.b", "Check (a.b) sources.", True),
+    ("北京", "核实北京市的来源。", True),
+    ("北京", "核实上海市的来源。", False),
+    ("京", "核实京的来源。", False),
+    ("京", "核实 京 来源。", False),
+    ("東京", "東京都の出典を確認する。", True),
+    ("서울", "서울시의 출처를 확인한다.", True),
+])
+def test_leakage_matches_tokens_and_cjk_phrases(library, gold, text, leaked):
+    reason = filter_edit(edit(title="Verify evidence", body=text), library, {gold}, .85)
+    assert reason == ("leakage: gold cell/entity text" if leaked else None)
+
+
 def test_normalization_and_dedup(library):
     assert normalize_text(" Ｆｉｘｔｕｒｅ\n ENTITY ") == "fixture entity"
     apply_op(library, edit())
