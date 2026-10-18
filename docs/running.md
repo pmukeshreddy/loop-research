@@ -10,12 +10,15 @@ distinguish real generation from fictional fixture behavior.
 | Configuration | Purpose |
 | --- | --- |
 | [`fixture.json`](../configs/fixture.json) | One fictional scripted task; no network or model calls |
-| [`open-web.json`](../configs/open-web.json) | Open-web pilot; private dated evidence, fresh internet solvers and bounded alternative search |
+| [`company-campaign.json`](../configs/company-campaign.json) | Current discovery target: 50 companies × 5 accepted open-web questions; shared bounded usage |
+| [`open-web.json`](../configs/open-web.json) | Historical four-company open-web pilot; not the generation boundary |
 | [`real-expansion.json`](../configs/real-expansion.json) | Legacy corpus pilot using four dated primary investor announcements |
 | [`live-smoke.json`](../configs/live-smoke.json) | Earlier Apptronik/Bedrock integration configuration |
 | [`codex.json`](../configs/codex.json) | Larger live template; supply sources before running |
 
-The open-web and real-expansion configurations include Cerbos and Cradle announcements from
+Use the [company campaign guide](company-campaign.md) for current live commands,
+discovery, quotas, coverage reports and explicit budget extensions.
+The historical open-web and real-expansion configurations include Cerbos and Cradle announcements from
 2023 and Fullview and Salesroom announcements from 2022. Comparison companies
 and independent co-investment relationships support a necessary expansion.
 Publication dates have documented bases. Discovery used Codex search; this
@@ -41,7 +44,7 @@ Create a separate editable configuration without overwriting an existing file:
 .venv/bin/python -m webshaper init --mode live --output configs/my-live.json
 ```
 
-Live init defaults to `research_mode: open_web`; absent modes in old files mean
+Live init defaults to a 50 × 5 discovery campaign with `research_mode: open_web`; absent modes in old files mean
 `legacy_corpus`. `--mode fixture` creates a legacy offline configuration instead.
 The open-web acceptance/rejection fixtures run with `pytest tests/test_open_web.py`;
 their tool traces and judgments are scripted and cannot demonstrate real browsing.
@@ -75,7 +78,7 @@ and labeled fixtures, with no separately billed API adapter.
   Keep `concurrency: 1` for the pilot. Open-web validation is sequential;
   higher values only parallelize legacy corpus attempts.
 
-Review accepted pilot tasks before increasing source coverage or target size.
+Accepted live tasks remain pending human review; larger targets do not bypass validation.
 Requested models, runtime version, configuration, prompts and schemas are recorded.
 Separate sessions do not guarantee independent model errors.
 
@@ -88,9 +91,9 @@ Check your login; run `codex login` only if ChatGPT sign-in is needed.
 ```bash
 codex --version
 codex login status
-.venv/bin/python -m webshaper doctor --config configs/open-web.json
-.venv/bin/python -m webshaper run --config configs/open-web.json --run-dir runs/my-open-web
-.venv/bin/python -m webshaper status --run-dir runs/my-open-web
+.venv/bin/python -m webshaper doctor --config configs/company-campaign.json
+.venv/bin/python -m webshaper run --config configs/company-campaign.json --run-dir runs/my-company-campaign
+.venv/bin/python -m webshaper status --run-dir runs/my-company-campaign
 ```
 
 Substitute your config and a fresh run directory when using different sources or
@@ -100,7 +103,7 @@ settings. Check `target_reached`, `depth_distribution`, and the reference's
 To check built-in search availability separately:
 
 ```bash
-.venv/bin/python -m webshaper doctor --config configs/open-web.json --probe-search --run-dir runs/search-check
+.venv/bin/python -m webshaper doctor --config configs/company-campaign.json --probe-search --run-dir runs/search-check
 ```
 
 This optional probe consumes a separate bounded Codex subscription session; account
@@ -143,7 +146,7 @@ Subscription limits pause the run without an external fallback. Only after the
 limit resets, explicitly retry those calls:
 
 ```bash
-.venv/bin/python -m webshaper run --config configs/open-web.json --run-dir runs/my-open-web --retry-limited
+.venv/bin/python -m webshaper run --config configs/company-campaign.json --run-dir runs/my-company-campaign --retry-limited
 ```
 
 Tokens are observed after a Codex turn. Reservations stop new calls before the

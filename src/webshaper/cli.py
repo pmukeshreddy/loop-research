@@ -10,7 +10,7 @@ from .generation import SearchResults
 from .models import RunConfig
 from .pipeline import frozen_config, run, run_lock
 from .providers import CodexProvider, ModelGateway
-from .storage import Journal, now
+from .storage import Journal, digest, now
 
 
 def load_config(path):
@@ -51,6 +51,8 @@ def main(argv=None):
     execute.add_argument("--config", type=Path, required=True)
     execute.add_argument("--run-dir", type=Path, required=True)
     execute.add_argument("--retry-limited", action="store_true", help="explicitly retry subscription-limited calls after reset")
+    execute.add_argument("--budget-extension", type=Path,
+                         help="explicit additive subscription-usage authorization JSON; never changes $0 paid limit")
     doctor = sub.add_parser("doctor", help="verify CLI auth/flags without reading tokens")
     doctor.add_argument("--config", type=Path, required=True)
     doctor.add_argument("--probe-search", action="store_true", help="uses one bounded subscription session")
@@ -70,13 +72,20 @@ def main(argv=None):
     try:
         if args.command == "init":
             from .fixtures import fixture_config
-            config = fixture_config() if args.mode == "fixture" else RunConfig(as_of=date.today(), research_mode="open_web")
+            from .models import Budget, CampaignConfig, ModelConfig
+            config = fixture_config() if args.mode == "fixture" else RunConfig(
+                as_of=date.today(), research_mode="open_web", campaign=CampaignConfig(), target_tasks=250,
+                max_seed_attempts=750, layers=2, browsing_attempts=1, shortcut_audit_rate=1,
+                solver=ModelConfig(max_searches_per_call=4), verifier=ModelConfig(max_searches_per_call=4),
+                budget=Budget(max_tokens=1_447_740, max_calls=49, max_searches=13))
             args.output.parent.mkdir(parents=True, exist_ok=True)
             with args.output.open("x") as f:
                 f.write(config.model_dump_json(indent=2) + "\n")
             print(f"Wrote {args.output}; mode={config.mode}, additional paid budget=$0")
         elif args.command == "run":
-            stats = run(load_config(args.config), args.run_dir, args.retry_limited)
+            from .models import BudgetExtension
+            extension = BudgetExtension.model_validate_json(args.budget_extension.read_text()) if args.budget_extension else None
+            stats = run(load_config(args.config), args.run_dir, args.retry_limited, extension)
             print(json.dumps(stats, indent=2, sort_keys=True))
             return 0 if stats["status"] == "completed" else (75 if stats["status"] == "paused" else 1)
         elif args.command == "status":
@@ -88,9 +97,13 @@ def main(argv=None):
             with run_lock(args.run_dir), Journal(args.run_dir / "run.sqlite", frozen["config"], config.budget) as journal:
                 if args.command == "review":
                     candidates = journal.get("final_candidates") or []
-                    if config.mode != "live" or args.task_id not in {c["task"]["task_id"] for c in candidates}:
+                    ids = {c["task"]["task_id"] for c in candidates}
+                    public_ids = {"task-" + digest([journal.get("campaign_public_id_salt"), internal])[:32]: internal
+                                  for internal in ids} if config.campaign else {}
+                    internal_id = public_ids.get(args.task_id, args.task_id)
+                    if config.mode != "live" or internal_id not in ids:
                         raise ValueError("manual review requires an accepted live task ID")
-                    journal.record("manual_reviews", args.task_id, {"task_id": args.task_id, "decision": args.decision,
+                    journal.record("manual_reviews", internal_id, {"task_id": internal_id, "decision": args.decision,
                                    "reviewer": args.reviewer, "notes": args.notes, "reviewed_at": now()})
                 stats = export_dataset(journal, config, args.run_dir)
             print(json.dumps(stats, indent=2, sort_keys=True))
@@ -121,10 +134,12 @@ def main(argv=None):
             args.output.mkdir(parents=True, exist_ok=True)
             classes = [getattr(models, n) for n in ("Source", "Evidence", "Entity", "Fact", "Bundle", "Query",
                         "PublicTask", "Candidate", "Validation", "RunConfig", "SemanticAssessment", "SolverAnswer",
-                        "WebSolverAnswer", "AlternativeReview", "WebGrade")]
-            for cls in [*classes, Extraction]:
+                        "WebSolverAnswer", "AlternativeReview", "WebGrade", "CampaignConfig", "BudgetExtension")]
+            from .discovery import CompanyDiscovery, CompanyAssessment, CompanySources
+            classes.extend([Extraction, CompanyDiscovery, CompanyAssessment, CompanySources])
+            for cls in classes:
                 (args.output / (cls.__name__ + ".json")).write_text(json.dumps(cls.model_json_schema(), indent=2) + "\n")
-            print(f"Wrote {len(classes)+1} schemas to {args.output}")
+            print(f"Wrote {len(classes)} schemas to {args.output}")
         return 0
     except (ValueError, OSError, RuntimeError) as error:
         print(f"webshaper: {error}", file=sys.stderr)

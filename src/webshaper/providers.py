@@ -296,7 +296,7 @@ class ModelGateway:
                 observation = {**empty_observation(web), **context, "dispatched": False,
                                "failure_code": "budget_exhausted" if isinstance(error, BudgetExceeded)
                                else "prior_call_unresolved"}
-                self.journal.record("web_traces", key, observation)
+                self.journal.record("web_traces", key + ":not_dispatched:" + digest(self.journal.budget), observation)
             error.observation = observation
             raise
         if cached is not None:

@@ -1,0 +1,40 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "authorization_id": {
+      "minLength": 1,
+      "pattern": "^[a-zA-Z0-9_-]+$",
+      "title": "Authorization Id",
+      "type": "string"
+    },
+    "additional_tokens": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Additional Tokens",
+      "type": "integer"
+    },
+    "additional_calls": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Additional Calls",
+      "type": "integer"
+    },
+    "additional_searches": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Additional Searches",
+      "type": "integer"
+    },
+    "additional_usd": {
+      "const": 0,
+      "default": 0,
+      "title": "Additional Usd",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "authorization_id"
+  ],
+  "title": "BudgetExtension",
+  "type": "object"
+}

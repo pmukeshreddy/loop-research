@@ -44,7 +44,7 @@ class Evidence(Record):
 
 
 EntityKind = Literal["company", "investor", "person", "product", "funding_event", "acquisition_event",
-                     "category", "date", "year", "location"]
+                     "partnership_event", "category", "date", "year", "location"]
 
 
 class Entity(Record):
@@ -149,6 +149,9 @@ class Candidate(Record):
     candidate_decisions: dict = Field(default_factory=dict)
     cell_evidence: dict[str, list[str]] = Field(default_factory=dict)
     graph_id: str = ""
+    company_id: str | None = None
+    question_slot: int | None = None
+    requested_depth: int | None = None
 
 
 class SeedProposal(Record):
@@ -258,6 +261,48 @@ class ModelConfig(Record):
     max_searches_per_call: int = Field(default=3, ge=1, le=10)
 
 
+class CampaignConfig(Record):
+    target_companies: int = Field(default=50, ge=1, le=500)
+    questions_per_company: int = Field(default=5, ge=1, le=20)
+    depth_targets: list[int] = Field(default_factory=lambda: [0, 1, 1, 2, 2])
+    discovery_batch_size: int = Field(default=10, ge=1, le=50)
+    max_discovery_batches: int = Field(default=10, ge=1, le=100)
+    max_company_candidates: int = Field(default=100, ge=1, le=1000)
+    source_search_attempts: int = Field(default=2, ge=1, le=5)
+    min_primary_sources: int = Field(default=3, ge=1)
+    min_relationship_families: int = Field(default=3, ge=1, le=6)
+    min_connected_entities: int = Field(default=5, ge=1)
+    min_question_patterns: int = Field(default=5, ge=1)
+    max_attempts_per_slot: int = Field(default=3, ge=1, le=20)
+    min_industries: int = Field(default=10, ge=1)
+    min_regions: int = Field(default=5, ge=1)
+    min_funding_stages: int = Field(default=4, ge=1)
+
+    @model_validator(mode="after")
+    def quotas(self):
+        if len(self.depth_targets) != self.questions_per_company or any(d < 0 or d > 5 for d in self.depth_targets):
+            raise ValueError("campaign depth_targets must specify one depth (0..5) per question slot")
+        if self.max_company_candidates < self.target_companies:
+            raise ValueError("campaign candidate pool cannot be smaller than its company target")
+        if max(self.min_industries, self.min_regions, self.min_funding_stages) > self.target_companies:
+            raise ValueError("campaign coverage minima cannot exceed its company target")
+        return self
+
+
+class BudgetExtension(Record):
+    authorization_id: str = Field(min_length=1, pattern=r"^[a-zA-Z0-9_-]+$")
+    additional_tokens: int = Field(default=0, ge=0)
+    additional_calls: int = Field(default=0, ge=0)
+    additional_searches: int = Field(default=0, ge=0)
+    additional_usd: Literal[0] = 0
+
+    @model_validator(mode="after")
+    def nonempty(self):
+        if not (self.additional_tokens or self.additional_calls or self.additional_searches):
+            raise ValueError("budget extension must explicitly authorize additional usage")
+        return self
+
+
 class RunConfig(Record):
     schema_version: str = SCHEMA_VERSION
     mode: Literal["fixture", "live"] = "live"
@@ -282,9 +327,15 @@ class RunConfig(Record):
     concurrency: int = Field(default=1, ge=1, le=2)
     shortcut_audit_rate: float = Field(default=0.1, ge=0, le=1)
     fixture_file: str | None = None
+    campaign: CampaignConfig | None = None
 
     @model_validator(mode="after")
     def isolation(self):
+        if self.campaign and (self.research_mode != "open_web"
+                or self.target_tasks != self.campaign.target_companies * self.campaign.questions_per_company
+                or self.layers < max(self.campaign.depth_targets) or self.concurrency != 1
+                or self.search_provider == "none"):
+            raise ValueError("campaign requires open-web discovery, matching task quota/depth and concurrency=1")
         if self.research_mode == "open_web" and (self.scope.mode != "identified_target"
                 or self.scope.candidate_universe is not None):
             raise ValueError("open-web mode requires identified-target scope without a private universe")

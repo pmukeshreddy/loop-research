@@ -67,7 +67,7 @@ def test_open_web_question_rejects_corpus_wording_and_reference_urls():
     assert not self_contained('As of 2025-12-31, which company is identified at https://private.example/reference?')
 
 
-def scripted_web_pipeline(tmp_path, monkeypatch, failure=None, layers=0):
+def scripted_web_pipeline(tmp_path, monkeypatch, failure=None, layers=0, configure=None):
     """All content, tool events and judgments are FICTIONAL OFFLINE FIXTURES."""
     from webshaper.fixtures import FixtureProvider, fixture_config
     from webshaper.pipeline import run
@@ -147,6 +147,8 @@ def scripted_web_pipeline(tmp_path, monkeypatch, failure=None, layers=0):
     monkeypatch.setattr(FixtureProvider, 'invoke', invoke)
     monkeypatch.setattr(SourceStore, 'capture_url', fake_capture)
     root = tmp_path / 'SCRIPTED-OFFLINE-open-web'
+    if configure:
+        configure(config)
     stats = run(config, root)
     return stats, root, calls, config
 

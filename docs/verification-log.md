@@ -143,3 +143,32 @@ unknown/ambiguous live alternatives still reject. Named private-review concerns
 reach both the live researcher and its independent grader. A new regression
 fails before this correction and passes afterward. The final suite has **122
 passing tests** and Ruff passes; independent review reran 23 open-web tests.
+
+
+## Company discovery campaign — 2026-10-18 UTC
+
+**139 tests pass**, and `.venv/bin/ruff check .` passes. Relative link targets in
+all 14 Markdown documentation files resolve. The documented offline quickstart
+also ran in `runs/campaign-docs-offline-check`, producing one explicitly fictional
+layer-1 task; that scripted result is not counted as real company generation.
+Twenty-one JSON schemas were regenerated, and live `doctor` confirmed Codex CLI
+0.163.0 with ChatGPT authentication and $0 additional paid spend.
+
+Campaign regressions cover 50 × 5 configuration consistency; observed discovery
+URLs; evidence readiness with exact quotes, dates and positive relationships;
+normalized company aliases/identifiers; distinct question requirements and global
+near-templates; minimum expansion depth and fixed company reference; private
+allocation and opaque public IDs; interrupted discovery/final checkpoints;
+bounded failed batches; explicit idempotent budget extensions; and no repeated
+calls on resume. The end-to-end campaign expansion uses **SCRIPTED OFFLINE**
+searches, captures and judgments and passes the unchanged open-web gates.
+
+Independent review identified public-ID allocation leakage, alias/rebrand
+collisions, negative relationships contributing readiness, and deterministic
+failed discovery batches replaying forever. All were corrected before the live
+run. Follow-up review passed 75 focused tests and an additional qualification
+checkpoint interruption exercise, with no remaining important issue found.
+
+The real campaign and its shortfalls are recorded in [run results](run-results.md#50-company-discovery-campaign--2026-10-18-utc).
+Its repeat run made zero additional calls, preserved usage and left 32 exported
+files byte-identical. Previous runs remain preserved. No training or RL was run.

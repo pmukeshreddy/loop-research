@@ -23,6 +23,11 @@ All tool events, network captures and judgments in these tests are synthetic;
 they never constitute actual browsing. Provider tests separately check live CLI
 flags, filesystem restrictions, observed event parsing and failure checkpoints.
 
+`tests/test_campaign.py` adds scripted campaign coverage for private allocation,
+minimum depth, diverse quotas, official-identity deduplication, positive-only
+connected evidence, observed discovery URLs, crash recovery and explicit budget
+extensions. Its accepted expansion is an **offline fixture**, not a live result.
+
 Repeat the quickstart run command to check resumability: completed calls and
 exports should remain unchanged. The tests cover exact-answer preservation,
 nonredundancy, date eligibility, source hashes, validation, budgets and pauses.

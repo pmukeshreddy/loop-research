@@ -1,0 +1,75 @@
+{
+  "$defs": {
+    "CompanyProposal": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "official_url": {
+          "title": "Official Url",
+          "type": "string"
+        },
+        "industry": {
+          "title": "Industry",
+          "type": "string"
+        },
+        "region": {
+          "title": "Region",
+          "type": "string"
+        },
+        "funding_stage": {
+          "title": "Funding Stage",
+          "type": "string"
+        },
+        "primary_urls": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Primary Urls",
+          "type": "array"
+        },
+        "rationale": {
+          "title": "Rationale",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "official_url",
+        "industry",
+        "region",
+        "funding_stage",
+        "primary_urls",
+        "rationale"
+      ],
+      "title": "CompanyProposal",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "companies": {
+      "items": {
+        "$ref": "#/$defs/CompanyProposal"
+      },
+      "maxItems": 50,
+      "title": "Companies",
+      "type": "array"
+    },
+    "limitations": {
+      "title": "Limitations",
+      "type": "string"
+    }
+  },
+  "required": [
+    "companies",
+    "limitations"
+  ],
+  "title": "CompanyDiscovery",
+  "type": "object"
+}

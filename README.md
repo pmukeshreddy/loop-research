@@ -21,6 +21,10 @@ receive only X and internet tools; acceptance requires observed browsing,
 independent citation checks, and a bounded search for alternative answers.
 The expansion method is inspired by
 [WebShaper](https://arxiv.org/abs/2507.15061v1).
+The [company campaign](docs/company-campaign.md) discovers companies across industries,
+regions and funding stages, targeting **50 companies × 5 accepted questions** with
+different research requirements and expansion depths. Targets are not accepted counts;
+budget pauses, evidence gaps and validation failures remain visible as shortfalls.
 
 ## Quickstart
 
@@ -51,6 +55,7 @@ automatically accepted live tasks await human review.
 ## Documentation
 
 - [Configuration, live runs, and authentication](docs/running.md)
+- [50-company discovery, quotas, coverage and resume](docs/company-campaign.md)
 - [Output files and human review](docs/outputs.md)
 - [Testing and troubleshooting](docs/development.md)
 - [Design and company-research adaptations](docs/design.md)

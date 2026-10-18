@@ -43,3 +43,6 @@ def test_live_init_defaults_to_codex_and_zero_paid_budget(tmp_path):
     assert data["research_mode"] == "open_web"
     assert data["budget"]["max_usd"] == 0
     assert data["concurrency"] == 1
+    assert data["target_tasks"] == 250
+    assert data["campaign"]["target_companies"] == 50
+    assert data["sources"] == []

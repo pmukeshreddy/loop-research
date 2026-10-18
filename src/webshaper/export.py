@@ -1,6 +1,7 @@
 """Private/public separation, deduplication, grouped partitions and honest metrics."""
 import json
 import re
+import secrets
 from collections import Counter
 from pathlib import Path
 
@@ -161,14 +162,25 @@ def export_dataset(journal, config, root):
             v["audit_status"] = reviewed[v["task_id"]]["decision"]
     manually_rejected = {r["task_id"] for r in reviews if r["decision"] == "rejected"}
     candidates = [c for c in candidates if c.task.task_id not in manually_rejected]
+    public_ids = {}
+    if config.campaign:
+        salt = journal.get("campaign_public_id_salt")
+        if salt is None:
+            salt = secrets.token_hex(32)
+            journal.put("campaign_public_id_salt", salt)
+        # Internal checkpoints encode private company allocation. Never export them as public X IDs.
+        public_ids = {c.task.task_id: "task-" + digest([salt, c.task.task_id])[:32] for c in candidates}
     references, provenance = [], []
     for c in candidates:
         graph = graph_map[c.graph_id]
-        reference = {"task_id": c.task.task_id, "answer_entities_or_rows": c.answer, "cell_evidence": c.cell_evidence,
+        reference = {"task_id": public_ids.get(c.task.task_id, c.task.task_id), "answer_entities_or_rows": c.answer, "cell_evidence": c.cell_evidence,
                      "reference_query": c.query.model_dump(mode="json"), "candidate_universe": c.task.scope.candidate_universe,
                      "candidate_decisions": c.candidate_decisions, "actual_layer": c.layer, "graph_id": c.graph_id,
                      "grading": "exact canonical entity set; source-backed aliases only", "data_mode": config.mode,
-                     "research_mode": research_mode}
+                     "research_mode": research_mode, "company_id": c.company_id, "question_slot": c.question_slot,
+                     "requested_depth": c.requested_depth}
+        if config.campaign:
+            reference["internal_task_id"] = c.task.task_id
         references.append(reference)
     for record in candidate_records:
         c = Candidate.model_validate(record)
@@ -176,6 +188,8 @@ def export_dataset(journal, config, root):
         provenance.append({"task_id": c.task.task_id, "seed_id": c.seed_id, "parent_id": c.parent_id,
                            "layer": c.layer, "candidate_version": c.version, "expanded_leaf": c.expanded_leaf,
                            "intermediate_answer": c.intermediate_answer,
+                           "company_id": c.company_id, "question_slot": c.question_slot, "requested_depth": c.requested_depth,
+                           "public_task_id": public_ids.get(c.task.task_id),
                            "subquery": c.subquery.model_dump(mode="json") if c.subquery else None,
                            "graph_id": c.graph_id, "prompt_version": journal.get("frozen")["config"]["prompt_version"],
                            "model_config": {r: getattr(config, r).model_dump(mode="json") for r in ("generator", "expander", "verifier", "solver")},
@@ -185,6 +199,8 @@ def export_dataset(journal, config, root):
     public_fields = {"task_id", "question", "answer_schema", "as_of", "allowed_tools", "data_mode", "research_mode"}
     tasks = [c.task.model_dump(mode="json", include=public_fields if research_mode == "open_web" else None)
              for c in candidates]
+    for task in tasks:
+        task["task_id"] = public_ids.get(task["task_id"], task["task_id"])
     write_jsonl(output / "tasks.jsonl", tasks)
     write_jsonl(output / "public" / "tasks.jsonl", tasks)
     write_jsonl(output / "references.jsonl", references)
@@ -231,6 +247,8 @@ def export_dataset(journal, config, root):
         entry = {k: v for k, v in call.items() if k != "result"}
         if call["result"]:
             entry["call_id"] = json.loads(call["result"]).get("metadata", {}).get("call_id")
+        else:
+            entry["call_id"] = (journal.record_value("web_traces", call["key"]) or {}).get("call_id")
         calls.append(entry)
     write_jsonl(output / "usage.jsonl", calls)
     attempts = solver_attempts(validations, web_records["web_attempts"])
@@ -277,12 +295,24 @@ def export_dataset(journal, config, root):
              "manual_reviews_pending": sum(c.task.task_id not in reviewed for c in candidates) if config.mode == "live" else 0,
              "usage": usage, "cost_per_accepted_task_usd": usage["cost_usd"] / len(candidates) if candidates else None,
              "shared_background_sources": [], "partition_counts": dict(Counter(partition.get(c.task.task_id) for c in candidates))}
+    write_jsonl(output / "budget_authorizations.jsonl", journal.records("budget_authorizations"))
+    if config.campaign:
+        from .campaign import campaign_report
+        coverage = campaign_report(journal, config, candidates, attempts, calls)
+        for kind in ("companies", "company_discovery", "company_discovery_failures", "company_source_searches", "company_qualification_attempts",
+                     "company_qualifications", "company_allocations", "company_diversity"):
+            write_jsonl(output / (kind + ".jsonl"), journal.records(kind))
+        write_jsonl(output / "company_coverage.jsonl", coverage["companies"])
+        atomic_write(output / "company_coverage.json", json.dumps(coverage, indent=2, sort_keys=True))
+        stats["campaign"] = {k: v for k, v in coverage.items() if k not in ("companies", "usage", "pause_reason")}
+        stats["target_reached"] = coverage["target_reached"]
     manifest = {"schema_version": SCHEMA_VERSION, "stats": stats, "data_mode": config.mode,
                 "research_mode": research_mode,
                 "configuration": config.model_dump(mode="json"), "frozen": journal.get("frozen"),
                 "runtime": journal.get("runtime"), "pause_reason": journal.get("pause_reason"),
+                "effective_budget": journal.budget.model_dump(mode="json"),
                 "exporter_hash": digest(Path(__file__).read_bytes()),
-                "started_at": journal.get("started_at"), "partitions": {c.task.task_id: partition[c.task.task_id] for c in candidates},
+                "started_at": journal.get("started_at"), "partitions": {public_ids.get(c.task.task_id, c.task.task_id): partition[c.task.task_id] for c in candidates},
                 "source_store": "../sources", "web_source_store": "../web_sources" if research_mode == "open_web" else None,
                 "private_files": sorted(p.name for p in output.glob("*.jsonl") if p.name != "tasks.jsonl"),
                 "file_hashes": {p.name: digest(p.read_bytes()) for p in output.glob("*.jsonl")}}

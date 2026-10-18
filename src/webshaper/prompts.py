@@ -182,3 +182,56 @@ Return check wording pass only if it expresses exactly the remaining constraints
 no uniqueness/identity clue, and is self-contained on the open web. Return claim_support:[] and concrete
 feedback. Private entities are for interpreting the query, never an implied universe of answers.""",
 })
+
+PROMPTS.update({
+    "company_discovery": COMMON + """Discover a diverse roster of real companies for an open-web
+research-question campaign. Use actual web searches within the stated action budget. Return at most
+count companies with primary source URLs observed in those search results or opened pages. Names from
+memory without an observed source do not qualify. Exclude known companies and aliases. Prioritize gaps
+in the provided industry, region and funding-stage vocabularies, and under-covered sectors/geographies.
+Use those exact vocabulary labels provisionally. Prefer companies with several accessible dated primary
+announcements before as_of, connecting funding, founders, products, acquisitions, partnerships and investors.
+An acquisition is not required of every company. Official_url is the company's own canonical HTTPS website,
+not its investor or a directory. Sources may be company, investor, partner or acquirer announcements.
+These are discovery proposals, not verified classifications or questions. Report limitations honestly.
+One search action may contain several queries for different regions/sectors. Stop before the action budget;
+return fewer proposals if needed. Do not invent URLs or manufacture coverage to meet a quota.""",
+    "company_sources": COMMON + """Search for dated primary evidence for the specified company and
+connected organizations, founders, products, investors, acquisitions and partnership events. Include
+additional organizations sharing investors, and distinguishing product/founder/event relationships useful
+for multi-hop research. Search for plausible competing companies too. Seek at least three independent
+primary pages and three relationship families; avoid repeating one press release on syndication sites.
+Only return HTTPS URLs present in actual tool results. Prefer explicit dated announcements before as_of
+and accessible HTML. Do not infer publication dates. Search within your action budget and return partial
+coverage plus concrete limitations. These sources remain PRIVATE construction evidence; solvers discover
+their own sources. Lack of evidence must remain a shortfall, never a fabricated relationship.""",
+    "company_assess": COMMON + """Independently qualify the proposed company's identity and source
+classifications against the supplied immutable documents and supported graph. Return checks identity, distinct_identity,
+primary_sources, classification, temporal_support. identity passes only if the company_entity_id unambiguously
+matches the proposed official website and name (including any rebrand/alias); do not merge independent firms.
+distinct_identity passes only if the proposed company is different from EVERY previous_companies entry;
+consider former names, acquisitions, legal-name variants, corporate aliases and domain changes. The same
+company after a rebrand must not occupy two slots. Unknown identity distinction blocks qualification.
+Use exact vocabulary labels for industry, headquarters region and funding_stage as of the cutoff. No inference
+of bootstrapping from silence. All classifications require actual evidence; unknown blocks qualification.
+Primary means an original statement by the company, founder, investor, partner or acquirer about its own
+involvement, not a news aggregator. primary_source_ids must exclude syndicated duplicates and secondary pages.
+For every listed primary source provide an exact short quotation in supports with attribute 'primary:<source_id>'.
+Also provide exact supporting quotes for attributes identity, industry, region and funding_stage. Quotes must
+be literal substrings of their source document. A primary attribution quote must identify the speaker's own
+involvement. Check publication and claim dates; no undated or future source may substantiate classification.
+The graph is NOT a universe of web answers. Qualification only establishes readiness to TRY generation.""",
+    "question_diversity": COMMON + """Compare the proposed question and query with prior accepted
+questions for the SAME company. Return check distinct_research_requirements. Pass only when answering it
+requires meaningfully different relationship discovery or combinations of constraints. Paraphrases, changed
+dates/amounts/names on otherwise identical relation paths, appended decorative clues, and partial restatements
+fail. More words alone is not more research depth. Inspect variable joins and what a solver must discover,
+not just keyword overlap. Return unknown if uncertain; unknown blocks quota credit. claim_support is empty.""",
+})
+PROMPTS["web_seed"] += """\nWhen company_context is provided, the query's unique constructed answer
+must be precisely company_entity_id. This private assignment must not appear in the public question.
+Use the available relationship_focus as guidance, prioritize different requirements from prior_requirements,
+and learn from previous_failures. Construct useful seeds with constants that have supported identifying
+dependencies for requested_depth expansion layers; never add unsupported relationships merely to meet it.
+Company selection does not establish uniqueness on the wider web. State every relevant date/constraint
+explicitly; all existing open-web correctness and ambiguity checks remain mandatory."""

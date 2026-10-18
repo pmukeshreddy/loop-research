@@ -24,8 +24,12 @@ PREDICATES = {
     "acquired_company": ("acquisition_event", "company"),
     "acquisition_date": ("acquisition_event", "date"),
     "product_category": ("product", "category"),
+    "has_partnership_event": ("company", "partnership_event"),
+    "partner_company": ("partnership_event", "company"),
+    "partnership_date": ("partnership_event", "date"),
+    "partnership_product": ("partnership_event", "product"),
 }
-OPERATIONAL = {"round_type", "announcement_year", "announcement_date", "founded_year", "acquisition_date"}
+OPERATIONAL = {"round_type", "announcement_year", "announcement_date", "founded_year", "acquisition_date", "partnership_date"}
 
 
 def values(term):

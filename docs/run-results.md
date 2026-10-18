@@ -12,7 +12,7 @@ the [live-run guide](running.md) documents how to produce your own runs.
 
 ## Local implementation
 
-- Current suite: 122 tests pass; Ruff passes. Open-web tests and independent
+- Current suite: 139 tests pass; Ruff passes. Open-web tests and independent
   review are documented in [verification history](verification-log.md#open-web-mode-follow-up).
   The previous corpus-only delivery had 62 passing tests.
 - The built wheel installs and runs the fixture workflow outside this checkout.
@@ -305,3 +305,71 @@ its target count is not a promise of acceptance. Further progress requires sourc
 and question selection that fits the browsing allowance and resolves announcement
 versus publication dates. None of the correctness, answer-preservation, temporal,
 ambiguity or shortcut gates was weakened to manufacture a successful result.
+
+
+## 50-company discovery campaign — 2026-10-18 UTC
+
+`runs/company-campaign-v1` starts a new open-web campaign; all four-company pilots
+remain untouched. The target is **50 distinct qualified companies × five diverse,
+validated questions = 250 accepted questions**. This run did **not** meet it.
+
+The campaign proposed five companies. None became a qualified/selected company;
+there were **zero generated question candidates and zero accepted questions**.
+Verified industry, region and funding-stage coverage therefore remain zero. The
+proposals' provisional labels are not credited as coverage. All 50 qualified
+company slots and 250 accepted-question slots remain unfilled.
+
+| Discovered proposal | Accepted / target | Current status |
+| --- | ---: | --- |
+| Gilmour Space Technologies | 0 / 5 | Two source searches; insufficient dated captured sources |
+| Tietoevry | 0 / 5 | Two source searches; insufficient dated captured sources |
+| BasiGo | 0 / 5 | One source search; paused before its follow-up search |
+| Solinftec | 0 / 5 | Discovered; qualification not started before pause |
+| Alembic | 0 / 5 | Discovered; qualification not started before pause |
+
+The run retained **26 immutable source snapshots**: three have publication dates
+within the 2025-12-31 cutoff; 23 have no extracted publication date. Source capture
+also recorded seven errors: one robots restriction, two redirected robots URLs,
+and four page redirects requiring explicit final-URL capture. The two completed
+company qualifications failed the three-dated-source minimum. No graph extraction,
+question generation, independent company-classification assessment or solver
+validation was reached. A missing extracted date does not mean the original page
+has no visible dateline; the current capture path did not establish one. No date
+was invented or inferred from retrieval time to fill the gap.
+
+Observed tool activity consists of **12 hosted search actions**, with no hosted
+page-open or find actions. Primary page snapshots were fetched by the separate
+capture layer. These collection searches are **not question-only browsing
+validation**. There are zero closed-book or browsing solver attempts, so browsing
+success rate and measured difficulty are **not available**, and accepted expansion
+depth is **none**.
+
+Usage: **six completed Codex subscription calls, 390,747 tokens, 12 web actions,
+109.803 seconds summed provider-call latency, $0 additional API/search charges**.
+There are no uncertain calls. The inherited ceiling is 49 calls, 1,447,740 tokens
+and 13 actions. The next call required a three-action reservation, so it paused
+before dispatch with `BudgetExceeded`; this was a local budget stop, not an
+observed subscription-account limit. No usage extension was applied.
+
+Repeating the frozen run command made **zero additional calls**, preserved usage,
+and left all **32 exported files byte-identical**. Checkpoints preserve the
+unfinished BasiGo qualification and all prior attempts. More allowance would
+permit continuation, but would not guarantee enough evidence or accepted questions.
+
+Private local artifacts:
+
+- `runs/company-campaign-v1/export/company_coverage.json`: counts, per-company
+  shortfalls, coverage and usage; `company_coverage.jsonl` contains individual rows.
+- `export/companies.jsonl`, `company_discovery.jsonl`, `company_source_searches.jsonl`
+  and `company_qualifications.jsonl`: discovery proposals and qualification decisions.
+- `export/sources.jsonl` plus `sources/raw/` and `sources/text/`: captured sources.
+- `export/web_traces.jsonl`: observed searches and actual tool result URLs;
+  `export/errors.jsonl`: capture/date/qualification failures.
+- `export/public/tasks.jsonl`, `references.jsonl`, `graphs.jsonl` and `validation.jsonl`
+  are empty. They do not constitute a generated or validated dataset.
+- `export/usage.jsonl`, `manifest.json`, `quality_report.md`, `resume-check.json`,
+  and `campaign-report.json`: detailed usage, frozen implementation, report and
+  no-call resume verification. The last two files are at the run root.
+
+Use the [campaign guide](company-campaign.md) for exact run/resume commands and
+explicit budget-extension semantics. No acceptance rule was weakened to meet the quota.

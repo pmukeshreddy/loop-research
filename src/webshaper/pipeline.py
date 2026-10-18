@@ -43,11 +43,12 @@ def error_record(journal, stage, identifier, error, **extra):
 
 
 def collect_sources(config, store, journal, inputs=None):
-    checkpoint = "sources:" + digest([s.model_dump(mode="json") for s in (inputs or config.sources)])
+    inputs = config.sources if inputs is None else inputs
+    checkpoint = "sources:" + digest([s.model_dump(mode="json") for s in inputs])
     cached = journal.get(checkpoint)
     if cached is not None:
         return [Source.model_validate(s) for s in cached]
-    queue = [(s, 0) for s in (inputs or config.sources)]
+    queue = [(s, 0) for s in inputs]
     sources, visited = [], set()
     while queue and len(sources) < config.max_sources:
         spec, depth = queue.pop(0)
@@ -140,8 +141,9 @@ def evaluate(candidate, bundle, sources, store, gateway, config, journal, parent
     return candidate, result
 
 
-def generate_seed(config, bundle, sources, graph_id, store, journal, gateway, index, prior):
-    seed_id = f"seed-{index:04d}"
+def generate_seed(config, bundle, sources, graph_id, store, journal, gateway, index, prior,
+                  *, seed_id=None, company_context=None, prior_candidates=None):
+    seed_id = seed_id or f"seed-{index:04d}"
     feedback = []
     for revision in range(config.max_revisions + 1):
         task_id = seed_id + f"-v{revision}"
@@ -149,8 +151,18 @@ def generate_seed(config, bundle, sources, graph_id, store, journal, gateway, in
             operation = "web_seed" if config.research_mode == "open_web" else "seed"
             proposal = gateway.call("generator", operation, {"graph": bundle.model_dump(mode="json"),
                                     "scope": config.scope.model_dump(mode="json"), "as_of": str(config.as_of),
-                                    "prior_questions": prior, "revision_feedback": feedback}, SeedProposal, task_id)
+                                    "prior_questions": prior, "revision_feedback": feedback,
+                                    **({"company_context": company_context} if company_context else {})}, SeedProposal, task_id)
             candidate = make_seed(proposal, config, bundle, sources, task_id, seed_id, revision, graph_id)
+            if company_context:
+                from .diversity import diversity_check
+                candidate.company_id = company_context["company_id"]
+                candidate.question_slot = company_context["question_slot"]
+                candidate.requested_depth = company_context["requested_depth"]
+                if candidate.answer != [company_context["company_entity_id"]]:
+                    raise ValueError("campaign_reference_mismatch")
+                if not diversity_check(candidate, prior_candidates or [], gateway, journal, "seed"):
+                    raise ValueError("near_duplicate_research_requirements")
             candidate, result = evaluate(candidate, bundle, sources, store, gateway, config, journal)
             if result.decision == "accept":
                 return candidate
@@ -159,7 +171,8 @@ def generate_seed(config, bundle, sources, graph_id, store, journal, gateway, in
             feedback = [str(error)]
             error_record(journal, "seed", task_id, error)
             journal.record("rejected", task_id, {"task_id": task_id, "seed_id": seed_id, "decision": "reject",
-                           "reason_codes": ["invalid_seed_proposal"], "feedback": feedback, "candidate_version": revision})
+                           "reason_codes": [str(error) if str(error) in ("campaign_reference_mismatch", "near_duplicate_research_requirements")
+                                            else "invalid_seed_proposal"], "feedback": feedback, "candidate_version": revision})
     return None
 
 
@@ -218,7 +231,8 @@ def expand_layers(parent, config, store, journal, gateway):
                     candidate = Candidate(task=task, query=query, answer=parent.answer, seed_id=parent.seed_id,
                                           parent_id=parent.task.task_id, layer=layer, version=revision,
                                           expanded_leaf=leaf, intermediate_answer=intermediate, subquery=proposal.subquery,
-                                          added_atoms=atoms, graph_id=graph_id)
+                                          added_atoms=atoms, graph_id=graph_id, company_id=parent.company_id,
+                                          question_slot=parent.question_slot, requested_depth=parent.requested_depth)
                     candidate, result = evaluate(candidate, bundle, sources, store, gateway, config, journal, parent)
                     if result.decision == "accept":
                         accepted = candidate
@@ -241,11 +255,13 @@ def expand_layers(parent, config, store, journal, gateway):
     return parent
 
 
-def run(config, run_dir, retry_limited=False):
+def run(config, run_dir, retry_limited=False, budget_extension=None):
     from .export import export_dataset, deduplicate
     from .fixtures import FixtureProvider
     run_dir = Path(run_dir)
     with run_lock(run_dir), Journal(run_dir / "run.sqlite", frozen_config(config), config.budget) as journal:
+        if budget_extension is not None:
+            journal.authorize_budget(budget_extension)
         if retry_limited:
             journal.retry_limited()
         if journal.get("completed"):
@@ -262,30 +278,34 @@ def run(config, run_dir, retry_limited=False):
                 if old and old != status:
                     raise ValueError("Codex runtime changed; start a new run")
                 journal.put("runtime", status)
-            sources = collect_sources(config, store, journal)
-            if not sources:
-                raise ValueError("no captured source documents; configure accessible dated sources")
-            graph_id, bundle, sources = generate_graph(config, sources, store, journal, gateway, "initial")
-            finals = journal.get("final_candidates") or []
-            prior = [c["task"]["question"] for c in finals]
-            for index in range(config.max_seed_attempts):
-                if len(deduplicate([Candidate.model_validate(c) for c in finals])[0]) >= config.target_tasks:
-                    break
-                checkpoint = f"family:{index}:done"
-                # Reconcile the crash window between writing a final candidate
-                # and marking its family done. Never regenerate an already saved family.
-                if any(c["seed_id"] == f"seed-{index:04d}" for c in finals):
+            if config.campaign:
+                from .campaign import run_campaign
+                run_campaign(config, store, journal, gateway)
+            else:
+                sources = collect_sources(config, store, journal)
+                if not sources:
+                    raise ValueError("no captured source documents; configure accessible dated sources")
+                graph_id, bundle, sources = generate_graph(config, sources, store, journal, gateway, "initial")
+                finals = journal.get("final_candidates") or []
+                prior = [c["task"]["question"] for c in finals]
+                for index in range(config.max_seed_attempts):
+                    if len(deduplicate([Candidate.model_validate(c) for c in finals])[0]) >= config.target_tasks:
+                        break
+                    checkpoint = f"family:{index}:done"
+                    # Reconcile the crash window between writing a final candidate
+                    # and marking its family done. Never regenerate an already saved family.
+                    if any(c["seed_id"] == f"seed-{index:04d}" for c in finals):
+                        journal.put(checkpoint, True)
+                        continue
+                    if journal.get(checkpoint):
+                        continue
+                    seed = generate_seed(config, bundle, sources, graph_id, store, journal, gateway, index, prior)
+                    if seed:
+                        final = expand_layers(seed, config, store, journal, gateway)
+                        finals.append(final.model_dump(mode="json"))
+                        prior.append(final.task.question)
+                        journal.put("final_candidates", finals)
                     journal.put(checkpoint, True)
-                    continue
-                if journal.get(checkpoint):
-                    continue
-                seed = generate_seed(config, bundle, sources, graph_id, store, journal, gateway, index, prior)
-                if seed:
-                    final = expand_layers(seed, config, store, journal, gateway)
-                    finals.append(final.model_dump(mode="json"))
-                    prior.append(final.task.question)
-                    journal.put("final_candidates", finals)
-                journal.put(checkpoint, True)
             journal.put("completed", True)
             journal.put("status", "completed")
             journal.put("pause_reason", None)

@@ -60,6 +60,21 @@ class Journal:
         # The process holding a reservation is gone when a run is reopened.
         self.db.execute("UPDATE calls SET status='uncertain' WHERE status='pending'")
         self.db.commit()
+        self._effective_budget()
+
+    def _effective_budget(self):
+        initial = dict(self.get("frozen")["budget"])
+        for extension in self.records("budget_authorizations"):
+            for field in ("tokens", "calls", "searches"):
+                initial["max_" + field] += extension["additional_" + field]
+        self.budget = Budget.model_validate(initial)
+
+    def authorize_budget(self, extension):
+        # Separate authorization does not change frozen generation/acceptance rules.
+        from .models import BudgetExtension
+        extension = BudgetExtension.model_validate(extension)
+        self.record("budget_authorizations", extension.authorization_id, extension)
+        self._effective_budget()
 
     def __enter__(self):
         return self

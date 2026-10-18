@@ -3,6 +3,10 @@
 Each run stores questions, reference answers, evidence, validation records and
 provenance. The dataset endpoint is implemented; training and RL are not.
 See [running the pipeline](running.md) for configuration and run commands.
+Discovery campaigns also provide a private [company coverage report](company-campaign.md#results-and-private-artifacts)
+with qualified companies, accepted counts, depth, browsing results, shortfalls and
+usage. Campaign public task IDs are opaque; reference records include the private
+internal ID for validation/provenance joins. The review command accepts either ID.
 
 ## Files
 

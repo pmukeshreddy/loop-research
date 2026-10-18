@@ -1,0 +1,106 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "target_companies": {
+      "default": 50,
+      "maximum": 500,
+      "minimum": 1,
+      "title": "Target Companies",
+      "type": "integer"
+    },
+    "questions_per_company": {
+      "default": 5,
+      "maximum": 20,
+      "minimum": 1,
+      "title": "Questions Per Company",
+      "type": "integer"
+    },
+    "depth_targets": {
+      "items": {
+        "type": "integer"
+      },
+      "title": "Depth Targets",
+      "type": "array"
+    },
+    "discovery_batch_size": {
+      "default": 10,
+      "maximum": 50,
+      "minimum": 1,
+      "title": "Discovery Batch Size",
+      "type": "integer"
+    },
+    "max_discovery_batches": {
+      "default": 10,
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Max Discovery Batches",
+      "type": "integer"
+    },
+    "max_company_candidates": {
+      "default": 100,
+      "maximum": 1000,
+      "minimum": 1,
+      "title": "Max Company Candidates",
+      "type": "integer"
+    },
+    "source_search_attempts": {
+      "default": 2,
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Source Search Attempts",
+      "type": "integer"
+    },
+    "min_primary_sources": {
+      "default": 3,
+      "minimum": 1,
+      "title": "Min Primary Sources",
+      "type": "integer"
+    },
+    "min_relationship_families": {
+      "default": 3,
+      "maximum": 6,
+      "minimum": 1,
+      "title": "Min Relationship Families",
+      "type": "integer"
+    },
+    "min_connected_entities": {
+      "default": 5,
+      "minimum": 1,
+      "title": "Min Connected Entities",
+      "type": "integer"
+    },
+    "min_question_patterns": {
+      "default": 5,
+      "minimum": 1,
+      "title": "Min Question Patterns",
+      "type": "integer"
+    },
+    "max_attempts_per_slot": {
+      "default": 3,
+      "maximum": 20,
+      "minimum": 1,
+      "title": "Max Attempts Per Slot",
+      "type": "integer"
+    },
+    "min_industries": {
+      "default": 10,
+      "minimum": 1,
+      "title": "Min Industries",
+      "type": "integer"
+    },
+    "min_regions": {
+      "default": 5,
+      "minimum": 1,
+      "title": "Min Regions",
+      "type": "integer"
+    },
+    "min_funding_stages": {
+      "default": 4,
+      "minimum": 1,
+      "title": "Min Funding Stages",
+      "type": "integer"
+    }
+  },
+  "title": "CampaignConfig",
+  "type": "object"
+}
