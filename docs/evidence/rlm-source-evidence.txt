@@ -3,19 +3,19 @@ exit_code: 0
 STDOUT:
      1	from abc import ABC, abstractmethod
      2	from typing import Any
-     3	
+     3
      4	from rlm.core.types import ModelUsageSummary, UsageSummary
-     5	
+     5
      6	# Default timeout for LM API calls (in seconds)
      7	DEFAULT_TIMEOUT: float = 300.0
-     8	
-     9	
+     8
+     9
     10	class BaseLM(ABC):
     11	    """
     12	    Base class for all language model routers / clients. When the RLM makes sub-calls, it currently
     13	    does so in a model-agnostic way, so this class provides a base interface for all language models.
     14	    """
-    15	
+    15
     16	    def __init__(
     17	        self,
     18	        model_name: str,
@@ -30,20 +30,20 @@ STDOUT:
     27	        # subclasses as **self.sampling_args.
     28	        self.sampling_args: dict[str, Any] = dict(sampling_args or {})
     29	        self.kwargs = kwargs
-    30	
+    30
     31	    @abstractmethod
     32	    def completion(self, prompt: str | dict[str, Any]) -> str:
     33	        raise NotImplementedError
-    34	
+    34
     35	    @abstractmethod
     36	    async def acompletion(self, prompt: str | dict[str, Any]) -> str:
     37	        raise NotImplementedError
-    38	
+    38
     39	    @abstractmethod
     40	    def get_usage_summary(self) -> UsageSummary:
     41	        """Get cost summary for all model calls."""
     42	        raise NotImplementedError
-    43	
+    43
     44	    @abstractmethod
     45	    def get_last_usage(self) -> ModelUsageSummary:
     46	        """Get the last cost summary of the model."""
@@ -56,15 +56,15 @@ $ nl -ba .verification/rlm/rlm/clients/__init__.py
 exit_code: 0
 STDOUT:
      1	from typing import Any
-     2	
+     2
      3	from dotenv import load_dotenv
-     4	
+     4
      5	from rlm.clients.base_lm import BaseLM
      6	from rlm.core.types import ClientBackend
-     7	
+     7
      8	load_dotenv()
-     9	
-    10	
+     9
+    10
     11	def get_client(
     12	    backend: ClientBackend,
     13	    backend_kwargs: dict[str, Any],
@@ -75,40 +75,40 @@ STDOUT:
     18	    """
     19	    if backend == "openai":
     20	        from rlm.clients.openai import OpenAIClient
-    21	
+    21
     22	        return OpenAIClient(**backend_kwargs)
     23	    elif backend == "vllm":
     24	        from rlm.clients.openai import OpenAIClient
-    25	
+    25
     26	        assert "base_url" in backend_kwargs, (
     27	            "base_url is required to be set to local vLLM server address for vLLM"
     28	        )
     29	        return OpenAIClient(**backend_kwargs)
     30	    elif backend == "portkey":
     31	        from rlm.clients.portkey import PortkeyClient
-    32	
+    32
     33	        return PortkeyClient(**backend_kwargs)
     34	    elif backend == "openrouter":
     35	        from rlm.clients.openai import OpenAIClient
-    36	
+    36
     37	        backend_kwargs.setdefault("base_url", "https://openrouter.ai/api/v1")
     38	        return OpenAIClient(**backend_kwargs)
     39	    elif backend == "vercel":
     40	        from rlm.clients.openai import OpenAIClient
-    41	
+    41
     42	        backend_kwargs.setdefault("base_url", "https://ai-gateway.vercel.sh/v1")
     43	        return OpenAIClient(**backend_kwargs)
     44	    elif backend == "anthropic":
     45	        from rlm.clients.anthropic import AnthropicClient
-    46	
+    46
     47	        return AnthropicClient(**backend_kwargs)
     48	    elif backend == "gemini":
     49	        from rlm.clients.gemini import GeminiClient
-    50	
+    50
     51	        return GeminiClient(**backend_kwargs)
     52	    elif backend == "azure_openai":
     53	        from rlm.clients.azure_openai import AzureOpenAIClient
-    54	
+    54
     55	        return AzureOpenAIClient(**backend_kwargs)
     56	    else:
     57	        raise ValueError(
@@ -250,23 +250,23 @@ exit_code: 0
 STDOUT:
      1	"""
      2	LMHandler - Routes LLM requests from the RLM process and environment subprocesses.
-     3	
+     3
      4	Uses a multi-threaded socket server. Protocol: 4-byte length prefix + JSON payload.
      5	"""
-     6	
+     6
      7	import asyncio
      8	import time
      9	from socketserver import StreamRequestHandler, ThreadingTCPServer
     10	from threading import Thread
-    11	
+    11
     12	from rlm.clients.base_lm import BaseLM
     13	from rlm.core.comms_utils import LMRequest, LMResponse, socket_recv, socket_send
     14	from rlm.core.types import RLMChatCompletion, UsageSummary
-    15	
-    16	
+    15
+    16
     17	class LMRequestHandler(StreamRequestHandler):
     18	    """Socket handler for LLM completion requests."""
-    19	
+    19
     20	    def handle(self):
     21	        try:
     22	            request_data = socket_recv(self.connection)
@@ -274,10 +274,10 @@ STDOUT:
     24	                response = LMResponse.error_response("Request must be a JSON object")
     25	                self._safe_send(response)
     26	                return
-    27	
+    27
     28	            request = LMRequest.from_dict(request_data)
     29	            handler: LMHandler = self.server.lm_handler  # type: ignore
-    30	
+    30
     31	            if request.is_batched:
     32	                # Batched request: process multiple prompts concurrently
     33	                response = self._handle_batched(request, handler)
@@ -286,19 +286,19 @@ STDOUT:
     36	                response = self._handle_single(request, handler)
     37	            else:
     38	                response = LMResponse.error_response("Missing 'prompt' or 'prompts' in request.")
-    39	
+    39
     40	            self._safe_send(response)
-    41	
+    41
     42	        except (BrokenPipeError, ConnectionError, ConnectionResetError, OSError):
     43	            # Client disconnected - this is expected during parallel execution
     44	            # when workers complete and close their sockets. Silently ignore.
     45	            pass
-    46	
+    46
     47	        except Exception as e:
     48	            # Try to send error response, but don't fail if socket is broken
     49	            response = LMResponse.error_response(str(e))
     50	            self._safe_send(response)
-    51	
+    51
     52	    def _safe_send(self, response: LMResponse) -> bool:
     53	        """Send response, returning False if the socket is broken."""
     54	        try:
@@ -307,15 +307,15 @@ STDOUT:
     57	        except (BrokenPipeError, ConnectionError, ConnectionResetError, OSError):
     58	            # Client disconnected - silently ignore
     59	            return False
-    60	
+    60
     61	    def _handle_single(self, request: LMRequest, handler: "LMHandler") -> LMResponse:
     62	        """Handle a single prompt request."""
     63	        client = handler.get_client(request.model, request.depth)
-    64	
+    64
     65	        start_time = time.perf_counter()
     66	        content = client.completion(request.prompt)
     67	        end_time = time.perf_counter()
-    68	
+    68
     69	        model_usage = client.get_last_usage()
     70	        root_model = request.model or client.model_name
     71	        usage_summary = UsageSummary(model_usage_summaries={root_model: model_usage})
@@ -328,33 +328,33 @@ STDOUT:
     78	                execution_time=end_time - start_time,
     79	            )
     80	        )
-    81	
+    81
     82	    def _handle_batched(self, request: LMRequest, handler: "LMHandler") -> LMResponse:
     83	        """Handle a batched prompts request using async for concurrency."""
     84	        client = handler.get_client(request.model, request.depth)
-    85	
+    85
     86	        start_time = time.perf_counter()
-    87	
+    87
     88	        sem = asyncio.Semaphore(handler.batch_max_concurrent)
-    89	
+    89
     90	        async def run_one(prompt: str):
     91	            async with sem:
     92	                return await client.acompletion(prompt)
-    93	
+    93
     94	        async def run_all():
     95	            tasks = [run_one(prompt) for prompt in request.prompts]
     96	            # return_exceptions=True so one failed call doesn't abort the whole
     97	            # batch; failures are surfaced per-prompt as error completions below.
     98	            return await asyncio.gather(*tasks, return_exceptions=True)
-    99	
+    99
    100	        results = asyncio.run(run_all())
    101	        end_time = time.perf_counter()
-   102	
+   102
    103	        total_time = end_time - start_time
    104	        model_usage = client.get_last_usage()
    105	        root_model = request.model or client.model_name
    106	        usage_summary = UsageSummary(model_usage_summaries={root_model: model_usage})
-   107	
+   107
    108	        chat_completions = []
    109	        for prompt, content in zip(request.prompts, results, strict=True):
    110	            if isinstance(content, BaseException):
@@ -381,25 +381,25 @@ STDOUT:
    131	                        / len(request.prompts),  # approximate per-prompt time
    132	                    )
    133	                )
-   134	
+   134
    135	        return LMResponse.batched_success_response(chat_completions=chat_completions)
-   136	
-   137	
+   136
+   137
    138	class ThreadingLMServer(ThreadingTCPServer):
    139	    """Multi-threaded TCP server for LM requests."""
-   140	
+   140
    141	    daemon_threads = True
    142	    allow_reuse_address = True
-   143	
-   144	
+   143
+   144
    145	class LMHandler:
    146	    """
    147	    Handles all LM calls from the RLM main process and environment subprocesses.
-   148	
+   148
    149	    Uses a multi-threaded socket server for concurrent requests.
    150	    Protocol: 4-byte big-endian length prefix + JSON payload.
    151	    """
-   152	
+   152
    153	    def __init__(
    154	        self,
    155	        client: BaseLM,
@@ -416,16 +416,16 @@ STDOUT:
    166	        self._thread: Thread | None = None
    167	        self._port = port
    168	        self.batch_max_concurrent = batch_max_concurrent
-   169	
+   169
    170	        self.register_client(client.model_name, client)
-   171	
+   171
    172	    def register_client(self, model_name: str, client: BaseLM) -> None:
    173	        """Register a client for a specific model name."""
    174	        self.clients[model_name] = client
-   175	
+   175
    176	    def get_client(self, model: str | None = None, depth: int = 0) -> BaseLM:
    177	        """Get client by model name or depth, or return default.
-   178	
+   178
    179	        Routing logic:
    180	        - depth=0: use default_client (main backend)
    181	        - depth=1: use other_backend_client if it exists, otherwise default_client
@@ -433,57 +433,57 @@ STDOUT:
    183	        """
    184	        if model and model in self.clients:
    185	            return self.clients[model]
-   186	
+   186
    187	        # Route based on depth
    188	        if depth == 1 and self.other_backend_client is not None:
    189	            return self.other_backend_client
-   190	
+   190
    191	        return self.default_client
-   192	
+   192
    193	    @property
    194	    def port(self) -> int:
    195	        """Get the actual port (useful when auto-assigned)."""
    196	        if self._server:
    197	            return self._server.server_address[1]
    198	        return self._port
-   199	
+   199
    200	    @property
    201	    def address(self) -> tuple[str, int]:
    202	        """Get (host, port) tuple for connecting."""
    203	        return (self.host, self.port)
-   204	
+   204
    205	    def start(self) -> tuple[str, int]:
    206	        """Start the socket server in a background thread. Returns (host, port)."""
    207	        if self._server is not None:
    208	            return self.address
-   209	
+   209
    210	        self._server = ThreadingLMServer((self.host, self._port), LMRequestHandler)
    211	        self._server.lm_handler = self  # type: ignore
-   212	
+   212
    213	        self._thread = Thread(target=self._server.serve_forever, daemon=True)
    214	        self._thread.start()
-   215	
+   215
    216	        return self.address
-   217	
+   217
    218	    def stop(self):
    219	        """Stop the socket server."""
    220	        if self._server:
    221	            self._server.shutdown()
    222	            self._server = None
    223	            self._thread = None
-   224	
+   224
    225	    def completion(self, prompt: str, model: str | None = None) -> str:
    226	        """Direct completion call (for main process use)."""
    227	        return self.get_client(model).completion(prompt)
-   228	
+   228
    229	    def __enter__(self):
    230	        self.start()
    231	        return self
-   232	
+   232
    233	    def __exit__(self, exc_type, exc_val, exc_tb):
    234	        self.stop()
    235	        return False
-   236	
+   236
    237	    def get_usage_summary(self) -> UsageSummary:
    238	        """Get the usage summary for all clients, merged into a single dict."""
    239	        merged = {}
@@ -508,29 +508,29 @@ exit_code: 0
 STDOUT:
      1	"""
      2	Logger for RLM iterations.
-     3	
+     3
      4	Captures run metadata and iterations in memory so they can be attached to
      5	RLMChatCompletion.metadata. Optionally writes the same data to JSON-lines files.
      6	"""
-     7	
+     7
      8	import json
      9	import os
     10	import uuid
     11	from datetime import datetime
-    12	
+    12
     13	from rlm.core.types import RLMIteration, RLMMetadata
-    14	
-    15	
+    14
+    15
     16	class RLMLogger:
     17	    """
     18	    Captures trajectory (run metadata + iterations) for each completion.
     19	    By default only captures in memory; set log_dir to also save to disk.
-    20	
+    20
     21	    - log_dir=None: trajectory is available via get_trajectory() and can be
     22	      attached to RLMChatCompletion.metadata (no disk write).
     23	    - log_dir="path": same capture plus appends to a JSONL file per run.
     24	    """
-    25	
+    25
     26	    def __init__(self, log_dir: str | None = None, file_name: str = "rlm"):
     27	        self._save_to_disk = log_dir is not None
     28	        self.log_dir = log_dir
@@ -540,20 +540,20 @@ STDOUT:
     32	            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     33	            run_id = str(uuid.uuid4())[:8]
     34	            self.log_file_path = os.path.join(log_dir, f"{file_name}_{timestamp}_{run_id}.jsonl")
-    35	
+    35
     36	        self._run_metadata: dict | None = None
     37	        self._iterations: list[dict] = []
     38	        self._iteration_count = 0
     39	        self._metadata_logged = False
-    40	
+    40
     41	    def log_metadata(self, metadata: RLMMetadata) -> None:
     42	        """Capture run metadata (and optionally write to file)."""
     43	        if self._metadata_logged:
     44	            return
-    45	
+    45
     46	        self._run_metadata = metadata.to_dict()
     47	        self._metadata_logged = True
-    48	
+    48
     49	        if self._save_to_disk and self.log_file_path:
     50	            entry = {
     51	                "type": "metadata",
@@ -563,7 +563,7 @@ STDOUT:
     55	            with open(self.log_file_path, "a") as f:
     56	                json.dump(entry, f)
     57	                f.write("\n")
-    58	
+    58
     59	    def log(self, iteration: RLMIteration) -> None:
     60	        """Capture one iteration (and optionally append to file)."""
     61	        self._iteration_count += 1
@@ -574,17 +574,17 @@ STDOUT:
     66	            **iteration.to_dict(),
     67	        }
     68	        self._iterations.append(entry)
-    69	
+    69
     70	        if self._save_to_disk and self.log_file_path:
     71	            with open(self.log_file_path, "a") as f:
     72	                json.dump(entry, f)
     73	                f.write("\n")
-    74	
+    74
     75	    def clear_iterations(self) -> None:
     76	        """Reset iterations for the next completion (trajectory is per completion)."""
     77	        self._iterations = []
     78	        self._iteration_count = 0
-    79	
+    79
     80	    def get_trajectory(self) -> dict | None:
     81	        """Return captured run_metadata + iterations for the current completion, or None if no metadata yet."""
     82	        if self._run_metadata is None:
@@ -593,7 +593,7 @@ STDOUT:
     85	            "run_metadata": self._run_metadata,
     86	            "iterations": list(self._iterations),
     87	        }
-    88	
+    88
     89	    @property
     90	    def iteration_count(self) -> int:
     91	        return self._iteration_count
@@ -607,7 +607,7 @@ STDOUT:
      1	from dataclasses import dataclass
      2	from types import ModuleType
      3	from typing import Any, Literal
-     4	
+     4
      5	ClientBackend = Literal[
      6	    "openai",
      7	    "portkey",
@@ -619,8 +619,8 @@ STDOUT:
     13	    "gemini",
     14	]
     15	EnvironmentType = Literal["local", "ipython", "docker", "modal", "prime", "daytona", "e2b"]
-    16	
-    17	
+    16
+    17
     18	def _serialize_value(value: Any) -> Any:
     19	    """Convert a value to a JSON-serializable representation."""
     20	    if value is None or isinstance(value, (bool, int, float, str)):
@@ -638,20 +638,20 @@ STDOUT:
     32	        return repr(value)
     33	    except Exception:
     34	        return f"<{type(value).__name__}>"
-    35	
-    36	
+    35
+    36
     37	########################################################
     38	########    Types for LM Cost Tracking         #########
     39	########################################################
-    40	
-    41	
+    40
+    41
     42	@dataclass
     43	class ModelUsageSummary:
     44	    total_calls: int
     45	    total_input_tokens: int
     46	    total_output_tokens: int
     47	    total_cost: float | None = None  # Cost in USD, if available from provider
-    48	
+    48
     49	    def to_dict(self):
     50	        result = {
     51	            "total_calls": self.total_calls,
@@ -661,7 +661,7 @@ STDOUT:
     55	        if self.total_cost is not None:
     56	            result["total_cost"] = self.total_cost
     57	        return result
-    58	
+    58
     59	    @classmethod
     60	    def from_dict(cls, data: dict) -> "ModelUsageSummary":
     61	        return cls(
@@ -670,12 +670,12 @@ STDOUT:
     64	            total_output_tokens=data.get("total_output_tokens"),
     65	            total_cost=data.get("total_cost"),
     66	        )
-    67	
-    68	
+    67
+    68
     69	@dataclass
     70	class UsageSummary:
     71	    model_usage_summaries: dict[str, ModelUsageSummary]
-    72	
+    72
     73	    @property
     74	    def total_cost(self) -> float | None:
     75	        """Aggregate cost across all models. Returns None if no cost data available."""
@@ -685,17 +685,17 @@ STDOUT:
     79	            if summary.total_cost is not None
     80	        ]
     81	        return sum(costs) if costs else None
-    82	
+    82
     83	    @property
     84	    def total_input_tokens(self) -> int:
     85	        """Aggregate input tokens across all models."""
     86	        return sum(summary.total_input_tokens for summary in self.model_usage_summaries.values())
-    87	
+    87
     88	    @property
     89	    def total_output_tokens(self) -> int:
     90	        """Aggregate output tokens across all models."""
     91	        return sum(summary.total_output_tokens for summary in self.model_usage_summaries.values())
-    92	
+    92
     93	    def to_dict(self):
     94	        result = {
     95	            "model_usage_summaries": {
@@ -706,7 +706,7 @@ STDOUT:
    100	        if self.total_cost is not None:
    101	            result["total_cost"] = self.total_cost
    102	        return result
-   103	
+   103
    104	    @classmethod
    105	    def from_dict(cls, data: dict) -> "UsageSummary":
    106	        return cls(
@@ -715,15 +715,15 @@ STDOUT:
    109	                for model, usage_summary in data.get("model_usage_summaries", {}).items()
    110	            },
    111	        )
-   112	
-   113	
+   112
+   113
    114	########################################################
    115	########   Types for REPL and RLM Iterations   #########
    116	########################################################
    117	@dataclass
    118	class RLMChatCompletion:
    119	    """Record of a single LLM call made from within the environment."""
-   120	
+   120
    121	    root_model: str
    122	    prompt: str | dict[str, Any]
    123	    response: str
@@ -735,7 +735,7 @@ STDOUT:
    129	    error: str | None = (
    130	        None  # Set when this single call failed (e.g. in a batch); response is empty.
    131	    )
-   132	
+   132
    133	    def to_dict(self):
    134	        out = {
    135	            "root_model": self.root_model,
@@ -749,7 +749,7 @@ STDOUT:
    143	        if self.error is not None:
    144	            out["error"] = self.error
    145	        return out
-   146	
+   146
    147	    @classmethod
    148	    def from_dict(cls, data: dict) -> "RLMChatCompletion":
    149	        return cls(
@@ -761,8 +761,8 @@ STDOUT:
    155	            metadata=data.get("metadata"),
    156	            error=data.get("error"),
    157	        )
-   158	
-   159	
+   158
+   159
    160	@dataclass
    161	class REPLResult:
    162	    stdout: str
@@ -771,7 +771,7 @@ STDOUT:
    165	    execution_time: float
    166	    llm_calls: list["RLMChatCompletion"]
    167	    final_answer: str | None = None
-   168	
+   168
    169	    def __init__(
    170	        self,
    171	        stdout: str,
@@ -787,10 +787,10 @@ STDOUT:
    181	        self.execution_time = execution_time
    182	        self.rlm_calls = rlm_calls or []
    183	        self.final_answer = final_answer
-   184	
+   184
    185	    def __str__(self):
    186	        return f"REPLResult(stdout={self.stdout}, stderr={self.stderr}, locals={self.locals}, execution_time={self.execution_time}, rlm_calls={len(self.rlm_calls)})"
-   187	
+   187
    188	    def to_dict(self):
    189	        return {
    190	            "stdout": self.stdout,
@@ -800,17 +800,17 @@ STDOUT:
    194	            "rlm_calls": [call.to_dict() for call in self.rlm_calls],
    195	            "final_answer": self.final_answer,
    196	        }
-   197	
-   198	
+   197
+   198
    199	@dataclass
    200	class CodeBlock:
    201	    code: str
    202	    result: REPLResult
-   203	
+   203
    204	    def to_dict(self):
    205	        return {"code": self.code, "result": self.result.to_dict()}
-   206	
-   207	
+   206
+   207
    208	@dataclass
    209	class RLMIteration:
    210	    prompt: str | dict[str, Any]
@@ -818,7 +818,7 @@ STDOUT:
    212	    code_blocks: list[CodeBlock]
    213	    final_answer: str | None = None
    214	    iteration_time: float | None = None
-   215	
+   215
    216	    def to_dict(self):
    217	        return {
    218	            "prompt": self.prompt,
@@ -827,17 +827,17 @@ STDOUT:
    221	            "final_answer": self.final_answer,
    222	            "iteration_time": self.iteration_time,
    223	        }
-   224	
-   225	
+   224
+   225
    226	########################################################
    227	########   Types for RLM Metadata   #########
    228	########################################################
-   229	
-   230	
+   229
+   230
    231	@dataclass
    232	class RLMMetadata:
    233	    """Metadata about the RLM configuration."""
-   234	
+   234
    235	    root_model: str
    236	    max_depth: int
    237	    max_iterations: int
@@ -846,7 +846,7 @@ STDOUT:
    240	    environment_type: str
    241	    environment_kwargs: dict[str, Any]
    242	    other_backends: list[str] | None = None
-   243	
+   243
    244	    def to_dict(self):
    245	        return {
    246	            "root_model": self.root_model,
@@ -860,19 +860,19 @@ STDOUT:
    254	            },
    255	            "other_backends": self.other_backends,
    256	        }
-   257	
-   258	
+   257
+   258
    259	########################################################
    260	########   Types for RLM Prompting   #########
    261	########################################################
-   262	
-   263	
+   262
+   263
    264	@dataclass
    265	class QueryMetadata:
    266	    context_lengths: list[int]
    267	    context_total_length: int
    268	    context_type: str
-   269	
+   269
    270	    def __init__(self, prompt: str | list[str] | dict[Any, Any] | list[dict[Any, Any]]):
    271	        if isinstance(prompt, str):
    272	            self.context_lengths = [len(prompt)]
@@ -886,7 +886,7 @@ STDOUT:
    280	                    continue
    281	                try:
    282	                    import json
-   283	
+   283
    284	                    self.context_lengths.append(len(json.dumps(chunk, default=str)))
    285	                except Exception:
    286	                    self.context_lengths.append(len(repr(chunk)))
@@ -903,7 +903,7 @@ STDOUT:
    297	                    for chunk in prompt:
    298	                        try:
    299	                            import json
-   300	
+   300
    301	                            self.context_lengths.append(len(json.dumps(chunk, default=str)))
    302	                        except Exception:
    303	                            self.context_lengths.append(len(repr(chunk)))
@@ -911,7 +911,7 @@ STDOUT:
    305	                self.context_lengths = [len(chunk) for chunk in prompt]
    306	        else:
    307	            raise ValueError(f"Invalid prompt type: {type(prompt)}")
-   308	
+   308
    309	        self.context_total_length = sum(self.context_lengths)
 
 STDERR:
@@ -1013,4 +1013,3 @@ STDOUT:
 .verification/rlm/README.md:124:uv pip install -e ".[prime]"
 
 STDERR:
-

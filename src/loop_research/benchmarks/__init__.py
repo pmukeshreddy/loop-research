@@ -39,4 +39,3 @@ class Benchmark(Protocol):
 
 # Explicit registration avoids imports of answer stores or final-only benchmarks.
 registry: dict[str, Benchmark] = {}
-

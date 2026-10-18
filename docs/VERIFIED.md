@@ -819,3 +819,10 @@ None block implementation or the verified local setup. Live Codex/web behavior,
 real research/grades, improvement cycles and final evaluations remain unexecuted
 at the user's explicit request. The user must run those commands to validate live
 availability and outcomes; no live success or benchmark performance is claimed.
+
+## PR preparation
+
+Whitespace-only cleanup removed trailing spaces/tabs and extra end-of-file blank
+lines from recorded evidence. Commands, findings, source line numbers, and
+non-whitespace content are preserved. The full offline suite passed again before
+publication; live tests remained deselected.

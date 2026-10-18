@@ -1,37 +1,37 @@
 $ nl -ba .verification/widesearch/src/evaluation/data_loader.py
     1	# Copyright (c) 2025 Bytedance Ltd. and/or its affiliates
     2	# SPDX-License-Identifier: MIT
-    3	
+    3
     4	"""
     5	This module provides data loaders for the WideSearch dataset.
-    6	
+    6
     7	It includes classes to load queries and responses from local files or Hugging Face datasets,
     8	and to handle the extraction of dataframes from markdown responses.
-    9	
+    9
    10	Example:
-   11	
+   11
    12	```py
    13	>>> data_loader = WideSearchDataLoaderHF()
    14	>>> print(data_loader.load_query_by_instance_id("ws_en_001"))
    15	```
-   16	
+   16
    17	"""
-   18	
+   18
    19	import json
    20	import os
    21	import re
    22	from dataclasses import asdict, dataclass
    23	from io import StringIO
    24	from typing import Optional
-   25	
+   25
    26	import pandas as pd
    27	from datasets import load_dataset
    28	from huggingface_hub import snapshot_download, try_to_load_from_cache
    29	from loguru import logger
-   30	
+   30
    31	from src.utils.utils import norm_column
-   32	
-   33	
+   32
+   33
    34	@dataclass
    35	class WideSearchQuery:
    36	    instance_id: str
@@ -39,12 +39,12 @@ $ nl -ba .verification/widesearch/src/evaluation/data_loader.py
    38	    evaluation: dict
    39	    answer: pd.DataFrame
    40	    language: str
-   41	
-   42	
+   41
+   42
    43	class WideSearchDataLoader:
    44	    def __init__(self, data_path: str, answer_root: str):
    45	        self.data = self.load_data(data_path, answer_root)
-   46	
+   46
    47	    def load_answer(self, answer_path, required_columns):
    48	        if not os.path.exists(answer_path):
    49	            logger.error(f"answer_path {answer_path} not found")
@@ -59,7 +59,7 @@ $ nl -ba .verification/widesearch/src/evaluation/data_loader.py
    58	                return None
    59	        answer = answer[required_columns]
    60	        return answer
-   61	
+   61
    62	    def load_data(self, data_path: str, answer_root: str):
    63	        if not os.path.exists(data_path):
    64	            logger.error(f"data_path {data_path} not found")
@@ -76,15 +76,15 @@ $ nl -ba .verification/widesearch/src/evaluation/data_loader.py
    75	            new_data[item["instance_id"]] = WideSearchQuery(**item)
    76	        logger.info(f"load {len(new_data)} queries from {data_path}")
    77	        return new_data
-   78	
+   78
    79	    def load_query_by_instance_id(self, instance_id: str):
    80	        assert instance_id in self.data, f"instance_id {instance_id} not found"
    81	        return self.data[instance_id]
-   82	
+   82
    83	    def get_instance_id_list(self):
    84	        return list(self.data.keys())
-   85	
-   86	
+   85
+   86
    87	class WideSearchDataLoaderHF:
    88	    def __init__(
    89	        self,
@@ -95,7 +95,7 @@ $ nl -ba .verification/widesearch/src/evaluation/data_loader.py
    94	        self.answer_root = answer_root
    95	        snapshot_download(repo_id=self.repo_id, repo_type="dataset")
    96	        self.data = self.load_data()
-   97	
+   97
    98	    def load_answer(self, instance_id, required_columns):
    99	        answer_path = f"{self.answer_root}/{instance_id}.csv"
   100	        cache_answer_path = try_to_load_from_cache(
@@ -116,7 +116,7 @@ $ nl -ba .verification/widesearch/src/evaluation/data_loader.py
   115	                return None
   116	        answer = answer[required_columns]
   117	        return answer
-  118	
+  118
   119	    def load_data(self):
   120	        data = load_dataset(self.repo_id)["full"]
   121	        new_data = {}
@@ -126,28 +126,28 @@ $ nl -ba .verification/widesearch/src/evaluation/data_loader.py
   125	            item["answer"] = self.load_answer(
   126	                item["instance_id"], item["evaluation"]["required"]
   127	            )
-  128	
+  128
   129	            if item["answer"] is None:
   130	                continue
   131	            new_data[item["instance_id"]] = WideSearchQuery(**item)
   132	        logger.info(f"load {len(new_data)} queries from {self.repo_id}")
   133	        return new_data
-  134	
+  134
   135	    def load_query_by_instance_id(self, instance_id: str):
   136	        assert instance_id in self.data, f"instance_id {instance_id} not found"
   137	        return self.data[instance_id]
-  138	
+  138
   139	    def get_instance_id_list(self):
   140	        return list(self.data.keys())
-  141	
-  142	
+  141
+  142
   143	@dataclass
   144	class WideSearchResponse:
   145	    instance_id: str
   146	    response: str
   147	    messages: Optional[list[dict]] = None
   148	    trial_idx: Optional[int] = None
-  149	
+  149
   150	    def extract_dataframe(self) -> pd.DataFrame | None:
   151	        response_df = None
   152	        markdown_str = re.findall(r"```markdown(.*?)```", self.response, re.DOTALL)
@@ -178,12 +178,12 @@ $ nl -ba .verification/widesearch/src/evaluation/data_loader.py
   177	            response_df = response_df.loc[
   178	                :, ~response_df.columns.str.startswith("Unnamed")
   179	            ]
-  180	
+  180
   181	        else:
   182	            logger.error(f"response {self.response} not found markdown_str")
   183	        return response_df
-  184	
-  185	
+  184
+  185
   186	class WideSearchResponseLoader:
   187	    @staticmethod
   188	    def load_response(response_path: str) -> list[WideSearchResponse]:
@@ -194,7 +194,7 @@ $ nl -ba .verification/widesearch/src/evaluation/data_loader.py
   193	        for item in response_list:
   194	            new_response_list.append(WideSearchResponse(**item))
   195	        return new_response_list
-  196	
+  196
   197	    @staticmethod
   198	    def dump_response(response_list: list[WideSearchResponse], response_path: str):
   199	        new_response_list = [asdict(item) for item in response_list]
@@ -207,23 +207,23 @@ $ nl -ba .verification/widesearch/src/evaluation/data_loader.py
 $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
     1	# Copyright (c) 2025 Bytedance Ltd. and/or its affiliates
     2	# SPDX-License-Identifier: MIT
-    3	
+    3
     4	"""
     5	This module provides evaluation functions for the WideSearch dataset.
-    6	
+    6
     7	It includes functions to evaluate single queries and calculate consistency between automatic and human evaluations.
     8	"""
-    9	
+    9
    10	import traceback
    11	from copy import deepcopy
    12	from dataclasses import dataclass
    13	from typing import Optional
-   14	
+   14
    15	import numpy as np
    16	import pandas as pd
    17	from loguru import logger
    18	from pandarallel import pandarallel
-   19	
+   19
    20	from src.evaluation.data_loader import (
    21	    WideSearchQuery,
    22	    WideSearchResponse,
@@ -235,10 +235,10 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
    28	    primary_key_preprocess,
    29	)
    30	from src.utils.utils import norm_column
-   31	
+   31
    32	pandarallel.initialize(nb_workers=8)
-   33	
-   34	
+   33
+   34
    35	@dataclass
    36	class EvaluationResult:
    37	    instance_id: str
@@ -250,32 +250,32 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
    43	    recall_by_item: float = 0.0
    44	    f1_by_item: float = 0.0
    45	    msg: str = ""
-   46	
-   47	
+   46
+   47
    48	def preprocess_call(content, preprocess_func_name):
    49	    assert (
    50	        preprocess_func_name in preprocess_function_registry
    51	    ), f"preprocess_func_name {preprocess_func_name} not in preprocess_function_registry"
-   52	
+   52
    53	    preprocess_func = preprocess_function_registry[preprocess_func_name]
    54	    return preprocess_func(content)
-   55	
-   56	
+   55
+   56
    57	def metric_call(response, target, criterion, metric_func_name):
    58	    assert (
    59	        metric_func_name in metric_function_registry
    60	    ), f"metric_func_name {metric_func_name} not in metric_function_registry"
-   61	
+   61
    62	    metric_func = metric_function_registry[metric_func_name]
    63	    if metric_func_name == "llm_judge" or metric_func_name == "number_near":
    64	        score, msg = metric_func(response, target, criterion)
    65	    else:
    66	        score, msg = metric_func(response, target)
-   67	
+   67
    68	    logger.debug(f"metric_func_name {metric_func_name} score {score} msg {msg}")
    69	    return score, msg
-   70	
-   71	
+   70
+   71
    72	def evaluate_single_query(
    73	    query: WideSearchQuery,
    74	    response: Optional[WideSearchResponse],
@@ -288,11 +288,11 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
    81	            instance_id=query.instance_id,
    82	            msg="response is None",
    83	        )
-   84	
+   84
    85	    assert (
    86	        query.instance_id == response.instance_id
    87	    ), f"query.instance_id {query.instance_id} != response.instance_id {response.instance_id}"
-   88	
+   88
    89	    score = 0.0
    90	    precision_by_row = 0.0
    91	    recall_by_row = 0.0
@@ -301,7 +301,7 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
    94	    recall_by_item = 0.0
    95	    f1_by_item = 0.0
    96	    msg = ""
-   97	
+   97
    98	    try:
    99	        # pre check
   100	        required_columns = query.evaluation["required"]
@@ -316,7 +316,7 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
   109	                instance_id=query.instance_id,
   110	                msg=msg,
   111	            )
-  112	
+  112
   113	        response_df.columns = [norm_column(col) for col in response_df.columns]
   114	        if set(required_columns) != set(response_df.columns):
   115	            column_map = primary_key_preprocess(
@@ -326,7 +326,7 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
   119	            logger.info(f"befor mapping: {response_df.columns}")
   120	            response_df.rename(columns=column_map, inplace=True)
   121	            logger.info(f"after mapping: {response_df.columns}")
-  122	
+  122
   123	        if set(required_columns) != set(response_df.columns):
   124	            msg = f"required_columns {required_columns} != response_df {response_df.columns}"
   125	            logger.info(f"instance_id: {query.instance_id}, msg: {msg}")
@@ -351,12 +351,12 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
   144	                        response_df[col] = response_df[col].astype(float)
   145	                    elif answer_type == int:
   146	                        answer_df[col] = answer_df[col].astype(float)
-  147	
+  147
   148	                answer_df[col] = answer_df[col].astype(str)
   149	                response_df[col] = response_df[col].astype(str)
   150	            response_df.drop_duplicates(subset=unique_columns, inplace=True)
   151	            answer_df.drop_duplicates(subset=unique_columns, inplace=True)
-  152	
+  152
   153	            for col in unique_columns:
   154	                item = query.evaluation["eval_pipeline"].get(col, None)
   155	                if item is None:
@@ -376,7 +376,7 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
   169	                    response_df[col] = response_df[col].apply(
   170	                        lambda x: primary_key_map.get(x, x)
   171	                    )
-  172	
+  172
   173	            for col, item in query.evaluation["eval_pipeline"].items():
   174	                preprocess_func_name_list = item.get("preprocess", [])
   175	                for preprocess_func_name in preprocess_func_name_list:
@@ -386,7 +386,7 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
   179	                    answer_df[col] = answer_df[col].apply(
   180	                        lambda x: preprocess_call(x, preprocess_func_name)
   181	                    )
-  182	
+  182
   183	            temp_score = 0.0
   184	            if answer_df.shape == response_df.shape:
   185	                gt_sorted = answer_df.sort_values(by=required_columns).reset_index(
@@ -405,12 +405,12 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
   198	                how="inner",
   199	                suffixes=("_query", "_response"),
   200	            )
-  201	
+  201
   202	            answer_df_outer = deepcopy(answer_df)
   203	            answer_df_outer["exist_flag_gt"] = 1
   204	            response_df_outer = deepcopy(response_df)
   205	            response_df_outer["exist_flag_response"] = 1
-  206	
+  206
   207	            df_outer = pd.merge(
   208	                answer_df_outer,
   209	                response_df_outer,
@@ -422,22 +422,22 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
   215	                df_outer["exist_flag_gt"].isna()
   216	                | df_outer["exist_flag_response"].isna()
   217	            ]
-  218	
+  218
   219	            logger.info(
   220	                f"{query.instance_id}, df_inner shape: {df_inner.shape}, "
   221	                f"answer_df shape: {answer_df.shape}, response_df shape: {response_df.shape}"
   222	            )
-  223	
+  223
   224	            # metric
   225	            df_inner_score = pd.DataFrame(index=df_inner.index)
   226	            df_inner_msg = pd.DataFrame(index=df_inner.index)
-  227	
+  227
   228	            for col in required_columns:
   229	                if col in unique_columns:
   230	                    df_inner_score[f"{col}_exact_match"] = 1.0
   231	                    df_inner_msg[f"{col}_exact_match_eval_msg"] = "key_match"
   232	                    continue
-  233	
+  233
   234	                item = query.evaluation["eval_pipeline"][col]
   235	                metric_func_name_list = item.get("metric", [])
   236	                criterion = item.get("criterion")
@@ -472,7 +472,7 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
   265	                    logger.debug(
   266	                        f"{query.instance_id}, col {col}, metric_func_name {metric_func_name}, score {df_inner_score[f'{col}_{metric_func_name}'].tolist()}"
   267	                    )
-  268	
+  268
   269	            if result_save_path is not None:
   270	                result_df = pd.concat([df_inner, df_inner_score, df_inner_msg], axis=1)
   271	                result_df = pd.concat([result_df, df_outer_wo_inner])
@@ -482,29 +482,29 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
   275	                    + [col + "_before_map" for col in unique_columns]
   276	                    + ["exist_flag_gt", "exist_flag_response"]
   277	                )
-  278	
+  278
   279	                cols1 = sorted([col for col in result_columns if col in key_cols])
   280	                cols2 = sorted([col for col in result_columns if col not in key_cols])
   281	                result_df = result_df[cols1 + cols2]
   282	                result_df.to_csv(result_save_path, index=False)  # pyright: ignore[reportAttributeAccessIssue]
-  283	
+  283
   284	            row_scores = df_inner_score.min(axis=1)
   285	            tp_by_row = row_scores.sum()
   286	            tp_by_item = df_inner_score.sum().sum()
-  287	
+  287
   288	            num_pred_rows = len(response_df)
   289	            num_gt_rows = len(answer_df)
   290	            num_pred_items = num_pred_rows * len(required_columns)
   291	            num_gt_items = num_gt_rows * len(required_columns)
-  292	
+  292
   293	            precision_by_row = tp_by_row / num_pred_rows if num_pred_rows > 0 else 0.0
   294	            recall_by_row = tp_by_row / num_gt_rows if num_gt_rows > 0 else 0.0
-  295	
+  295
   296	            precision_by_item = (
   297	                tp_by_item / num_pred_items if num_pred_items > 0 else 0.0
   298	            )
   299	            recall_by_item = tp_by_item / num_gt_items if num_gt_items > 0 else 0.0
-  300	
+  300
   301	            def calc_f1(precision, recall):
   302	                epsilon = 1e-9
   303	                return (
@@ -512,17 +512,17 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
   305	                    if (precision + recall > epsilon)
   306	                    else 0.0
   307	                )
-  308	
+  308
   309	            f1_by_row = calc_f1(precision_by_row, recall_by_row)
   310	            f1_by_item = calc_f1(precision_by_item, recall_by_item)
-  311	
+  311
   312	            logger.info(
   313	                f"{query.instance_id}, P/R/F1 by row: {precision_by_row:.4f}/{recall_by_row:.4f}/{f1_by_row:.4f}"
   314	            )
   315	            logger.info(
   316	                f"{query.instance_id}, P/R/F1 by item: {precision_by_item:.4f}/{recall_by_item:.4f}/{f1_by_item:.4f}"
   317	            )
-  318	
+  318
   319	            msg = df_inner_score.to_string()
   320	            if (
   321	                precision_by_item == recall_by_item == f1_by_item == 1.0
@@ -530,16 +530,16 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
   323	            ):
   324	                msg += "\nAll items match perfectly."
   325	                score = 1
-  326	
+  326
   327	            logger.info(f"{query.instance_id}, final table score: {score}")
-  328	
+  328
   329	    except Exception:
   330	        logger.error(f"evaluator error: \n{traceback.format_exc()}")
   331	        return EvaluationResult(
   332	            instance_id=query.instance_id,
   333	            msg=f"evaluator error: \n{traceback.format_exc()}",
   334	        )
-  335	
+  335
   336	    return EvaluationResult(
   337	        instance_id=query.instance_id,
   338	        score=score,
@@ -551,8 +551,8 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
   344	        f1_by_item=f1_by_item,
   345	        msg=msg,
   346	    )
-  347	
-  348	
+  347
+  348
   349	def evaluatation_consistency(
   350	    query: WideSearchQuery, auto_result_path: str, human_result_path: str
   351	):
@@ -564,7 +564,7 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
   357	        logger.warning(
   358	            f"auto: {set(df_auto.columns) - set(df_human.columns)}, human: {set(df_human.columns) - set(df_auto.columns)}"
   359	        )
-  360	
+  360
   361	    score_column_suffix = [
   362	        "_exact_match",
   363	        "_number_near",
@@ -572,7 +572,7 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
   365	        "_llm_judge",
   366	        "_near_match",
   367	    ]
-  368	
+  368
   369	    score_columns_trans = []
   370	    for col in df_auto.columns:
   371	        for suffix in score_column_suffix:
@@ -589,12 +589,12 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
   382	                    df_human[col].fillna(0).astype(int)
   383	                )
   384	                break
-  385	
+  385
   386	    df_auto.drop_duplicates(subset=unique_columns, inplace=True)
   387	    df_auto["auto_result_flag"] = 1
   388	    df_human.drop_duplicates(subset=unique_columns, inplace=True)
   389	    df_human["human_result_flag"] = 1
-  390	
+  390
   391	    df = pd.merge(
   392	        df_auto, df_human, on=unique_columns, how="outer", suffixes=("_auto", "_human")
   393	    )
@@ -621,33 +621,33 @@ $ nl -ba .verification/widesearch/src/evaluation/evaluation.py
 $ nl -ba .verification/widesearch/src/evaluation/metric_utils.py
     1	# Copyright (c) 2025 Bytedance Ltd. and/or its affiliates
     2	# SPDX-License-Identifier: MIT
-    3	
+    3
     4	import json
     5	import re
     6	from typing import Callable, List, Optional
     7	from urllib.parse import urlparse
-    8	
+    8
     9	import dateparser
    10	from loguru import logger
-   11	
+   11
    12	from src.utils.llm import llm_completion
-   13	
+   13
    14	preprocess_function_registry = {}
-   15	
-   16	
+   15
+   16
    17	def register_preprocess_function(func: Callable):
    18	    preprocess_function_registry[func.__name__] = func
    19	    return func
-   20	
-   21	
+   20
+   21
    22	metric_function_registry = {}
-   23	
-   24	
+   23
+   24
    25	def register_metric_function(func: Callable):
    26	    metric_function_registry[func.__name__] = func
    27	    return func
-   28	
-   29	
+   28
+   29
    30	# preprocess response
    31	@register_preprocess_function
    32	def extract_number(content: str):
@@ -657,56 +657,56 @@ $ nl -ba .verification/widesearch/src/evaluation/metric_utils.py
    36	    if len(numbers) == 0:
    37	        return "NULL"
    38	    return numbers[0]
-   39	
-   40	
+   39
+   40
    41	@register_preprocess_function
    42	def norm_str(content):
    43	    return str(content).lower().strip().replace(" ", "").replace("*", "")
-   44	
-   45	
+   44
+   45
    46	@register_preprocess_function
    47	def norm_date(content):
    48	    normalized_date = dateparser.parse(
    49	        content, settings={"PREFER_DAY_OF_MONTH": "first"}
    50	    )
-   51	
+   51
    52	    if normalized_date is None:
    53	        return content
    54	    else:
    55	        return normalized_date.strftime("%Y-%m-%d")
-   56	
-   57	
+   56
+   57
    58	# metric
    59	@register_metric_function
    60	def exact_match(response: str, target: str):
    61	    if response.lower() == target.lower():
    62	        return 1.0, f"exact match, response: {response}, target: {target}"
    63	    return 0.0, f"exact not match, response: {response}, target: {target}"
-   64	
-   65	
+   64
+   65
    66	@register_metric_function
    67	def url_match(response: str, target: str):
    68	    url_pattern = re.compile(
    69	        r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
    70	    )
-   71	
+   71
    72	    response_urls = url_pattern.findall(response)
    73	    target_urls = url_pattern.findall(target)
    74	    response_urls = [urlparse(url).netloc for url in response_urls]
    75	    target_urls = [urlparse(url).netloc for url in target_urls]
-   76	
+   76
    77	    if set(response_urls) == set(target_urls):
    78	        return 1.0, f"url match, response: {response}, target: {target}"
    79	    return 0.0, f"url not match, response: {response}, target: {target}"
-   80	
-   81	
+   80
+   81
    82	@register_metric_function
    83	def in_match(response: str, target: str):
    84	    if response in target:
    85	        return 1.0, f"response in target, response: {response}, target: {target}"
    86	    return 0.0, f"response not in target, response: {response}, target: {target}"
-   87	
-   88	
+   87
+   88
    89	@register_metric_function
    90	def number_near(response: str, target: str, criterion: float):
    91	    if "%" in response:
@@ -731,7 +731,7 @@ $ nl -ba .verification/widesearch/src/evaluation/metric_utils.py
   110	            target_num = float(target)
   111	        except (ValueError, TypeError):
   112	            target_num = None
-  113	
+  113
   114	    if response_num is None or target_num is None:
   115	        if response_num is None and target_num is None and response == target:
   116	            return 1.0, f"number equal, response: {response}, target: {target}"
@@ -745,8 +745,8 @@ $ nl -ba .verification/widesearch/src/evaluation/metric_utils.py
   124	            f"number near in range {criterion * 100}%, response: {response_num}, target: {target_num}",
   125	        )
   126	    return 0.0, f"number not near, response: {response_num}, target: {target_num}"
-  127	
-  128	
+  127
+  128
   129	@register_metric_function
   130	def date_near(response: str, target: str):
   131	    try:
@@ -755,43 +755,43 @@ $ nl -ba .verification/widesearch/src/evaluation/metric_utils.py
   134	        )
   135	    except Exception:
   136	        response_date = None
-  137	
+  137
   138	    try:
   139	        target_date = dateparser.parse(
   140	            target, settings={"PREFER_DAY_OF_MONTH": "first"}
   141	        )
   142	    except Exception:
   143	        target_date = None
-  144	
+  144
   145	    if response_date is None or target_date is None:
   146	        if response_date is None and target_date is None:
   147	            return 1.0, f"date near, response: {response}, target: {target}"
   148	        return 0.0, f"date not convertable, response: {response}, target: {target}"
-  149	
+  149
   150	    if abs((response_date - target_date).days) <= 31:
   151	        return 1.0, f"date near, response: {response_date}, target: {target_date}"
   152	    return 0.0, f"date not near, response: {response_date}, target: {target_date}"
-  153	
-  154	
+  153
+  154
   155	# special preprocess method
   156	# 主键使用LLM生成，通过reference字段作为参考，如果匹配，则使用reference字段里的结果作为map
   157	# primary_key_preprocess_prompt = \
   158	# """Your task is to align two vocabularies. The inputs are the vocabulary to be aligned and the reference vocabulary respectively. Note that you need to perform semantic alignment (not positional alignment). If two strings are exactly the same, they must correspond to each other. These two strings are supposed to represent the same entity, with differences only in the expression forms and formats.
-  159	
-  160	
+  159
+  160
   161	# The vocabulary to be aligned is as follows:
   162	# {response}
-  163	
+  163
   164	# The reference vocabulary is as follows:
   165	# {reference}
-  166	
+  166
   167	# The alignment rules are as follows:
   168	# List the values in the vocabulary to be aligned one by one. If there is a value in the reference vocabulary that has the same meaning as this value, `transform` should be represented as the value from the reference vocabulary; otherwise, `transform` should be represented as the original value from the vocabulary to be aligned.
-  169	
+  169
   170	# Note that `origin` must be taken from the vocabulary to be aligned keeping the original format, and `transform` must be taken from the reference vocabulary. For example: Some words in the vocabulary to be aligned might be the words in the reference vocabulary with Markdown formatting added, keep the to be aligned format in `origin` and the reference format in `transform`.
-  171	
+  171
   172	# For the `origin`, first find the `transform` that is the closest in meaning and then judge whether they correspond to each other. Those entities not correspond to each other could not output.
-  173	
+  173
   174	# Please output the alignment results in the following format:
   175	# ```json
   176	# {{
@@ -801,21 +801,21 @@ $ nl -ba .verification/widesearch/src/evaluation/metric_utils.py
   180	# ```
   181	# """
   182	primary_key_preprocess_prompt = """Your task is to align two vocabularies. The inputs are the vocabulary to be aligned and the reference vocabulary respectively. Note that you need to perform semantic alignment (not positional alignment). If two strings are exactly the same, they must correspond to each other. These two strings are supposed to represent the same entity, with differences only in the expression forms and formats.
-  183	
-  184	
+  183
+  184
   185	The vocabulary to be aligned is as follows:
   186	{response}
-  187	
+  187
   188	The reference vocabulary is as follows:
   189	{reference}
-  190	
+  190
   191	The alignment rules are as follows:
   192	List the values in the vocabulary to be aligned one by one. If there is a value in the reference vocabulary that has the same meaning as this value, `transform` should be represented as the value from the reference vocabulary; otherwise, `transform` should be represented as the original value from the vocabulary to be aligned.
-  193	
+  193
   194	Note that `origin` must be taken from the vocabulary to be aligned keeping the original format, and `transform` must be taken from the reference vocabulary. For example: Some words in the vocabulary to be aligned might be the words in the reference vocabulary with Markdown formatting added, keep the to be aligned format in `origin` and the reference format in `transform`.
-  195	
+  195
   196	For the `origin`, first find the `transform` that is the closest in meaning and then judge whether they correspond to each other. Those entities not correspond to each other could not output.
-  197	
+  197
   198	Please output the alignment results in the following format:
   199	```json
   200	{{
@@ -824,25 +824,25 @@ $ nl -ba .verification/widesearch/src/evaluation/metric_utils.py
   203	}}
   204	```
   205	"""  # noqa: E501
-  206	
-  207	
+  206
+  207
   208	def primary_key_preprocess(
   209	    response: list[str],
   210	    reference: list[str],
   211	    model_config_name,
   212	):
   213	    primary_key_map = {}
-  214	
+  214
   215	    result = llm_completion(
   216	        messages=primary_key_preprocess_prompt.format(
   217	            response=response, reference=reference
   218	        ),
   219	        model_config_name=model_config_name,
   220	    )
-  221	
+  221
   222	    if result is None or result.content is None:
   223	        return primary_key_map
-  224	
+  224
   225	    try:
   226	        logger.info(f"primary_key_preprocess result: {result.content}")
   227	        transform_map = parse_markdown_json(result.content)
@@ -851,17 +851,17 @@ $ nl -ba .verification/widesearch/src/evaluation/metric_utils.py
   230	        primary_key_map.update(transform_map)
   231	    except Exception:
   232	        return primary_key_map
-  233	
+  233
   234	    # logger.info(
   235	    #     f"response: {response}, reference: {reference}, primary_key_map: {primary_key_map}"
   236	    # )
   237	    return primary_key_map
-  238	
-  239	
+  238
+  239
   240	# evaluation
-  241	
+  241
   242	eval_column_prompt = """You are an expert in grading answers. Your task is to score the responses to a certain question. Below, you will be provided with a set of standard answers, a set of responses to be graded, and specific grading criteria.
-  243	
+  243
   244	Each answer and each response has an idx. Please score each pair of answers and responses in this set according to the following methods:
   245	1. The scoring range is from 0 to 1. A score of 1 indicates a completely correct answer. For deduction items, please refer to the specific grading criteria section.
   246	2. After reading the standard answers, responses to be graded, and grading criteria, please first analyze and judge them item by item according to the grading criteria.
@@ -874,20 +874,20 @@ $ nl -ba .verification/widesearch/src/evaluation/metric_utils.py
   253	    ...
   254	}}
   255	```
-  256	
+  256
   257	====== criterion-start ======
   258	{criterion}
   259	====== criterion-end ======
-  260	
+  260
   261	====== response-start ======
   262	{response}
   263	====== response-end ======
-  264	
+  264
   265	Now start scoring. Please make sure to analyze each item step by step before providing the final scoring results.
-  266	
+  266
   267	"""
-  268	
-  269	
+  268
+  269
   270	def parse_markdown_json(completion: str) -> Optional[dict]:
   271	    pat = r"```json\s*(\{.*?\})\s*```"
   272	    matches = re.findall(pat, completion, re.DOTALL)
@@ -899,8 +899,8 @@ $ nl -ba .verification/widesearch/src/evaluation/metric_utils.py
   278	    except Exception:
   279	        return None
   280	    return json_obj
-  281	
-  282	
+  281
+  282
   283	def parse_score_markdown_json(completion: str) -> Optional[int]:
   284	    """Parse the score from the completion, which the markdown json format is specified."""
   285	    pat = r"```json\s*(\{.*?\})\s*```"
@@ -916,23 +916,23 @@ $ nl -ba .verification/widesearch/src/evaluation/metric_utils.py
   295	    if isinstance(score, int):
   296	        return score
   297	    return None
-  298	
-  299	
+  298
+  299
   300	def parse_score_markdown_json_normalize(
   301	    completion: Optional[str],
   302	) -> Optional[int]:
   303	    """Parse the score from the completion, and then normalization the scores."""
   304	    if completion is None:
   305	        return None
-  306	
+  306
   307	    score = parse_score_markdown_json(completion)
   308	    if score is None:
   309	        return None
   310	    if score not in [0, 1]:
   311	        return None
   312	    return score
-  313	
-  314	
+  313
+  314
   315	@register_metric_function
   316	def llm_judge(
   317	    response: str,
@@ -942,25 +942,25 @@ $ nl -ba .verification/widesearch/src/evaluation/metric_utils.py
   321	):
   322	    # if response == target:
   323	    #     return 1.0, "exact match (from llm judge)"
-  324	
+  324
   325	    # result = llm_completion(
   326	    #     messages=eval_prompt.format(
   327	    #         answer=target, criterion=criterion, response=response
   328	    #     ),
   329	    #     model_config_name=model_config_name,
   330	    # )
-  331	
+  331
   332	    # if result is None or result.content is None:
   333	    #     return 0.0, "llm judge failed"
-  334	
+  334
   335	    # score = parse_score_markdown_json_normalize(result.content)
   336	    # if score is None:
   337	    #     return 0.0, result.content
-  338	
+  338
   339	    # return score, result.content
   340	    return None, None
-  341	
-  342	
+  341
+  342
   343	@register_metric_function
   344	def llm_judge_column(
   345	    response: List[str],
@@ -970,16 +970,16 @@ $ nl -ba .verification/widesearch/src/evaluation/metric_utils.py
   349	):
   350	    response_dict = {}
   351	    # target_dict = {}
-  352	
+  352
   353	    for idx, (resp, tar) in enumerate(zip(response, target)):
   354	        response_dict[f"idx_{idx}"] = {"response": resp, "target": tar}
   355	        # target_dict[f"idx_{idx}"] = tar
-  356	
+  356
   357	    result = llm_completion(
   358	        messages=eval_column_prompt.format(criterion=criterion, response=response_dict),
   359	        model_config_name=model_config_name,
   360	    )
-  361	
+  361
   362	    if result is None or result.content is None:
   363	        score_list = [0] * len(response)
   364	        msg_list = ["llm judge failed due llm return none error"] * len(response)
@@ -993,17 +993,17 @@ $ nl -ba .verification/widesearch/src/evaluation/metric_utils.py
   372	                score_dict.get(f"idx_{idx}", 0) for idx in range(len(response))
   373	            ]
   374	            msg_list = [result.content] * len(response)
-  375	
+  375
   376	    if len(score_list) != len(response):
   377	        score_list = [0] * len(response)
   378	        msg_list = ["llm judge failed due to length"] * len(response)
-  379	
+  379
   380	    return score_list, msg_list
 
 $ nl -ba .verification/widesearch/src/utils/config.py
     1	# Copyright (c) 2025 Bytedance Ltd. and/or its affiliates
     2	# SPDX-License-Identifier: MIT
-    3	
+    3
     4	model_config = {
     5	    "model_config_name": {
     6	        "model_name": "MODEL_NAME",
@@ -1101,7 +1101,7 @@ $ nl -ba .verification/widesearch/scripts/run_infer_and_eval_batching.py
     3	"""
     4	run infer and eval batching.
     5	"""
-    6	
+    6
     7	import asyncio
     8	import dataclasses
     9	import json
@@ -1112,10 +1112,10 @@ $ nl -ba .verification/widesearch/scripts/run_infer_and_eval_batching.py
    14	from argparse import ArgumentParser
    15	from concurrent.futures import ThreadPoolExecutor
    16	from copy import deepcopy
-   17	
+   17
    18	import numpy as np
    19	from loguru import logger
-   20	
+   20
    21	from src.agent.multi_agent_tools import get_multi_agent_tools
    22	from src.agent.prompt import (
    23	    get_multi_agent_system_prompt,
@@ -1131,11 +1131,11 @@ $ nl -ba .verification/widesearch/scripts/run_infer_and_eval_batching.py
    33	    WideSearchResponseLoader,
    34	)
    35	from src.evaluation.evaluation import EvaluationResult, evaluate_single_query
-   36	
+   36
    37	logger.remove()
    38	logger.add(sys.stderr, level="INFO")
-   39	
-   40	
+   39
+   40
    41	class SingleTask:
    42	    def __init__(
    43	        self,
@@ -1159,17 +1159,17 @@ $ nl -ba .verification/widesearch/scripts/run_infer_and_eval_batching.py
    61	        self.eval_model_config_name = eval_model_config_name
    62	        self.tools = tools
    63	        self.eval_result_path = self.result_save_path.replace(".csv", ".json")
-   64	
+   64
    65	    def load_response(self) -> list[WideSearchResponse]:
    66	        if not os.path.exists(self.response_path):
    67	            raise FileNotFoundError(f"response_path {self.response_path} not found")
    68	        return WideSearchResponseLoader.load_response(self.response_path)
-   69	
+   69
    70	    async def infer(self):
    71	        if self.use_cache and os.path.exists(self.response_path):
    72	            logger.info(f"response_path {self.response_path} exists, skip")
    73	            return self.load_response()
-   74	
+   74
    75	        logger.info(f"infer start, instance_id: {self.query.instance_id}")
    76	        start_time = time.time()
    77	        if self.multi_agent:
@@ -1184,7 +1184,7 @@ $ nl -ba .verification/widesearch/scripts/run_infer_and_eval_batching.py
    86	        else:
    87	            tools = self.tools
    88	            system_prompt = get_system_prompt(self.query.language)
-   89	
+   89
    90	        tools_desc = get_tools_api_description(self.query.language, list(tools.keys()))
    91	        messages = await run_single_query(
    92	            query=self.query.query,
@@ -1199,7 +1199,7 @@ $ nl -ba .verification/widesearch/scripts/run_infer_and_eval_batching.py
   101	            response = messages[-1]["content"]["content"]
   102	        except Exception:
   103	            response = messages[-1]["content"]
-  104	
+  104
   105	        wide_search_response_list = [
   106	            WideSearchResponse(
   107	                instance_id=self.query.instance_id,
@@ -1208,7 +1208,7 @@ $ nl -ba .verification/widesearch/scripts/run_infer_and_eval_batching.py
   110	                trial_idx=self.trial_idx,
   111	            )
   112	        ]
-  113	
+  113
   114	        WideSearchResponseLoader.dump_response(
   115	            wide_search_response_list, self.response_path
   116	        )
@@ -1217,7 +1217,7 @@ $ nl -ba .verification/widesearch/scripts/run_infer_and_eval_batching.py
   119	            f"infer end, instance_id: {self.query.instance_id}, cost(s): {end_time - start_time:.2f}"
   120	        )
   121	        return wide_search_response_list
-  122	
+  122
   123	    def eval(self):
   124	        start_time = time.time()
   125	        if os.path.exists(self.eval_result_path) and self.use_cache:
@@ -1233,7 +1233,7 @@ $ nl -ba .verification/widesearch/scripts/run_infer_and_eval_batching.py
   135	            assert (
   136	                response_list
   137	            ), f"response is None, response_path: {self.response_path}"
-  138	
+  138
   139	            eval_result = evaluate_single_query(
   140	                self.query,
   141	                response_list[0],
@@ -1249,8 +1249,8 @@ $ nl -ba .verification/widesearch/scripts/run_infer_and_eval_batching.py
   151	            f"eval end, instance_id: {self.query.instance_id}, cost(s): {end_time - start_time:.2f}"
   152	        )
   153	        return eval_result
-  154	
-  155	
+  154
+  155
   156	def calc_summary_results(tasks: list[SingleTask], summary_result_path: str):
   157	    metrics = [
   158	        "score",
@@ -1261,14 +1261,14 @@ $ nl -ba .verification/widesearch/scripts/run_infer_and_eval_batching.py
   163	        "recall_by_item",
   164	        "f1_by_item",
   165	    ]
-  166	
+  166
   167	    all_results = {m: [] for m in metrics}
   168	    id_to_task = {}
   169	    for task in tasks:
   170	        if task.query.instance_id not in id_to_task:
   171	            id_to_task[task.query.instance_id] = []
   172	        id_to_task[task.query.instance_id].append(task)
-  173	
+  173
   174	    for iid, task_list in id_to_task.items():
   175	        trial_metrics = {m: [] for m in metrics}
   176	        for task in task_list:
@@ -1294,7 +1294,7 @@ $ nl -ba .verification/widesearch/scripts/run_infer_and_eval_batching.py
   196	            max_n = float(np.max(values))
   197	            min_n = float(np.min(values))
   198	            all_results[m].append({"avg_n": avg_n, "max_n": max_n, "min_n": min_n})
-  199	
+  199
   200	    # Aggregate over all instances
   201	    summary = {}
   202	    for m in metrics:
@@ -1307,13 +1307,13 @@ $ nl -ba .verification/widesearch/scripts/run_infer_and_eval_batching.py
   209	            "min_n": float(np.mean([v["min_n"] for v in vals])),
   210	        }
   211	    logger.info(json.dumps(summary, indent=2, ensure_ascii=False))
-  212	
+  212
   213	    with open(summary_result_path, "w") as f:
   214	        json.dump(summary, f, indent=2, ensure_ascii=False)
-  215	
+  215
   216	    return summary
-  217	
-  218	
+  217
+  218
   219	if __name__ == "__main__":
   220	    parser = ArgumentParser()
   221	    parser.add_argument(
@@ -1326,7 +1326,7 @@ $ nl -ba .verification/widesearch/scripts/run_infer_and_eval_batching.py
   228	        choices=["eval", "infer", "both"],
   229	        help="stage to run",
   230	    )
-  231	
+  231
   232	    parser.add_argument(
   233	        "--response_root", type=str, default="data/output", help="response root"
   234	    )
@@ -1354,27 +1354,27 @@ $ nl -ba .verification/widesearch/scripts/run_infer_and_eval_batching.py
   256	    parser.add_argument(
   257	        "--thread_num", type=int, default=4, help="thread num to run infer and eval"
   258	    )
-  259	
+  259
   260	    args = parser.parse_args()
-  261	
+  261
   262	    trial_num = args.trial_num
   263	    model_config_name = args.model_config_name
   264	    response_root = args.response_root
   265	    result_save_root = args.result_save_root
-  266	
+  266
   267	    data_loader = WideSearchDataLoaderHF()
-  268	
+  268
   269	    instance_id_list = data_loader.get_instance_id_list()
-  270	
+  270
   271	    tasks = []
-  272	
+  272
   273	    tools = _default_tools
-  274	
+  274
   275	    for instance_id in instance_id_list:
   276	        if args.instance_id and instance_id not in args.instance_id.split(","):
   277	            continue
   278	        query = data_loader.load_query_by_instance_id(instance_id)
-  279	
+  279
   280	        for trial_idx in range(trial_num):
   281	            multi_agent_flag = "_multi_agent" if args.multi_agent else ""
   282	            response_path = f"{response_root}/{model_config_name}_{instance_id}_{trial_idx}{multi_agent_flag}_response.jsonl"
@@ -1403,7 +1403,7 @@ $ nl -ba .verification/widesearch/scripts/run_infer_and_eval_batching.py
   305	                    logger.info(f"infer success, instance_id: {result[0].instance_id}")
   306	            except Exception:
   307	                logger.error(f"infer error: {traceback.format_exc()}")
-  308	
+  308
   309	    if args.stage in ["eval", "both"]:
   310	        # multi threading
   311	        with ThreadPoolExecutor(max_workers=args.thread_num) as executor:
