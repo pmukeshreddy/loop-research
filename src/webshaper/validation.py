@@ -7,6 +7,7 @@ from .expansion import ablated, redundant
 from .models import Check, Record, SemanticAssessment, SolverAnswer, Validation
 from .query import eligible_facts, execute, membership, validate_bundle, validate_query
 from .storage import digest, SubscriptionLimit, BudgetExceeded, UncertainCall
+from .sources import eligible_sources
 
 SEMANTIC_CHECKS = ("wording", "identity", "temporal_semantics", "ambiguity", "leakage", "usefulness", "evidence_support")
 
@@ -125,7 +126,15 @@ def documents_for(sources, store, cutoff, retrospective=False):
     return [{"source_id": s.source_id, "url": s.url_or_local_origin, "title": s.title,
              "published_at": s.published_at.isoformat(), "date_basis": s.date_basis,
              "retrieved_at": s.retrieved_at.isoformat(), "category": s.category, "text": store.read(s)}
-            for s in sources if s.published_at is not None and (retrospective or s.published_at <= cutoff)]
+            for s in eligible_sources(sources, cutoff, retrospective)]
+
+
+def validation_result(candidate, checks, attempts, config):
+    return Validation(task_id=candidate.task.task_id, candidate_version=candidate.version,
+                      decision=decide(checks, candidate.version, config.max_revisions), checks=checks,
+                      solver_attempts=attempts, feedback=[c.name + ": " + c.feedback for c in checks if c.status != "pass"],
+                      judge_config=config.verifier.model_dump(mode="json"),
+                      audit_status="fixture_only" if config.mode == "fixture" else "pending_manual_review")
 
 
 def validate(candidate, bundle, sources, store, gateway, config, parent=None):
@@ -166,6 +175,8 @@ def validate(candidate, bundle, sources, store, gateway, config, parent=None):
                 attempts.append({"mode": "closed_book", "correct": correct, "response": closed.model_dump(mode="json"),
                                  "model_config": config.solver.model_dump(mode="json")})
                 checks.append(check("closed_book_screen", not correct, "model-relative screen; not proof of browsing necessity"))
+                if correct:
+                    return validation_result(candidate, checks, attempts, config)
             # Five fresh sessions by default, never sharing previous attempts or references.
             stopped = threading.Event()
             def solve(i):
@@ -216,8 +227,4 @@ def validate(candidate, bundle, sources, store, gateway, config, parent=None):
                 attempts.append({"mode": "ablation", "question": rendered.question, "correct": shortcut,
                                  "response": answer.model_dump(mode="json")})
                 checks.append(check("empirical_shortcut_audit", not shortcut, "sampled solver behavior after clue removal"))
-    return Validation(task_id=candidate.task.task_id, candidate_version=candidate.version,
-                      decision=decide(checks, candidate.version, config.max_revisions), checks=checks,
-                      solver_attempts=attempts, feedback=[c.name + ": " + c.feedback for c in checks if c.status != "pass"],
-                      judge_config=config.verifier.model_dump(mode="json"),
-                      audit_status="fixture_only" if config.mode == "fixture" else "pending_manual_review")
+    return validation_result(candidate, checks, attempts, config)

@@ -43,7 +43,7 @@ the private evidence graph still cannot enter a solver payload.
 
 Quality counters include proposals rejected before candidate construction;
 capture/date errors and extraction errors are reported separately. The final
-local suite has **56 passing tests**, with Ruff passing. The current wheel was
+local suite at the original delivery had **56 passing tests**, with Ruff passing. The wheel was
 installed in a separate environment and completed the offline workflow.
 `runs/fixture-final-delivery` exported one fictional task at layer 1 with two
 rejected expansion proposals. Re-running it left all 15 export files and all
@@ -73,3 +73,32 @@ Paid API/search calls remain disabled. Codex CLI 0.163.0 reported ChatGPT login;
 isolated subscription sessions successfully exercised structured output and
 built-in web search. The role configuration must keep Codex's execution host
 enabled for web search while disabling other capabilities separately.
+
+## Temporal export and difficulty-gate follow-up
+
+The public export included metadata for sources unavailable to validation. Six
+new parameterized regression cases first failed, then passed after the fixes:
+
+- Export and `documents_for` now share `eligible_sources`. A 2026 source is
+  excluded from a 2025 task unless retrospective access is explicit; undated
+  sources remain excluded in both modes. Tests check whole entries with both
+  redistributable and withheld text, plus intact private raw/text snapshots.
+- A correct closed-book answer on an expanded task now returns immediately.
+  Tests cover revise and reject, preserve the completed attempt, earlier checks,
+  feedback and metadata, and assert zero downstream provider calls, including
+  when shortcut auditing is forced on. Before the fix, 12 downstream calls ran.
+
+The full suite now has **62 passing tests**; Ruff passes. An independent read-only
+review found no actionable correctness issue in these fixes. Acceptance gates,
+historical evidence policy and exact answer equality are unchanged.
+
+Prompt v1.2 favors minimally constrained seeds with necessary expandable leaves,
+reinforces variable subjects and stable identifiers, and requests separately
+quoted investor-to-company relationships where the primary source supports them.
+These are proposal improvements, not exceptions to validation. A new frozen
+real run uses `configs/real-expansion.json`; previous runs are preserved.
+Its first attempt retained a depth-0 seed: extraction omitted announcement-year
+facts, and the revised date-disjunction query repeated its investor constant,
+making that constant ineligible for expansion. Prompt v1.3 explicitly requests
+separately evidenced year projections and degree-one leaf selection. Neither
+change bypasses the independent fact assessor or changes leaf eligibility.

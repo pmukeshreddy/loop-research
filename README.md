@@ -7,8 +7,9 @@ of model improvement are outside scope.
 The design inputs are [the company-research brief](2026-10-17-webshaper-data-generation.md)
 and [WebShaper v1](https://arxiv.org/abs/2507.15061v1). See the
 [implementation plan](docs/implementation-plan.md) and [design notes](docs/design.md).
-The [run results](docs/run-results.md) distinguish the real one-task diagnostic
-from fictional fixture tests and describe the remaining manual review.
+The [run results](docs/run-results.md) document an accepted real depth-1 expansion,
+distinguish earlier diagnostics from fictional fixture tests, and describe the
+remaining manual review.
 
 ## Configure and test
 
@@ -130,6 +131,28 @@ This consumes Codex subscription usage. A live run can reject every candidate;
 the configured target is not a promise of acceptance. See
 [verification notes](docs/verification-log.md) for the checks actually run.
 
+`configs/real-expansion.json` supplies four primary investor announcements:
+Cerbos and Cradle in 2023, plus Fullview and Salesroom in 2022. The comparison
+company makes the investor dependency necessary; the earlier announcements
+can identify that investor independently of the final answer. Dates use visible
+article datelines, with their basis recorded in the config. Discovery used Codex
+search; this curated run sets `search_provider: none` to keep the source bundle
+fixed. Every generation and validation role still uses a fresh live Codex session.
+Limits remain 50 calls, 1,500,000 tokens, 15 search actions, concurrency 1 and $0
+additional paid spend. To run and resume in your own fresh directory:
+
+```bash
+export PYTHONPATH="$PWD/src"
+.venv/bin/python -m webshaper doctor --config configs/real-expansion.json
+.venv/bin/python -m webshaper run --config configs/real-expansion.json --run-dir runs/my-real-expansion
+.venv/bin/python -m webshaper status --run-dir runs/my-real-expansion
+# Resume completed checkpoints without repeating calls:
+.venv/bin/python -m webshaper run --config configs/real-expansion.json --run-dir runs/my-real-expansion
+```
+
+Check `depth_distribution` and the reference's `actual_layer`: a retained depth-0
+seed does not establish a successful expansion. Results are model-dependent.
+
 ```bash
 .venv/bin/python -m webshaper run --config configs/codex.json --run-dir runs/live-pilot
 .venv/bin/python -m webshaper status --run-dir runs/live-pilot
@@ -193,6 +216,10 @@ expansion; this is not a general web-browsing research agent.
 Public source text with unknown redistribution rights is withheld. Such corpus
 tasks need separately authorized access to the associated snapshots; the public
 directory alone is not advertised as self-contained for those tasks.
+Public corpus entries also follow the validator's temporal access policy:
+undated sources are excluded, and post-cutoff sources require explicit
+`allow_retrospective`. Exclusion removes the entire entry, including its URL and
+title; original snapshots and metadata remain private for auditing.
 
 Record real human reviews, then regenerate the export:
 

@@ -1,5 +1,40 @@
 from test_validation import candidate
 
+import json
+import pytest
+
+
+@pytest.mark.parametrize("retrospective", [False, True])
+@pytest.mark.parametrize("redistributable", [False, True])
+def test_public_corpus_matches_temporal_access_and_keeps_private_snapshots(tmp_path, retrospective, redistributable):
+    from webshaper.fixtures import fixture_config
+    from webshaper.models import SourceInput
+    from webshaper.pipeline import run
+    from webshaper.sources import SourceStore
+    from webshaper.validation import documents_for
+    config = fixture_config()
+    config.scope.allow_retrospective = retrospective
+    for name, published in [("future", "2026-01-01"), ("undated", None)]:
+        path = tmp_path / (name + ".txt")
+        path.write_text("FICTIONAL EXTRA SOURCE: " + name)
+        config.sources.append(SourceInput(origin=str(path), title=name, published_at=published,
+                              date_basis="fixture", category="fixture", redistributable=redistributable))
+    root = tmp_path / "run"
+    assert run(config, root)["accepted_tasks"] == 1
+    entries = [json.loads(line) for line in (root / "export/public/corpus.jsonl").read_text().splitlines()]
+    origins = {entry["url"] for entry in entries}
+    expected = {s.origin for s in config.sources[:2]}
+    if retrospective:
+        expected.add(str(tmp_path / "future.txt"))
+    assert origins == expected  # Exclude entire metadata entries, even when text is withheld.
+    store = SourceStore(root / "sources")
+    sources = store.all()
+    assert {d["url"] for d in documents_for(sources, store, config.as_of, retrospective)} == expected
+    assert len(sources) == 4
+    assert len((root / "export/sources.jsonl").read_text().splitlines()) == 4
+    for source in sources:
+        assert store.read(source)  # Private raw/text snapshots remain intact and hash-valid.
+
 
 def test_dedup_discards_paraphrase_but_preserves_distinct_query():
     from webshaper.export import deduplicate

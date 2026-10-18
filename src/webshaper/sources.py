@@ -18,6 +18,12 @@ from .storage import digest, dump
 MAX_BYTES = 5_000_000
 
 
+def eligible_sources(sources, cutoff, retrospective=False):
+    """The dated document environment shared by validation and public export."""
+    return [s for s in sources if s.published_at is not None
+            and (retrospective or s.published_at <= cutoff)]
+
+
 class HTMLText(HTMLParser):
     def __init__(self):
         super().__init__()

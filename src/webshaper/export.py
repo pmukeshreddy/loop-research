@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .models import Candidate, SCHEMA_VERSION, Source
 from .query import canonical
-from .sources import SourceStore
+from .sources import SourceStore, eligible_sources
 from .storage import digest, dump
 
 
@@ -155,7 +155,12 @@ def export_dataset(journal, config, root):
     write_jsonl(output / "sources.jsonl", list(sources.values()))
     public_corpora = []
     for gid in sorted({c.graph_id for c in candidates}):
-        for s in graph_map[gid]["sources"]:
+        policies = {(c.task.as_of, c.task.scope.allow_retrospective) for c in candidates if c.graph_id == gid}
+        if len(policies) != 1:
+            raise ValueError("a shared public corpus cannot mix temporal access policies")
+        cutoff, retrospective = next(iter(policies))
+        for source in eligible_sources([Source.model_validate(s) for s in graph_map[gid]["sources"]], cutoff, retrospective):
+            s = source.model_dump(mode="json")
             public_corpora.append({"corpus_id": gid, "source_id": s["source_id"], "url": s["url_or_local_origin"],
                                   "title": s["title"], "published_at": s["published_at"],
                                   "text": store.read(Source.model_validate(s)) if s["redistributable"] else None,
