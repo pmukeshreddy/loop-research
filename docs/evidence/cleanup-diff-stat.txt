@@ -1,0 +1,18 @@
+$ git diff --stat
+(No output: project files are untracked.)
+
+$ git diff --no-index --stat <before-cleanup>/src src
+ .../src => src}/loop_research/__init__.py          |  1 -
+ .../src => src}/loop_research/agent.py             | 29 ++++++++--------------
+ .../src => src}/loop_research/archive.py           | 15 -----------
+ .../loop_research/benchmarks/__init__.py           |  9 -------
+ .../loop_research/benchmarks/widesearch/data.py    |  4 +--
+ .../loop_research/benchmarks/widesearch/grader.py  | 17 +++++++------
+ .../src => src}/loop_research/codex_backend.py     |  2 +-
+ .../src => src}/loop_research/config.py            |  2 --
+ .../src => src}/loop_research/gate.py              | 12 +++------
+ .../src => src}/loop_research/reflect.py           |  3 +--
+ .../src => src}/loop_research/repl_tools.py        |  5 +---
+ .../src => src}/loop_research/rlm_codex_client.py  |  3 +--
+ .../src => src}/loop_research/skills.py            |  7 ++++--
+ 13 files changed, 33 insertions(+), 76 deletions(-)

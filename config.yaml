@@ -1,0 +1,47 @@
+models:
+  root: null
+  sub: null
+  reflect: null
+  reasoning_effort: null
+codex:
+  bin: codex
+  max_concurrent: 4
+  timeout_s: 600
+  max_retries: 4
+  log_full_text: false
+rlm:
+  max_iterations: 30
+  max_depth: 1
+agent:
+  task_timeout_s: 3600
+  max_codex_calls: 300
+data:
+  seed: 42
+  languages:
+  - en
+  - zh
+  split:
+    train: 0.6
+    val: 0.2
+    test: 0.2
+wandr:
+  final_n_tasks: 50
+  seed: 42
+final:
+  repeats: 1
+skills:
+  max_playbook_chars: 6000
+reflect:
+  max_ops: 3
+  max_chars: 20000
+  batch_size: 1
+gate:
+  val_batch_size: 20
+  repeats: 1
+  min_delta: 0.01
+  max_regressions: 2
+  regression_tol: 0.1
+  dedup_threshold: 0.85
+  leakage_min_len: 4
+loop:
+  train_batch_size: 5

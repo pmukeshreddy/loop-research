@@ -1,0 +1,595 @@
+$ rg -n "RateLimitExceeded|usage limit|usage_limit_reached|rate_limit_exceeded|spend cap|out of credits|exceeded retry limit" .verification/codex/codex-rs/protocol/src/error.rs .verification/codex/codex-rs/codex-api/src/api_bridge.rs .verification/codex/codex-rs/codex-api/src/sse/responses_error.rs
+exit_code: 0
+STDOUT:
+.verification/codex/codex-rs/codex-api/src/api_bridge.rs:25:        | ApiError::RateLimitExceeded { retry_after, .. }
+.verification/codex/codex-rs/codex-api/src/api_bridge.rs:57:        ApiError::RateLimitExceeded { message, .. } => {
+.verification/codex/codex-rs/codex-api/src/api_bridge.rs:58:            CodexErr::new(CodexErrorDetails::RateLimitExceeded(message))
+.verification/codex/codex-rs/codex-api/src/api_bridge.rs:112:                            return CodexErr::new(CodexErrorDetails::RateLimitExceeded(
+.verification/codex/codex-rs/codex-api/src/api_bridge.rs:192:                        if err.error.error_type.as_deref() == Some("usage_limit_reached") {
+.verification/codex/codex-rs/codex-api/src/sse/responses_error.rs:90:        Some("rate_limit_exceeded" | "slow_down") => {
+.verification/codex/codex-rs/codex-api/src/sse/responses_error.rs:93:            ApiError::RateLimitExceeded {
+.verification/codex/codex-rs/protocol/src/error.rs:123:    RateLimitExceeded(String),
+.verification/codex/codex-rs/protocol/src/error.rs:443:            | CodexErrorDetails::RateLimitExceeded(_)
+.verification/codex/codex-rs/protocol/src/error.rs:491:            CodexErrorDetails::RateLimitExceeded(_) => CodexErrorInfo::RateLimitExceeded,
+.verification/codex/codex-rs/protocol/src/error.rs:694:            "exceeded retry limit, last status: {}{}",
+.verification/codex/codex-rs/protocol/src/error.rs:730:                "You’ve hit your usage limit for {limit_name}. Switch to another model now,{}",
+.verification/codex/codex-rs/protocol/src/error.rs:740:                        "Your workspace is out of credits. Add credits to continue."
+.verification/codex/codex-rs/protocol/src/error.rs:746:                        "Your workspace is out of credits. Ask your workspace owner to refill in order to continue."
+.verification/codex/codex-rs/protocol/src/error.rs:752:                        "You hit your spend cap set in your workspace. Increase your spend cap to continue."
+.verification/codex/codex-rs/protocol/src/error.rs:758:                        "You hit your spend cap set by the owner of your workspace. Ask an owner to increase your spend cap to continue."
+.verification/codex/codex-rs/protocol/src/error.rs:770:                "You’ve hit your usage limit. {promo_message},{}",
+.verification/codex/codex-rs/protocol/src/error.rs:777:                "You’ve hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/settings/usage to purchase more credits{}",
+.verification/codex/codex-rs/protocol/src/error.rs:790:                    "You’ve hit your usage limit. To get more access now, send a request to your admin{}",
+.verification/codex/codex-rs/protocol/src/error.rs:796:                    "You’ve hit your usage limit. Upgrade to Plus to continue using Codex (https://chatgpt.com/explore/plus),{}",
+.verification/codex/codex-rs/protocol/src/error.rs:802:                    "You’ve hit your usage limit. Visit https://chatgpt.com/settings/usage to purchase more credits{}",
+.verification/codex/codex-rs/protocol/src/error.rs:809:                "You’ve hit your usage limit.{}",
+.verification/codex/codex-rs/protocol/src/error.rs:813:                "You’ve hit your usage limit.{}",
+
+STDERR:
+
+
+$ rg -n web_search|model_reasoning_effort .verification/codex/codex-rs/core/config.schema.json
+exit_code: 0
+STDOUT:
+1201:            "standalone_web_search": {
+1288:            "web_search": {
+1291:            "web_search_cached": {
+1294:            "web_search_request": {
+1353:        "model_reasoning_effort": {
+1395:        "web_search": {
+2909:        "supports_standalone_web_search": {
+4606:        "web_search": {
+7529:        "standalone_web_search": {
+7616:        "web_search": {
+7619:        "web_search_cached": {
+7622:        "web_search_request": {
+7866:    "model_reasoning_effort": {
+8106:    "web_search": {
+
+STDERR:
+
+
+$ rg -n "WebSearchMode|pub enum WebSearchMode|Cached|Indexed|Live|Disabled" .verification/codex/codex-rs/protocol/src/config_types.rs
+exit_code: 0
+STDOUT:
+299:    Disabled,
+376:pub enum WebSearchMode {
+377:    Disabled,
+379:    Cached,
+380:    Indexed,
+381:    Live,
+384:impl WebSearchMode {
+388:            (Self::Disabled, _) | (_, Self::Disabled) => Self::Disabled,
+389:            (Self::Cached, _) | (_, Self::Cached) => Self::Cached,
+390:            (Self::Indexed, _) | (_, Self::Indexed) => Self::Indexed,
+391:            (Self::Live, Self::Live) => Self::Live,
+804:        use WebSearchMode::Cached;
+805:        use WebSearchMode::Disabled;
+806:        use WebSearchMode::Indexed;
+807:        use WebSearchMode::Live;
+809:        let modes = [Disabled, Cached, Indexed, Live];
+811:            [Disabled, Disabled, Disabled, Disabled],
+812:            [Disabled, Cached, Cached, Cached],
+813:            [Disabled, Cached, Indexed, Indexed],
+814:            [Disabled, Cached, Indexed, Live],
+
+STDERR:
+
+
+$ rg -n "fn resolve_web_search_mode|config_toml.web_search|WebSearchMode::Live|provider_capabilities.external_web_access|is_allowed\(preferred\)" .verification/codex/codex-rs/core/src/config/mod.rs
+exit_code: 0
+STDOUT:
+2736:fn resolve_web_search_mode(config_toml: &ConfigToml, features: &Features) -> Option<WebSearchMode> {
+2737:    if let Some(mode) = config_toml.web_search {
+2744:        return Some(WebSearchMode::Live);
+3147:pub(crate) fn resolve_web_search_mode_for_turn(
+3155:            WebSearchMode::Live | WebSearchMode::Indexed => {
+3156:                provider_capabilities.external_web_access
+3168:            WebSearchMode::Live,
+3177:        if is_allowed(preferred) {
+3182:            WebSearchMode::Live,
+
+STDERR:
+
+
+$ nl -ba .verification/codex/codex-rs/exec/src/exec_events.rs
+exit_code: 0
+STDOUT:
+     1	use codex_protocol::models::WebSearchAction;
+     2	use serde::Deserialize;
+     3	use serde::Serialize;
+     4	use serde_json::Value as JsonValue;
+     5	use std::collections::HashMap;
+     6	use ts_rs::TS;
+     7
+     8	/// Top-level JSONL events emitted by codex exec
+     9	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+    10	#[serde(tag = "type")]
+    11	pub enum ThreadEvent {
+    12	    /// Emitted when a new thread is started as the first event.
+    13	    #[serde(rename = "thread.started")]
+    14	    ThreadStarted(ThreadStartedEvent),
+    15	    /// Emitted when a turn is started by sending a new prompt to the model.
+    16	    /// A turn encompasses all events that happen while agent is processing the prompt.
+    17	    #[serde(rename = "turn.started")]
+    18	    TurnStarted(TurnStartedEvent),
+    19	    /// Emitted when a turn is completed. Typically right after the assistant's response.
+    20	    #[serde(rename = "turn.completed")]
+    21	    TurnCompleted(TurnCompletedEvent),
+    22	    /// Indicates that a turn failed with an error.
+    23	    #[serde(rename = "turn.failed")]
+    24	    TurnFailed(TurnFailedEvent),
+    25	    /// Emitted when a new item is added to the thread. Typically the item will be in an "in progress" state.
+    26	    #[serde(rename = "item.started")]
+    27	    ItemStarted(ItemStartedEvent),
+    28	    /// Emitted when an item is updated.
+    29	    #[serde(rename = "item.updated")]
+    30	    ItemUpdated(ItemUpdatedEvent),
+    31	    /// Signals that an item has reached a terminal state—either success or failure.
+    32	    #[serde(rename = "item.completed")]
+    33	    ItemCompleted(ItemCompletedEvent),
+    34	    /// Represents an unrecoverable error emitted directly by the event stream.
+    35	    #[serde(rename = "error")]
+    36	    Error(ThreadErrorEvent),
+    37	}
+    38
+    39	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+    40	pub struct ThreadStartedEvent {
+    41	    /// The identified of the new thread. Can be used to resume the thread later.
+    42	    pub thread_id: String,
+    43	}
+    44
+    45	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS, Default)]
+    46
+    47	pub struct TurnStartedEvent {}
+    48
+    49	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+    50	pub struct TurnCompletedEvent {
+    51	    pub usage: Usage,
+    52	}
+    53
+    54	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+    55	pub struct TurnFailedEvent {
+    56	    pub error: ThreadErrorEvent,
+    57	}
+    58
+    59	/// Describes the usage of tokens during a turn.
+    60	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS, Default)]
+    61	pub struct Usage {
+    62	    /// The number of input tokens used during the turn.
+    63	    pub input_tokens: i64,
+    64	    /// The number of cached input tokens used during the turn.
+    65	    pub cached_input_tokens: i64,
+    66	    /// The number of input tokens written to the prompt cache during the turn.
+    67	    #[serde(default)]
+    68	    pub cache_write_input_tokens: i64,
+    69	    /// The number of output tokens used during the turn.
+    70	    pub output_tokens: i64,
+    71	    /// The number of reasoning output tokens used during the turn.
+    72	    pub reasoning_output_tokens: i64,
+    73	}
+    74
+    75	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+    76	pub struct ItemStartedEvent {
+    77	    pub item: ThreadItem,
+    78	}
+    79
+    80	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+    81	pub struct ItemCompletedEvent {
+    82	    pub item: ThreadItem,
+    83	}
+    84
+    85	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+    86	pub struct ItemUpdatedEvent {
+    87	    pub item: ThreadItem,
+    88	}
+    89
+    90	/// Fatal error emitted by the stream.
+    91	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+    92	pub struct ThreadErrorEvent {
+    93	    pub message: String,
+    94	}
+    95
+    96	/// Canonical representation of a thread item and its domain-specific payload.
+    97	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+    98	pub struct ThreadItem {
+    99	    pub id: String,
+   100	    #[serde(flatten)]
+   101	    pub details: ThreadItemDetails,
+   102	}
+   103
+   104	/// Typed payloads for each supported thread item type.
+   105	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+   106	#[serde(tag = "type", rename_all = "snake_case")]
+   107	pub enum ThreadItemDetails {
+   108	    /// Response from the agent.
+   109	    /// Either a natural-language response or a JSON string when structured output is requested.
+   110	    AgentMessage(AgentMessageItem),
+   111	    /// Agent's reasoning summary.
+   112	    Reasoning(ReasoningItem),
+   113	    /// Tracks a command executed by the agent. The item starts when the command is
+   114	    /// spawned, and completes when the process exits with an exit code.
+   115	    CommandExecution(CommandExecutionItem),
+   116	    /// Represents a set of file changes by the agent. The item is emitted only as a
+   117	    /// completed event once the patch succeeds or fails.
+   118	    FileChange(FileChangeItem),
+   119	    /// Represents a call to an MCP tool. The item starts when the invocation is
+   120	    /// dispatched and completes when the MCP server reports success or failure.
+   121	    McpToolCall(McpToolCallItem),
+   122	    /// Represents a call to a collab tool. The item starts when the collab tool is
+   123	    /// invoked and completes when the collab tool reports success or failure.
+   124	    CollabToolCall(CollabToolCallItem),
+   125	    /// Captures a web search request. It starts when the search is kicked off
+   126	    /// and completes when results are returned to the agent.
+   127	    WebSearch(WebSearchItem),
+   128	    /// Tracks the agent's running to-do list. It starts when the plan is first
+   129	    /// issued, updates as steps change state, and completes when the turn ends.
+   130	    TodoList(TodoListItem),
+   131	    /// Describes a non-fatal error surfaced as an item.
+   132	    Error(ErrorItem),
+   133	}
+   134
+   135	/// Response from the agent.
+   136	/// Either a natural-language response or a JSON string when structured output is requested.
+   137	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+   138	pub struct AgentMessageItem {
+   139	    pub text: String,
+   140	}
+   141
+   142	/// Agent's reasoning summary.
+   143	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+   144	pub struct ReasoningItem {
+   145	    pub text: String,
+   146	}
+   147
+   148	/// The status of a command execution.
+   149	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS)]
+   150	#[serde(rename_all = "snake_case")]
+   151	pub enum CommandExecutionStatus {
+   152	    #[default]
+   153	    InProgress,
+   154	    Completed,
+   155	    Failed,
+   156	    Declined,
+   157	}
+   158
+   159	/// A command executed by the agent.
+   160	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+   161	pub struct CommandExecutionItem {
+   162	    pub command: String,
+   163	    pub aggregated_output: String,
+   164	    pub exit_code: Option<i32>,
+   165	    pub status: CommandExecutionStatus,
+   166	}
+   167
+   168	/// A set of file changes by the agent.
+   169	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+   170	pub struct FileUpdateChange {
+   171	    pub path: String,
+   172	    pub kind: PatchChangeKind,
+   173	}
+   174
+   175	/// The status of a file change.
+   176	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+   177	#[serde(rename_all = "snake_case")]
+   178	pub enum PatchApplyStatus {
+   179	    InProgress,
+   180	    Completed,
+   181	    Failed,
+   182	}
+   183
+   184	/// A set of file changes by the agent.
+   185	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+   186	pub struct FileChangeItem {
+   187	    pub changes: Vec<FileUpdateChange>,
+   188	    pub status: PatchApplyStatus,
+   189	}
+   190
+   191	/// Indicates the type of the file change.
+   192	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+   193	#[serde(rename_all = "snake_case")]
+   194	pub enum PatchChangeKind {
+   195	    Add,
+   196	    Delete,
+   197	    Update,
+   198	}
+   199
+   200	/// The status of an MCP tool call.
+   201	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS)]
+   202	#[serde(rename_all = "snake_case")]
+   203	pub enum McpToolCallStatus {
+   204	    #[default]
+   205	    InProgress,
+   206	    Completed,
+   207	    Failed,
+   208	}
+   209
+   210	/// The status of a collab tool call.
+   211	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS)]
+   212	#[serde(rename_all = "snake_case")]
+   213	pub enum CollabToolCallStatus {
+   214	    #[default]
+   215	    InProgress,
+   216	    Completed,
+   217	    Failed,
+   218	}
+   219
+   220	/// Supported collab tools.
+   221	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+   222	#[serde(rename_all = "snake_case")]
+   223	pub enum CollabTool {
+   224	    SpawnAgent,
+   225	    SendInput,
+   226	    Wait,
+   227	    CloseAgent,
+   228	}
+   229
+   230	/// The status of a collab agent.
+   231	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+   232	#[serde(rename_all = "snake_case")]
+   233	pub enum CollabAgentStatus {
+   234	    PendingInit,
+   235	    Running,
+   236	    Interrupted,
+   237	    Completed,
+   238	    Errored,
+   239	    Shutdown,
+   240	    NotFound,
+   241	}
+   242
+   243	/// Last known state of a collab agent.
+   244	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+   245	pub struct CollabAgentState {
+   246	    pub status: CollabAgentStatus,
+   247	    pub message: Option<String>,
+   248	}
+   249
+   250	/// A call to a collab tool.
+   251	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+   252	pub struct CollabToolCallItem {
+   253	    pub tool: CollabTool,
+   254	    pub sender_thread_id: String,
+   255	    pub receiver_thread_ids: Vec<String>,
+   256	    pub prompt: Option<String>,
+   257	    pub agents_states: HashMap<String, CollabAgentState>,
+   258	    pub status: CollabToolCallStatus,
+   259	}
+   260
+   261	/// Result payload produced by an MCP tool invocation.
+   262	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+   263	pub struct McpToolCallItemResult {
+   264	    // NOTE: `rmcp::model::Content` (and its `RawContent` variants) would be a
+   265	    // more precise Rust representation of MCP content blocks. We intentionally
+   266	    // use `serde_json::Value` here because this crate exports JSON schema + TS
+   267	    // types (`schemars`/`ts-rs`), and the rmcp model types aren't set up to be
+   268	    // schema/TS friendly (and would introduce heavier coupling to rmcp's Rust
+   269	    // representations). Using `JsonValue` keeps the payload wire-shaped and
+   270	    // easy to export.
+   271	    pub content: Vec<JsonValue>,
+   272	    #[serde(rename = "_meta", skip_serializing_if = "Option::is_none")]
+   273	    #[ts(optional)]
+   274	    pub meta: Option<JsonValue>,
+   275	    pub structured_content: Option<JsonValue>,
+   276	}
+   277
+   278	/// Error details reported by a failed MCP tool invocation.
+   279	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+   280	pub struct McpToolCallItemError {
+   281	    pub message: String,
+   282	}
+   283
+   284	/// A call to an MCP tool.
+   285	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+   286	pub struct McpToolCallItem {
+   287	    pub server: String,
+   288	    pub tool: String,
+   289	    #[serde(default)]
+   290	    pub arguments: JsonValue,
+   291	    pub result: Option<McpToolCallItemResult>,
+   292	    pub error: Option<McpToolCallItemError>,
+   293	    pub status: McpToolCallStatus,
+   294	}
+   295
+   296	/// A web search request.
+   297	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+   298	pub struct WebSearchItem {
+   299	    pub id: String,
+   300	    pub query: String,
+   301	    pub action: WebSearchAction,
+   302	    /// Structured results returned by web search, when available.
+   303	    #[serde(default, skip_serializing_if = "Option::is_none")]
+   304	    #[ts(optional)]
+   305	    pub results: Option<Vec<JsonValue>>,
+   306	}
+   307
+   308	/// An error notification.
+   309	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+   310	pub struct ErrorItem {
+   311	    pub message: String,
+   312	}
+   313
+   314	/// An item in agent's to-do list.
+   315	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+   316	pub struct TodoItem {
+   317	    pub text: String,
+   318	    pub completed: bool,
+   319	}
+   320
+   321	#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+   322	pub struct TodoListItem {
+   323	    pub items: Vec<TodoItem>,
+   324	}
+
+STDERR:
+
+
+$ rg -n error_seen|process::exit\(1\)|TurnStatus::Failed|will_retry .verification/codex/codex-rs/exec/src/lib.rs
+exit_code: 0
+STDOUT:
+355:            std::process::exit(1);
+373:            std::process::exit(1);
+650:            std::process::exit(1);
+660:        std::process::exit(1);
+849:            std::process::exit(1);
+1018:        std::process::exit(1);
+1302:    let mut error_seen = false;
+1338:                handle_server_request(&client, *request, &mut error_seen).await;
+1345:                        && !payload.will_retry
+1347:                        error_seen = true;
+1354:                        codex_app_server_protocol::TurnStatus::Failed
+1358:                    error_seen = true;
+1403:    if error_seen {
+1404:        std::process::exit(1);
+2076:    error_seen: &mut bool,
+2211:        *error_seen = true;
+2226:            std::process::exit(1);
+2237:            std::process::exit(1);
+2323:            std::process::exit(1);
+2338:        std::process::exit(1);
+2345:            std::process::exit(1);
+2354:                std::process::exit(1);
+
+STDERR:
+
+
+$ rg -n ERROR:|TurnStatus::Failed|TurnFailed|TurnCompletedEvent|usage_from_last_total|will_retry .verification/codex/codex-rs/exec/src/event_processor_with_human_output.rs .verification/codex/codex-rs/exec/src/event_processor_with_jsonl_output.rs
+exit_code: 0
+STDOUT:
+.verification/codex/codex-rs/exec/src/event_processor_with_human_output.rs:256:                    "ERROR:".style(self.red).style(self.bold),
+.verification/codex/codex-rs/exec/src/event_processor_with_human_output.rs:327:                TurnStatus::Failed => {
+.verification/codex/codex-rs/exec/src/event_processor_with_human_output.rs:332:                        eprintln!("{} {}", "ERROR:".style(self.red).style(self.bold), error);
+.verification/codex/codex-rs/exec/src/event_processor_with_jsonl_output.rs:53:use crate::exec_events::TurnCompletedEvent;
+.verification/codex/codex-rs/exec/src/event_processor_with_jsonl_output.rs:54:use crate::exec_events::TurnFailedEvent;
+.verification/codex/codex-rs/exec/src/event_processor_with_jsonl_output.rs:118:    fn usage_from_last_total(&self) -> Usage {
+.verification/codex/codex-rs/exec/src/event_processor_with_jsonl_output.rs:533:                        events.push(ThreadEvent::TurnCompleted(TurnCompletedEvent {
+.verification/codex/codex-rs/exec/src/event_processor_with_jsonl_output.rs:534:                            usage: self.usage_from_last_total(),
+.verification/codex/codex-rs/exec/src/event_processor_with_jsonl_output.rs:538:                    TurnStatus::Failed => {
+.verification/codex/codex-rs/exec/src/event_processor_with_jsonl_output.rs:556:                        events.push(ThreadEvent::TurnFailed(TurnFailedEvent { error }));
+
+STDERR:
+
+
+$ nl -ba .verification/codex/codex-rs/exec/tests/suite/server_error_exit.rs
+exit_code: 0
+STDOUT:
+     1	#![cfg(not(target_os = "windows"))]
+     2	#![allow(clippy::unwrap_used)]
+     3
+     4	use core_test_support::responses;
+     5	use core_test_support::test_codex_exec::test_codex_exec;
+     6
+     7	/// Verify that when the server reports an error, `codex-exec` exits with a
+     8	/// non-zero status code so automation can detect failures.
+     9	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    10	async fn exits_non_zero_when_server_reports_error() -> anyhow::Result<()> {
+    11	    let test = test_codex_exec();
+    12
+    13	    // Mock a simple Responses API SSE stream that immediately reports a
+    14	    // `response.failed` event with an error message.
+    15	    let server = responses::start_mock_server().await;
+    16	    let body = responses::sse(vec![serde_json::json!({
+    17	        "type": "response.failed",
+    18	        "response": {
+    19	            "id": "resp_err_1",
+    20	            "error": {"code": "rate_limit_exceeded", "message": "synthetic server error"}
+    21	        }
+    22	    })]);
+    23	    responses::mount_sse_once(&server, body).await;
+    24
+    25	    test.cmd_with_server(&server)
+    26	        .arg("--skip-git-repo-check")
+    27	        .arg("tell me something")
+    28	        .arg("--experimental-json")
+    29	        .assert()
+    30	        .code(1);
+    31
+    32	    Ok(())
+    33	}
+
+STDERR:
+
+
+$ sed -n 4069,4073p;6828,6837p;7866,7868p;8106,8113p .verification/codex/codex-rs/core/config.schema.json
+exit_code: 0
+STDOUT:
+    "ReasoningEffort": {
+      "description": "A non-empty reasoning effort value advertised by the model.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "WebSearchMode": {
+      "enum": [
+        "disabled",
+        "cached",
+        "indexed",
+        "live"
+      ],
+      "type": "string"
+    },
+    "WebSearchToolConfig": {
+    "model_reasoning_effort": {
+      "$ref": "#/definitions/ReasoningEffort"
+    },
+    "web_search": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/WebSearchMode"
+        }
+      ],
+      "description": "Controls the web search tool mode: disabled, cached, indexed, or live."
+    },
+
+STDERR:
+
+$ sed -n 118,128p .verification/codex/codex-rs/exec/src/event_processor_with_jsonl_output.rs
+exit_code: 0
+STDOUT:
+    fn usage_from_last_total(&self) -> Usage {
+        let Some(usage) = self.last_total_token_usage.as_ref() else {
+            return Usage::default();
+        };
+        Usage {
+            input_tokens: usage.total.input_tokens,
+            cached_input_tokens: usage.total.cached_input_tokens,
+            cache_write_input_tokens: usage.total.cache_write_input_tokens,
+            output_tokens: usage.total.output_tokens,
+            reasoning_output_tokens: usage.total.reasoning_output_tokens,
+        }
+
+STDERR:
+
+$ sed -n 1992,2021p .verification/codex/codex-rs/app-server-protocol/src/protocol/v2/thread.rs
+exit_code: 0
+STDOUT:
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export_to = "v2/")]
+pub struct TokenUsageBreakdown {
+    #[ts(type = "number")]
+    pub total_tokens: i64,
+    #[ts(type = "number")]
+    pub input_tokens: i64,
+    #[ts(type = "number")]
+    pub cached_input_tokens: i64,
+    #[serde(default)]
+    #[ts(type = "number")]
+    pub cache_write_input_tokens: i64,
+    #[ts(type = "number")]
+    pub output_tokens: i64,
+    #[ts(type = "number")]
+    pub reasoning_output_tokens: i64,
+}
+
+impl From<CoreTokenUsage> for TokenUsageBreakdown {
+    fn from(value: CoreTokenUsage) -> Self {
+        Self {
+            total_tokens: value.total_tokens,
+            input_tokens: value.input_tokens,
+            cached_input_tokens: value.cached_input_tokens,
+            cache_write_input_tokens: value.cache_write_input_tokens,
+            output_tokens: value.output_tokens,
+            reasoning_output_tokens: value.reasoning_output_tokens,
+        }
+    }
+
+STDERR:

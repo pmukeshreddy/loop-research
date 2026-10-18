@@ -1,0 +1,24 @@
+$ git -C .verification/exa-benchmarks grep -l -i atlas
+exit_code: 0
+STDOUT:
+data/company.jsonl
+data/publication.jsonl
+data/webcode/highlights.jsonl
+
+STDERR:
+
+
+$ git -C .verification/exa-benchmarks grep -n -i atlas -- *.py *.md
+exit_code: 1
+STDOUT:
+
+STDERR:
+
+
+Interpretation: git grep exit 1 means no matching lines. No command malfunction.
+
+$ git -C .verification/exa-benchmarks status --porcelain
+exit_code: 0
+STDOUT:
+
+STDERR:
