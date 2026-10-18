@@ -190,7 +190,8 @@ async def check():
 asyncio.run(check())
 print('Pinned verifier imports; official BrowserClient launches successfully')
 """
-        result = subprocess.run([sys.executable, '-c', script, str(package)], capture_output=True, text=True, timeout=120)
+        result = subprocess.run([sys.executable, '-c', script, str(package)], capture_output=True, text=True,
+                                timeout=self.config.verify.browser_timeout_s)
         if result.returncode:
             raise RuntimeError('WANDR browser readiness failed: ' + result.stderr)
         return [('WANDR', True, f'{DATASET_REVISION} / {CODE_REVISION}; fetch: wandr-browser'),

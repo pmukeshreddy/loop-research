@@ -14,6 +14,8 @@ from loop_research.codex_backend import BudgetExceeded, CallBudget, CodexBackend
 @pytest.mark.parametrize("model,effort", [(None, None), ("fixture-model", "high")])
 def test_command_modes(ctx, web, schema, model, effort):
     ctx.config.models.reasoning_effort = effort
+    if model is not None:
+        ctx.config.models.root = model
     seen = []
     def runner(command, **kwargs):
         seen.append(command)
@@ -29,11 +31,9 @@ def test_command_modes(ctx, web, schema, model, effort):
             assert json.loads(Path(command[command.index("--output-schema") + 1]).read_text()) == schema
         else:
             assert "--output-schema" not in command
-        if model:
-            assert command[command.index("--model") + 1] == model
+        assert command[command.index("--model") + 1] == ctx.config.models.root
+        if effort:
             assert 'model_reasoning_effort="high"' in command
-        else:
-            assert "--model" not in command
         Path(command[command.index("--output-last-message") + 1]).write_text("fixture response")
         return SimpleNamespace(returncode=0, stdout=json.dumps({"type": "turn.completed", "usage": {
             "input_tokens": 12, "output_tokens": 4, "cached_input_tokens": 5}}), stderr="")
@@ -44,6 +44,58 @@ def test_command_modes(ctx, web, schema, model, effort):
     assert records[0]["prompt_chars"] == len(INSTRUCTION + "fixture prompt")
     assert "prompt" not in records[0] and "response" not in records[0]
     assert backend.last_usage["input_tokens"] == 12
+
+
+@pytest.mark.parametrize("purpose,model", [("root", "fixture-root"), ("repair", "fixture-root"),
+    ("sub", "fixture-sub"), ("search", "fixture-sub"), ("fetch", "fixture-sub"),
+    ("refine", "fixture-refine"), ("grade", "fixture-judge")])
+def test_every_purpose_uses_and_logs_its_configured_model(ctx, purpose, model):
+    for role in ("root", "sub", "refine", "judge"):
+        setattr(ctx.config.models, role, "fixture-" + role)
+    def runner(command, **kwargs):
+        assert command[command.index("--model") + 1] == model
+        Path(command[command.index("--output-last-message") + 1]).write_text("fixture response")
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+    assert CodexBackend(ctx, runner=runner).complete("fixture", purpose=purpose) == "fixture response"
+    assert read_jsonl(ctx.path / "codex_calls.jsonl")[0]["model"] == model
+
+
+def test_backend_rejects_unconfigured_model_override_before_dispatch(ctx):
+    def forbidden(*args, **kwargs):
+        pytest.fail("Invalid model request must not invoke Codex")
+    with pytest.raises(ValueError, match="configured"):
+        CodexBackend(ctx, runner=forbidden).complete("fixture", purpose="root", model="unconfigured")
+
+
+def test_retry_delay_obeys_configured_cap(ctx):
+    ctx.config.codex.retry_delay_cap_s = .25
+    ctx.config.codex.max_retries = 2
+    waits = []
+    def runner(*args, **kwargs):
+        return SimpleNamespace(returncode=1, stdout="", stderr="fixture failure")
+    with pytest.raises(CodexError):
+        CodexBackend(ctx, runner=runner, sleep=waits.append, jitter=lambda: 0).complete("fixture", purpose="repair")
+    assert waits == [.25, .25]
+
+
+def test_attempt_callback_links_dispatch_and_completion_for_every_retry(ctx):
+    ctx.config.codex.max_retries = 1
+    events, calls = [], []
+    def runner(command, **kwargs):
+        assert events[-1]['status'] == 'dispatched'
+        calls.append(command)
+        if len(calls) == 1:
+            return SimpleNamespace(returncode=1, stdout='', stderr='fixture retry')
+        Path(command[command.index('--output-last-message') + 1]).write_text('done')
+        return SimpleNamespace(returncode=0, stdout='', stderr='')
+    result = CodexBackend(ctx, runner=runner, sleep=lambda _: None).complete(
+        'fixture', purpose='fetch', on_attempt=events.append)
+    assert result == 'done'
+    assert [event['status'] for event in events] == ['dispatched', 'failed', 'dispatched', 'succeeded']
+    assert events[0]['call_id'] == events[1]['call_id'] != events[2]['call_id'] == events[3]['call_id']
+    assert [event['attempt'] for event in events] == [0, 0, 1, 1]
+    assert all(event['model'] == ctx.config.models.sub for event in events)
+    assert 'fixture retry' in events[1]['error'] and events[3]['error'] is None
 
 
 @pytest.mark.parametrize("failure", ["nonzero", "timeout", "rate", "terminal", "empty"])

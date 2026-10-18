@@ -29,3 +29,17 @@ def test_check_cannot_accept_grades_as_evidence(task):
     report = check(task, {'rows': []}, {'fetched': {}, 'checks': [], 'searches': [], 'discoveries': [], 'failures': []}, {})
     assert not report['ok']
     assert report['issues'] == [{'type': 'empty_output'}]
+
+
+def test_selfcheck_exposes_fetch_audit_and_every_dropped_hit(task, output):
+    fetches = [{'id': 1, 'url': 'https://example.org/', 'focus': '',
+                'source': 'backend', 'status': 'succeeded'}]
+    dropped = [{'query': 'fixture', 'index': 0, 'hit': None, 'reason': 'malformed_hit'},
+               {'query': 'fixture', 'index': 2, 'hit': {'title': 'excess'}, 'reason': 'excess_k'}]
+    evidence = {'fetched': {}, 'checks': [], 'searches': [], 'discoveries': [], 'failures': [],
+                'fetches': fetches, 'dropped_search_hits': dropped}
+    report = check(task, output, evidence, {})
+    assert report['fetches'] == fetches
+    assert report['dropped_search_hits'] == dropped
+    assert [item for item in report['issues'] if item['type'] == 'dropped_search_hit'] == [
+        {'type': 'dropped_search_hit', **item} for item in dropped]

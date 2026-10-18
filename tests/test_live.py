@@ -26,7 +26,8 @@ def test_live_research_cited_table(live_workspace):
     root = live_workspace
     result = CliRunner().invoke(app, ['--root', str(root), 'research',
         'Identify the official website and current stable version of the Python programming language.',
-        '--columns', 'project', '--columns', 'website', '--columns', 'stable_version'])
+        '--columns', 'project', '--columns', 'website', '--columns', 'stable_version',
+        '--keys', 'project', '--language', 'en'])
     assert result.exit_code == 0, f'{result.output}\n{result.exception}'
     run_id = next(line.removeprefix('Archive: ') for line in result.stdout.splitlines() if line.startswith('Archive: '))
     archives = list((root / 'runs' / run_id).glob('*/output.json'))

@@ -138,3 +138,55 @@ def test_rollback_deletion_preserves_usage_outcomes_and_creation_time(tmp_path):
         assert restored[key] == prior[key]
     assert restored['version'] == prior['version'] + 1
     assert restored['refinement_id'] != prior['refinement_id']
+
+
+def test_replayed_edit_rollback_and_outcome_are_idempotent(tmp_path):
+    h = Harness(tmp_path / 'harness')
+    operation = 'refine_' + 'a' * 32
+    entry = h.create('memory', 'Failure', 'lesson', id='one', operation_id=operation)
+    n = commits(h)
+    assert h.create('memory', 'Failure', 'lesson', id='one', operation_id=operation) == entry
+    assert commits(h) == n
+    h.record_usage([entry], 'run1')
+    h.record_outcome('run1', {'ok': False, 'issues': ['failed_fetch']})
+    n = commits(h)
+    h.record_outcome('run1', {'ok': False, 'issues': ['failed_fetch']})
+    assert commits(h) == n
+    assert len(h.get('memory', 'one')['outcomes']) == 1
+    h.rollback(operation, operation_id='refine_' + 'b' * 32)
+    n = commits(h)
+    h.rollback(operation, operation_id='refine_' + 'b' * 32)
+    assert commits(h) == n and h.list() == []
+
+
+def test_restart_discards_only_uncommitted_transaction_files(tmp_path):
+    from loop_research.archive import write_json
+    h = Harness(tmp_path / 'harness')
+    before = h.head
+    event_id = 'refine_123456'
+    write_json(h.path / '.git/transaction.json', {'base': before, 'message': 'interrupted', 'record': event_id})
+    write_json(h.path / 'edits' / (event_id + '.json'), {'id': event_id})
+    write_json(h.path / 'harness_state.json', {'entries': {'incomplete': True}})
+    h.git('add', 'harness_state.json', 'edits')
+    recovered = Harness(h.path)
+    assert recovered.head == before and recovered.list() == []
+    assert recovered.edit_record(event_id) is None
+    assert recovered.git('status', '--porcelain') == ''
+    assert not (h.path / '.git/transaction.json').exists()
+
+
+def test_interruption_after_successful_commit_keeps_committed_edit(tmp_path, monkeypatch):
+    import pytest
+    h = Harness(tmp_path / 'harness')
+    commit = h.commit
+    def interrupted(message):
+        commit(message)
+        raise OSError('interrupted after commit')
+    monkeypatch.setattr(h, 'commit', interrupted)
+    with pytest.raises(OSError, match='interrupted'):
+        h.create('memory', 'Title', 'Body', id='saved', operation_id='refine_abcdef')
+    recovered = Harness(h.path)
+    assert recovered.get('memory', 'saved')['body'] == 'Body'
+    assert recovered.edit_record('refine_abcdef')['after']['id'] == 'saved'
+    assert recovered.git('status', '--porcelain') == ''
+    assert commits(recovered) == 2

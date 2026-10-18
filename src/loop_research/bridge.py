@@ -6,14 +6,14 @@ import threading
 
 
 class Server:
-    def __init__(self, path, dispatch):
+    def __init__(self, path, dispatch, *, socket_timeout_s):
         active, lock = set(), threading.Lock()
         class Handler(socketserver.StreamRequestHandler):
             def handle(self):
                 with lock:
                     active.add(self.request)
                 try:
-                    self.request.settimeout(5)
+                    self.request.settimeout(socket_timeout_s)
                     request = json.loads(self.rfile.readline())
                     result = {'result': dispatch(request['method'], request.get('args', []), request.get('kwargs', {}))}
                 except Exception as exc:

@@ -1,10 +1,12 @@
 """Background planning, precise host-side edits at model-turn boundaries."""
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
+import copy
 import json
 import threading
 from typing import Literal
+from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from .archive import append_json, stamp
 
@@ -32,7 +34,7 @@ class Edit(BaseModel):
 class Proposal(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
     summary: str
-    edits: list[Edit] = Field(max_length=2)
+    edits: list[Edit]
 
 
 INSTRUCTIONS = '''Refine supplemental harness state from this run's trajectory and deterministic self-check.
@@ -57,71 +59,145 @@ class Refiner:
         self.lock = threading.RLock()
         self.focus = None
 
-    def run(self, focus=None):
+    def audit(self, status, **details):
+        append_json(self.ctx.path / 'refinements.jsonl', {'created_at': stamp(), 'status': status,
+                                                       'focus': self.focus, **details})
+
+    def resume(self):
+        with self.lock:
+            job = self.ctx.load('refine_state.json')
+            if self.pending is not None or not job or job['status'] in {'applied', 'discarded'}:
+                return False
+            if not self.enabled:
+                raise ValueError('Cannot resume refinement with learning disabled')
+            self.focus = job['focus']
+            if job.get('proposal') is not None:
+                self.pending = Future()
+                self.pending.set_result(job)
+            else:
+                self.pending = self.pool.submit(self._plan, job)
+            return True
+
+    def run(self, focus=None, *, request_id=None):
         if focus is not None and not isinstance(focus, str):
             raise TypeError('focus must be text or None')
         with self.lock:
             if not self.enabled:
                 return {'scheduled': False, 'reason': 'no-learning comparison'}
+            previous = self.ctx.load('refine_state.json')
+            if request_id and previous and previous.get('request_id') == request_id and previous['status'] == 'applied':
+                return {'scheduled': False, 'reason': 'already_applied'}
             if self.pending is not None:
+                self.audit('skipped_request', reason='planning_in_progress', requested_focus=focus)
                 return {'scheduled': False, 'reason': 'planning already in progress'}
+            if self.resume():
+                return {'scheduled': True, 'resumed': True}
             snapshot = self.harness.snapshot()
             observed = self.observation()
             if set(observed) != {'trajectory', 'self_check'}:
                 raise ValueError('Refinement receives only trajectory and self-check')
             self.focus = focus
-            self.pending = self.pool.submit(self._plan, snapshot, observed, focus, self.harness.branch)
+            job = {'status': 'planning', 'focus': focus, 'snapshot': snapshot, 'observed': observed,
+                   'branch': self.harness.branch, 'proposal': None, 'request_id': request_id or uuid4().hex}
+            self.ctx.save('refine_state.json', job)
+            self.pending = self.pool.submit(self._plan, job)
             return {'scheduled': True}
 
-    def _plan(self, snapshot, observed, focus, branch):
-        prompt = INSTRUCTIONS + json.dumps({'focus': focus, 'entries': list(snapshot['entries'].values()),
-                                            **observed}, ensure_ascii=False)
-        text = self.backend.complete(prompt, purpose='refine', model=self.ctx.config.models.refine,
-                                     schema=Proposal.model_json_schema())
-        return branch, snapshot, Proposal.model_validate_json(text)
+    def _plan(self, job):
+        prompt = INSTRUCTIONS + json.dumps({'focus': job['focus'], 'entries': list(job['snapshot']['entries'].values()),
+                                            **job['observed']}, ensure_ascii=False)
+        schema = Proposal.model_json_schema()
+        schema['properties']['edits']['maxItems'] = self.ctx.config.refine.max_edits
+        text = None
+        try:
+            text = self.backend.complete(prompt, purpose='refine', model=self.ctx.config.models.refine, schema=schema)
+            proposal = Proposal.model_validate_json(text)
+            if len(proposal.edits) > self.ctx.config.refine.max_edits:
+                raise ValueError('Proposal exceeds refine.max_edits')
+            for edit in proposal.edits:
+                if edit.id is not None:
+                    self.harness._key(edit.kind, edit.id)
+            job.update(status='planned', proposal=proposal.model_dump(),
+                       operations=['refine_' + uuid4().hex for _ in proposal.edits])
+            self.ctx.save('refine_state.json', job)
+            return job
+        except Exception as exc:
+            job.update(status='failed', error=str(exc))
+            self.ctx.save('refine_state.json', job)
+            self.audit('discarded', reason='planning_failed', error=str(exc), proposal=text)
+            raise
 
     def boundary(self, wait=False):
         with self.lock:
             if self.pending is None or (not wait and not self.pending.done()):
                 return []
             future, self.pending = self.pending, None
-            branch, snapshot, proposal = future.result()
+            job = future.result()
             with self.harness.transaction():
-                return self._apply(branch, snapshot, proposal)
+                try:
+                    return self._apply(job)
+                except Exception as exc:
+                    self.audit('failed', reason='apply_failed', error=str(exc), proposal=job['proposal'])
+                    raise
 
-    def _apply(self, branch, snapshot, proposal):
-        if branch != self.harness.branch:
+    def _discard(self, job, reason):
+        self.audit('discarded', reason=reason, proposal=job['proposal'])
+        job['status'] = 'discarded'
+        self.ctx.save('refine_state.json', job)
+
+    def _apply(self, job):
+        if job['branch'] != self.harness.branch:
+            self._discard(job, 'lineage_changed')
             return []
+        proposal = Proposal.model_validate(job['proposal'])
+        expected = copy.deepcopy(job['snapshot']['entries'])
+        records = [self.harness.edit_record(op) for op in job['operations']]
+        for record in records:
+            if record:
+                if record['after'] is None:
+                    expected.pop(record['key'], None)
+                else:
+                    expected[record['key']] = record['after']
         current = self.harness.snapshot()
-        for edit in proposal.edits:
+        for edit, record in zip(proposal.edits, records):
             key = edit.kind + ':' + str(edit.id)
-            if edit.action != 'create' and current['entries'].get(key) != snapshot['entries'].get(key):
-                self.run(self.focus)
+            if record is None and edit.action != 'create' and current['entries'].get(key) != expected.get(key):
+                self._discard(job, 'target_changed')
+                self.run(self.focus, request_id=job['request_id'])
                 return []
         commits = []
-        for edit in proposal.edits:
-            kwargs = {'trigger': self.focus or 'after task', 'evidence': [self.ctx.run_id + '/' + self.ctx.task_id]}
+        for edit, operation, record in zip(proposal.edits, job['operations'], records):
+            if record:
+                commits.append(self.harness.git('log', '-1', '--format=%H', '--', 'edits/' + operation + '.json'))
+                continue
+            kwargs = {'trigger': self.focus or 'after task', 'evidence': [self.ctx.run_id + '/' + self.ctx.task_id],
+                      'operation_id': operation}
             if edit.action == 'create':
-                self.harness.create(edit.kind, edit.title, edit.content, module=edit.module, **kwargs)
+                self.harness.create(edit.kind, edit.title, edit.content, id=operation.removeprefix('refine_'),
+                                    module=edit.module, **kwargs)
             elif edit.action == 'update':
-                previous = snapshot['entries'].get(edit.kind + ':' + str(edit.id))
+                previous = self.harness.get(edit.kind, edit.id)
                 self.harness.update(edit.kind, edit.id, edit.title, edit.content, module=edit.module,
                                     expected_version=previous['version'] if previous else None, **kwargs)
             else:
-                previous = snapshot['entries'].get(edit.kind + ':' + str(edit.id))
+                previous = self.harness.get(edit.kind, edit.id)
                 if not self.harness.delete(edit.kind, edit.id,
                         expected_version=previous['version'] if previous else None, **kwargs):
+                    self.audit('skipped_delete', reason='entry_missing', kind=edit.kind, id=edit.id)
                     continue
             commits.append(self.harness.head)
-        append_json(self.ctx.path / 'refinements.jsonl', {'created_at': stamp(), 'focus': self.focus,
-                    'summary': proposal.summary, 'commits': commits})
+        self.audit('applied', summary=proposal.summary, commits=commits)
+        job['status'] = 'applied'
+        self.ctx.save('refine_state.json', job)
         return commits
 
-
-    def rollback(self, id):
+    def rollback(self, id, *, operation_id=None):
         if not self.enabled:
             raise ValueError('Harness writes disabled for no-learning comparison')
-        return self.harness.rollback(id)
+        result = self.harness.rollback(id, operation_id=operation_id)
+        if result is False:
+            self.audit('skipped_delete', reason='entry_missing', rollback=id)
+        return result
 
     def close(self):
         self.pool.shutdown(wait=True)

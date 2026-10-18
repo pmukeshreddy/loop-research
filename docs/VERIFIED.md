@@ -1,4 +1,4 @@
-> Current status (2026-10-18): the continual harness replaces the historical gated self-improvement design. The pinned Prime Agent/paper findings, explicit project overrides, and separate offline implementation verification appear at the end of this document. No live tests, research, streams, or performance measurements were run. Earlier WideSearch/WANDR records below remain historical evidence.
+> Current status (2026-10-18): the continual harness replaces the historical gated design. The reliability changes and testing incident are recorded in the final section. An unmocked regression accidentally made live refinement calls during this work; do not describe the current implementation session as entirely offline. No benchmark performance result is claimed. Earlier records below describe their own historical verification passes and are superseded where the current contract differs.
 
 # Verify-first findings
 
@@ -1119,7 +1119,7 @@ silently filled in:
   unexecuted under the user's instruction; no simulated result is presented as
   a live measurement.
 
-## Continual harness implementation verification (2026-10-18)
+## Historical continual harness implementation verification (2026-10-18)
 
 This section describes the built code, separately from the reference findings.
 It supersedes historical completion records about the removed loop. No open
@@ -1169,3 +1169,67 @@ All 270 offline tests passed in 27.59 seconds. Full suite output is preserved in
 test has the explicit `live` marker; it was not run. Deleted legacy tests covered
 the removed features; archive/transport/source-integrity coverage was retained
 and the new architecture has dedicated regression tests.
+
+
+## Current reliability changes and testing incident (2026-10-18)
+
+This section supersedes historical statements above about implicit models,
+null failure scores, discarded refinement errors, implicit baseline selection,
+and the absence of live calls across the entire implementation session.
+The README and PIPELINE_SPEC describe the current contract. Older test totals
+and source line numbers are historical evidence, not results for this revision.
+
+### Testing incident and guard
+
+An unmocked new regression accidentally dispatched live refinement calls through
+the normal Codex subscription backend during this reliability work. This violated
+the instruction to keep implementation testing offline. The calls are not
+benchmark research or measured benchmark results, and no quality claim follows
+from them. The explicitly marked live test was not selected.
+
+`tests/conftest.py` now installs an autouse guard for tests without a `live`
+marker. It intercepts `subprocess.Popen` in the pytest process and rejects a
+direct command whose executable basename is `codex` and whose arguments contain
+`exec`. Tests must inject their external model transports. The guard is a
+process-local monkeypatch: it does not by itself propagate into separately
+launched Python interpreters or recognize renamed executables. It is not proof
+that every possible child-process path is offline. Do not report this session
+as having made no live calls.
+
+### Current behavior and evidence
+
+| Area | Current contract and regression coverage |
+| --- | --- |
+| Explicit settings | `config.yaml` requires four named models, date policy, retry delay cap, refinement edit limit, bridge timeout, and verification timeouts. Null/blank model selections are rejected. Config and CLI tests cover required values. |
+| Research schema and date | Research requires columns, key columns and language. Keys must name selected columns. `agent.as_of` is `today` or an ISO date; a structured task date takes precedence, and the resolved date/source is archived for reuse. Exhausted format repair raises a visible error. |
+| Official failure scores | Failed research or grading uses each adapter's canonical empty submission with the unchanged official scorer. WideSearch receives `response=None`; WANDR receives every required JSONL file with zero records. WANDR itself classifies these files as invalid submissions and emits its official rewards before authentication/browser/model stages. No project-generated score substitutes for a grader result. |
+| Empty-grade evidence | `tests/test_widesearch.py` runs the pinned absent-response evaluator with a judge that raises if called, verifies all official metrics, and checks that stale alignment artifacts are removed. `tests/test_wandr.py` runs the pinned verifier with a nonexistent Codex binary, checks native rewards against the reward artifact and verifies empty required files and no judge-cache calls. |
+| Error breakdown | WideSearch missing, null or NaN metric values are failed checks. Matched key columns use the official alignment's `exact_match` fields, even when the configured key matching pipeline has another name. |
+| Fetch and search audit | Every fetch has a durable attempt outcome, including shared/cache requests, invalid arguments, backend failure and cancellation. Failed fetches can be retried. Malformed, invalid-URL and excess search hits are retained with drop reasons. Evidence tests cover concurrent and failed paths. |
+| Refinement recovery | Proposal, snapshot, request and operation identities persist before application. Discards and skipped deletes have reasons. A committed edit can be recognized after a checkpoint failure. Planning, apply, rollback and finalization errors stop stream progress; resumed work continues the unfinished phase. |
+| Explicit lineage and resume | New no-learning runs require `--base SHA`. Learning can use an explicit safe base or a safe ancestor of the active harness. No newest-report heuristic selects a baseline. `--resume RUN_ID` retains the original configuration, order, mode, base and lineage and reuses completed phases. A worker interrupted before its result checkpoint is graded as a failed empty attempt. |
+| Reports | Every completed row must contain a finite official score. Missing/nonfinite rows are rejected instead of excluded. Rolling means and paired comparisons include scored failures. Interrupted streams display count, phase, active task, pending count and error. Synthetic report fixtures prove failed scores contribute to both aggregates. CSV, summary and curve labels identify all four model roles; archived judge labels must match the configured judge. |
+
+Final verification for this revision: `.venv/bin/pytest` completed with **411
+passed, 1 deselected in 35.32 seconds**. The deselected test is explicitly marked
+`live`; it was not selected. Complete output is preserved in
+[explicit-failures-unit-tests.txt](evidence/explicit-failures-unit-tests.txt).
+This final run used the offline transport fixtures and guard described above;
+it does not erase the earlier accidental live refinement calls.
+
+Recovery tests exercise failures before and after a harness commit, after the
+atomic official-grade checkpoint, before the stream manifest append, and during
+learning/no-learning finalization. A transaction journal restores only unfinished
+harness writes from committed Git state. Persisted edit identities prevent
+reapplication after a successful commit. Completed research archives preserve
+self-check status. Interrupted runs with actual edits retain the same semantic
+harness contents and ordered scores as uninterrupted fixture runs.
+
+Backend fetch retries now retain each dispatched attempt's call id, model,
+status and error in the owning fetch evidence record. Transient failures remain
+self-check issues after eventual success; shared/cache callers reference the
+owner without duplicating backend attempts. Tests verify Codex runs without the
+tool lock held. Report comparisons require matching task content digests and
+resolved dates, as well as matching order, base, judge and execution settings.
+Independent review identified these recovery and provenance gaps; regression
+coverage now verifies their fixes. `git diff --check` is clean.

@@ -45,9 +45,11 @@ Every CRUD edit creates one Git commit containing the trigger, evidence and befo
 
 ## 4. Refinement
 
-`refine.run(focus=None)` is callable from the REPL. It schedules planning on a background thread and immediately returns. Applying waits for a model-turn boundary; automatic refinement runs after every task, including failed tasks. A pending plan cannot cross a lineage fork. Concurrently changed target entries cause replanning from current state.
+`refine.run(focus=None)` is callable from the REPL. It schedules planning on a background thread and immediately returns. Applying waits for a model-turn boundary; automatic refinement runs after every task, including failed research tasks. Planning, applying, rollback, or task-finalization failures stop the current stream; they are never suppressed so a later task can proceed. A pending plan cannot cross a lineage fork. Concurrently changed target entries cause replanning from current state.
 
 The planner receives only current-run trajectory, self-check and harness entries including past usage/outcomes. It prefers updating, merging (update then delete), or deleting an existing entry over adding one. Failure lessons become memories; successful reusable procedures become skills. Repeatedly poor self-check outcomes prompt revision/deletion. An empty edit list is legitimate when no reusable change is supported. No rewrite of the whole harness, acceptance gate, freeze or learning rounds exists.
+
+Persist the proposal, snapshot, request identity and per-edit operation identities before applying edits. Resume recognizes already committed edits and continues unfinished application without duplicate edits. Persist finalization and rollback progress; record discarded proposals and skipped deletes with explicit reasons.
 
 `refine.rollback(id)` queues a compensating edit for the next boundary when invoked inside the REPL. Host rollback accepts a refinement id or its commit SHA.
 
@@ -75,26 +77,29 @@ The host exposes only enumerated RPC operations. Root/sub-model completions, too
 
 ## 7. Tools and transport
 
-`search(query, k=8)` and `fetch(url, focus='')` use `codex exec` and one task cache/URL ledger. `search_many(queries, k=8)` and `fetch_many(urls, focus='')` run concurrently up to `codex.max_concurrent`, returning results in input order. Duplicate in-flight requests share results. No cache/ledger lock is held during a Codex call or while waiting for another request.
+`search(query, k=8)` and `fetch(url, focus='')` use `codex exec` and one task cache/URL ledger. `search_many(queries, k=8)` and `fetch_many(urls, focus='')` run concurrently up to `codex.max_concurrent`, returning results in input order. Duplicate in-flight requests share results. Record each fetch attempt, including backend calls, cache hits, shared requests, validation failures, exceptions and cancellation. Failed fetches are retryable and do not become cached evidence. Keep dropped malformed, invalid-URL and excess search hits with their reasons. No cache/ledger lock is held during a Codex call or while waiting for another request.
 
-Codex runs with ChatGPT authentication forced, provider-key environment variables removed, shell tool disabled, user configuration ignored, ephemeral sessions, and read-only sandboxing. Retry limits, timeouts, call accounting and actual usage logs are explicit. All grading calls select `models.judge`; labels include `codex/<model>` or `codex/default` when the CLI default is selected.
+Codex runs with ChatGPT authentication forced, provider-key environment variables removed, shell tool disabled, user configuration ignored, ephemeral sessions, and read-only sandboxing. Retry limits, timeouts, call accounting and actual usage logs are explicit. All four model fields (`root`, `sub`, `refine`, `judge`) require explicit nonempty selections. All grading calls select `models.judge`; labels include `codex/<models.judge>`. Required YAML policy includes `agent.as_of` (`today` or `YYYY-MM-DD`), `codex.retry_delay_cap_s`, `refine.max_edits`, `bridge.socket_timeout_s`, and `verify.codex_timeout_s`/`verify.browser_timeout_s`. Resolve the as-of date once per task, preserving a structured task date when present, and archive it for reuse on resume. Streams freeze the `today` value at stream creation.
 
 ## 8. Commands and measurement
 
 - `init`: create directories and initialize the separate harness repository; preserve existing configuration and verification findings.
 - `prepare-data`: acquire and verify pinned benchmark data and evaluator sources.
 - `verify`: offline dependency, authentication, source integrity, browser readiness and OS-isolation checks.
-- `research "<question>" [--columns <name> ...]`: return a cited table and refine from this run.
-- `stream --benchmark widesearch|wandr`: fixed seeded task order; each task runs research, then report-only grading, then self-check, then refinement before the next task.
-- `stream --benchmark ... --no-learning`: same tasks and initial harness commit with refinement and agent CRUD writes disabled, for comparison only.
+- `research "<question>" --columns <name> ... --keys <name> ... --language <language>`: require explicit unique columns, unique keys drawn from those columns, and a nonempty answer language; return a cited table and refine from this run.
+- `stream --benchmark widesearch|wandr [--base SHA]`: fixed seeded task order; each task runs research, then report-only grading, then self-check, then refinement before the next task.
+- `stream --benchmark ... --no-learning --base SHA`: require the intended explicit starting harness commit, with refinement and agent CRUD writes disabled, for comparison only.
+- `stream --benchmark ... --resume RUN_ID`: continue the explicit archived stream, preserving its configuration, order, mode, base and lineage; never rerun completed tasks or completed phases.
 - `report`: regenerate ordered task scores, CSV and rolling-mean curves from report artifacts.
 
 No train/validation/test partitions, leakage index, validation gate or improvement command remain. WideSearch uses the complete selected-language release. WANDR uses all 500 tasks when `wandr.final_n_tasks: null`.
 
-Record a benchmark task's first exposure before starting research. A repeat forks the harness from a commit before that task was first seen. Exposure records survive entry rollback; prior learned content cannot enter a replay's active lineage. Repeated streams select a safe common initial commit. Comparison runs restore the live learning branch afterward. A workspace lock serializes tasks against the harness.
+Record a benchmark task's first exposure before starting research. A repeat forks the harness from a commit before that task was first seen. Exposure records survive entry rollback; prior learned content cannot enter a replay's active lineage. An unspecified learning base comes from the active harness or a safe ancestor before all selected tasks were exposed. Explicit unsafe bases are rejected. Never select a base by taking the newest report matching a benchmark. Comparison runs restore the live learning branch afterward. A workspace lock serializes tasks against the harness.
 
-Reports contain per-task score, task order, judge label, failure information, before/after harness commits, and a rolling mean with configured window. Failed or ungraded tasks remain null, never fabricated zeroes. Pair learning/no-learning only for identical ordered tasks, initial commit and execution configuration.
+Worker failures, exhausted format repair, and grading failures remain visible errors. For benchmark failures, construct the adapter's canonical empty submission and run the unchanged official grader on it; do not manufacture a score. A resumed interrupted worker is a failed attempt, not a fresh research attempt. If empty grading cannot finish, archive the interruption and leave that task pending.
+
+Persist task research, grading, and finalization phases separately. Grading state and results stay under reports, outside researcher/refiner observations; research/finalization checkpoints contain no grader feedback. Completed manifest rows must have finite official scores. Report generation rejects missing/nonfinite completed scores; rolling means and paired comparisons include scored failures. Show interruption counts, active task, phase, pending tasks and error. Identify all four model roles in CSV, summary and curves, and reject archived judge labels inconsistent with the configured judge. Pair learning/no-learning only for identical ordered tasks, initial commit, judge and execution configuration.
 
 ## 9. Verification
 
-Unit coverage must include CRUD round trips, BM25, one commit per edit, outcome notes, rollback, commit-failure recovery, fabricated quotes, constraint coverage, lock-free backend calls, real OS gold-file isolation, full Python/async/thread execution, asynchronous planning/boundary application, stale plans, lineage-safe replay and grades excluded from refinement/harness. Run the complete offline suite and fix every failure. Live tests remain explicitly unexecuted.
+Unit coverage must include CRUD round trips, BM25, one commit per edit, outcome notes, rollback, commit-failure recovery, fabricated quotes, constraint coverage, lock-free backend calls, real OS gold-file isolation, full Python/async/thread execution, asynchronous planning/boundary application, stale plans, lineage-safe replay and grades excluded from refinement/harness. The intended verification suite must remain offline, with injected external transports and a guard against direct `codex exec` in non-live tests. Explicitly live-marked tests require separate user execution. Record any accidental live dispatch honestly; the reliability-session incident and guard limitations are documented in `docs/VERIFIED.md`.

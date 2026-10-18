@@ -112,3 +112,55 @@ def test_invalid_second_edit_is_rejected_before_any_commit(ctx):
         refiner.boundary(wait=True)
     assert h.list() == [] and commits(h) == n
     refiner.close()
+
+
+def test_discarded_proposals_and_missing_deletes_have_reasons(ctx):
+    from loop_research.archive import read_jsonl
+    h = Harness(ctx.root / 'harness')
+    refiner = Refiner(h, ctx, Planner(proposal('delete', id='missing', title=None, content=None)),
+                      lambda: {'trajectory': [], 'self_check': {}})
+    refiner.run(); refiner.boundary(wait=True)
+    rows = read_jsonl(ctx.path / 'refinements.jsonl')
+    assert any(r['status'] == 'skipped_delete' and r['reason'] == 'entry_missing' for r in rows)
+    refiner.backend = Planner(proposal())
+    refiner.run(); refiner.pending.result(5)
+    h.fork(h.head)
+    refiner.boundary()
+    rows = read_jsonl(ctx.path / 'refinements.jsonl')
+    assert any(r['status'] == 'discarded' and r['reason'] == 'lineage_changed' for r in rows)
+    refiner.close()
+
+
+def test_resume_after_edit_commit_does_not_reapply_or_replan(ctx, monkeypatch):
+    import pytest
+    h = Harness(ctx.root / 'harness'); planner = Planner(proposal())
+    refiner = Refiner(h, ctx, planner, lambda: {'trajectory': [], 'self_check': {}})
+    refiner.run(); refiner.pending.result(5)
+    save = ctx.save
+    def interrupted(name, state):
+        if name == 'refine_state.json' and state.get('status') == 'applied':
+            raise OSError('fixture interrupted after edit')
+        return save(name, state)
+    monkeypatch.setattr(ctx, 'save', interrupted)
+    with pytest.raises(OSError, match='interrupted'):
+        refiner.boundary(wait=True)
+    n = commits(h)
+    refiner.close()
+    monkeypatch.setattr(ctx, 'save', save)
+    resumed = Refiner(h, ctx, planner, lambda: {'trajectory': [], 'self_check': {}})
+    resumed.resume(); resumed.boundary(wait=True); resumed.close()
+    assert commits(h) == n and len(h.list()) == 1 and len(planner.prompts) == 1
+
+
+def test_refine_max_edits_comes_from_required_config(ctx):
+    import pytest
+    h = Harness(ctx.root / 'harness')
+    ctx.config.refine.max_edits = 1
+    value = proposal(); value['edits'].append(proposal(kind='skill')['edits'][0])
+    planner = Planner(value)
+    refiner = Refiner(h, ctx, planner, lambda: {'trajectory': [], 'self_check': {}})
+    refiner.run()
+    with pytest.raises(ValueError, match='max_edits'):
+        refiner.boundary(wait=True)
+    assert h.list() == []
+    refiner.close()

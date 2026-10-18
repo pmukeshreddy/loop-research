@@ -3,16 +3,17 @@ import json
 import threading
 from concurrent.futures import Future
 from dataclasses import replace
+from uuid import uuid4
 
 from .archive import append_json, read_jsonl, count_codex_calls
-from .codex_backend import CodexBackend, CallBudget, CodexError
+from .codex_backend import CodexBackend, CallBudget
 from .refine import Refiner
 from .repl_tools import ResearchTools
 from .selfcheck import check
 
 
 class Session:
-    def __init__(self, task, ctx, harness, *, learning=True, backend=None):
+    def __init__(self, task, ctx, harness, *, learning=True, backend=None, resume=False):
         self.task, self.ctx, self.harness, self.learning = task, ctx, harness, learning
         self.run_id = ctx.run_id + '/' + ctx.task_id
         self.budget = CallBudget(ctx.config.agent.max_codex_calls, ctx.config.agent.task_timeout_s)
@@ -26,7 +27,11 @@ class Session:
         self.output = {'rows': []}
         self.turns = 0
         self.turn_lock = threading.Lock()
-        self.rollbacks = []
+        state = ctx.load('session_state.json', {})
+        self.rollbacks = state.get('rollbacks', [])
+        self.finish_phase = state.get('finish_phase', 'pending')
+        self.automatic_id = state.get('automatic_id', uuid4().hex)
+        self.fatal = None if resume else state.get('fatal')
         self.refiner = Refiner(harness, ctx, CodexBackend(ctx), self.observation, enabled=learning)
         if ctx.cancellation is not None:
             ctx.cancellation.add_done_callback(lambda _: self.close_worker())
@@ -35,19 +40,27 @@ class Session:
         with self.lifecycle, self.tools.lock:
             self.research_ctx.cancellation.cancel()
 
+    def checkpoint(self):
+        self.ctx.save('session_state.json', {'rollbacks': self.rollbacks, 'finish_phase': self.finish_phase,
+                      'automatic_id': self.automatic_id, 'fatal': self.fatal})
+
     def apply_refinement(self, wait=False):
+        if self.fatal:
+            raise RuntimeError(self.fatal)
+        operation = 'Refinement'
         try:
             commits = self.refiner.boundary(wait=wait)
-        except (ValueError, CodexError) as exc:
-            append_json(self.ctx.path / 'refinements.jsonl', {'error': str(exc), 'status': 'failed'})
-            commits = []
-        while self.rollbacks:
-            id = self.rollbacks.pop(0)
-            try:
-                self.refiner.rollback(id)
-            except ValueError as exc:
-                append_json(self.ctx.path / 'refinements.jsonl', {'error': str(exc), 'rollback': id, 'status': 'failed'})
-        return commits
+            while self.rollbacks:
+                operation = 'Rollback'
+                self.refiner.rollback(**self.rollbacks[0])
+                self.rollbacks.pop(0)
+                self.checkpoint()
+            return commits
+        except Exception as exc:
+            self.fatal = f'{operation} failed: {type(exc).__name__}: {exc}'
+            self.refiner.audit('failed', reason=operation.lower(), error=self.fatal)
+            self.checkpoint()
+            raise RuntimeError(self.fatal) from exc
 
     def retrieve(self):
         entries = self.harness.search(self.task.question + ' ' + json.dumps(self.task.spec, ensure_ascii=False),
@@ -69,6 +82,9 @@ class Session:
             purpose = kwargs.get('purpose')
             if purpose not in {'root', 'sub'} or len(args) != 1 or not isinstance(args[0], str):
                 raise ValueError('Worker may request only root/sub completions')
+            model = self.ctx.config.models.root if purpose == 'root' else self.ctx.config.models.sub
+            if 'model' in kwargs and kwargs['model'] != model:
+                raise ValueError('Worker must use the configured model for its role')
             prompt = args[0]
             if purpose == 'root':
                 with self.lifecycle, self.turn_lock:
@@ -78,12 +94,11 @@ class Session:
                     if self.turns > self.ctx.config.rlm.max_iterations:
                         self.status['iteration_limit'] = True
                     prompt += '\nCURRENT RELEVANT HARNESS ENTRIES\n' + json.dumps(self.retrieve(), ensure_ascii=False)
-            model = self.ctx.config.models.root if purpose == 'root' else self.ctx.config.models.sub
             text = self.backend.complete(prompt, purpose=purpose, model=model)
             with self.lifecycle:
                 self.research_ctx.check_cancelled()
                 append_json(self.ctx.path / 'trajectory.jsonl', {'type': 'model', 'purpose': purpose,
-                            'prompt': prompt, 'response': text})
+                            'model': model, 'prompt': prompt, 'response': text})
             return {'text': text, 'usage': self.backend.last_usage}
         if method.startswith('tools.'):
             name = method.removeprefix('tools.')
@@ -113,16 +128,21 @@ class Session:
                 kwargs['evidence'] = [self.run_id]
                 kwargs.setdefault('trigger', 'agent mid-task edit')
             result = getattr(self.harness, name)(*args, **kwargs)
+            if name == 'delete' and result is False:
+                self.refiner.audit('skipped_delete', reason='entry_missing', args=args, kwargs=kwargs)
             if name in {'read', 'get', 'list', 'search'} and result:
                 self.harness.record_usage(result if isinstance(result, list) else [result], self.run_id)
             return result
         if method == 'refine.run':
+            if len(args) > 1 or set(kwargs) - {'focus'}:
+                raise ValueError('Refinement accepts only focus')
             return self.refiner.run(*args, **kwargs)
         if method == 'refine.rollback':
             if not self.learning or len(args) != 1 or kwargs or not isinstance(args[0], str) or not args[0]:
                 raise ValueError('Rollback requires an id and enabled learning')
             with self.turn_lock:
-                self.rollbacks.append(args[0])
+                self.rollbacks.append({'id': args[0], 'operation_id': 'refine_' + uuid4().hex})
+                self.checkpoint()
             return {'scheduled': True}
         if method == 'iteration':
             if len(args) != 1 or kwargs:
@@ -133,11 +153,23 @@ class Session:
 
     def finish(self):
         self.close_worker()
+        if self.fatal:
+            raise RuntimeError(self.fatal)
+        if self.finish_phase == 'complete':
+            return self.ctx.load('self_check.json')
         report = self.self_check()
-        self.harness.record_outcome(self.run_id, {k: report[k] for k in ('ok', 'issues')})
-        self.apply_refinement(wait=True)
-        self.refiner.run()
+        self.refiner.resume()
+        if self.finish_phase == 'pending':
+            self.harness.record_outcome(self.run_id, {k: report[k] for k in ('ok', 'issues')})
+            self.apply_refinement(wait=True)
+            while self.refiner.pending is not None:
+                self.apply_refinement(wait=True)
+            self.finish_phase = 'automatic'
+            self.checkpoint()
+        self.refiner.run(request_id=self.automatic_id)
         while self.refiner.pending is not None:
             self.apply_refinement(wait=True)
+        self.finish_phase = 'complete'
+        self.checkpoint()
         self.refiner.close()
         return report
