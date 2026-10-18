@@ -692,7 +692,7 @@ Some HF instructions omit embedded artifacts; the loader uses the matching
 canonical package instruction in those cases. It never substitutes synthetic
 text. The dataset's benchmark-construction metadata is not sent to the agent.
 
-Browser installation output is recorded in `evidence/wandr-browser-install.txt`.
+Browser installation output (trailing whitespace normalized) is recorded in `evidence/wandr-browser-install.txt`.
 Only installation and offline import/browser readiness checks are permitted
 during this build; no page fetch, judge call, or benchmark run is authorized.
 
