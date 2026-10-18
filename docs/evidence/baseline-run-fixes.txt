@@ -1,0 +1,13 @@
+Baseline preparation and execution fixes
+
+- The environment contained an old installed wheel that rejected current configuration fields.
+  Rebuilt and installed the current checkout using uv pip install --no-deps --reinstall .
+  An editable install was unsuitable because macOS repeatedly marked its .pth files hidden,
+  causing Python to ignore them. The installed wheel passes all verify checks.
+- Review found timeout archives omitted parsed web actions and partial stderr. Shared event
+  parsing now retains both, with a timeout regression test.
+- Review found failed baseline runs left aggregate reports stale. Reports are now rebuilt
+  after persisting the interrupted manifest, with a regression test.
+- Initial launch stopped before creating a run because the workspace had no harness repository.
+  Ran the existing loop-research init command before the fresh baseline launch. Config was
+  preserved. Baseline itself still cannot initialize, read state from, or write the harness.
