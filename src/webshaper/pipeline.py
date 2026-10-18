@@ -50,8 +50,25 @@ def collect_sources(config, store, journal, inputs=None):
     cached = journal.get(checkpoint)
     if cached is not None:
         return [Source.model_validate(s) for s in cached]
-    queue = [(s, 0) for s in inputs]
-    sources, visited = [], set()
+    ordered = journal.get(checkpoint + ":order")
+    if ordered is None:
+        if config.research_mode == "open_web":
+            from .sources import publication_eligible
+            def priority(spec):
+                source = store.reusable(spec.origin)
+                if source:
+                    return 0 if publication_eligible(source.published_at, config.as_of, config.scope.allow_retrospective) else 2
+                return 3 if journal.get("capture:" + digest(spec)) else 1
+            inputs = sorted(inputs, key=priority)
+        ordered = [s.model_dump(mode="json") for s in inputs]
+        journal.put(checkpoint + ":order", ordered)
+    queue = [(SourceInput.model_validate(s), 0) for s in ordered]
+    sources, visited, selected = [], set(), set()
+    def select(source):
+        identity = (source.final_url or source.url_or_local_origin, source.content_hash)
+        if identity not in selected:
+            sources.append(source)
+            selected.add(identity)
     while queue and len(sources) < config.max_sources:
         spec, depth = queue.pop(0)
         if spec.origin in visited:
@@ -63,7 +80,7 @@ def collect_sources(config, store, journal, inputs=None):
             if capture.get("source"):
                 source = Source.model_validate(capture["source"])
                 store.read(source)
-                sources.append(source)
+                select(source)
                 if depth < config.crawl_depth:
                     queue.extend((SourceInput(origin=url), depth + 1) for url in capture["links"]
                                  if urlsplit(url).hostname in config.allowed_domains)
@@ -75,7 +92,7 @@ def collect_sources(config, store, journal, inputs=None):
                 source, links = store.capture_url(spec.origin, config.allowed_domains, spec)
             else:
                 source, links = store.capture_local(spec)
-            sources.append(source)
+            select(source)
             journal.put(capture_key, {"source": source.model_dump(mode="json"), "links": links})
             if source.published_at is None:
                 error_record(journal, "source_date", spec.origin, ValueError("publication_date_" + source.date_status))

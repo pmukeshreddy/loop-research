@@ -61,7 +61,9 @@ def validate_bundle(bundle):
                 raise ValueError("fact type mismatch")
         event_nodes = [n for n in (f.subject_id, f.object_id_or_value) if entities[n].kind.endswith("_event")]
         if f.event_id != (event_nodes[0] if event_nodes else None):
-            raise ValueError("event_id does not match joined event")
+            raise ValueError(f"event_id does not match joined event: claim {f.claim_id}, "
+                             f"predicate {f.predicate} ({f.subject_id}, {f.object_id_or_value}); "
+                             f"expected event_id={(event_nodes[0] if event_nodes else None)!r}, got {f.event_id!r}")
         if f.valid_time.end and f.valid_time.start and f.valid_time.end < f.valid_time.start:
             raise ValueError("invalid effective date interval")
         for eid in f.evidence_ids:

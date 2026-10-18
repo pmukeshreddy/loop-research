@@ -168,12 +168,14 @@ class SourceStore:
         text = self.read(source)
         if start is None:
             if not quote or quote not in text:
-                raise ValueError("evidence span missing")
+                raise ValueError(f"evidence span missing: source {source.source_id}, claim {claim_id}, quote {quote!r}; "
+                                 "quote must be an exact substring of this source's text")
             # Repeated summaries are common in press releases. An exact match
             # is still auditable; select the first occurrence deterministically.
             start = text.index(quote)
         if not quote or start < 0 or text[start:start + len(quote)] != quote:
-            raise ValueError("invalid evidence span")
+            raise ValueError(f"invalid evidence span: source {source.source_id}, claim {claim_id}, start {start}, "
+                             f"quote {quote!r}; use an exact text span or null start for exact lookup")
         return Evidence(evidence_id="e_" + digest([source.source_id, claim_id, start, quote])[:24],
                         source_id=source.source_id, span_start=start, span_end=start + len(quote),
                         span_text=quote, claim_id=claim_id)

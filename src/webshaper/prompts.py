@@ -245,3 +245,8 @@ PROMPTS["extract"] += """\nPublication date_evidence is a deterministic transcri
 or labeled date passages. Treat it as provenance, distinct from event/effective dates. Quotes for claims
 must still be exact substrings of document text. Do not substitute publication for an explicitly different
 transaction/announcement date, and do not extract unsupported historical states from later pages."""
+PROMPTS["extract"] += """\nSet event_id to the event entity at one endpoint of this exact fact, if present.
+For predicates with no event endpoint (including portfolio_company, founded_by and builds), event_id MUST
+be null even when the relation is mentioned in a funding announcement. Quote text literally: do not
+normalize apostrophes, whitespace or punctuation. Prefer start:null for automatic exact substring lookup.
+Revision feedback identifies the offending claim, predicate or quote; fix it without inventing support."""

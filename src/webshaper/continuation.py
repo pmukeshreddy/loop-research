@@ -21,7 +21,7 @@ def import_collection_run(parent_dir, root, config, journal):
                 raise ValueError("repair continuation cannot change mode, cutoff, scope or campaign acceptance settings")
         if previous.get("research_mode") != "open_web" or not config.campaign:
             raise ValueError("repair continuation requires an open-web campaign")
-        if old.execute("SELECT count(*) FROM records WHERE kind IN ('candidates','candidate_attempts','graphs','validations')").fetchone()[0]:
+        if old.execute("SELECT count(*) FROM records WHERE kind IN ('candidates','candidate_attempts','validations')").fetchone()[0]:
             raise ValueError("collection-only repair cannot import generated tasks or validation checkpoints")
         calls = [dict(r) for r in old.execute("SELECT * FROM calls ORDER BY started,key")]
         if any(c["status"] != "complete" for c in calls):

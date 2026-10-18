@@ -181,12 +181,15 @@ def test_repair_continuation_preserves_accounting_and_original_snapshots(tmp_pat
         journal.reserve('prior-call', 'generator:test', 0, 1000, 0)
         journal.complete('prior-call', {}, 0, 900)
         journal.record('companies', 'fixture-company', {'company_id':'fixture-company', 'name':'FICTIONAL'})
+        journal.record('graphs', 'old-graph', {'graph_id': 'old-graph', 'note': 'FICTIONAL pre-question graph audit'})
     before = (old / 'sources' / source.raw_path).read_bytes()
     new = tmp_path / 'new'
     with Journal(new / 'run.sqlite', frozen_config(config), config.budget) as journal:
         import_collection_run(old, new, config, journal)
         import_collection_run(old, new, config, journal)
         assert journal.usage()['calls'] == 1 and journal.usage()['tokens'] == 900
+        assert journal.records('graphs') == []
+        assert journal.records('parent_graphs')[0]['graph_id'] == 'old-graph'
         with pytest.raises(BudgetExceeded):
             journal.reserve('new-call', 'generator:test', 0, 100, 0)
         repaired = SourceStore(new / 'sources').all()
@@ -194,6 +197,12 @@ def test_repair_continuation_preserves_accounting_and_original_snapshots(tmp_pat
         assert repaired[0].raw_hash == source.raw_hash
         assert repaired[0].retrieved_at == source.retrieved_at
     assert (old / 'sources' / source.raw_path).read_bytes() == before
+    with Journal(old / 'run.sqlite', frozen_config(config), config.budget) as journal:
+        journal.record('candidates', 'private-task', {'fixture': True})
+    with Journal(tmp_path / 'rejected-import' / 'run.sqlite', frozen_config(config), config.budget) as journal:
+        with pytest.raises(ValueError, match='cannot import generated tasks'):
+            import_collection_run(old, tmp_path / 'rejected-import', config, journal)
+        assert journal.usage()['calls'] == 0
 
 
 def test_pilot_success_requires_multiple_companies_and_an_accepted_expansion():

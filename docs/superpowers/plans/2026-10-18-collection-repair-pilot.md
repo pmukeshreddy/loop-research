@@ -32,3 +32,12 @@ Execute inline with focused regression tests and an independent final review.
 
 The user explicitly authorizes finite local allowance increases for this pilot.
 No external paid provider, API-key fallback, training, RL or product UI is in scope.
+
+Live follow-up: v1 exposed a source-selection cap retaining undated cached pages
+ahead of an eligible cached release, plus repeated invalid event bindings and
+nonliteral extraction quotes. Fix selection order and duplicate redirect slots;
+make revision feedback identify the exact rejected fact/quote. Pause v1 between
+provider sessions and continue in `company-repair-pilot-v2`, preserving all v1
+usage within the SAME total 15,000,000 / 220 / 700 limits. Pre-question graphs may
+be archived privately during continuation, but no generated questions or validation
+results can be imported. Acceptance predicates and evidence requirements stay fixed.

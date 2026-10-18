@@ -296,7 +296,7 @@ def export_dataset(journal, config, root):
              "usage": usage, "cost_per_accepted_task_usd": usage["cost_usd"] / len(candidates) if candidates else None,
              "shared_background_sources": [], "partition_counts": dict(Counter(partition.get(c.task.task_id) for c in candidates))}
     write_jsonl(output / "budget_authorizations.jsonl", journal.records("budget_authorizations"))
-    for kind in ("inherited_runs", "source_repairs", "parent_errors", "parent_web_traces", "parent_company_qualifications"):
+    for kind in ("inherited_runs", "source_repairs", "parent_errors", "parent_web_traces", "parent_company_qualifications", "parent_graphs"):
         write_jsonl(output / (kind + ".jsonl"), journal.records(kind))
     if config.campaign:
         from .campaign import campaign_report

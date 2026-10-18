@@ -238,7 +238,8 @@ def test_extraction_revision_receives_the_concrete_failure(tmp_path, monkeypatch
     stats = run(fixture_config(), tmp_path / "run")
     assert stats["accepted_tasks"] == 1
     assert len(seen) == 2 and seen[0] == []
-    assert seen[1] == ["invalid evidence span"]
+    assert len(seen[1]) == 1 and seen[1][0].startswith("invalid evidence span:")
+    assert "invented text" in seen[1][0] and "source s_" in seen[1][0]
 
 
 def test_quality_counts_seed_proposals_rejected_before_candidate_creation(tmp_path, monkeypatch):

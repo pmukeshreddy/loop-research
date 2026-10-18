@@ -138,7 +138,9 @@ fresh checkout without historical artifacts, omit `--continue-from` and choose a
 new directory. `--continue-from` opens the parent read-only, verifies and copies
 its raw snapshots, re-extracts date provenance, and inherits every completed call
 and its usage. It does not import accepted tasks or solver results; parents with
-graphs, candidates, validations or unresolved calls are rejected. Mode, cutoff,
+generated candidates, validations or unresolved calls are rejected. Pre-question
+graphs are retained only as private `parent_graphs` audit records and recomputed;
+they cannot become active graph or validation checkpoints. Mode, cutoff,
 scope and campaign acceptance settings must match. Previous failed qualifications
 remain private audit records while repaired evidence is reassessed.
 
@@ -150,6 +152,9 @@ redirect chain. Redirects are bounded and destinations receive access and robots
 checks. Inaccessible pages prompt searches for alternative primary sources;
 restrictions are not bypassed. Captured successes and failures are checkpointed
 per URL so a growing discovery queue does not repeat completed collection work.
+Selection prioritizes eligible cached evidence, then new alternatives, before
+known unusable pages. The queue order is frozen for resume, and redirects to the
+same captured final page consume only one source slot.
 
 `export/pilot_report.json` separates inherited usage, new usage, collection and
 qualification overhead, and question work including rejections. Per-accepted
