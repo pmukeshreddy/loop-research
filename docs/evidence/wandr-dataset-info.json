@@ -1,0 +1,192 @@
+{
+  "url": "https://huggingface.co/api/datasets/perplexity-ai/wandr",
+  "status": 200,
+  "data": {
+    "_id": "6a9db2c6eae84bed0c493eff",
+    "id": "perplexity-ai/wandr",
+    "author": "perplexity-ai",
+    "sha": "066ee3d71cd332cb2fb4f49146cad7f9c7249f86",
+    "lastModified": "2026-09-06T19:50:28.000Z",
+    "private": false,
+    "gated": false,
+    "disabled": false,
+    "tags": [
+      "task_categories:question-answering",
+      "task_categories:text-retrieval",
+      "language:en",
+      "license:other",
+      "size_categories:n<1K",
+      "format:json",
+      "modality:text",
+      "library:datasets",
+      "library:pandas",
+      "library:polars",
+      "library:mlcroissant",
+      "arxiv:2608.14747",
+      "region:us",
+      "information-retrieval",
+      "research-agents",
+      "benchmark",
+      "web-research",
+      "arxiv:2608.14747"
+    ],
+    "description": "\n\t\n\t\t\n\t\n\t\n\t\tWANDR\n\t\n\n\n\t\n\t\t\n\t\n\t\n\t\tOverview and provenance\n\t\n\nWANDR (Wide ANd Deep Research) is a benchmark of 500 realistic, structured,\nhigh-volume web research tasks. This dataset is a task-and-verification corpus,\nnot a question/answer collection: it contains no solver outputs or reference\nanswer sets. WANDR evaluation refetches cited pages and judges submitted records\nagainst task-specific, reference-free specifications.\nSee the paper, the\nblog,\nand the evaluation repository.\u2026 See the full description on the dataset page: https://huggingface.co/datasets/perplexity-ai/wandr.",
+    "downloads": 363,
+    "likes": 3,
+    "cardData": {
+      "pretty_name": "WANDR",
+      "license": "other",
+      "license_name": "wandr-apache-2.0-with-third-party-notices",
+      "license_link": "LICENSE",
+      "language": [
+        "en"
+      ],
+      "task_categories": [
+        "question-answering",
+        "text-retrieval"
+      ],
+      "tags": [
+        "information-retrieval",
+        "research-agents",
+        "benchmark",
+        "web-research",
+        "arxiv:2608.14747"
+      ],
+      "configs": [
+        {
+          "config_name": "default",
+          "data_files": [
+            {
+              "split": "test",
+              "path": "data/test.jsonl"
+            },
+            {
+              "split": "smoke",
+              "path": "data/smoke.jsonl"
+            }
+          ]
+        }
+      ],
+      "dataset_info": {
+        "features": [
+          {
+            "name": "task_id",
+            "dtype": "string"
+          },
+          {
+            "name": "source_commit",
+            "dtype": "string"
+          },
+          {
+            "name": "source_url",
+            "dtype": "string"
+          },
+          {
+            "name": "instruction",
+            "dtype": "string"
+          },
+          {
+            "name": "instruction_sha256",
+            "dtype": "string"
+          },
+          {
+            "name": "instruction_status",
+            "dtype": "string"
+          },
+          {
+            "name": "instruction_source_url",
+            "dtype": "string"
+          },
+          {
+            "name": "required_output_files",
+            "sequence": "string"
+          },
+          {
+            "name": "task_tree_json",
+            "dtype": "string"
+          },
+          {
+            "name": "metadata_json",
+            "dtype": "string"
+          },
+          {
+            "name": "submission_contract_json",
+            "dtype": "string"
+          },
+          {
+            "name": "evaluator_index_path",
+            "dtype": "string"
+          },
+          {
+            "name": "source_bundle_path",
+            "dtype": "string"
+          },
+          {
+            "name": "external_dependencies_json",
+            "dtype": "string"
+          },
+          {
+            "name": "self_contained",
+            "dtype": "bool"
+          },
+          {
+            "name": "scored",
+            "dtype": "bool"
+          }
+        ]
+      }
+    },
+    "siblings": [
+      {
+        "rfilename": ".gitattributes"
+      },
+      {
+        "rfilename": "CITATION.bib"
+      },
+      {
+        "rfilename": "LICENSE"
+      },
+      {
+        "rfilename": "NOTICE"
+      },
+      {
+        "rfilename": "README.md"
+      },
+      {
+        "rfilename": "THIRD_PARTY.md"
+      },
+      {
+        "rfilename": "auxiliary/excluded-artifacts.jsonl"
+      },
+      {
+        "rfilename": "auxiliary/source-bundle-index.json"
+      },
+      {
+        "rfilename": "auxiliary/source-bundles/part-00000.jsonl"
+      },
+      {
+        "rfilename": "auxiliary/source-bundles/part-00001.jsonl"
+      },
+      {
+        "rfilename": "auxiliary/source-bundles/part-00002.jsonl"
+      },
+      {
+        "rfilename": "auxiliary/source-files.jsonl"
+      },
+      {
+        "rfilename": "data/smoke.jsonl"
+      },
+      {
+        "rfilename": "data/test.jsonl"
+      },
+      {
+        "rfilename": "evaluator/index.jsonl"
+      },
+      {
+        "rfilename": "release-manifest.json"
+      }
+    ],
+    "createdAt": "2026-09-06T18:36:54.000Z",
+    "usedStorage": 2769681
+  }
+}

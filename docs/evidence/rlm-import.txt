@@ -1,0 +1,40 @@
+$ .venv/bin/python -c "import inspect, importlib.metadata, json, sys
+import rlm
+from rlm import RLM
+from rlm.clients.base_lm import BaseLM
+from rlm.environments.local_repl import LocalREPL
+from rlm.core.lm_handler import LMHandler
+from rlm.logger import RLMLogger
+from rlm.core.types import ModelUsageSummary, UsageSummary
+p = importlib.metadata.distribution(\"rlms\")
+direct = json.loads(p.read_text(\"direct_url.json\"))
+assert direct[\"vcs_info\"][\"commit_id\"] == \"d04208afbad29ca675ab13478c40ee8bebc84bfe\"
+print(\"Python:\", sys.version)
+print(\"rlms:\", p.version)
+print(\"rlm import:\", rlm.__file__)
+print(\"direct_url:\", json.dumps(direct, sort_keys=True))
+for obj in (BaseLM, BaseLM.completion, BaseLM.acompletion, BaseLM.get_usage_summary, BaseLM.get_last_usage, RLM, RLM.completion, LocalREPL, LMHandler, RLMLogger, ModelUsageSummary, UsageSummary):
+ print(obj.__qualname__ + str(inspect.signature(obj)))
+print(\"PASS: pinned RLM imports; no model invocation performed\")
+"
+exit_code: 0
+STDOUT:
+Python: 3.12.12 (main, Jan 14 2026, 23:36:32) [Clang 21.1.4 ]
+rlms: 0.1.3
+rlm import: /Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/lib/python3.12/site-packages/rlm/__init__.py
+direct_url: {"url": "https://github.com/alexzhang13/rlm.git", "vcs_info": {"commit_id": "d04208afbad29ca675ab13478c40ee8bebc84bfe", "requested_revision": "d04208afbad29ca675ab13478c40ee8bebc84bfe", "vcs": "git"}}
+BaseLM(model_name: str, timeout: float = 300.0, sampling_args: dict[str, typing.Any] | None = None, **kwargs)
+BaseLM.completion(self, prompt: str | dict[str, typing.Any]) -> str
+BaseLM.acompletion(self, prompt: str | dict[str, typing.Any]) -> str
+BaseLM.get_usage_summary(self) -> rlm.core.types.UsageSummary
+BaseLM.get_last_usage(self) -> rlm.core.types.ModelUsageSummary
+RLM(backend: Literal['openai', 'portkey', 'openrouter', 'vercel', 'vllm', 'anthropic', 'azure_openai', 'gemini'] = 'openai', backend_kwargs: dict[str, typing.Any] | None = None, environment: Literal['local', 'ipython', 'docker', 'modal', 'prime', 'daytona', 'e2b'] = 'local', environment_kwargs: dict[str, typing.Any] | None = None, depth: int = 0, max_depth: int = 1, max_iterations: int = 30, max_budget: float | None = None, max_timeout: float | None = None, max_tokens: int | None = None, max_errors: int | None = None, custom_system_prompt: str | None = None, other_backends: list[typing.Literal['openai', 'portkey', 'openrouter', 'vercel', 'vllm', 'anthropic', 'azure_openai', 'gemini']] | None = None, other_backend_kwargs: list[dict[str, typing.Any]] | None = None, logger: rlm.logger.rlm_logger.RLMLogger | None = None, verbose: bool = False, persistent: bool = False, custom_tools: dict[str, typing.Any] | None = None, custom_sub_tools: dict[str, typing.Any] | None = None, compaction: bool = False, compaction_threshold_pct: float = 0.85, max_concurrent_subcalls: int = 4, on_subcall_start: collections.abc.Callable[[int, str, str], None] | None = None, on_subcall_complete: collections.abc.Callable[[int, str, float, str | None], None] | None = None, on_iteration_start: collections.abc.Callable[[int, int], None] | None = None, on_iteration_complete: collections.abc.Callable[[int, int, float], None] | None = None, sampling_args: dict[str, typing.Any] | None = None, sub_sampling_args: dict[str, typing.Any] | None = None, orchestrator: bool = True, user_prologue: str | None = None)
+RLM.completion(self, prompt: str | dict[str, typing.Any], root_prompt: str | None = None) -> rlm.core.types.RLMChatCompletion
+LocalREPL(lm_handler_address: tuple[str, int] | None = None, context_payload: dict | list | str | None = None, setup_code: str | None = None, persistent: bool = False, depth: int = 1, subcall_fn: collections.abc.Callable[[str, str | None], rlm.core.types.RLMChatCompletion] | None = None, custom_tools: dict[str, typing.Any] | None = None, custom_sub_tools: dict[str, typing.Any] | None = None, compaction: bool = False, max_concurrent_subcalls: int = 4, **kwargs)
+LMHandler(client: rlm.clients.base_lm.BaseLM, host: str = '127.0.0.1', port: int = 0, other_backend_client: rlm.clients.base_lm.BaseLM | None = None, batch_max_concurrent: int = 16)
+RLMLogger(log_dir: str | None = None, file_name: str = 'rlm')
+ModelUsageSummary(total_calls: int, total_input_tokens: int, total_output_tokens: int, total_cost: float | None = None) -> None
+UsageSummary(model_usage_summaries: dict[str, rlm.core.types.ModelUsageSummary]) -> None
+PASS: pinned RLM imports; no model invocation performed
+
+STDERR:
