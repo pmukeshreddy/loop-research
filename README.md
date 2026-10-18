@@ -53,6 +53,8 @@ Run the full configured benchmark stream in deterministic order:
 .venv/bin/loop-research stream --benchmark wandr
 .venv/bin/loop-research stream --benchmark wandr --no-learning --base LEARNING_BASE_SHA
 .venv/bin/loop-research stream --benchmark widesearch --resume RUN_ID
+.venv/bin/loop-research baseline --benchmark wandr
+.venv/bin/loop-research baseline --benchmark wandr --resume
 .venv/bin/loop-research report
 ```
 
@@ -62,7 +64,11 @@ A new `--no-learning` run requires `--base SHA`, using the `base_sha` recorded i
 
 `--resume RUN_ID` continues the named archived stream with its original configuration, task order, mode, base and lineage. The supplied configuration and selected tasks must match the archive; incompatible settings or an externally changed lineage are rejected. Completed tasks and completed research/grading phases are reused. A worker interrupted before a durable research result is treated as a failed attempt and receives official empty-submission grading. Refinement, rollback, and finalization failures stop the stream with an archived phase and error; resume retries the unfinished phase. Persisted proposal and edit identities prevent committed edits from being applied twice. If official empty grading also fails, the task remains pending and the stream stays interrupted until it can be graded.
 
-The commands are `init`, `prepare-data`, `verify`, `research`, `stream`, and `report`. The previous round-based training and final-evaluation commands have been removed.
+The plain WANDR baseline uses the same seeded task order and `wandr.final_n_tasks` limit as both stream modes. It makes one Codex research call per task, with live web search, shell disabled, a read-only sandbox and an empty temporary working directory. It uses `models.root`, `models.reasoning_effort` and the full `agent.task_timeout_s`; transport retries and the shorter per-call timeout do not apply to this one call. Its prompt contains only the question, spec, resolved date and WANDR contract. The same contract supplies `--output-schema`, validation and submission adaptation, followed by the same official browser-fetch/Codex-judge verifier. It never loads harness contents or changes the harness, and checks Git HEAD before and after execution.
+
+Baseline `--resume` selects the latest baseline archive and requires identical settings, task content and harness HEAD. Completed research and grades are reused. A failed task receives official empty-submission grading, remains in every mean, and stops the run for investigation; resume continues with the next pending task. An interrupted call without a durable response is treated as failed, as in stream. Baseline archives always retain prompt, raw response, Codex events and web actions, regardless of `log_full_text`. Reports identify baseline separately, compare it with each compatible stream and plot its paired mean as a dashed reference line. The current config selects the first 50 tasks in the seeded order for all WANDR modes.
+
+The commands are `init`, `prepare-data`, `verify`, `research`, `stream`, `baseline`, and `report`.
 
 ## Evidence, grading and limits
 
@@ -101,6 +107,7 @@ runs/<run_id>/<task_id>/         research-only artifacts
   codex_attempts/                durable attempt starts
 reports/<run_id>/
   stream.json                   task order, base, outcomes, interruption phase/error
+  baseline.json                 plain baseline task order, outcomes and harness HEAD checks
   grading/                      official grades, grading checkpoints, diagnostics and judge caches
 reports/tasks.csv               task scores, failures and rolling means
 reports/learning_curve.png      rolling task-score means by stream

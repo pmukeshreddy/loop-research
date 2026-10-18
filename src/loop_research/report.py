@@ -1,4 +1,4 @@
-"""Tables and plots derived only from archived stream reports."""
+"""Tables and plots derived only from archived stream and baseline reports."""
 import copy
 import csv
 import io
@@ -55,7 +55,8 @@ def render_table(output):
 
 def _streams(root):
     streams = []
-    for path in sorted((root / 'reports').glob('*/stream.json')):
+    for path in sorted([*(root / 'reports').glob('*/stream.json'),
+                        *(root / 'reports').glob('*/baseline.json')]):
         manifest = read_json(path)
         config = Config.model_validate(manifest['config'])
         for field in ('as_of_date', 'task_digest'):
@@ -76,6 +77,7 @@ def _streams(root):
             scores = [row['score'] for row in window]
             rows.append({
                 'run_id': manifest['run_id'], 'benchmark': manifest['benchmark'],
+                'mode': _mode(manifest),
                 'learning': manifest['learning'], 'base_sha': manifest['base_sha'],
                 **task, 'status': 'failed' if task['error'] else 'succeeded',
                 'root_model': config.models.root, 'sub_model': config.models.sub,
@@ -95,11 +97,19 @@ def _execution_config(config):
     return result
 
 
+def _mode(manifest):
+    return 'baseline' if manifest.get('mode') == 'baseline' else 'learning' if manifest['learning'] else 'no-learning'
+
+
 def _comparison(learning, baseline):
-    if learning['learning'] is not True or baseline['learning'] is not False:
+    plain = _mode(baseline) == 'baseline'
+    if plain:
+        if _mode(learning) == 'baseline' or learning['benchmark'] != 'wandr':
+            return None
+    elif learning['learning'] is not True or baseline['learning'] is not False:
         return None
-    if any(learning[key] != baseline[key] for key in
-           ('benchmark', 'task_ids', 'task_digest', 'as_of_date', 'base_sha', 'judge')):
+    keys = ('benchmark', 'task_ids', 'task_digest', 'as_of_date', 'judge')
+    if any(learning[key] != baseline[key] for key in keys + (() if plain else ('base_sha',))):
         return None
     if _execution_config(learning['config']) != _execution_config(baseline['config']):
         return None
@@ -130,7 +140,7 @@ def _curve(path, streams):
                                figsize=(6 * columns, 4 * math.ceil(count / columns)))
     axes = list(grid.flat)
     for axis, (manifest, rows, _) in zip(axes, streams):
-        mode = 'learning' if manifest['learning'] else 'no-learning'
+        mode = _mode(manifest)
         window = manifest['config']['stream']['rolling_window']
         models = manifest['config']['models']
         metrics = sorted({row['primary_metric'] for row in rows if row['primary_metric'] is not None})
@@ -142,10 +152,22 @@ def _curve(path, streams):
         axis.title.set_fontsize(8)
         axis.grid(alpha=.2)
         axis.xaxis.set_major_locator(MaxNLocator(integer=True))
-        if rows:
+        if rows and mode != 'baseline':
             axis.plot([row['index'] for row in rows],
                       [row['rolling_mean'] for row in rows],
                       marker='o', markersize=3)
+        for reference, reference_rows, _ in streams:
+            if _mode(reference) != 'baseline' or not reference_rows:
+                continue
+            paired = _comparison(manifest, reference)
+            if mode == 'baseline' and reference['run_id'] == manifest['run_id']:
+                mean = sum(row['score'] for row in reference_rows) / len(reference_rows)
+            elif paired:
+                mean = paired[4]
+            else:
+                continue
+            axis.axhline(mean, linestyle='--', label='Plain Codex: ' + reference['run_id'])
+            axis.legend(fontsize=6)
         if not rows:
             axis.text(.5, .5, 'No archived task scores', ha='center', va='center', transform=axis.transAxes)
     if not streams:
@@ -163,7 +185,7 @@ def build_report(root):
     directory = root / 'reports'
     directory.mkdir(parents=True, exist_ok=True)
     streams = _streams(root)
-    fields = ['run_id', 'benchmark', 'learning', 'base_sha', 'index', 'task_id', 'status', 'score',
+    fields = ['run_id', 'benchmark', 'mode', 'learning', 'base_sha', 'index', 'task_id', 'status', 'score',
               'primary_metric', 'judge', 'root_model', 'sub_model', 'refine_model',
               'error', 'harness_before', 'harness_after',
               'rolling_window', 'rolling_scored', 'rolling_mean', 'source']
@@ -176,10 +198,13 @@ def build_report(root):
                              format(row[key], '.8g') if isinstance(row[key], float) else row[key] for key in fields})
     _write(directory / 'tasks.csv', buffer.getvalue())
     _curve(directory / 'learning_curve.png', streams)
-    lines = ['# Continual research report', '', 'Derived only from archived stream reports.', '',
+    lines = ['# Continual research report', '', 'Derived only from archived stream and baseline reports.', '',
              'Task details: [tasks.csv](tasks.csv). Every completed task has an official grader score.', '',
              'Rolling means include every completed task within the configured window, including '
-             'official empty-submission scores for failed tasks. Failures retain their errors.', '', '## Streams', '']
+             'official empty-submission scores for failed tasks. Failures retain their errors.', '',
+             'WANDR primary: full-lineage soft F1 (`soft_f1_full`); official harness primary: '
+             'full-lineage soft recall (`soft_recall_full`). Fetch: `wandr-browser`; judge: `codex/<model>`.', '',
+             '## Streams', '']
     if not streams:
         lines.append('No stream reports are archived.')
     else:
@@ -188,7 +213,7 @@ def build_report(root):
         for manifest, rows, path in streams:
             scores = [row['score'] for row in rows]
             models = manifest['config']['models']
-            values = [manifest['run_id'], manifest['benchmark'], 'learning' if manifest['learning'] else 'no-learning',
+            values = [manifest['run_id'], manifest['benchmark'], _mode(manifest),
                       manifest['as_of_date'],
                       f'{len(rows)} / {len(manifest["task_ids"])}', len(scores), sum(row['status'] == 'failed' for row in rows),
                       ', '.join(sorted({row['primary_metric'] for row in rows if row['primary_metric'] is not None})) or None,
@@ -222,7 +247,8 @@ def build_report(root):
               'starting harness, judge and execution settings. '
               'All jointly completed tasks contribute, including scored failures; pending interrupted tasks remain visible above. '
               'Logging and rolling-window settings do not affect eligibility.', '']
-    comparisons = [_comparison(left, right) for left, _, _ in streams for right, _, _ in streams]
+    comparisons = [_comparison(left, right) for left, _, _ in streams for right, _, _ in streams
+                   if _mode(right) != 'baseline']
     comparisons = [row for row in comparisons if row is not None]
     if comparisons:
         lines += ['| learning run | no-learning run | jointly scored / planned | learning mean | no-learning mean | difference |',
@@ -230,6 +256,20 @@ def build_report(root):
         lines.extend('| ' + ' | '.join(_text(value) for value in row) + ' |' for row in comparisons)
     else:
         lines.append('No comparable learning and no-learning streams with jointly scored tasks are archived.')
+    lines += ['', '## Plain Codex baseline comparisons', '',
+              'Each learning or no-learning stream is paired with the baseline on jointly completed task IDs, '
+              'requiring the same ordered task list, content, date, judge, metric and execution settings. '
+              'The baseline is independent of the starting harness. Dashed plot lines show its paired mean, '
+              'including failures.', '']
+    pairs = [_comparison(left, right) for left, _, _ in streams for right, _, _ in streams
+             if _mode(right) == 'baseline']
+    pairs = [pair for pair in pairs if pair is not None]
+    if pairs:
+        lines += ['| stream run | baseline run | jointly scored / planned | stream mean | baseline mean | difference |',
+                  '| --- | --- | --- | --- | --- | --- |']
+        lines.extend('| ' + ' | '.join(_text(value) for value in pair) + ' |' for pair in pairs)
+    else:
+        lines.append('No comparable WANDR streams and plain baselines with jointly scored tasks are archived.')
     path = directory / 'summary.md'
     _write(path, '\n'.join(lines) + '\n')
     return path

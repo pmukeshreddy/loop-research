@@ -225,3 +225,65 @@ def test_report_labels_resolved_as_of_date(tmp_path, config):
     summary = build_report(tmp_path).read_text()
     assert '| as-of date |' in summary
     assert '| 2026-09-01 |' in summary
+
+
+def save_baseline(root, config):
+    manifest = save_stream(root, 'plain', config, learning=None, scores=(.2, 0, .4),
+                           benchmark='wandr', mode='baseline', base_sha='independent-harness')
+    for task in manifest['tasks']:
+        task['primary_metric'] = 'soft_f1_full'
+    (root / 'reports/plain/stream.json').unlink()
+    write_json(root / 'reports/plain/baseline.json', manifest)
+    return manifest
+
+
+def test_baseline_reports_pair_both_modes_and_plot_reference_lines(tmp_path, config, monkeypatch):
+    import matplotlib.pyplot as plt
+    from loop_research.report import build_report
+    for name, learning in [('learn', True), ('fixed', False)]:
+        manifest = save_stream(tmp_path, name, config, learning=learning,
+                               benchmark='wandr', scores=(.6, .1, .8))
+        for task in manifest['tasks']:
+            task['primary_metric'] = 'soft_f1_full'
+        write_json(tmp_path / 'reports' / name / 'stream.json', manifest)
+    save_baseline(tmp_path, config)
+    figures = []
+    original = plt.subplots
+    def observe(*args, **kwargs):
+        figure, axes = original(*args, **kwargs)
+        figures.append(figure)
+        return figure, axes
+    monkeypatch.setattr(plt, 'subplots', observe)
+    summary = build_report(tmp_path).read_text()
+    assert '| plain | wandr | baseline |' in summary
+    assert '| learn | plain | 3 / 3 | 0.5 | 0.2 | 0.3 |' in summary
+    assert '| fixed | plain | 3 / 3 | 0.5 | 0.2 | 0.3 |' in summary
+    assert 'full-lineage soft F1' in summary and 'soft_recall_full' in summary
+    rows = list(csv.DictReader((tmp_path / 'reports/tasks.csv').open()))
+    assert {row['mode'] for row in rows} == {'baseline', 'learning', 'no-learning'}
+    assert sum(row['status'] == 'failed' for row in rows if row['mode'] == 'baseline') == 1
+    for axis in figures[0].axes:
+        reference = [line for line in axis.lines if line.get_label().startswith('Plain Codex')]
+        assert len(reference) == 1
+        assert list(reference[0].get_ydata()) == pytest.approx([.2, .2])
+
+
+@pytest.mark.parametrize('difference', ['task_ids', 'task_digest', 'as_of_date', 'config', 'metric'])
+def test_baseline_pairs_only_matching_tasks_settings_and_metrics(tmp_path, config, difference):
+    from loop_research.report import build_report
+    manifest = save_stream(tmp_path, 'learn', config, benchmark='wandr', scores=(.6, .1, .8))
+    for task in manifest['tasks']:
+        task['primary_metric'] = 'soft_f1_full'
+    write_json(tmp_path / 'reports/learn/stream.json', manifest)
+    other = save_baseline(tmp_path, config)
+    if difference == 'config':
+        other['config']['agent']['task_timeout_s'] += 1
+    elif difference == 'metric':
+        other['tasks'][0]['primary_metric'] = 'soft_recall_full'
+    elif difference == 'task_ids':
+        other['task_ids'].reverse()
+    else:
+        other[difference] = 'changed'
+    write_json(tmp_path / 'reports/plain/baseline.json', other)
+    summary = build_report(tmp_path).read_text()
+    assert '| learn | plain |' not in summary

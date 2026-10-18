@@ -249,3 +249,16 @@ def test_retry_attempts_have_distinct_identity_and_matching_completion(ctx):
     assert len({call['call_id'] for call in completed}) == len(starts) == 2
     assert {call['call_id'] for call in completed} == {call['call_id'] for call in starts}
     assert count_codex_calls(ctx.path) == 2
+
+
+def test_baseline_timeout_archives_web_actions_and_partial_stderr(ctx):
+    event = json.dumps({'type': 'item.completed', 'item': {'type': 'web_search',
+                       'action': {'type': 'open', 'url': 'https://example.org'}}})
+    def runner(command, **kwargs):
+        raise subprocess.TimeoutExpired(command, kwargs['timeout'],
+                                        output=event.encode(), stderr=b'partial stderr evidence')
+    with pytest.raises(CodexError):
+        CodexBackend(ctx, runner=runner).complete('fixture', purpose='baseline', web=True)
+    call, = read_jsonl(ctx.path / 'codex_calls.jsonl')
+    assert call['web_actions'] == [{'type': 'open', 'url': 'https://example.org'}]
+    assert 'partial stderr evidence' in (ctx.path / 'codex_stderr.txt').read_text()

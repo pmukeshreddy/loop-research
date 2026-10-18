@@ -197,6 +197,17 @@ def stream(ctx: typer.Context,
 
 
 @app.command()
+def baseline(ctx: typer.Context,
+             benchmark: Annotated[Benchmark, typer.Option(help="Benchmark for the plain Codex baseline.")],
+             resume: Annotated[bool, typer.Option("--resume", help="Continue the latest baseline run.")] = False):
+    """Run plain Codex on WANDR with official grading and no harness access."""
+    from .baseline import baseline as baseline_tasks
+    result = baseline_tasks(*settings(ctx), benchmark.value, resume=resume)
+    typer.echo("Archive: " + result['run_id'])
+    typer.echo("Report: " + str(ctx.obj[0] / 'reports' / result['run_id'] / 'baseline.json'))
+
+
+@app.command()
 def report(ctx: typer.Context):
     """Build a task CSV, rolling learning curve and summary from reports on disk."""
     from .report import build_report
