@@ -43,6 +43,20 @@ def test_jsonl_and_real_trajectory_fields(ctx):
     assert len(condensed_trajectory(path, 20)) == 20
 
 
+def test_codex_call_count_includes_pending_attempts_without_double_counting(ctx):
+    from loop_research.archive import count_codex_calls, write_json
+    log = ctx.path / "codex_calls.jsonl"
+    write_json(ctx.path / "codex_attempts/completed.json", {"call_id": "completed", "purpose": "root"})
+    write_json(ctx.path / "codex_attempts/pending.json", {"call_id": "pending", "purpose": "sub"})
+    write_json(ctx.path / "codex_attempts/judge.json", {"call_id": "judge", "purpose": "grade"})
+    append_json(log, {"call_id": "completed", "purpose": "root", "duration_s": .1})
+    append_json(log, {"call_id": "completed", "purpose": "root", "duration_s": .1})
+    append_json(log, {"purpose": "search", "duration_s": .1})  # Legacy completed call.
+    assert count_codex_calls(ctx.path) == 4
+    assert count_codex_calls(ctx.path, exclude_purposes=("grade",)) == 3
+    assert count_codex_calls(ctx.path / "empty") == 0
+
+
 def test_reflection_rejects_non_train_before_reading_archives(ctx, task):
     with pytest.raises(ValueError, match="train"):
         reflect([task], [ctx], ctx, set())
@@ -61,6 +75,33 @@ def test_reflection_validates_task_evidence_and_feedback(ctx, task):
     result = reflect([task], [ctx], ctx, {task.task_id}, backend=Backend())
     assert result.skill_feedback == {"sk_0001": "unused"}
     assert ctx.load("reflection.json")["ops"] == []
+
+
+@pytest.mark.parametrize("used", [[], ["sk_0001", "sk_0002"]])
+def test_reflection_sends_closed_strict_schema_for_rendered_skills(ctx, task, used):
+    ctx.path.mkdir(parents=True)
+    (ctx.path / "playbook.txt").write_text("\n".join(f"[{ident}] Check sources" for ident in used))
+    ctx.save("output.json", {"rows": []})
+    ctx.save("grade.json", {"errors": {}})
+
+    class Backend:
+        def complete(self, prompt, **kwargs):
+            schema = kwargs["schema"]
+            feedback = schema["properties"]["skill_feedback"]
+            assert feedback["additionalProperties"] is False
+            assert set(feedback["properties"]) == set(feedback["required"]) == set(used)
+            assert all(field == {"type": "string", "enum": ["helped", "hurt", "unused"]}
+                       for field in feedback["properties"].values())
+            edit = schema["$defs"]["EditOp"]
+            assert edit["additionalProperties"] is False
+            assert set(edit["required"]) == set(edit["properties"])
+            for name in ("id", "title", "body", "applies_to"):
+                assert {"type": "null"} in edit["properties"][name]["anyOf"]
+                assert "default" not in edit["properties"][name]
+            return json.dumps({"ops": [], "skill_feedback": {ident: "unused" for ident in used}})
+
+    result = reflect([task], [ctx], ctx, {task.task_id}, backend=Backend())
+    assert result.skill_feedback == {ident: "unused" for ident in used}
 
 
 @pytest.mark.parametrize("module", ["agent", "reflect", "repl_tools", "gate"])

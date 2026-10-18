@@ -1,4 +1,4 @@
-"""All tables in this module are hand-written fixtures, not benchmark data."""
+"""Grading uses hand-written fixtures; integrity checks use pinned release bytes."""
 import json
 import os
 import subprocess
@@ -94,3 +94,73 @@ def test_adapter_grade_preserves_metrics_and_label(ctx, benchmark, task, output,
     assert (ctx.path / "alignment.csv").exists()
     captured = capsys.readouterr()
     assert captured.out == captured.err == ""
+
+
+import pytest
+
+
+@pytest.mark.parametrize("verdict", [None, {}, {"idx_0": .5}, {"idx_0": True}, {"idx_1": 1}, {"idx_0": 1, "extra": 0}])
+def test_official_judge_rejects_malformed_scores(ctx, benchmark, verdict):
+    from loop_research.benchmarks.widesearch.grader import _BACKEND
+    class Judge:
+        def __init__(self):
+            self.ctx = ctx
+        def complete(self, prompt, **kwargs):
+            assert kwargs == {"purpose": "grade", "model": None}
+            return '```json\n' + json.dumps(verdict) + '\n```'
+    token = _BACKEND.set(Judge())
+    try:
+        metric = official_modules(benchmark.code)["src.evaluation.metric_utils"]
+        with pytest.raises(ValueError, match="judge"):
+            metric.llm_judge_column(["fixture-response"], ["fixture-target"], "Fixture criterion", "official-config")
+    finally:
+        _BACKEND.reset(token)
+    assert not list((ctx.path / "judge_cache").glob("*.json"))
+
+
+def test_official_judge_uses_codex_and_reuses_valid_verdict(ctx, benchmark):
+    from loop_research.benchmarks.widesearch.grader import _BACKEND
+    calls = []
+    class Judge:
+        def __init__(self):
+            self.ctx = ctx
+        def complete(self, prompt, **kwargs):
+            calls.append((prompt, kwargs))
+            return '```json\n{"idx_0": 1}\n```'
+    token = _BACKEND.set(Judge())
+    try:
+        metric = official_modules(benchmark.code)["src.evaluation.metric_utils"]
+        for _ in range(2):
+            assert metric.llm_judge_column(["fixture-response"], ["fixture-target"], "Fixture criterion", "official-config")[0] == [1]
+    finally:
+        _BACKEND.reset(token)
+    assert len(calls) == 1
+    assert calls[0][0] == metric.eval_column_prompt.format(criterion="Fixture criterion", response={"idx_0": {"response": "fixture-response", "target": "fixture-target"}})
+
+
+@pytest.mark.parametrize("filename", ["widesearch.jsonl", "widesearch_gold/ws_en_001.csv"])
+def test_preparation_rejects_corrupted_pinned_downloads(benchmark, monkeypatch, filename, widesearch_download):
+    import shutil
+    from loop_research.benchmarks.widesearch import data
+    shutil.copytree(widesearch_download, benchmark.download)
+    (benchmark.download / filename).write_text('corrupted fixture')
+    (benchmark.download / 'revision.json').write_text(json.dumps({'dataset': data.DATASET_REVISION, 'code': data.CODE_REVISION}))
+    def no_network(*args, **kwargs):
+        raise AssertionError('Existing downloads must be validated before reuse')
+    monkeypatch.setattr(data.urllib.request, 'urlopen', no_network)
+    with pytest.raises(ValueError, match='integrity'):
+        benchmark.prepare()
+
+
+def test_saved_splits_cannot_move_test_tasks_into_training(benchmark, task, monkeypatch):
+    from loop_research.archive import read_json, write_json
+    tasks = [task.model_copy(update={'task_id': f'fixture-{i}'}) for i in range(10)]
+    monkeypatch.setattr(benchmark, 'load_tasks', lambda: tasks)
+    benchmark.config.gate.val_batch_size = 2
+    benchmark.prepare_splits(42)
+    path = benchmark.root / 'data/splits.json'
+    saved = read_json(path)
+    saved['splits']['train'][0], saved['splits']['test'][0] = saved['splits']['test'][0], saved['splits']['train'][0]
+    write_json(path, saved)
+    with pytest.raises(ValueError, match='split'):
+        benchmark.split_tasks('train')

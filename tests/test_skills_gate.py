@@ -103,3 +103,95 @@ def test_gate_rejection_archived_before_validation(ctx, library):
     result = gate.consider(edit(body="Find fixture secret in the source."), library, "reject")
     assert not result["decision"]["accepted"]
     assert (ctx.path / "skills_rejected.jsonl").exists()
+
+
+@pytest.mark.parametrize("operation,ident", [("update", "sk_9999"), ("retire", "sk_9999"),
+                                             ("add", "sk_0001")])
+def test_gate_invalid_target_is_rejected_once_before_validation(ctx, library, operation, ident):
+    from loop_research.archive import read_jsonl
+    from loop_research.skills import commit_library
+    apply_op(library, edit())
+    commit_library(library, "Initial fixture skill")
+    before = library_sha(library)
+    def no_scores(*args):
+        raise AssertionError("Invalid skill targets must not trigger validation")
+    gate = SkillGate(ctx, {"id": "batch", "task_ids": ["val"]}, set(), no_scores)
+    op = edit(op=operation, id=ident)
+    result = gate.consider(op, library, "invalid-target")
+    assert result["done"] and not result["decision"]["accepted"]
+    assert ident in result["reason"]
+    assert gate.consider(op, library, "invalid-target") == result
+    assert read_jsonl(ctx.path / "skills_rejected.jsonl") == [result]
+    assert library_sha(library) == before
+
+
+def test_gate_does_not_turn_validation_failure_into_rejected_edit(ctx, library):
+    def failed_scores(*args):
+        raise RuntimeError("fixture evaluator failure")
+    gate = SkillGate(ctx, {"id": "batch", "task_ids": ["val"]}, set(), failed_scores)
+    with pytest.raises(RuntimeError, match="fixture evaluator failure"):
+        gate.consider(edit(), library, "failed-validation")
+    assert not (ctx.path / "gate_events/failed-validation.json").exists()
+    assert not (ctx.path / "skills_rejected.jsonl").exists()
+
+
+@pytest.mark.parametrize("crash_after_commit", [False, True])
+def test_gate_resumes_interrupted_accept_with_frozen_date(ctx, library, monkeypatch, crash_after_commit):
+    from datetime import date
+    from loop_research import gate as module
+    from loop_research.archive import read_json, read_jsonl
+    from loop_research.skills import git
+
+    gate = SkillGate(ctx, {"id": "batch", "task_ids": ["val"]}, set(),
+                     lambda directory, key: {"val": .6 if load_skills(directory) else .4})
+    commit = module.commit_library
+    def interrupted(directory, message):
+        if crash_after_commit:
+            commit(directory, message)
+        raise RuntimeError("simulated interruption")
+    class FirstDay:
+        @staticmethod
+        def today():
+            return date(2025, 1, 1)
+    monkeypatch.setattr(module, "date", FirstDay)
+    monkeypatch.setattr(module, "commit_library", interrupted)
+    with pytest.raises(RuntimeError, match="interruption"):
+        gate.consider(edit(), library, "resume")
+    assert not read_json(ctx.path / "gate_events/resume.json")["done"]
+    monkeypatch.setattr(module, "commit_library", commit)
+    monkeypatch.setattr(module, "date", date)
+    result = gate.consider(edit(), library, "resume")
+    assert result["done"] and library_sha(library) == result["skills_sha"]
+    assert load_skills(library)[0].gate.date == date(2025, 1, 1)
+    assert git(library, "rev-list", "--count", "HEAD") == "2"
+    assert len(read_jsonl(ctx.path / "skills_accepted.jsonl")) == 1
+    assert gate.consider(edit(), library, "resume") == result
+
+
+def test_gate_resumes_update_and_recovers_missing_event_log(ctx, library, monkeypatch):
+    from loop_research import gate as module
+    from loop_research.archive import read_jsonl
+    from loop_research.skills import commit_library
+    apply_op(library, edit())
+    commit_library(library, "Initial fixture skill")
+    candidate = edit(op="update", id="sk_0001", body="Check original sources before accepting any claim.")
+    gate = SkillGate(ctx, {"id": "batch", "task_ids": ["val"]}, set(),
+                     lambda directory, key: {"val": .6 if load_skills(directory)[0].body == candidate.body else .4})
+    commit = module.commit_library
+    def interrupt(*args):
+        raise RuntimeError("interruption")
+    monkeypatch.setattr(module, "commit_library", interrupt)
+    with pytest.raises(RuntimeError, match="interruption"):
+        gate.consider(candidate, library, "update")
+    monkeypatch.setattr(module, "commit_library", commit)
+    result = gate.consider(candidate, library, "update")
+    (ctx.path / "skills_accepted.jsonl").unlink()
+    assert gate.consider(candidate, library, "update") == result
+    assert len(read_jsonl(ctx.path / "skills_accepted.jsonl")) == 1
+
+
+def test_skill_round_trip_preserves_dashes_inside_yaml_values(library):
+    skill = Skill(id='sk_0001', title='Check --- separators', body='Keep source-specific formatting.',
+                  applies_to=['format'], source_tasks=['fixture'])
+    write_skill(library, skill)
+    assert parse_skill(library / 'sk_0001.md') == skill

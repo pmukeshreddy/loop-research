@@ -22,8 +22,22 @@ def task():
 @pytest.fixture
 def benchmark(tmp_path):
     benchmark = WideSearchData(tmp_path, Config())
-    benchmark.code = Path(__file__).resolve().parents[1] / ".verification/widesearch"
+    benchmark.code = widesearch_source("data/vendor/widesearch", ".verification/widesearch")
     return benchmark
+
+
+def widesearch_source(prepared, verification):
+    root = Path(__file__).resolve().parents[1]
+    for relative in (prepared, verification):
+        path = root / relative
+        if path.exists():
+            return path
+    pytest.fail("Pinned WideSearch files are missing; run loop-research prepare-data before pytest")
+
+
+@pytest.fixture
+def widesearch_download():
+    return widesearch_source("data/downloads/widesearch", ".verification/widesearch-dataset")
 
 
 @pytest.fixture

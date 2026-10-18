@@ -93,3 +93,77 @@ def test_hard_call_budget(ctx):
     budget.deadline = 0
     with pytest.raises(BudgetExceeded, match="deadline"):
         budget.remaining()
+
+
+def _offline_codex_process(ctx, index, started, ready, release):
+    def runner(command, **kwargs):
+        started[index].set()
+        assert release.wait(5)
+        Path(command[command.index('--output-last-message') + 1]).write_text('fixture response')
+        return SimpleNamespace(returncode=0, stdout='', stderr='')
+    ready[index].set()
+    CodexBackend(ctx, runner=runner).complete('fixture', purpose='root')
+
+
+def test_codex_limit_is_shared_by_worker_processes(ctx):
+    import multiprocessing
+    ctx.config.codex.max_concurrent = 1
+    mp = multiprocessing.get_context('spawn')
+    started = [mp.Event(), mp.Event()]
+    ready = [mp.Event(), mp.Event()]
+    release = mp.Event()
+    first, second = [mp.Process(target=_offline_codex_process, args=(ctx, index, started, ready, release))
+                     for index in range(2)]
+    first.start()
+    try:
+        assert started[0].wait(5)
+        second.start()
+        assert ready[1].wait(5)
+        assert not started[1].wait(.2), 'Second worker exceeded the global Codex limit'
+    finally:
+        release.set()
+        first.join(5)
+        if second.pid is not None:
+            second.join(5)
+    assert first.exitcode == second.exitcode == 0
+    assert started[1].is_set()
+
+
+def test_killed_codex_attempt_keeps_durable_start_without_fake_completion(ctx):
+    import multiprocessing
+    from loop_research.archive import count_codex_calls, read_json
+    mp = multiprocessing.get_context('spawn')
+    started, ready, release = [mp.Event()], [mp.Event()], mp.Event()
+    process = mp.Process(target=_offline_codex_process, args=(ctx, 0, started, ready, release))
+    process.start()
+    try:
+        assert started[0].wait(5)
+        assert (ctx.path / 'codex_calls.jsonl').exists()
+        starts = list((ctx.path / 'codex_attempts').glob('*.json'))
+        assert len(starts) == 1
+        record = read_json(starts[0])
+        assert record['call_id'] == starts[0].stem
+        assert record['purpose'] == 'root'
+        assert not {'usage', 'duration_s', 'exit_code', 'response'} & record.keys()
+    finally:
+        process.terminate()
+        process.join(5)
+    assert process.exitcode != 0
+    assert read_jsonl(ctx.path / 'codex_calls.jsonl') == []
+    assert count_codex_calls(ctx.path) == 1
+
+
+def test_retry_attempts_have_distinct_identity_and_matching_completion(ctx):
+    from loop_research.archive import count_codex_calls, read_json
+    ctx.config.codex.max_retries = 1
+    def runner(command, **kwargs):
+        starts = list((ctx.path / 'codex_attempts').glob('*.json'))
+        assert len(starts) == len(read_jsonl(ctx.path / 'codex_calls.jsonl')) + 1
+        return SimpleNamespace(returncode=1, stdout='', stderr='fixture failure')
+    with pytest.raises(CodexError):
+        CodexBackend(ctx, runner=runner, sleep=lambda _: None).complete('fixture', purpose='sub')
+    completed = read_jsonl(ctx.path / 'codex_calls.jsonl')
+    starts = [read_json(p) for p in (ctx.path / 'codex_attempts').glob('*.json')]
+    assert len({call['call_id'] for call in completed}) == len(starts) == 2
+    assert {call['call_id'] for call in completed} == {call['call_id'] for call in starts}
+    assert count_codex_calls(ctx.path) == 2

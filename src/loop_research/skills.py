@@ -1,5 +1,7 @@
 from datetime import date
 from pathlib import Path
+import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -70,7 +72,7 @@ class EditOp(Strict):
 
 def parse_skill(path):
     text = Path(path).read_text()
-    parts = text.split("---", 2)
+    parts = re.split(r"(?m)^---[ \t]*$", text, maxsplit=2)
     if len(parts) != 3 or parts[0].strip():
         raise ValueError(f"Invalid skill front matter: {path}")
     return Skill.model_validate({**yaml.safe_load(parts[1]), "body": parts[2].strip()})
@@ -81,7 +83,11 @@ def write_skill(directory, skill):
     directory.mkdir(parents=True, exist_ok=True)
     meta = skill.model_dump(mode="json", exclude={"body"})
     text = "---\n" + yaml.safe_dump(meta, sort_keys=False, allow_unicode=True) + "---\n\n" + skill.body.strip() + "\n"
-    (directory / (skill.id + ".md")).write_text(text)
+    with tempfile.NamedTemporaryFile(mode="w", dir=directory, delete=False) as pending:
+        pending.write(text)
+        pending.flush()
+        os.fsync(pending.fileno())
+    os.replace(pending.name, directory / (skill.id + ".md"))
 
 
 def load_skills(directory):

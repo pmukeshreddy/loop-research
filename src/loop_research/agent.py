@@ -7,9 +7,8 @@ import signal
 import subprocess
 import sys
 import tempfile
-import time
 from pydantic import BaseModel
-from .archive import RunContext, read_jsonl, write_json, read_json
+from .archive import RunContext, count_codex_calls, write_json, read_json
 from .codex_backend import CodexBackend, CallBudget
 from .config import Config
 from .repl_tools import ResearchTools, normalized_url
@@ -36,7 +35,8 @@ def parse_output(text, contract, backend):
         if attempt == 0:
             text = backend.complete("Reformat only the existing content to this JSON contract. "
                 "Do not research, add facts, rows, sources, or records. Remove malformed entries if needed.\n"
-                + contract.prompt + "\nExisting content:\n" + text, purpose="repair", schema=contract.schema)
+                + contract.prompt + "\nJSON schema:\n" + json.dumps(contract.schema, ensure_ascii=False)
+                + "\nExisting content:\n" + text, purpose="repair")
     return contract.empty, errors, True
 
 
@@ -78,7 +78,10 @@ def citation_check(output, ledger):
 
 
 def make_prompt(task, contract, playbook):
-    asof = task.as_of_date or date.today()
+    asof = task.as_of_date
+    if asof is None:
+        fallback = task.raw.get("fallback_as_of_date")
+        asof = date.fromisoformat(fallback) if fallback else date.today()
     source = "task" if task.as_of_date else "today_fallback"
     prompt = (f"TASK\n{task.question}\nSPEC\n{json.dumps(task.spec, ensure_ascii=False)}\n\n"
         f"AS-OF DATE\n{asof.isoformat()} (source: {source}). Honor all dates/periods in the task text.\n\n"
@@ -99,6 +102,7 @@ def make_prompt(task, contract, playbook):
 
 
 def run_task(task, benchmark, library_dir, run_ctx):
+    budget = CallBudget(run_ctx.config.agent.max_codex_calls, run_ctx.config.agent.task_timeout_s)
     run_ctx.path.mkdir(parents=True, exist_ok=True)
     contract = benchmark.output_contract(task)
     playbook = render_playbook(task, library_dir, run_ctx.config.skills.max_playbook_chars) if library_dir else ""
@@ -106,11 +110,11 @@ def run_task(task, benchmark, library_dir, run_ctx):
     (run_ctx.path / "prompt.txt").write_text(prompt)
     (run_ctx.path / "playbook.txt").write_text(playbook)
     run_ctx.save("task.json", task.model_dump(mode="json"))
-    started = time.monotonic()
     with tempfile.TemporaryDirectory(prefix="loop-task-") as tmp:
         tmp = Path(tmp)
         request = {"root": str(run_ctx.root), "run_id": run_ctx.run_id, "task_id": run_ctx.task_id,
                    "config": run_ctx.config.model_dump(), "prompt": prompt,
+                   "deadline": budget.deadline,
                    "result_path": str(tmp / "result.json")}
         write_json(tmp / "request.json", request)
         env = os.environ.copy()
@@ -118,19 +122,26 @@ def run_task(task, benchmark, library_dir, run_ctx):
         with (run_ctx.path / "worker.log").open("a") as log:
             process = subprocess.Popen([sys.executable, "-m", "loop_research.agent", str(tmp / "request.json")],
                 cwd=tmp, env=env, stdout=log, stderr=log, start_new_session=True)
+            finished = False
             try:
-                code = process.wait(timeout=run_ctx.config.agent.task_timeout_s)
+                code = process.wait(timeout=budget.remaining())
+                finished = True
             except subprocess.TimeoutExpired as exc:
-                os.killpg(process.pid, signal.SIGKILL)
-                process.wait()
                 raise TimeoutError("Task hard deadline exceeded") from exc
+            finally:
+                if not finished:
+                    try:
+                        os.killpg(process.pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass  # The worker may have exited between interruption and cleanup.
+                    process.wait()
         if code:
             raise RuntimeError(f"Research worker failed ({code}); see {run_ctx.path / 'worker.log'}")
         result = read_json(tmp / "result.json")
-        budget = CallBudget(run_ctx.config.agent.max_codex_calls,
-            max(.001, run_ctx.config.agent.task_timeout_s - (time.monotonic() - started)))
-        budget.count = len([c for c in read_jsonl(run_ctx.path / "codex_calls.jsonl") if c['purpose'] != 'grade'])
+        budget.remaining()
+        budget.count = count_codex_calls(run_ctx.path, exclude_purposes=("grade",))
         output, errors, repaired = parse_output(result["text"], contract, CodexBackend(run_ctx, budget=budget))
+        budget.remaining()
     result = AgentResult(output=output, errors=errors, repaired=repaired,
         uncited=citation_check(output, run_ctx.load("url_ledger.json", [])), as_of_date=asof, date_source=source)
     run_ctx.save("output.json", output)
@@ -150,14 +161,15 @@ def worker(request_path):
     config = Config.model_validate(request["config"])
     ctx = RunContext(Path(request["root"]), request["run_id"], config, request["task_id"])
     budget = CallBudget(config.agent.max_codex_calls, config.agent.task_timeout_s)
-    budget.count = len([c for c in read_jsonl(ctx.path / "codex_calls.jsonl") if c['purpose'] != 'grade'])
+    budget.deadline = request.get("deadline", budget.deadline)
+    budget.count = count_codex_calls(ctx.path, exclude_purposes=("grade",))
     backend = CodexBackend(ctx, budget=budget)
     tools = ResearchTools(backend, ctx)
-    logger = RLMLogger()
+    logger = RLMLogger(log_dir=str(ctx.path))
     logger.log_file_path = str(ctx.path / "trajectory.jsonl")
     rlm = CodexRLM(backend, root_model=config.models.root, sub_model=config.models.sub,
         max_depth=config.rlm.max_depth, max_iterations=config.rlm.max_iterations,
-        max_timeout=config.agent.task_timeout_s, max_concurrent_subcalls=config.codex.max_concurrent,
+        max_timeout=budget.remaining(), max_concurrent_subcalls=config.codex.max_concurrent,
         custom_tools=tools.injected(), logger=logger)
     result = rlm.completion(request["prompt"], root_prompt=request["prompt"])
     write_json(Path(request["result_path"]), {"text": result.response})

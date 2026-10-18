@@ -46,6 +46,19 @@ def read_jsonl(path: Path):
     return [json.loads(x) for x in path.read_text().splitlines() if x.strip()] if path.exists() else []
 
 
+def count_codex_calls(directory: Path, *, exclude_purposes=()):
+    """Count dispatched attempts, including interrupted calls, once per identity."""
+    calls = {record["call_id"]: record for path in (directory / "codex_attempts").glob("*.json")
+             if (record := read_json(path)) is not None}
+    legacy = []
+    for record in read_jsonl(directory / "codex_calls.jsonl"):
+        if record.get("call_id"):
+            calls[record["call_id"]] = record
+        else:
+            legacy.append(record)
+    return sum(record["purpose"] not in exclude_purposes for record in [*calls.values(), *legacy])
+
+
 @dataclass
 class RunContext:
     root: Path
@@ -82,7 +95,8 @@ class RunContext:
         existing = self.load("config.json")
         if existing is not None and existing != snapshot:
             raise ValueError("Cannot resume with changed configuration")
-        self.save("config.json", snapshot)
+        if existing is None:
+            self.save("config.json", snapshot)
         sha_file = self.path / "skills_sha.txt"
         if sha_file.exists() and sha_file.read_text().strip() != skills_sha:
             raise ValueError("Run library identity changed")

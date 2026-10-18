@@ -46,6 +46,13 @@ def reflect(tasks, contexts, run_ctx, train_ids, backend=None):
         "every skill actually present in the playbooks.\n" + json.dumps(examples, ensure_ascii=False))
     schema = Reflection.model_json_schema()
     schema["properties"]["ops"]["maxItems"] = run_ctx.config.reflect.max_ops
+    edit = schema["$defs"]["EditOp"]
+    edit["required"] = list(edit["properties"])
+    for field in edit["properties"].values():
+        field.pop("default", None)
+    schema["properties"]["skill_feedback"] = {"type": "object", "additionalProperties": False,
+        "properties": {ident: {"type": "string", "enum": ["helped", "hurt", "unused"]} for ident in sorted(used)},
+        "required": sorted(used)}
     text = (backend or CodexBackend(run_ctx)).complete(prompt, purpose="reflect", schema=schema,
                                                       model=run_ctx.config.models.reflect)
     result = Reflection.model_validate_json(text)

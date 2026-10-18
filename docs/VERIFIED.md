@@ -1,3 +1,5 @@
+> Current status: the complete WideSearch/WANDR implementation and key-free WANDR adaptation supersede the historical deferral below. See “Implementation completion” and the final “Open questions” section at the end.
+
 # Verify-first findings
 
 Checked on 2026-10-18 in `/Users/mukeshreddypochamreddy/Desktop/loop-research`.
@@ -412,7 +414,7 @@ There are no working `atlas-rlm` commands to run yet. Supply the missing officia
 distribution first; implementation and unit tests must follow before a runnable
 project setup/live-command sequence can honestly be provided.
 
-## Current verification status (WideSearch + deferred WANDR)
+## Historical verification status (WANDR deferral later revoked)
 
 The preceding ATLAS findings are preserved as history, not current requirements.
 RLM and Codex pins and findings above remain unchanged. No live model call or
@@ -599,9 +601,9 @@ $ git -C .verification/wandr checkout --detach ccb0baeb96f1c77a48e47f92122c57479
 HEAD is now at ccb0bae Merge pull request #6 from perplexityai/codex/add-integration-attribution
 ```
 
-## Open questions
+## Superseded open questions
 
-- **Deferred WANDR:** need an official harness revision with a documented
+- **Previously deferred WANDR:** need an official harness revision with a documented
   key-free fetch mode before WANDR execution/grading/cache/live tests can be
   implemented. User explicitly chose to defer, so no API key or permission to
   use a paid service is requested. Existing pins are retained as evidence;
@@ -639,3 +641,181 @@ WideSearch and WANDR checkouts remain unmodified.
 All project files are currently untracked against an empty repository HEAD, so
 plain `git diff --stat` produces no output. A before/after source comparison for
 this cleanup is preserved in [evidence/cleanup-diff-stat.txt](evidence/cleanup-diff-stat.txt).
+
+## WANDR reactivation: authorized service adapters
+
+The user revoked the WANDR deferral and explicitly authorized browser-primary
+fetching plus Codex subscription judging. The on-disk spec still contains the
+earlier stop clause; this later user instruction controls. Keep the original
+dataset and harness pins. No provider keys may be used. Full-lineage soft F1
+remains the project primary metric; upstream PRIMARY_REWARD is full soft recall.
+Every WANDR report must label `fetch: wandr-browser` and `judge: codex/<model>`.
+
+Verified integration boundaries (paths relative to the pinned WANDR checkout):
+
+- `adapters/wandr/src/wandr/origin/wandr_core/src/components.py:280–288` calls
+  Perplexity through `fetch_pages`; replace the pipeline's binding to that
+  service function with batched calls to unchanged `browser_fetch` (335–336).
+  Browser retries, URL validation, Camoufox navigation, text extraction and
+  excerpt windowing remain at `components.py:299–318`. Browser output supplies
+  `page_text`; the adapter supplies that same text as `content` for the unchanged
+  triage stage. No page text, titles, metadata or verdicts are synthesized.
+- Wire the fetch service's pool through unchanged `create_browser_pool`
+  (`src/runtime/clients.py:95–119`), using one browser per concurrent fetch
+  worker. Set the fetch service's batch/client-load to one and its concurrency
+  to the existing browser-concurrency setting. Keep browser fallback disabled:
+  browser fetching is now primary and the only retrieval service.
+- `src/runtime/llm.py:23–74` is the unmodified judge-call boundary for triage,
+  canon, dedup and final judgment. It builds exact system/user messages and
+  invokes `client.beta.chat.completions.parse` or `client.chat.completions.create`.
+  Replace the client pool binding in `src/pipeline.py:39–41` with a Codex-backed
+  client; keep this function and all stage prompts/schemas/parsing unchanged.
+  Schema conversion uses the installed OpenAI SDK's offline
+  `type_to_response_format_param`; response parsing uses that same SDK's
+  `_parse_content` (the content parser used by `parse_chat_completion`). These utilities make no API calls. SDK parameter
+  signatures were inspected locally before integration.
+- The service auth preflight `task-template/tests/verify.py:97–99` assumes
+  an OpenAI API key. Its project adapter instead validates the actual
+  `codex login status` ChatGPT result. This is auth wiring for the judge
+  replacement, not a fake key or a scoring change.
+- Execute the unchanged generated `tests/verify.py:282–325` entrypoint in
+  a fresh subprocess for each task. This preserves validation, healing,
+  schema failures, hierarchical metrics and artifact construction.
+- Original judge caches in `src/pipeline.py:208–216,395–417` key task evaluator
+  fingerprint, canonical entity keys, URL, answer/excerpt hashes, page text and
+  aliases. Keep them; an additional atomic transport-response cache prevents
+  repeating finished calls if interrupted before upstream's buffered cache
+  is flushed (`runtime/modifiers.py:45,68–193`, default flush batch is 25).
+
+Data inspection found every release root has a matching generated task package.
+Some HF instructions omit embedded artifacts; the loader uses the matching
+canonical package instruction in those cases. It never substitutes synthetic
+text. The dataset's benchmark-construction metadata is not sent to the agent.
+
+Browser installation output is recorded in `evidence/wandr-browser-install.txt`.
+Only installation and offline import/browser readiness checks are permitted
+during this build; no page fetch, judge call, or benchmark run is authorized.
+
+
+## Implementation completion (2026-10-18)
+
+The initial state was committed first as `52dcc36` (`Save verified sources,
+research components, and offline tests`). The earlier ATLAS and WANDR-deferral
+findings remain as historical evidence; WANDR is now implemented under the
+user's explicit browser-primary/Codex authorization. No upstream source was edited.
+
+### Exact WANDR adaptation
+
+Project paths below are relative to this repository. Upstream paths are relative
+to `data/vendor/wandr` at `ccb0baeb96f1c77a48e47f92122c57479ee99700`.
+The generated package used to inspect the integration is
+`datasets/wandr/abm-provider-commercial-provenance/tests`; each release task
+runs its own corresponding generated package in a fresh Python process.
+
+| Service binding | Original function | Project replacement |
+| --- | --- | --- |
+| Fetch operation | `adapters/wandr/src/wandr/origin/wandr_core/src/components.py:284` (`fetch_pages`), imported by `src/pipeline.py:27` | `src/loop_research/benchmarks/wandr/grader.py:76` (`browser_pages`), bound at line 90; calls the original `components.browser_fetch` at upstream line 335 |
+| Fetch pool | Upstream `src/runtime/clients.py:70` (`create_fetch_pool`), imported by `src/pipeline.py:40` | Original `create_browser_pool` at upstream `src/runtime/clients.py:95`, bound by project `grader.py:91`; batch/client load 1, existing browser concurrency, no fallback fetch |
+| Judge pool | Upstream `src/runtime/clients.py:78` (`create_openai_pool`), imported by `src/pipeline.py:41` | Project `grader.py:87` (`judge_pool`), bound at line 95; returns `CodexTransport` (lines 24–68) |
+| Judge auth preflight | `adapters/wandr/src/wandr/task-template/tests/verify.py:97` (`_validate_runtime_env`) | Project `grader.py:18` (`subscription_auth`), bound at line 96; checks real ChatGPT login, supplies no fake key |
+
+These are two service substitutions and their pool/auth wiring. The unmodified
+upstream `src/runtime/llm.py:23` still builds the original role messages and
+parses through the same response interface. The adapter uses the exact offline
+OpenAI SDK strict-schema converter and content parser from **openai 3.35.1**.
+Installed paths, source line numbers and function bodies are captured in
+[evidence/wandr-adapter-verification.txt](evidence/wandr-adapter-verification.txt).
+The model request's system/user strings are preserved verbatim as a JSON role
+transcript. The required Codex component instruction is prepended by the shared
+backend. All grading stages use `models.root` (or Codex default), with configured
+`models.reasoning_effort`. Original model/token-limit/provider parameters are
+retained in the transport cache; unverified provider controls are not translated
+to invented CLI flags. Judge substitution therefore does not claim identical
+model behavior to the upstream provider.
+
+Per-browser serialization prevents the upstream enqueue-time round robin
+(`src/runtime/node.py:109–121`) from navigating a single page concurrently.
+Cancelled upstream waits leave a shared in-flight Codex call running; its parsed
+response is persisted inside the worker thread, so healing can reuse it.
+Upstream triage/canon/dedup/judge timeouts, retry/healing policy, prompt templates,
+validation, hierarchy and metric computations remain unchanged. Atomic project
+response caching complements the untouched original task/record/URL caches.
+
+Project `grader.py:117–144` invokes the original generated verifier `main`, reads
+its actual artifacts, preserves all twelve official metrics and the official
+`grade`/`reward` soft-recall aliases, and labels human-readable reports. Project
+primary: `soft_f1_full`; harness primary: `soft_recall_full`. Provenance is
+`fetch: wandr-browser`, `judge: codex/<model>`. Excerpt failures count actual false
+`excerpts_faithful` judgments divided by actual boolean judgments; no judgments
+means `null`, not a fabricated zero. Original full verdicts and unjudged counts
+are retained. Invalid submissions use only the original harness's zero rewards.
+
+`src/loop_research/benchmarks/wandr/data.py:46–61` loads all 500 scored roots.
+Four missing HF instruction bodies use their exact canonical generated
+`instruction.md`. All required filenames and subtask structures come from the
+pinned release. Agent `answer` objects remain free-form; repair includes the
+contract in its prompt and validates locally because Codex strict output schemas
+cannot represent an open object. Reflection uses a closed schema with every
+nullable edit property required and feedback keys limited to rendered skill IDs.
+
+### Installation and offline checks
+
+The public pinned sources already inspected under `.verification/` were copied
+into the Section 4 `data/vendor/` and `data/downloads/` locations. `prepare-data`
+then checked their pins/content and wrote all deterministic selection files.
+WideSearch checks every release file against the pinned Git blob hashes in its
+packaged `manifest.json`; the original metadata response is retained in
+[evidence/widesearch-pinned-tree.json](evidence/widesearch-pinned-tree.json).
+
+Commands executed without model calls:
+
+```text
+uv pip install --python .venv/bin/python -e '.[test]'
+python -m camoufox fetch
+python -m camoufox path
+python -m camoufox active
+PYTHONPATH=src .venv/bin/python -m loop_research.cli init
+PYTHONPATH=src .venv/bin/python -m loop_research.cli prepare-data
+PYTHONPATH=src .venv/bin/python -m loop_research.cli verify
+uv pip install --python .venv/bin/python --reinstall-package loop-research '.[test]'
+.venv/bin/loop-research verify
+.venv/bin/python -m pytest
+uvx ruff check src tests --select F --output-format concise
+```
+
+Camoufox installed successfully; the official `BrowserClient` launched and
+navigated only to `about:blank`. The complete successful verification table is
+[evidence/final-verify.txt](evidence/final-verify.txt). It confirms Codex 0.163.0,
+ChatGPT login, required flags, installed RLM SHA/source hashes, both dataset/code
+pins and browser readiness. No model capability or benchmark score is inferred
+from these checks.
+
+This environment assigned macOS `UF_HIDDEN` to the editable installation's `.pth`
+file; Python 3.12 `site.py:176–182` skips hidden `.pth` files. Tests and worker
+subprocesses explicitly use the project source path; the delivered CLI is installed
+as a normal wheel, and README recommends a normal installation. This is an
+installation issue, not a reason to skip a check. The installed wheel matches
+all tested package source/manifest files; see
+[evidence/final-installation.txt](evidence/final-installation.txt).
+
+The offline suite includes actual pinned WideSearch scoring on hand-written
+fixtures, the unchanged WANDR pipeline through all four judging stages on
+hand-written fixtures, real upstream invalid-submission handling, cache hits and
+misses, cancellation/concurrency, import boundaries, CLI guards, resumable gate
+commits, reflection schemas, citation/repair paths, and paired final evaluation.
+All external responses in these tests are declared test fixtures. Exactly three
+`live` tests are opt-in and are not part of the executed suite.
+
+Final result: **141 passed, 3 live tests deselected in 12.60 seconds**. Static unused-import/name checks and `git diff --check` also passed.
+
+Full final unit output is retained in
+[evidence/final-unit-tests.txt](evidence/final-unit-tests.txt). No tests or checks
+were skipped or weakened to obtain a pass. The three live tests are deselected
+by the requested default test configuration.
+
+## Open questions
+
+None block implementation or the verified local setup. Live Codex/web behavior,
+real research/grades, improvement cycles and final evaluations remain unexecuted
+at the user's explicit request. The user must run those commands to validate live
+availability and outcomes; no live success or benchmark performance is claimed.

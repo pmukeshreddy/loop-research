@@ -1,5 +1,6 @@
 """Task metadata and pinned acquisition. Never opens gold tables."""
 import csv
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -15,6 +16,14 @@ DATASET_REVISION = "6531a7e5b497d44c8912407e0cb3dc95bd98cc09"
 CODE_REVISION = "9825ba7b140b71d81b364793f86dabe4cfed6749"
 REPO = "https://github.com/ByteDance-Seed/WideSearch.git"
 DATASET = "https://huggingface.co/datasets/ByteDance-Seed/WideSearch/resolve/" + DATASET_REVISION
+MANIFEST = json.loads(Path(__file__).with_name("manifest.json").read_text())
+
+
+def verify_payload(filename, payload):
+    """Validate bytes against Git blob IDs from the pinned Hugging Face tree."""
+    actual = hashlib.sha1(f"blob {len(payload)}\0".encode() + payload).hexdigest()
+    if MANIFEST["revision"] != DATASET_REVISION or actual != MANIFEST["files"][filename]:
+        raise ValueError(f"WideSearch dataset integrity check failed: {filename}")
 
 
 class Cell(BaseModel):
@@ -76,19 +85,18 @@ class WideSearchData:
         self.download.mkdir(parents=True, exist_ok=True)
         def download(filename):
             path = self.download / filename
-            if not path.exists():
+            if path.exists():
+                verify_payload(filename, path.read_bytes())
+            else:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 with urllib.request.urlopen(DATASET + "/" + filename, timeout=120) as response:
                     payload = response.read()
+                verify_payload(filename, payload)
                 temporary = path.with_suffix(path.suffix + ".part")
                 temporary.write_bytes(payload)
                 temporary.replace(path)
-        download("widesearch.jsonl")
-        download("README.md")
-        # Only filenames are read here; table contents remain grader-only.
-        ids = [json.loads(line)["instance_id"] for line in (self.download / "widesearch.jsonl").read_text().splitlines()]
         with ThreadPoolExecutor(max_workers=8) as pool:
-            list(pool.map(download, [f"widesearch_gold/{task_id}.csv" for task_id in ids]))
+            list(pool.map(download, MANIFEST["files"]))
         if not self.code.exists():
             self.code.parent.mkdir(parents=True, exist_ok=True)
             subprocess.run(["git", "clone", "--quiet", "--no-checkout", REPO, str(self.code)], check=True)
@@ -96,6 +104,11 @@ class WideSearchData:
         self.verify_code()
         write_json(self.download / "revision.json", {"dataset": DATASET_REVISION, "code": CODE_REVISION})
         self.prepare_splits(self.config.data.seed)
+
+    def verify_data(self):
+        # Acquisition integrity only; no gold values are parsed or returned to a solver.
+        for filename in MANIFEST["files"]:
+            verify_payload(filename, (self.download / filename).read_bytes())
 
     def verify_code(self):
         sha = subprocess.check_output(["git", "-C", str(self.code), "rev-parse", "HEAD"], text=True).strip()
@@ -132,6 +145,9 @@ class WideSearchData:
         if not meta or meta["revision"] != DATASET_REVISION or meta["seed"] != self.config.data.seed or meta["languages"] != self.config.data.languages or meta["ratios"] != self.config.data.split.model_dump():
             raise ValueError("Prepare data with matching configuration first")
         tasks = {t.task_id: t for t in self.load_tasks()}
+        if meta["splits"] != deterministic_split(list(tasks.values()), self.config.data.seed,
+                                                self.config.data.split.model_dump()):
+            raise ValueError("Saved splits differ from the deterministic dataset partition")
         return [tasks[x] for x in meta["splits"][name]]
 
 

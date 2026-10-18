@@ -1,8 +1,10 @@
 from datetime import date
 from difflib import SequenceMatcher
+from pathlib import Path
 import re
-from .archive import append_json, digest, read_json, write_json
-from .skills import (GateMetadata, assign_id, apply_op, load_skills, library_sha, staged_library, commit_library, normalize_text)
+from .archive import append_json, digest, read_json, read_jsonl, write_json
+from .skills import (GateMetadata, Skill, assign_id, load_skills, library_sha, staged_library,
+                     commit_library, normalize_text, parse_skill, write_skill)
 
 
 def filter_edit(op, library, leakage_index, threshold):
@@ -57,30 +59,52 @@ class SkillGate:
         event_path = self.ctx.path / "gate_events" / (event_id + ".json")
         saved = read_json(event_path)
         if saved and saved.get("done"):
+            self._record(saved)
             return saved
         if saved and saved.get("decision", {}).get("accepted"):
             return self._finish_accept(saved, event_path, library)
-        op = assign_id(op, library)
-        reason = filter_edit(op, library, self.index, self.ctx.config.gate.dedup_threshold)
+        existing = {skill.id for skill in load_skills(library)}
+        if op.op == "add" and op.id in existing:
+            reason = f"invalid target: skill {op.id} already exists; use update"
+        elif op.op != "add" and op.id not in existing:
+            reason = f"invalid target: unknown skill {op.id}"
+        else:
+            op = assign_id(op, library)
+            reason = filter_edit(op, library, self.index, self.ctx.config.gate.dedup_threshold)
         if reason:
-            saved = {"done": True, "op": op.model_dump(), "decision": {"accepted": False}, "reason": reason}
+            saved = {"done": True, "op": op.model_dump(), "decision": {"accepted": False},
+                     "event_id": event_id, "reason": reason}
         else:
             baseline_sha = library_sha(library)
             baseline = self.scores(library, baseline_sha)
             with staged_library(library, op) as (staged, applied):
                 candidate_key = digest({"parent": baseline_sha, "op": applied.model_dump()})
                 candidate = self.scores(staged, candidate_key)
+                skill = parse_skill(staged / (applied.id + ".md"))
             decision = gate_decision(baseline, candidate, self.ctx.config.gate)
             saved = {"done": False, "op": applied.model_dump(), "decision": decision,
-                     "baseline_sha": baseline_sha, "scores": candidate, "event_id": event_id,
+                     "baseline_sha": baseline_sha, "baseline_scores": baseline,
+                     "baseline_cache_key": self.cache_key(baseline_sha),
+                     "candidate_cache_key": self.cache_key(candidate_key),
+                     "scores": candidate, "event_id": event_id,
                      "reason": "validation gain/regression limits"}
             if decision["accepted"]:
+                skill.gate = GateMetadata(val_batch=self.batch["id"], baseline=decision["baseline"],
+                    with_edit=decision["with_edit"], delta=decision["delta"],
+                    repeats=self.ctx.config.gate.repeats, date=date.today())
+                saved["skill"] = skill.model_dump(mode="json")
                 write_json(event_path, saved)
                 return self._finish_accept(saved, event_path, library)
             saved["done"] = True
         write_json(event_path, saved)
-        append_json(self.ctx.path / "skills_rejected.jsonl", saved)
+        self._record(saved)
         return saved
+
+    def _record(self, saved):
+        name = "skills_accepted.jsonl" if saved["decision"]["accepted"] else "skills_rejected.jsonl"
+        path = self.ctx.path / name
+        if not any(item.get("event_id") == saved["event_id"] for item in read_jsonl(path)):
+            append_json(path, saved)
 
     def _finish_accept(self, saved, path, library):
         from .skills import EditOp, git
@@ -92,12 +116,17 @@ class SkillGate:
             if git(library, "log", "-1", "--format=%s") != message or git(library, "rev-parse", "HEAD^") != saved["baseline_sha"]:
                 raise ValueError("Skills changed outside the pending gate transaction")
         else:
-            metadata = GateMetadata(val_batch=self.batch["id"], baseline=decision["baseline"],
-                with_edit=decision["with_edit"], delta=decision["delta"], repeats=self.ctx.config.gate.repeats, date=date.today())
-            apply_op(library, op, metadata)
+            skill = Skill.model_validate(saved["skill"])
+            filename = op.id + ".md"
+            dirty = set(git(library, "diff", "--name-only", "HEAD").splitlines())
+            dirty.update(git(library, "ls-files", "--others", "--exclude-standard").splitlines())
+            if dirty and (dirty != {filename} or
+                          parse_skill(Path(library) / filename) != skill):
+                raise ValueError("Skills changed outside the pending gate transaction")
+            write_skill(library, skill)
             commit_library(library, message)
         saved.update(done=True, skills_sha=library_sha(library))
         write_json(self.ctx.root / "runs/gate_cache" / (self.cache_key(saved["skills_sha"]) + ".json"), saved["scores"])
         write_json(path, saved)
-        append_json(self.ctx.path / "skills_accepted.jsonl", saved)
+        self._record(saved)
         return saved

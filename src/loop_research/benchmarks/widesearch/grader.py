@@ -1,5 +1,6 @@
 """Load unchanged pinned scoring source; replace only its provider transport."""
 import builtins
+import ast
 from collections import Counter
 from contextlib import redirect_stdout
 from contextvars import ContextVar
@@ -37,14 +38,23 @@ def official_modules(code):
             key = digest({"prompt": prompt, "code": CODE_REVISION, "config": backend.ctx.config.model_dump()})
             path = backend.ctx.path / "judge_cache" / (key + ".json")
             cached = read_json(path)
-            if cached is not None:
-                return SimpleNamespace(content=cached["content"])
-            response = backend.complete(prompt, purpose="grade", model=backend.ctx.config.models.root)
+            response = cached["content"] if cached is not None else backend.complete(
+                prompt, purpose="grade", model=backend.ctx.config.models.root)
             # The official parser expects fenced JSON; fail a malformed judge rather than silently awarding zeros.
             parsed = private["src.evaluation.metric_utils"].parse_markdown_json(response)
             if not isinstance(parsed, dict):
                 raise ValueError("Official judge response did not contain a fenced JSON object")
-            write_json(path, {"content": response})
+            metric = private["src.evaluation.metric_utils"]
+            if prompt.startswith(metric.eval_column_prompt.split("\n", 1)[0]):
+                items = ast.literal_eval(prompt.split("====== response-start ======\n", 1)[1]
+                                         .rsplit("\n====== response-end ======", 1)[0])
+                if set(parsed) != set(items) or any(type(score) is not int or score not in (0, 1)
+                                                   for score in parsed.values()):
+                    raise ValueError("Official judge must return one binary integer score for every requested item")
+            elif any(not isinstance(value, str) for value in parsed.values()):
+                raise ValueError("Official judge alignment must map strings to strings")
+            if cached is None:
+                write_json(path, {"content": response})
             return SimpleNamespace(content=response)
         bridge.llm_completion = llm_completion
         private["src.utils.llm"] = bridge
