@@ -146,7 +146,8 @@ def generate_seed(config, bundle, sources, graph_id, store, journal, gateway, in
     for revision in range(config.max_revisions + 1):
         task_id = seed_id + f"-v{revision}"
         try:
-            proposal = gateway.call("generator", "seed", {"graph": bundle.model_dump(mode="json"),
+            operation = "web_seed" if config.research_mode == "open_web" else "seed"
+            proposal = gateway.call("generator", operation, {"graph": bundle.model_dump(mode="json"),
                                     "scope": config.scope.model_dump(mode="json"), "as_of": str(config.as_of),
                                     "prior_questions": prior, "revision_feedback": feedback}, SeedProposal, task_id)
             candidate = make_seed(proposal, config, bundle, sources, task_id, seed_id, revision, graph_id)
@@ -204,7 +205,8 @@ def expand_layers(parent, config, store, journal, gateway):
             for revision in range(config.max_revisions + 1):
                 task_id = parent.seed_id + f"-l{layer}-leaf{index}-v{revision}"
                 try:
-                    proposal = gateway.call("expander", "expand", {"parent": parent.model_dump(mode="json"),
+                    operation = "web_expand" if config.research_mode == "open_web" else "expand"
+                    proposal = gateway.call("expander", operation, {"parent": parent.model_dump(mode="json"),
                                             "selected_leaf": leaf, "graph": bundle.model_dump(mode="json"),
                                             "revision_feedback": feedback}, ExpansionProposal, task_id)
                     if proposal.subquery is None:
@@ -212,7 +214,7 @@ def expand_layers(parent, config, store, journal, gateway):
                     facts = eligible_facts(bundle, sources, config.as_of, config.scope.allow_retrospective)
                     query, intermediate, atoms = replace_leaf(parent.query, leaf, proposal.subquery, bundle, facts)
                     task = parent.task.model_copy(update={"task_id": task_id, "question": proposal.proposed_question,
-                                                          "corpus_id": graph_id})
+                                                          "corpus_id": graph_id if config.research_mode == "legacy_corpus" else None})
                     candidate = Candidate(task=task, query=query, answer=parent.answer, seed_id=parent.seed_id,
                                           parent_id=parent.task.task_id, layer=layer, version=revision,
                                           expanded_leaf=leaf, intermediate_answer=intermediate, subquery=proposal.subquery,

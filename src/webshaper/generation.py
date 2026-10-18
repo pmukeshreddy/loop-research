@@ -123,7 +123,10 @@ def make_seed(proposal: SeedProposal, config, bundle, sources, task_id, seed_id,
     facts = eligible_facts(bundle, sources, config.as_of, config.scope.allow_retrospective)
     result = execute(proposal.query, bundle, facts)
     task = PublicTask(task_id=task_id, question=proposal.question, as_of=config.as_of,
-                      scope=config.scope.model_copy(deep=True), corpus_id=graph_id,
-                      allowed_tools=["corpus"], data_mode=config.mode)
+                      scope=config.scope.model_copy(deep=True),
+                      research_mode=config.research_mode,
+                      corpus_id=graph_id if config.research_mode == "legacy_corpus" else None,
+                      allowed_tools=["corpus"] if config.research_mode == "legacy_corpus" else ["web_search"],
+                      data_mode=config.mode)
     return Candidate(task=task, query=proposal.query, answer=result.answers, seed_id=seed_id,
                      parent_id=None, version=version, graph_id=graph_id)

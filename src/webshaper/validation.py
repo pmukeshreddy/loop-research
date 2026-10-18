@@ -134,10 +134,16 @@ def validation_result(candidate, checks, attempts, config):
                       decision=decide(checks, candidate.version, config.max_revisions), checks=checks,
                       solver_attempts=attempts, feedback=[c.name + ": " + c.feedback for c in checks if c.status != "pass"],
                       judge_config=config.verifier.model_dump(mode="json"),
+                      research_mode=config.research_mode,
                       audit_status="fixture_only" if config.mode == "fixture" else "pending_manual_review")
 
 
 def validate(candidate, bundle, sources, store, gateway, config, parent=None):
+    if candidate.task.research_mode != config.research_mode:
+        raise ValueError("candidate and validation environment disagree")
+    if config.research_mode == "open_web":
+        from .web_validation import validate_open_web
+        return validate_open_web(candidate, bundle, sources, store, gateway, config, parent)
     checks = deterministic_checks(candidate, bundle, sources, store, parent)
     attempts = []
     call_prefix = candidate.task.task_id + f":v{candidate.version}"

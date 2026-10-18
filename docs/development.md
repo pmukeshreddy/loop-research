@@ -17,6 +17,12 @@ and solver responses are scripted, not real company data or empirical model
 results. Fixture mode cannot access the network; live mode rejects fixture
 providers. See [fixture data](../tests/fixtures/README.md).
 
+`tests/test_open_web.py` additionally runs a fully scripted open-web path, including
+expansion, citation capture, alternatives, whole/partial shortcuts and resume.
+All tool events, network captures and judgments in these tests are synthetic;
+they never constitute actual browsing. Provider tests separately check live CLI
+flags, filesystem restrictions, observed event parsing and failure checkpoints.
+
 Repeat the quickstart run command to check resumability: completed calls and
 exports should remain unchanged. The tests cover exact-answer preservation,
 nonredundancy, date eligibility, source hashes, validation, budgets and pauses.
@@ -50,6 +56,8 @@ Python 3.11+ is required; recorded checks used Python 3.12.
 | Run pauses or a call outcome is unknown | Follow [checkpoints and limits](running.md#checkpoints-and-limits); unknown calls are not blindly retried. |
 | Run completes with no task or only depth 0 | Inspect `rejected.jsonl`, `errors.jsonl`, `validation.jsonl` and the quality report. Bounded completion is not an acceptance or expansion guarantee. |
 | Public corpus lacks source text | Check redistribution and temporal access policies in [outputs](outputs.md#access-and-interpretation). Private snapshots may still exist. |
+| Open-web attempt has no browsing or page read | Inspect `web_traces.jsonl` and the capability report. No generated answer can substitute for observed search and page-reading events. |
+| Citation cannot be verified | Inspect `web_evidence.jsonl`: unobserved URL, retrieval/access failure and missing exact quote are distinct reasons. The verifier does not fill gaps with private generator evidence. |
 
 SQLite checkpoints and locking support one local run process; distributed workers
 are outside the current implementation. Preserve prior runs when changing code.

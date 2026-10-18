@@ -7,6 +7,9 @@ leaf constants and replaces them with identifying subquestions one layer at a
 time, preserving the target answer. §3.2.3's consistency check tests type fit,
 not exact equality. This implementation adds stronger checks; it does not
 reproduce the paper's full system, datasets, results or training pipeline.
+The current [open-web mode](open-web-design.md) keeps construction evidence
+private and requires independently observed internet solving. Original corpus
+experiments remain explicitly labeled `legacy_corpus`.
 
 Our query is a union (`branches`) of conjunctions (`Atom`s). Each atom has a
 variable subject, a directed typed predicate and a variable or constant-set
@@ -31,7 +34,8 @@ stay fixed. At layer start the ordered leaves are checkpointed. New leaves wait
 until the next layer. Subquery answers must equal the original constant set.
 Variables are renamed to prevent capture, and only the selected leaf is replaced.
 The final answer must equal its parent and original reference. Clue ablation
-must change graph answers; a configured sample also tests solver behavior.
+must change graph answers. Legacy mode samples solver ablations; open-web mode
+requires whole-dependency and connected partial-clue audits for every expansion.
 Failed leaves retain their last validated parent. `actual_layer` records the
 last successful layer; the journal also records whether all leaves expanded.
 Known discovery or evidence-extraction failures reject the affected leaf and
@@ -54,10 +58,12 @@ people and investors are never merged merely because their names match.
 
 The verifier has separate instructions and sessions. It assesses claim meaning,
 identity, time, wording, alternatives, leakage and usefulness. Deterministic
-gates run first and cannot be overridden. Five independent corpus-based solver
-attempts are used by default; exact answers alone do not pass, because citations
-need resolvable quotes and separate semantic grading. Expanded tasks also receive
-a closed-book screen. These screens are model-relative, not truth guarantees.
+gates run first and cannot be overridden. Legacy mode defaults to five corpus-based
+attempts. Open-web attempts use fresh internet sessions, observed activity,
+independently captured citations and separate constraint grading. A separate web
+investigation challenges the reference with plausible alternatives and records
+its limited coverage. Closed-book screening applies to all open-web candidates
+and legacy expansions. These screens are model-relative, not truth guarantees.
 
 SQLite records calls before dispatch. Completed structured responses are cached;
 malformed completed responses may be revised within limits, while unknown

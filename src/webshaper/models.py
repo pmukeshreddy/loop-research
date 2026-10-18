@@ -120,9 +120,18 @@ class PublicTask(Record):
     answer_schema: str = "entity_names"
     as_of: date
     scope: Scope
-    corpus_id: str
+    research_mode: Literal["legacy_corpus", "open_web"] = "legacy_corpus"
+    corpus_id: str | None = None
     allowed_tools: list[str]
     data_mode: Literal["fixture", "live"]
+
+    @model_validator(mode="after")
+    def environment(self):
+        if self.research_mode == "open_web" and (self.corpus_id is not None
+                or self.allowed_tools != ["web_search"] or self.scope.mode != "identified_target"
+                or self.scope.candidate_universe is not None):
+            raise ValueError("open-web tasks cannot supply a private corpus or candidate universe")
+        return self
 
 
 class Candidate(Record):
@@ -186,6 +195,38 @@ class SolverAnswer(Record):
     uncertainty: str
 
 
+class WebCitation(Record):
+    url: str
+    quote: str
+
+
+class WebSolverAnswer(Record):
+    answer: list[str]
+    citations: list[WebCitation]
+    uncertainty: str
+    outcome: Literal["answered", "uncertain", "access_error", "budget_exhausted", "tools_unavailable"]
+
+
+class Alternative(Record):
+    name: str
+    status: Literal["satisfies", "excluded", "unresolved"]
+    reason: str
+    citations: list[WebCitation]
+
+
+class AlternativeReview(Record):
+    outcome: Literal["unique_within_search", "ambiguous", "unknown"]
+    candidates: list[Alternative]
+    search_extent: str
+    limitations: str
+
+
+class WebGrade(Record):
+    checks: list[Check]
+    constraint_support: list[ClaimSupport]
+    feedback: str
+
+
 class Validation(Record):
     task_id: str
     candidate_version: int
@@ -195,6 +236,7 @@ class Validation(Record):
     feedback: list[str]
     judge_config: dict
     audit_status: Literal["fixture_only", "pending_manual_review", "approved", "rejected"]
+    research_mode: Literal["legacy_corpus", "open_web"] = "legacy_corpus"
 
 
 class SourceInput(Record):
@@ -219,6 +261,7 @@ class ModelConfig(Record):
 class RunConfig(Record):
     schema_version: str = SCHEMA_VERSION
     mode: Literal["fixture", "live"] = "live"
+    research_mode: Literal["legacy_corpus", "open_web"] = "legacy_corpus"
     sources: list[SourceInput] = Field(default_factory=list)
     allowed_domains: list[str] = Field(default_factory=list)
     crawl_depth: int = Field(default=0, ge=0, le=3)
@@ -242,6 +285,9 @@ class RunConfig(Record):
 
     @model_validator(mode="after")
     def isolation(self):
+        if self.research_mode == "open_web" and (self.scope.mode != "identified_target"
+                or self.scope.candidate_universe is not None):
+            raise ValueError("open-web mode requires identified-target scope without a private universe")
         backends = {getattr(self, r).backend for r in ("generator", "expander", "verifier", "solver")}
         if self.mode == "live" and (backends != {"codex"} or self.search_provider == "fixture"):
             raise ValueError("live runs may not use fixture providers")

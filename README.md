@@ -13,11 +13,13 @@ implemented.
   </a>
 </p>
 
-We collect source evidence, build a structured evidence graph, and generate seed
-questions with reference answers. We then expand each question's research
-dependencies while preserving its answer, independently validate correctness
-and solvability, revise or reject failed candidates, and deduplicate and export
-the accepted dataset. The expansion method is inspired by
+We generate **X**, a self-contained research question, and **Y**, its verified
+reference answer, backed by **E**, private sources, passages, and an evidence
+chain. We collect evidence, generate seeds, expand research dependencies while
+preserving the answer, validate, revise or reject, and export. Open-web solvers
+receive only X and internet tools; acceptance requires observed browsing,
+independent citation checks, and a bounded search for alternative answers.
+The expansion method is inspired by
 [WebShaper](https://arxiv.org/abs/2507.15061v1).
 
 ## Quickstart
@@ -33,6 +35,8 @@ export PYTHONPATH="$PWD/src"
 ```
 
 Results appear in `runs/quickstart/export/`; repeat the run command to resume.
+This quickstart exercises the legacy corpus path; open-web validation has
+[offline tests and a bounded live command](docs/running.md).
 Live runs use Codex subscription authentication through ChatGPT sign-in, enforce
 configured usage limits, and allow $0 additional paid API/search spend.
 
@@ -40,7 +44,8 @@ configured usage limits, and allow $0 additional paid API/search spend.
 
 Each dataset includes **questions, reference answers, evidence, and validation
 records**, with source snapshots and revision history retained for audit.
-References and validation records remain separate from solver-visible inputs;
+Only public questions go to open-web solvers; references, evidence, source lists,
+and validation records stay private. Legacy corpus runs retain their original mode;
 automatically accepted live tasks await human review.
 
 ## Documentation
@@ -49,5 +54,6 @@ automatically accepted live tasks await human review.
 - [Output files and human review](docs/outputs.md)
 - [Testing and troubleshooting](docs/development.md)
 - [Design and company-research adaptations](docs/design.md)
+- [Open-web contracts and validation](docs/open-web-design.md)
 - [Recorded runs](docs/run-results.md) and [verification history](docs/verification-log.md)
 - [Implementation plan](docs/implementation-plan.md) and [original brief](2026-10-17-webshaper-data-generation.md)

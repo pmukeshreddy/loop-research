@@ -102,3 +102,44 @@ facts, and the revised date-disjunction query repeated its investor constant,
 making that constant ineligible for expansion. Prompt v1.3 explicitly requests
 separately evidenced year projections and degree-one leaf selection. Neither
 change bypasses the independent fact assessor or changes leaf eligibility.
+
+
+## Open-web mode follow-up
+
+Added a distinct `open_web` contract; absent modes remain `legacy_corpus`.
+Public exports and solver payloads use allowlists. Solvers receive only the
+question, output requirements and browsing budget, in fresh Codex sessions with
+local tools disabled and a restricted filesystem permission profile.
+
+The full local suite has **122 passing tests**; Ruff and relative-link checks pass.
+New scripted offline tests cover complete seed/expansion validation and resume,
+missing browsing, incorrect closed-book difficulty, unsupported citations,
+plausible alternatives, partial shortcuts and failure categories. These synthetic
+traces do not demonstrate real browsing. Provider tests cover observed native CLI
+events, cached and interrupted traces, restricted flags and conservative usage.
+
+Independent review found three issues, each corrected before the pilot:
+
+- All added atoms now receive partial-removal consideration, including connected
+  variable-object joins. A failing-then-passing regression covers the missed case.
+- Fresh cited pages share the deterministic publication policy. Future and undated
+  captures cannot be accepted by a permissive grader; both counterexamples have
+  failing-then-passing regressions. Explicit retrospective access remains distinct.
+- Web sessions reserve a stop margin and retain already queued events after
+  cancellation. This is a local guard, not an upstream hard quota. Missing-tool
+  errors retain their specific category in attempt metrics.
+
+The reviewer reran **71 focused tests**, checked the corrections and found no
+additional pre-pilot blockers. Full-suite and Ruff checks were also run by the
+implementer. The real capability probe and bounded pilot are recorded separately
+in [run results](run-results.md); legacy corpus success is not open-web validation.
+
+
+The first open-web pilot exposed an ordering issue: the offline construction judge
+was asked to establish global uniqueness before the live alternative audit could
+run. Global ambiguity is now assessed by that mandatory live audit. Construction
+support, dates, wording, identity, leakage and usefulness still gate progression;
+unknown/ambiguous live alternatives still reject. Named private-review concerns
+reach both the live researcher and its independent grader. A new regression
+fails before this correction and passes afterward. The final suite has **122
+passing tests** and Ruff passes; independent review reran 23 open-web tests.

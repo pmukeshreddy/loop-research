@@ -1,0 +1,97 @@
+{
+  "$defs": {
+    "Check": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "pass",
+            "fail",
+            "unknown"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "feedback": {
+          "default": "",
+          "title": "Feedback",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "status"
+      ],
+      "title": "Check",
+      "type": "object"
+    },
+    "ClaimSupport": {
+      "additionalProperties": false,
+      "properties": {
+        "claim_id": {
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "supported",
+            "unsupported",
+            "unknown"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "feedback": {
+          "title": "Feedback",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claim_id",
+        "status",
+        "feedback"
+      ],
+      "title": "ClaimSupport",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "checks": {
+      "items": {
+        "$ref": "#/$defs/Check"
+      },
+      "title": "Checks",
+      "type": "array"
+    },
+    "constraint_support": {
+      "items": {
+        "$ref": "#/$defs/ClaimSupport"
+      },
+      "title": "Constraint Support",
+      "type": "array"
+    },
+    "feedback": {
+      "title": "Feedback",
+      "type": "string"
+    }
+  },
+  "required": [
+    "checks",
+    "constraint_support",
+    "feedback"
+  ],
+  "title": "WebGrade",
+  "type": "object"
+}

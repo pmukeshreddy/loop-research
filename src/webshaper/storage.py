@@ -89,6 +89,12 @@ class Journal:
             return [json.loads(r[0]) for r in self.db.execute(
                 "SELECT value FROM records WHERE kind=? ORDER BY id", (kind,))]
 
+    def record_value(self, kind, record_id):
+        with self.lock:
+            row = self.db.execute("SELECT value FROM records WHERE kind=? AND id=?",
+                                  (kind, record_id)).fetchone()
+            return json.loads(row[0]) if row else None
+
     def usage(self):
         with self.lock:
             rows = list(self.db.execute("SELECT * FROM calls"))
@@ -123,15 +129,25 @@ class Journal:
                             "VALUES (?,?,'pending',?,?,?,?)", (key, role, usd, tokens, searches, now()))
         return None
 
-    def complete(self, key, result, usd, tokens, searches=None, latency=0):
+    def complete(self, key, result, usd, tokens, searches=None, latency=0, *, observation=None):
         with self.lock, self.db:
+            if observation is not None:
+                self.record("web_traces", key, observation)
             self.db.execute("UPDATE calls SET status='complete',result=?,cost_usd=?,tokens=?,ended=?,latency=? "
                             "WHERE key=?", (dump(result), usd, tokens, now(), latency, key))
             if searches is not None:
                 self.db.execute("UPDATE calls SET searches=? WHERE key=?", (searches, key))
 
-    def fail(self, key, status, code, latency=0):
+    def fail(self, key, status, code, latency=0, *, observation=None):
         with self.lock, self.db:
+            if observation is not None:
+                self.record("web_traces", key, observation)
+                # An interrupted trace may observe more actions than the initial reservation.
+                # Unknown usage retains its entire reservation; never replace it with zero.
+                self.db.execute("UPDATE calls SET searches=MAX(searches,?) WHERE key=?",
+                                (observation.get("searches", 0), key))
+                if observation.get("usage_known"):
+                    self.db.execute("UPDATE calls SET tokens=? WHERE key=?", (observation["tokens"], key))
             self.db.execute("UPDATE calls SET status=?,error=?,ended=?,latency=? WHERE key=?",
                             (status, code, now(), latency, key))
 
@@ -139,7 +155,13 @@ class Journal:
         # Preserve failed attempts and their conservative usage before allocating a new call.
         with self.lock, self.db:
             for row in self.db.execute("SELECT key FROM calls WHERE status='limited'").fetchall():
-                self.db.execute("UPDATE calls SET key=? WHERE key=?", (row[0] + ":limited:" + now(), row[0]))
+                archived_key = row[0] + ":limited:" + now()
+                trace = self.record_value("web_traces", row[0])
+                if trace is not None:
+                    trace.update(cache_key=archived_key, original_cache_key=row[0])
+                    self.db.execute("UPDATE records SET id=?,value=? WHERE kind='web_traces' AND id=?",
+                                    (archived_key, dump(trace), row[0]))
+                self.db.execute("UPDATE calls SET key=? WHERE key=?", (archived_key, row[0]))
 
     def calls(self):
         with self.lock:

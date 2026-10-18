@@ -97,10 +97,55 @@ def atomic_write(path, data):
     temp.replace(path)
 
 
+def check_research_modes(journal, config, candidates, validations):
+    frozen = (journal.get("frozen") or {}).get("config", {})
+    # Journal wraps pipeline.frozen_config, which itself wraps the generation config.
+    generation = frozen.get("config", frozen)
+    original_mode = generation.get("research_mode", "legacy_corpus")
+    if config.research_mode != original_mode:
+        raise ValueError("export research_mode must match the original frozen generation configuration")
+    for record in candidates:
+        if record["task"].get("research_mode", "legacy_corpus") != original_mode:
+            raise ValueError("candidate research_mode disagrees with the frozen generation configuration")
+    for record in validations:
+        if record.get("research_mode", "legacy_corpus") != original_mode:
+            raise ValueError("validation research_mode disagrees with the frozen generation configuration")
+    other_attempt_mode = "browsing" if original_mode == "open_web" else "open_web"
+    attempts = journal.records("web_attempts") + [a for v in validations for a in v["solver_attempts"]]
+    if any(a.get("mode") == other_attempt_mode for a in attempts):
+        raise ValueError("solver attempt research_mode disagrees with the frozen generation configuration")
+    return original_mode
+
+
+def observed_browsing(attempt):
+    observation = attempt.get("observation") or {}
+    actions = {event["action"].get("type") for event in observation.get("web_events", [])
+               if event.get("status") in {"completed", "item.completed"}
+               and isinstance(event.get("action"), dict)}
+    return (attempt.get("browsing_observed") is True and "search" in actions
+            and bool(actions & {"open_page", "find_in_page"}))
+
+
+def solver_attempts(validations, incomplete):
+    attempts = {}
+    phases = {"solver_complete": 1, "final": 2}
+    retained = sorted(incomplete, key=lambda a: phases.get(a.get("phase"), 0))
+    for index, attempt in enumerate(retained + [a for v in validations for a in v["solver_attempts"]]):
+        observation = attempt.get("observation") or {}
+        identity = attempt.get("call_id") or observation.get("call_id") or observation.get("cache_key")
+        # Identical responses from separate fresh sessions remain separate attempts.
+        attempts[identity or ("unidentified", index)] = attempt
+    return list(attempts.values())
+
+
 def export_dataset(journal, config, root):
+    final_records = journal.get("final_candidates") or []
+    candidate_records = journal.records("candidates")
+    validations = journal.records("validations")
+    research_mode = check_research_modes(journal, config, final_records + candidate_records, validations)
     output = Path(root) / "export"
     output.mkdir(parents=True, exist_ok=True)
-    all_final = [Candidate.model_validate(c) for c in (journal.get("final_candidates") or [])]
+    all_final = [Candidate.model_validate(c) for c in final_records]
     candidates, duplicates = deduplicate(all_final)
     graphs = journal.records("graphs")
     graph_map = {g["graph_id"]: g for g in graphs}
@@ -108,7 +153,7 @@ def export_dataset(journal, config, root):
     clusters = source_clusters(graphs, store)
     groups = {c.task.task_id: {clusters[s["source_id"]] for s in graph_map[c.graph_id]["sources"]} for c in candidates}
     partition = partitions(candidates, groups)
-    validations = journal.records("validations")
+    validations = [{**v, "research_mode": research_mode} for v in validations]
     reviews = journal.records("manual_reviews")
     reviewed = {r["task_id"]: r for r in reviews}
     for v in validations:
@@ -122,9 +167,10 @@ def export_dataset(journal, config, root):
         reference = {"task_id": c.task.task_id, "answer_entities_or_rows": c.answer, "cell_evidence": c.cell_evidence,
                      "reference_query": c.query.model_dump(mode="json"), "candidate_universe": c.task.scope.candidate_universe,
                      "candidate_decisions": c.candidate_decisions, "actual_layer": c.layer, "graph_id": c.graph_id,
-                     "grading": "exact canonical entity set; source-backed aliases only", "data_mode": config.mode}
+                     "grading": "exact canonical entity set; source-backed aliases only", "data_mode": config.mode,
+                     "research_mode": research_mode}
         references.append(reference)
-    for record in journal.records("candidates"):
+    for record in candidate_records:
         c = Candidate.model_validate(record)
         graph = graph_map[c.graph_id]
         provenance.append({"task_id": c.task.task_id, "seed_id": c.seed_id, "parent_id": c.parent_id,
@@ -134,9 +180,11 @@ def export_dataset(journal, config, root):
                            "graph_id": c.graph_id, "prompt_version": journal.get("frozen")["config"]["prompt_version"],
                            "model_config": {r: getattr(config, r).model_dump(mode="json") for r in ("generator", "expander", "verifier", "solver")},
                            "source_hashes": {s["source_id"]: s["content_hash"] for s in graph["sources"]},
-                           "data_mode": config.mode})
+                           "data_mode": config.mode, "research_mode": research_mode})
     # All reference-bearing files remain private; public/ contains only X and permitted source text.
-    tasks = [c.task.model_dump(mode="json") for c in candidates]
+    public_fields = {"task_id", "question", "answer_schema", "as_of", "allowed_tools", "data_mode", "research_mode"}
+    tasks = [c.task.model_dump(mode="json", include=public_fields if research_mode == "open_web" else None)
+             for c in candidates]
     write_jsonl(output / "tasks.jsonl", tasks)
     write_jsonl(output / "public" / "tasks.jsonl", tasks)
     write_jsonl(output / "references.jsonl", references)
@@ -146,6 +194,10 @@ def export_dataset(journal, config, root):
     write_jsonl(output / "manual_reviews.jsonl", reviews)
     write_jsonl(output / "graphs.jsonl", graphs)
     write_jsonl(output / "errors.jsonl", journal.records("errors"))
+    web_records = {kind: journal.records(kind) for kind in
+                   ("web_traces", "web_evidence", "web_attempts", "web_alternatives", "web_shortcuts")}
+    for kind, records in web_records.items():
+        write_jsonl(output / (kind + ".jsonl"), records)
     rejected = journal.records("rejected") + duplicates + [{"task_id": t, "decision": "reject",
                 "reason_codes": ["manual_review_rejected"]} for t in manually_rejected]
     write_jsonl(output / "rejected.jsonl", rejected)
@@ -153,8 +205,15 @@ def export_dataset(journal, config, root):
     for source in sources.values():
         store.read(Source.model_validate(source))
     write_jsonl(output / "sources.jsonl", list(sources.values()))
+    web_sources = []
+    if (Path(root) / "web_sources").exists():
+        web_store = SourceStore(Path(root) / "web_sources")
+        for source in web_store.all():
+            web_store.read(source)
+            web_sources.append(source.model_dump(mode="json"))
+    write_jsonl(output / "web_sources.jsonl", web_sources)
     public_corpora = []
-    for gid in sorted({c.graph_id for c in candidates}):
+    for gid in sorted({c.graph_id for c in candidates} if research_mode == "legacy_corpus" else set()):
         policies = {(c.task.as_of, c.task.scope.allow_retrospective) for c in candidates if c.graph_id == gid}
         if len(policies) != 1:
             raise ValueError("a shared public corpus cannot mix temporal access policies")
@@ -174,8 +233,11 @@ def export_dataset(journal, config, root):
             entry["call_id"] = json.loads(call["result"]).get("metadata", {}).get("call_id")
         calls.append(entry)
     write_jsonl(output / "usage.jsonl", calls)
-    attempts = [a for v in validations for a in v["solver_attempts"]]
-    browsing = [a for a in attempts if a["mode"] == "browsing"]
+    attempts = solver_attempts(validations, web_records["web_attempts"])
+    legacy_browsing = [a for a in attempts if a["mode"] == "browsing"]
+    web_attempts = [a for a in attempts if a["mode"] == "open_web"]
+    web_observed = [a for a in web_attempts if observed_browsing(a)]
+    browsing = web_observed if research_mode == "open_web" else legacy_browsing
     closed = [a for a in attempts if a["mode"] == "closed_book"]
     support_audits = journal.records("support_audits")
     support = Counter(c["status"] for a in support_audits for c in a["claim_support"])
@@ -184,41 +246,66 @@ def export_dataset(journal, config, root):
     attempted_ids = {c["task"]["task_id"] for c in journal.records("candidates")}
     attempted_ids.update(r["task_id"] for r in journal.records("rejected"))
     attempted_ids.update(r["task_id"] for r in journal.records("candidate_attempts"))
-    solver_responses = sum(c["role"] == "solver:solver" and c["status"] == "complete" for c in calls)
-    stats = {"data_mode": config.mode, "status": journal.get("status"), "accepted_tasks": len(candidates),
+    solver_roles = {"solver:web_solver", "solver:web_closed"} if research_mode == "open_web" else {"solver:solver"}
+    grade_role = "verifier:web_grade" if research_mode == "open_web" else "verifier:grade"
+    solver_responses = sum(c["role"] in solver_roles and c["status"] == "complete" for c in calls)
+    validated_attempts = sum(len(v["solver_attempts"]) for v in validations)
+    stats = {"data_mode": config.mode, "research_mode": research_mode,
+             "status": journal.get("status"), "accepted_tasks": len(candidates),
              "target_tasks": config.target_tasks, "target_reached": len(candidates) >= config.target_tasks,
              "attempted_versions": len(attempted_ids), "evaluated_versions": len(validations),
              "rejection_records": len(rejected),
              "rejection_reasons": dict(Counter(code for r in rejected for code in r["reason_codes"])),
              "source_count": len(sources), "source_categories": dict(Counter(s["category"] for s in sources.values())),
+             "web_source_count": len(web_sources),
              "error_records": len(errors),
              "source_errors": sum(e["stage"] in ("source_capture", "source_date") for e in errors),
              "extraction_errors": sum(e["stage"] == "extraction" for e in errors),
              "answer_support_audit": dict(support),
              "browsing_attempts": len(browsing), "browsing_success_rate": sum(a["success"] for a in browsing) / len(browsing) if browsing else None,
+             "legacy_corpus_browsing_attempts": len(legacy_browsing),
+             "legacy_corpus_browsing_success_rate": sum(a["success"] for a in legacy_browsing) / len(legacy_browsing) if legacy_browsing else None,
+             "open_web_attempts": len(web_attempts), "open_web_observed_attempts": len(web_observed),
+             "open_web_success_rate": sum(a["success"] and observed_browsing(a) for a in web_attempts) / len(web_attempts) if web_attempts else None,
+             "open_web_failure_categories": dict(Counter(a["failure_category"] for a in web_attempts if a.get("failure_category"))),
              "completed_solver_responses": solver_responses,
-             "completed_solver_grades": sum(c["role"] == "verifier:grade" and c["status"] == "complete" for c in calls),
-             "solver_responses_without_validation_record": max(0, solver_responses - len(attempts)),
-             "closed_book_attempts": len(closed), "closed_book_success_rate": sum(a["correct"] for a in closed) / len(closed) if closed else None,
+             "completed_solver_grades": sum(c["role"] == grade_role and c["status"] == "complete" for c in calls),
+             "solver_responses_without_validation_record": max(0, solver_responses - validated_attempts),
+             "closed_book_attempts": len(closed), "closed_book_success_rate": sum(a.get("correct", a.get("success", False)) for a in closed) / len(closed) if closed else None,
              "depth_distribution": dict(Counter(str(c.layer) for c in candidates)),
              "duplicate_rate": len(duplicates) / len(all_final) if all_final else 0,
              "manual_reviews_pending": sum(c.task.task_id not in reviewed for c in candidates) if config.mode == "live" else 0,
              "usage": usage, "cost_per_accepted_task_usd": usage["cost_usd"] / len(candidates) if candidates else None,
              "shared_background_sources": [], "partition_counts": dict(Counter(partition.get(c.task.task_id) for c in candidates))}
     manifest = {"schema_version": SCHEMA_VERSION, "stats": stats, "data_mode": config.mode,
+                "research_mode": research_mode,
                 "configuration": config.model_dump(mode="json"), "frozen": journal.get("frozen"),
                 "runtime": journal.get("runtime"), "pause_reason": journal.get("pause_reason"),
                 "exporter_hash": digest(Path(__file__).read_bytes()),
                 "started_at": journal.get("started_at"), "partitions": {c.task.task_id: partition[c.task.task_id] for c in candidates},
-                "source_store": "../sources", "private_files": ["references.jsonl", "graphs.jsonl", "provenance.jsonl", "validation.jsonl"],
+                "source_store": "../sources", "web_source_store": "../web_sources" if research_mode == "open_web" else None,
+                "private_files": sorted(p.name for p in output.glob("*.jsonl") if p.name != "tasks.jsonl"),
                 "file_hashes": {p.name: digest(p.read_bytes()) for p in output.glob("*.jsonl")}}
     atomic_write(output / "manifest.json", json.dumps(manifest, indent=2, sort_keys=True))
     label = "FICTIONAL SCRIPTED FIXTURE — NOT REAL GENERATED COMPANY DATA" if config.mode == "fixture" else "LIVE SUBSCRIPTION GENERATION — MANUAL PILOT REVIEW REQUIRED"
     report = f"# Quality report\n\n{label}\n\n```json\n{json.dumps(stats, indent=2, sort_keys=True)}\n```\n\n"
+    if research_mode == "open_web":
+        report += ("Research mode: open_web. Public tasks contain only the question and answer/access requirements; "
+                   "public/corpus.jsonl is empty. Captures, graphs, references, tool traces and audit records remain private.\n\n"
+                   "open_web_attempts includes retained attempts from paused validations. open_web_success_rate uses "
+                   "all recorded open-web attempts and requires successful grading plus observed completed search and "
+                   "page-reading activity. browsing_attempts and browsing_success_rate cover only attempts with that "
+                   "observed activity. Missing tools/activity, access errors and budget outcomes are reported separately "
+                   "in open_web_failure_categories. A final answer alone does not establish browsing.\n\n")
+    else:
+        report += ("Research mode: legacy_corpus. browsing_attempts and browsing_success_rate measure solving against "
+                   "the supplied corpus; they do not establish observed open-web research. Historical records without "
+                   "a research mode retain this legacy meaning.\n\n")
     report += ("Counts cover all candidate versions, including failed revisions and expansions. Source failures are in errors.jsonl.\n\n"
-               "Success rates use completed validation records only. During a pause, completed solver responses "
+               "Legacy corpus success rates use completed validation records. During a pause, completed solver responses "
                "without a final validation record are counted separately; responses remain cached in run.sqlite "
-               "and candidate attempts remain in attempts.jsonl. They are not implicitly graded as failures.\n\n"
+               "and candidate attempts remain in attempts.jsonl. Private web_attempts.jsonl and web_traces.jsonl retain "
+               "observed open-web progress and failures without implying successful validation.\n\n"
                "Correctness gates and independent semantic checks are separate from model-relative difficulty screens. "
                "Closed-book failure does not prove that browsing is necessary. Structural layer is measured separately "
                "from empirical difficulty. A partially expanded layer is not a fully expanded graph.\n\n"

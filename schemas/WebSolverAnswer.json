@@ -1,0 +1,63 @@
+{
+  "$defs": {
+    "WebCitation": {
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "quote": {
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url",
+        "quote"
+      ],
+      "title": "WebCitation",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "answer": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Answer",
+      "type": "array"
+    },
+    "citations": {
+      "items": {
+        "$ref": "#/$defs/WebCitation"
+      },
+      "title": "Citations",
+      "type": "array"
+    },
+    "uncertainty": {
+      "title": "Uncertainty",
+      "type": "string"
+    },
+    "outcome": {
+      "enum": [
+        "answered",
+        "uncertain",
+        "access_error",
+        "budget_exhausted",
+        "tools_unavailable"
+      ],
+      "title": "Outcome",
+      "type": "string"
+    }
+  },
+  "required": [
+    "answer",
+    "citations",
+    "uncertainty",
+    "outcome"
+  ],
+  "title": "WebSolverAnswer",
+  "type": "object"
+}

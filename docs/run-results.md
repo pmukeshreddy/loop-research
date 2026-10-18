@@ -12,8 +12,9 @@ the [live-run guide](running.md) documents how to produce your own runs.
 
 ## Local implementation
 
-- 62 tests pass; Ruff passes (including six temporal-export and closed-book
-  early-return regression cases added after the initial delivery).
+- Current suite: 122 tests pass; Ruff passes. Open-web tests and independent
+  review are documented in [verification history](verification-log.md#open-web-mode-follow-up).
+  The previous corpus-only delivery had 62 passing tests.
 - The built wheel installs and runs the fixture workflow outside this checkout.
 - `runs/fixture-final-delivery` contains one **fictional scripted** expanded task at
   layer 1, two rejected expansion proposals and two source fixtures.
@@ -22,9 +23,11 @@ the [live-run guide](running.md) documents how to produce your own runs.
   bounded revision, exact answers, event joins, unknown membership and pauses.
 - Fixture solver success rates are programmed test behavior, not model results.
 
-## Real integration history
+## Legacy corpus integration history
 
 Earlier runs remain available for audit; errors were not erased or relabeled.
+All historical runs below used corpus-based solving; none establishes open-web
+solvability, even when generation used search.
 
 | Run | Outcome | Calls | CLI tokens | Search actions |
 | --- | --- | ---: | ---: | ---: |
@@ -199,3 +202,106 @@ use `runs/real-expansion-v2` as the run directory. Local test commands are in
 The separate model sessions are isolated, but same-model errors may be correlated.
 The dataset makes a corpus-scoped identification claim, not open-web completeness.
 Neither training nor RL was introduced.
+
+
+## Open-web capability and pilot (2026-10-17 local date)
+
+These runs use the distinct `open_web` mode. Legacy corpus results above are
+unchanged and do not count toward open-web acceptance. All private run artifacts
+remain local; this report intentionally does not publish candidate answers or E.
+
+### Capability: `runs/open-web-capability-v1`
+
+One fresh ChatGPT-authenticated Codex CLI 0.163.0 session performed a recorded
+hosted search and opened an absolute HTTPS documentation URL. The native sandbox
+check separately confirmed that the temporary role file was readable and this
+repository's README was denied. Actual usage: **one call, 52,260 tokens, two web
+actions, 15.3 seconds, $0 additional spend**. Cached input is included in the token
+total. The original trace is retained unchanged; later code normalizes event
+statuses while keeping raw events.
+
+Local artifacts: `report.json`, `web_traces.json`, `invocation.json`,
+`permissions-check-corrected.json`, and `run.sqlite` in that directory. A capability
+probe establishes tool availability, not successful question validation.
+
+### First pilot: `runs/open-web-pilot-v1`
+
+**Four attempted versions, zero accepted tasks, zero solver attempts.** Two
+proposals violated typed-query structure. Two passed construction far enough to
+reach the offline private judge, then failed `semantic_ambiguity` because that
+judge could not search the wider web. No difficulty or browsing result was obtained.
+All four rejections and original private evidence remain in the export/journal.
+
+Actual usage: **eight completed calls, 201,588 tokens, zero web actions,
+230.7 seconds, $0 additional spend**. Four primary sources were captured;
+57 extracted claims were supported and one unsupported. No uncertain calls.
+
+This exposed an ordering problem: global ambiguity was required before the live
+alternative search could run. The correction keeps private construction checks
+mandatory and assesses web ambiguity in the mandatory browsing audit, forwarding
+specific private-review concerns to both researcher and independent grader.
+A failing-then-passing regression and independent review cover this separation;
+ambiguous or unresolved alternatives still block acceptance. The next run uses a
+new directory and subtracts all preceding probe/pilot usage from the aggregate
+1.5M-token, 50-call, 15-action allowance.
+
+
+### Revised pilot: `runs/open-web-pilot-v2`
+
+**Four attempted versions, zero accepted tasks; three actual web-solving sessions.**
+One version failed deterministic reference/evidence/date checks. The other three
+passed private construction and closed-book screening, then each used three actual
+web actions and reported budget exhaustion before completing the evidence chain.
+These failures are classified as budget exhaustion, not reasoning failures.
+Two responses also distinguished article publication dates from the claimed
+announcement date; that uncertainty was not overridden.
+
+Observed tool activity across these solver attempts: **five searches and four page
+opens**, with four absolute visited URLs retained in the private traces. Each
+attempt has actual search and page-reading events. Answers, quoted citations,
+queries, native event payloads, tokens and latency are saved. No citation grader,
+live alternative audit or shortcut audit was reached; their live performance is
+therefore unmeasured. Closed-book accuracy was **0/3** and verified browsing success
+**0/3**; the budget-limited browsing failures do not establish intrinsic difficulty.
+No seed was accepted and no layer-1 expansion was attempted. Task and private reference
+exports are empty; there is no validated open-web dataset from this pilot.
+
+Usage for v2: **15 completed calls, 537,458 tokens, nine web actions, 346.3 seconds,
+$0 additional spend**. Four generation sources were captured, with 45 supported,
+ten unknown and three unsupported extracted claims. No uncertain calls. Repeating
+the exact run command made **zero additional calls** and kept all 21 export files
+byte-identical. The actual export-file count is also recorded in `resume-check.json`.
+
+Aggregate probe + both pilots: **24 completed calls, 791,306 tokens, 11 web actions,
+592.3 seconds of provider latency, $0 additional spend**. This remained within the
+50-call/1.5M-token/15-action allowance. The remaining four web actions cannot cover
+another fully guarded solve-plus-alternative-audit cycle, so no further run was
+started. Prior runs and unsuccessful versions are preserved.
+
+Private local artifacts:
+
+| Path under `runs/open-web-pilot-v2/` | Contents |
+| --- | --- |
+| `export/tasks.jsonl`, `export/references.jsonl` | Empty: no accepted X/Y pairs |
+| `candidate-audit.jsonl` | Four unaccepted candidates with proposed references, explicitly marked not web validated |
+| `export/graphs.jsonl`, `export/sources.jsonl`, `sources/` | Private construction evidence, spans, assessments and immutable snapshots |
+| `export/validation.jsonl`, `export/rejected.jsonl` | Every completed gate and rejection |
+| `export/web_attempts.jsonl`, `export/web_traces.jsonl` | Actual solver answers, citations, search/page events, visited URLs and usage |
+| `export/web_evidence.jsonl`, `export/web_sources.jsonl` | Empty: budget failures stopped before independent citation capture |
+| `export/web_alternatives.jsonl`, `export/web_shortcuts.jsonl` | Empty: those gates were not reached |
+| `export/usage.jsonl`, `export/manifest.json`, `pilot-config.json` | Usage and frozen run configuration |
+| `resume-check.json` | No-call, byte-identical resume verification |
+
+`runs/open-web-pilot-report.json` contains the aggregate machine-readable report.
+The exact v2 command is:
+
+```bash
+.venv/bin/python -m webshaper run --config runs/open-web-pilot-v2/pilot-config.json --run-dir runs/open-web-pilot-v2
+```
+
+This local config deducts the capability probe and v1 usage before v2. For a fresh
+bounded experiment, use the checked-in [configuration and commands](running.md);
+its target count is not a promise of acceptance. Further progress requires source
+and question selection that fits the browsing allowance and resolves announcement
+versus publication dates. None of the correctness, answer-preservation, temporal,
+ambiguity or shortcut gates was weakened to manufacture a successful result.

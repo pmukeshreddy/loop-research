@@ -42,7 +42,7 @@ def saved_frozen(root):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(prog="webshaper", description="Company research QA generation; Codex subscription or labeled fixtures")
+    parser = argparse.ArgumentParser(prog="webshaper", description="Open-web research QA generation; Codex subscription or labeled fixtures")
     sub = parser.add_subparsers(dest="command", required=True)
     init = sub.add_parser("init", help="write editable configuration; never overwrite")
     init.add_argument("--mode", choices=["fixture", "live"], default="live")
@@ -70,7 +70,7 @@ def main(argv=None):
     try:
         if args.command == "init":
             from .fixtures import fixture_config
-            config = fixture_config() if args.mode == "fixture" else RunConfig(as_of=date.today())
+            config = fixture_config() if args.mode == "fixture" else RunConfig(as_of=date.today(), research_mode="open_web")
             args.output.parent.mkdir(parents=True, exist_ok=True)
             with args.output.open("x") as f:
                 f.write(config.model_dump_json(indent=2) + "\n")
@@ -105,10 +105,11 @@ def main(argv=None):
             if args.probe_search:
                 with run_lock(args.run_dir), Journal(args.run_dir / "run.sqlite", frozen_config(config), config.budget) as journal:
                     gateway = ModelGateway(journal, {"generator": provider})
-                    result = gateway.call("generator", "probe", {}, SearchResults, "search-probe", web=True)
-                    metadata = json.loads(journal.calls()[-1]["result"])["metadata"]
-                    report["search"] = "verified" if result.capability_available and metadata.get("web_search_actions", 0) > 0 else "unavailable"
+                    from .web_validation import observed_browsing
+                    result, observation = gateway.call_observed("generator", "probe", {}, SearchResults, "search-probe", web=True)
+                    report["search"] = "verified" if result.capability_available and observed_browsing(observation) else "unavailable"
                     report["result"] = result.model_dump(mode="json")
+                    report["observation"] = observation
                     report["usage"] = journal.usage()
                 if report["search"] != "verified":
                     print(json.dumps(report, indent=2))
@@ -119,7 +120,8 @@ def main(argv=None):
             from .generation import Extraction
             args.output.mkdir(parents=True, exist_ok=True)
             classes = [getattr(models, n) for n in ("Source", "Evidence", "Entity", "Fact", "Bundle", "Query",
-                        "PublicTask", "Candidate", "Validation", "RunConfig", "SemanticAssessment", "SolverAnswer")]
+                        "PublicTask", "Candidate", "Validation", "RunConfig", "SemanticAssessment", "SolverAnswer",
+                        "WebSolverAnswer", "AlternativeReview", "WebGrade")]
             for cls in [*classes, Extraction]:
                 (args.output / (cls.__name__ + ".json")).write_text(json.dumps(cls.model_json_schema(), indent=2) + "\n")
             print(f"Wrote {len(classes)+1} schemas to {args.output}")

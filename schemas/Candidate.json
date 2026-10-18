@@ -59,9 +59,26 @@
         "scope": {
           "$ref": "#/$defs/Scope"
         },
-        "corpus_id": {
-          "title": "Corpus Id",
+        "research_mode": {
+          "default": "legacy_corpus",
+          "enum": [
+            "legacy_corpus",
+            "open_web"
+          ],
+          "title": "Research Mode",
           "type": "string"
+        },
+        "corpus_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Corpus Id"
         },
         "allowed_tools": {
           "items": {
@@ -84,7 +101,6 @@
         "question",
         "as_of",
         "scope",
-        "corpus_id",
         "allowed_tools",
         "data_mode"
       ],
