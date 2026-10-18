@@ -18,6 +18,7 @@ from loop_research.harness import Harness
 def offline(tmp_path, config, monkeypatch):
     from loop_research import baseline
     config.wandr.final_n_tasks = 3
+    config.codex.max_concurrent = 1
     config.agent.as_of = '2026-10-18'
     config.models.reasoning_effort = 'high'
     harness = Harness(tmp_path / 'harness')
@@ -51,6 +52,7 @@ def offline(tmp_path, config, monkeypatch):
                            primary_metric='soft_f1_full', judge=ctx.config.judge_label,
                            provenance={'fetch': 'wandr-browser', 'harness_primary_metric': 'soft_recall_full'})
 
+    state.real_process = baseline.RunContext.run_process
     monkeypatch.setattr(baseline.RunContext, 'run_process', runner)
     monkeypatch.setattr(WandrBenchmark, 'grade', grade)
     state.harness = harness
@@ -228,3 +230,154 @@ def test_cli_baseline_accepts_boolean_resume_and_rejects_other_benchmarks(tmp_pa
     assert len(offline.calls) == 3
     result = runner.invoke(app, ['--root', str(tmp_path), 'baseline', '--benchmark', 'widesearch'])
     assert result.exit_code != 0 and len(offline.calls) == 3
+
+
+def test_parallel_completion_keeps_sequential_results_archives_and_report_order(tmp_path, config, offline, monkeypatch):
+    import csv
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+    from loop_research import baseline
+
+    sequential = baseline.baseline(tmp_path, config, 'wandr')
+    config.codex.max_concurrent = 2
+    original = baseline.RunContext.run_process
+    started = {task_id: threading.Event() for task_id in ['t2', 't1', 't3']}
+    release = threading.Event()
+    lock = threading.Lock()
+    active = peak = 0
+    def runner(ctx, command, **kwargs):
+        nonlocal active, peak
+        with lock:
+            active += 1
+            peak = max(peak, active)
+        started[ctx.task_id].set()
+        try:
+            if ctx.task_id == 't2':
+                assert release.wait(5)
+            return original(ctx, command, **kwargs)
+        finally:
+            with lock:
+                active -= 1
+    monkeypatch.setattr(baseline.RunContext, 'run_process', runner)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(baseline.baseline, tmp_path, config, 'wandr')
+        try:
+            assert started['t2'].wait(5)
+            assert started['t1'].wait(2), 'Second task must run while the first is blocked'
+            assert started['t3'].wait(2), 'A completed task must free a slot before the first finishes'
+        finally:
+            release.set()
+        parallel = future.result(timeout=5)
+    assert peak == 2
+    assert parallel['tasks'] == sequential['tasks']
+    for task_id in sequential['task_ids']:
+        before = tmp_path / 'runs' / sequential['run_id'] / task_id
+        after = tmp_path / 'runs' / parallel['run_id'] / task_id
+        for filename in ['prompt.txt', 'response.txt', 'output_schema.json', 'output.json', 'submission.json']:
+            assert (before / filename).read_bytes() == (after / filename).read_bytes()
+    rows = list(csv.DictReader((tmp_path / 'reports/tasks.csv').open()))
+    assert [row['task_id'] for row in rows if row['run_id'] == parallel['run_id']] == ['t2', 't1', 't3']
+
+
+def test_parallel_resume_keeps_completed_tasks_across_a_gap(tmp_path, config, offline):
+    from loop_research.baseline import baseline
+    sequential = baseline(tmp_path, config, 'wandr')
+    config.codex.max_concurrent = 2
+    parallel = baseline(tmp_path, config, 'wandr')
+    path = tmp_path / 'reports' / parallel['run_id'] / 'baseline.json'
+    parallel['tasks'] = [row for row in parallel['tasks'] if row['task_id'] != 't2']
+    parallel['status'] = 'interrupted'
+    write_json(path, parallel)
+    # Simulate interruption after research, before the first task's grading checkpoint.
+    grade_dir = path.parent / 'grading/t2'
+    for name in ['task_result.json', 'grading_state.json']:
+        (grade_dir / name).unlink()
+    state = tmp_path / 'runs' / parallel['run_id'] / 't2/task_state.json'
+    write_json(state, {'phase': 'grade', 'error': None})
+    count = len(offline.calls)
+    resumed = baseline(tmp_path, config, 'wandr', resume=True)
+    assert len(offline.calls) == count
+    assert resumed['tasks'] == sequential['tasks']
+
+
+def test_parallel_failure_drains_active_tasks_and_does_not_dispatch_more(tmp_path, config, offline, monkeypatch):
+    import threading
+    import time
+    from loop_research import baseline
+    config.codex.max_concurrent = 2
+    original = baseline.RunContext.run_process
+    both = threading.Barrier(2)
+    def runner(ctx, command, **kwargs):
+        assert ctx.task_id in {'t2', 't1'}, 'Tasks must not start after a detected failure'
+        both.wait(timeout=5)
+        if ctx.task_id == 't2':
+            offline.calls.append((command, kwargs))
+            return subprocess.CompletedProcess(command, 1, '', 'fixture failure')
+        deadline = time.monotonic() + 5
+        while not read_json(tmp_path / 'reports' / ctx.run_id / 'baseline.json')['tasks']:
+            assert time.monotonic() < deadline
+            time.sleep(.01)
+        return original(ctx, command, **kwargs)
+    monkeypatch.setattr(baseline.RunContext, 'run_process', runner)
+    with pytest.raises(RuntimeError, match='stopped'):
+        baseline.baseline(tmp_path, config, 'wandr')
+    path, = (tmp_path / 'reports').glob('*/baseline.json')
+    result = read_json(path)
+    assert [row['task_id'] for row in result['tasks']] == ['t2', 't1']
+    assert [row['status'] for row in result['tasks']] == ['failed', 'succeeded']
+    monkeypatch.setattr(baseline.RunContext, 'run_process', original)
+    resumed = baseline.baseline(tmp_path, config, 'wandr', resume=True)
+    assert len(offline.calls) == 3 and len(resumed['tasks']) == 3
+
+
+def test_parallel_interruption_terminates_owned_processes_before_releasing_lock(tmp_path, config, offline, monkeypatch):
+    import os
+    import sys
+    import time
+    from loop_research import baseline
+    config.codex.max_concurrent = 2
+    # Use the real process supervisor while replacing only the external Codex executable.
+    def runner(ctx, command, **kwargs):
+        pidfile = tmp_path / (ctx.task_id + '.pid')
+        script = 'import os,time; from pathlib import Path; Path(' + repr(str(pidfile)) + ').write_text(str(os.getpid())); time.sleep(30)'
+        return offline.real_process(ctx, [sys.executable, '-c', script], **kwargs)
+    monkeypatch.setattr(baseline.RunContext, 'run_process', runner)
+    def interrupt(*args, **kwargs):
+        deadline = time.monotonic() + 5
+        while len(list(tmp_path.glob('*.pid'))) < 2:
+            assert time.monotonic() < deadline
+            time.sleep(.01)
+        raise KeyboardInterrupt('fixture stop')
+    monkeypatch.setattr(baseline, 'wait', interrupt)
+    with pytest.raises(RuntimeError, match='fixture stop'):
+        baseline.baseline(tmp_path, config, 'wandr')
+    for pidfile in tmp_path.glob('*.pid'):
+        with pytest.raises(ProcessLookupError):
+            os.kill(int(pidfile.read_text()), 0)
+    path, = (tmp_path / 'reports').glob('*/baseline.json')
+    manifest = read_json(path)
+    assert manifest['status'] == 'interrupted' and manifest['tasks'] == []
+
+
+def test_grading_cancellation_preserves_successful_submission_for_resume(tmp_path, config, offline, monkeypatch):
+    from concurrent.futures import CancelledError, Future
+    from loop_research.archive import RunContext
+    from loop_research.evaluation import _grade
+    cancellation = Future()
+    cancellation.cancel()
+    task = offline.tasks[0]
+    ctx = GradeContext(tmp_path, 'fixture-cancel', config, task.task_id, cancellation)
+    RunContext(tmp_path, ctx.run_id, config, task.task_id).save('submission.json', offline.output['files'])
+    original = WandrBenchmark.grade
+    def grade(self, task, submission, ctx):
+        ctx.check_cancelled()
+        return original(self, task, submission, ctx)
+    monkeypatch.setattr(WandrBenchmark, 'grade', grade)
+    adapter = WandrBenchmark(tmp_path, config)
+    with pytest.raises(CancelledError):
+        _grade(task, adapter, ctx, False)
+    assert ctx.load('grading_state.json') == {'empty': False, 'errors': [], 'complete': False}
+    ctx.cancellation = None
+    result, errors = _grade(task, adapter, ctx, False)
+    assert result.metrics['soft_f1_full'] == .75 and errors == []
+    assert offline.grades == [(task.task_id, offline.output['files'])]

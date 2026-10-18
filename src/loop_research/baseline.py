@@ -1,5 +1,6 @@
 """Plain Codex WANDR baseline: no harness state, retrieval, or learning."""
 from datetime import date
+from concurrent.futures import CancelledError, FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 import fcntl
 import json
 from pathlib import Path
@@ -19,7 +20,8 @@ def harness_head(root):
 
 
 def _task(task, adapter, ctx, manifest):
-    grade_ctx = GradeContext(ctx.root, ctx.run_id, ctx.config, task.task_id)
+    ctx.check_cancelled()
+    grade_ctx = GradeContext(ctx.root, ctx.run_id, ctx.config, task.task_id, ctx.cancellation)
     completed = grade_ctx.load('task_result.json')
     if completed is not None:
         return completed
@@ -45,6 +47,8 @@ def _task(task, adapter, ctx, manifest):
                     raise RuntimeError(saved['error'])
                 raw = saved['response']
             output = contract.model.model_validate_json(raw).model_dump(by_alias=True)
+        except CancelledError:
+            raise
         except Exception as exc:
             error = _error(exc)
             ctx.save('error.json', {'error': error})
@@ -61,6 +65,65 @@ def _task(task, adapter, ctx, manifest):
     grade_ctx.save('task_result.json', result)
     ctx.save('task_state.json', {**state, 'phase': 'complete'})
     return result
+
+
+def _run_tasks(tasks, adapter, root, config, manifest, path):
+    """Bound active tasks, checkpoint completions in task order, drain on failure."""
+    completed = {row['task_id']: row for row in manifest['tasks']}
+    remaining = iter((index, task) for index, task in enumerate(tasks, 1) if task.task_id not in completed)
+    cancellation = Future()
+    pool = ThreadPoolExecutor(max_workers=config.codex.max_concurrent)
+    active, errors = {}, []
+
+    def checkpoint():
+        manifest['tasks'] = sorted(completed.values(), key=lambda row: row['index'])
+        manifest['active_task_ids'] = [task.task_id for _, task in sorted(active.values(), key=lambda pair: pair[0])]
+        manifest['active_task_id'] = next(iter(manifest['active_task_ids']), None)
+        write_json(path, manifest)
+
+    def fill_slots():
+        while len(active) < config.codex.max_concurrent:
+            item = next(remaining, None)
+            if item is None:
+                break
+            index, task = item
+            ctx = RunContext(root, manifest['run_id'], config, task.task_id, cancellation)
+            print(f'[{index}/{len(tasks)}] {task.task_id}: started', flush=True)
+            active[pool.submit(_task, task, adapter, ctx, manifest)] = item
+        checkpoint()
+
+    try:
+        fill_slots()
+        while active:
+            done, _ = wait(active, return_when=FIRST_COMPLETED)
+            for future in sorted(done, key=lambda future: active[future][0]):
+                index, task = active.pop(future)
+                try:
+                    result = future.result()
+                except BaseException as exc:
+                    errors.append(task.task_id + ': ' + _error(exc))
+                else:
+                    completed[task.task_id] = {'index': index, **result}
+                    print(f'[{index}/{len(tasks)}] {task.task_id}: {result["status"]}; '
+                          f'{result["primary_metric"]}={result["score"]}', flush=True)
+                    if result['error']:
+                        errors.append(task.task_id + ': ' + result['error'])
+            checkpoint()
+            if not errors:
+                fill_slots()
+        if errors:
+            raise RuntimeError('; '.join(errors))
+    finally:
+        # User interruption terminates owned subprocess groups, then joins workers
+        # before writing the final checkpoint or releasing the run lock.
+        cancellation.cancel()
+        pool.shutdown(wait=True, cancel_futures=True)
+        for index, task in enumerate(tasks, 1):
+            result = GradeContext(root, manifest['run_id'], config, task.task_id).load('task_result.json')
+            if result is not None:
+                completed[task.task_id] = {'index': index, **result}
+        active.clear()
+        checkpoint()
 
 
 def baseline(root, config, benchmark, resume=False):
@@ -90,8 +153,12 @@ def baseline(root, config, benchmark, resume=False):
             if (manifest['benchmark'] != benchmark or manifest['config'] != config.model_dump() or
                     manifest['task_digest'] != task_digest or manifest['harness_before'] != before):
                 raise ValueError('Resume requires identical configuration, ordered tasks and harness HEAD')
-            if [row['task_id'] for row in manifest['tasks']] != manifest['task_ids'][:len(manifest['tasks'])]:
-                raise ValueError('Baseline completion checkpoint is not an ordered prefix')
+            positions = {task.task_id: index for index, task in enumerate(tasks, 1)}
+            completed_ids = [row['task_id'] for row in manifest['tasks']]
+            if (len(set(completed_ids)) != len(completed_ids) or
+                    completed_ids != [task.task_id for task in tasks if task.task_id in completed_ids] or
+                    any(row['index'] != positions.get(row['task_id']) for row in manifest['tasks'])):
+                raise ValueError('Baseline completion checkpoint is not in task order')
         else:
             manifest = {'run_id': 'baseline-wandr-' + uuid4().hex, 'created_at': stamp(),
                         'mode': 'baseline', 'benchmark': benchmark, 'learning': None,
@@ -101,22 +168,11 @@ def baseline(root, config, benchmark, resume=False):
                         'config': config.model_dump(), 'judge': config.judge_label, 'tasks': []}
         run_id = manifest['run_id']
         path = reports / run_id / 'baseline.json'
-        manifest.update(status='running', error=None)
+        manifest.update(status='running', error=None, phase='tasks')
         write_json(path, manifest)
         print(f'Archive: {run_id}; planned tasks: {len(tasks)}', flush=True)
         try:
-            for index, task in enumerate(tasks[len(manifest['tasks']):], len(manifest['tasks']) + 1):
-                manifest.update(active_task_id=task.task_id, phase='research')
-                write_json(path, manifest)
-                print(f'[{index}/{len(tasks)}] {task.task_id}: started', flush=True)
-                ctx = RunContext(root, run_id, config, task.task_id)
-                result = _task(task, adapter, ctx, manifest)
-                manifest['tasks'].append({'index': index, **result})
-                write_json(path, manifest)
-                print(f'[{index}/{len(tasks)}] {task.task_id}: {result["status"]}; '
-                      f'{result["primary_metric"]}={result["score"]}', flush=True)
-                if result['error']:
-                    raise RuntimeError('Task failed: ' + result['error'])
+            _run_tasks(tasks, adapter, root, config, manifest, path)
             manifest.update(status='complete', active_task_id=None, phase=None)
         except BaseException as exc:
             manifest.update(status='interrupted', error=_error(exc))

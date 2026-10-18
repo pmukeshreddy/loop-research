@@ -1,4 +1,5 @@
 """Shared task selection and official failure grading, independent of the harness."""
+from concurrent.futures import CancelledError
 import math
 import random
 
@@ -24,6 +25,8 @@ def _grade(task, adapter, ctx, failed):
             result = adapter.grade(task, submission, ctx)
             if result.judge != ctx.config.judge_label or not math.isfinite(result.metrics[result.primary_metric]):
                 raise ValueError('Official grader returned an invalid score or judge label')
+        except CancelledError:
+            raise
         except Exception as exc:
             state['errors'].append(_error(exc))
             already_empty = state['empty']

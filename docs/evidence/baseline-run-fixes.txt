@@ -11,3 +11,13 @@ Baseline preparation and execution fixes
 - Initial launch stopped before creating a run because the workspace had no harness repository.
   Ran the existing loop-research init command before the fresh baseline launch. Config was
   preserved. Baseline itself still cannot initialize, read state from, or write the harness.
+- On request, stopped the first sequential run with SIGINT before any task completed. Its
+  interrupted manifest confirms unchanged harness HEAD. Replaced sequential scheduling with
+  at most codex.max_concurrent active tasks, preserving seeded report order and completed
+  task checkpoints across gaps. Tests compare sequential and parallel outputs and archives,
+  verify bounded concurrency, drain-on-failure, resume without duplicate research, and child
+  process cleanup on interruption.
+- Review of parallel cancellation found that the shared grader treated CancelledError as a
+  submission failure and would grade an empty submission on resume. It now propagates user
+  cancellation without changing the grading checkpoint; a regression test proves that the
+  original successful submission is graded on resume.
