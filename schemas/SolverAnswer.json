@@ -1,0 +1,51 @@
+{
+  "$defs": {
+    "Citation": {
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "quote": {
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "quote"
+      ],
+      "title": "Citation",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "answer": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Answer",
+      "type": "array"
+    },
+    "citations": {
+      "items": {
+        "$ref": "#/$defs/Citation"
+      },
+      "title": "Citations",
+      "type": "array"
+    },
+    "uncertainty": {
+      "title": "Uncertainty",
+      "type": "string"
+    }
+  },
+  "required": [
+    "answer",
+    "citations",
+    "uncertainty"
+  ],
+  "title": "SolverAnswer",
+  "type": "object"
+}

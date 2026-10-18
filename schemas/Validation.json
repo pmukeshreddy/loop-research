@@ -1,0 +1,109 @@
+{
+  "$defs": {
+    "Check": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "pass",
+            "fail",
+            "unknown"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "feedback": {
+          "default": "",
+          "title": "Feedback",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "status"
+      ],
+      "title": "Check",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "task_id": {
+      "title": "Task Id",
+      "type": "string"
+    },
+    "candidate_version": {
+      "title": "Candidate Version",
+      "type": "integer"
+    },
+    "decision": {
+      "enum": [
+        "accept",
+        "revise",
+        "reject"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "checks": {
+      "items": {
+        "$ref": "#/$defs/Check"
+      },
+      "title": "Checks",
+      "type": "array"
+    },
+    "solver_attempts": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Solver Attempts",
+      "type": "array"
+    },
+    "feedback": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Feedback",
+      "type": "array"
+    },
+    "judge_config": {
+      "additionalProperties": true,
+      "title": "Judge Config",
+      "type": "object"
+    },
+    "audit_status": {
+      "enum": [
+        "fixture_only",
+        "pending_manual_review",
+        "approved",
+        "rejected"
+      ],
+      "title": "Audit Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "task_id",
+    "candidate_version",
+    "decision",
+    "checks",
+    "solver_attempts",
+    "feedback",
+    "judge_config",
+    "audit_status"
+  ],
+  "title": "Validation",
+  "type": "object"
+}

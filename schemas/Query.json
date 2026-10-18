@@ -1,0 +1,80 @@
+{
+  "$defs": {
+    "Atom": {
+      "additionalProperties": false,
+      "properties": {
+        "subject": {
+          "title": "Subject",
+          "type": "string"
+        },
+        "predicate": {
+          "title": "Predicate",
+          "type": "string"
+        },
+        "object": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "title": "Object"
+        }
+      },
+      "required": [
+        "subject",
+        "predicate",
+        "object"
+      ],
+      "title": "Atom",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "target": {
+      "default": "?company",
+      "title": "Target",
+      "type": "string"
+    },
+    "answer_type": {
+      "default": "company",
+      "enum": [
+        "company",
+        "investor",
+        "person",
+        "product",
+        "funding_event",
+        "acquisition_event",
+        "category",
+        "date",
+        "year",
+        "location"
+      ],
+      "title": "Answer Type",
+      "type": "string"
+    },
+    "branches": {
+      "items": {
+        "items": {
+          "$ref": "#/$defs/Atom"
+        },
+        "type": "array"
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "title": "Branches",
+      "type": "array"
+    }
+  },
+  "required": [
+    "branches"
+  ],
+  "title": "Query",
+  "type": "object"
+}

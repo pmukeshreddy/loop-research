@@ -1,0 +1,83 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "source_id": {
+      "title": "Source Id",
+      "type": "string"
+    },
+    "url_or_local_origin": {
+      "title": "Url Or Local Origin",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "published_at": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Published At"
+    },
+    "retrieved_at": {
+      "format": "date-time",
+      "title": "Retrieved At",
+      "type": "string"
+    },
+    "content_hash": {
+      "title": "Content Hash",
+      "type": "string"
+    },
+    "raw_hash": {
+      "title": "Raw Hash",
+      "type": "string"
+    },
+    "text_path": {
+      "title": "Text Path",
+      "type": "string"
+    },
+    "raw_path": {
+      "title": "Raw Path",
+      "type": "string"
+    },
+    "category": {
+      "default": "primary",
+      "enum": [
+        "primary",
+        "secondary",
+        "fixture"
+      ],
+      "title": "Category",
+      "type": "string"
+    },
+    "redistributable": {
+      "default": false,
+      "title": "Redistributable",
+      "type": "boolean"
+    },
+    "date_basis": {
+      "default": "unknown",
+      "title": "Date Basis",
+      "type": "string"
+    }
+  },
+  "required": [
+    "source_id",
+    "url_or_local_origin",
+    "title",
+    "published_at",
+    "retrieved_at",
+    "content_hash",
+    "raw_hash",
+    "text_path",
+    "raw_path"
+  ],
+  "title": "Source",
+  "type": "object"
+}

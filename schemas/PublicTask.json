@@ -1,0 +1,106 @@
+{
+  "$defs": {
+    "Scope": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "identified_target",
+          "enum": [
+            "corpus_bounded",
+            "identified_target"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "candidate_universe": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Candidate Universe"
+        },
+        "expected_count": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Expected Count",
+          "type": "integer"
+        },
+        "allow_retrospective": {
+          "default": false,
+          "title": "Allow Retrospective",
+          "type": "boolean"
+        },
+        "description": {
+          "default": "Identify the specified target; no open-web completeness claim.",
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "title": "Scope",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "task_id": {
+      "title": "Task Id",
+      "type": "string"
+    },
+    "question": {
+      "minLength": 10,
+      "title": "Question",
+      "type": "string"
+    },
+    "answer_schema": {
+      "default": "entity_names",
+      "title": "Answer Schema",
+      "type": "string"
+    },
+    "as_of": {
+      "format": "date",
+      "title": "As Of",
+      "type": "string"
+    },
+    "scope": {
+      "$ref": "#/$defs/Scope"
+    },
+    "corpus_id": {
+      "title": "Corpus Id",
+      "type": "string"
+    },
+    "allowed_tools": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Allowed Tools",
+      "type": "array"
+    },
+    "data_mode": {
+      "enum": [
+        "fixture",
+        "live"
+      ],
+      "title": "Data Mode",
+      "type": "string"
+    }
+  },
+  "required": [
+    "task_id",
+    "question",
+    "as_of",
+    "scope",
+    "corpus_id",
+    "allowed_tools",
+    "data_mode"
+  ],
+  "title": "PublicTask",
+  "type": "object"
+}

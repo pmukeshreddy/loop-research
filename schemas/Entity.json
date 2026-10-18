@@ -1,0 +1,60 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "entity_id": {
+      "title": "Entity Id",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "company",
+        "investor",
+        "person",
+        "product",
+        "funding_event",
+        "acquisition_event",
+        "category",
+        "date",
+        "year",
+        "location"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "identifiers": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Identifiers",
+      "type": "array"
+    },
+    "aliases": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Aliases",
+      "type": "array"
+    },
+    "resolution_status": {
+      "default": "unresolved",
+      "enum": [
+        "resolved",
+        "unresolved",
+        "conflict"
+      ],
+      "title": "Resolution Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "entity_id",
+    "name",
+    "kind"
+  ],
+  "title": "Entity",
+  "type": "object"
+}

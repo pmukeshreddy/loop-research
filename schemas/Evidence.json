@@ -1,0 +1,52 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "evidence_id": {
+      "title": "Evidence Id",
+      "type": "string"
+    },
+    "source_id": {
+      "title": "Source Id",
+      "type": "string"
+    },
+    "span_start": {
+      "minimum": 0,
+      "title": "Span Start",
+      "type": "integer"
+    },
+    "span_end": {
+      "exclusiveMinimum": 0,
+      "title": "Span End",
+      "type": "integer"
+    },
+    "span_text": {
+      "minLength": 1,
+      "title": "Span Text",
+      "type": "string"
+    },
+    "claim_id": {
+      "title": "Claim Id",
+      "type": "string"
+    },
+    "support_status": {
+      "default": "unknown",
+      "enum": [
+        "supported",
+        "unsupported",
+        "unknown"
+      ],
+      "title": "Support Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "evidence_id",
+    "source_id",
+    "span_start",
+    "span_end",
+    "span_text",
+    "claim_id"
+  ],
+  "title": "Evidence",
+  "type": "object"
+}

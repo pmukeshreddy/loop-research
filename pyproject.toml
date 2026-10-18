@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "company-webshaper"
+version = "0.1.0"
+description = "Evidence-grounded, WebShaper-inspired company research dataset generation"
+requires-python = ">=3.11"
+dependencies = ["pydantic>=2.10,<3", "httpx>=0.28,<1", "pypdf>=5,<7"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "ruff>=0.12,<1"]
+
+[project.scripts]
+webshaper = "webshaper.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/webshaper"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"tests/fixtures" = "webshaper/fixture_data"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]

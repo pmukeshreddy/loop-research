@@ -1,0 +1,341 @@
+{
+  "$defs": {
+    "Budget": {
+      "additionalProperties": false,
+      "properties": {
+        "max_usd": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Max Usd",
+          "type": "number"
+        },
+        "max_tokens": {
+          "default": 500000,
+          "minimum": 1,
+          "title": "Max Tokens",
+          "type": "integer"
+        },
+        "max_searches": {
+          "default": 100,
+          "minimum": 0,
+          "title": "Max Searches",
+          "type": "integer"
+        },
+        "max_calls": {
+          "default": 150,
+          "minimum": 1,
+          "title": "Max Calls",
+          "type": "integer"
+        }
+      },
+      "title": "Budget",
+      "type": "object"
+    },
+    "ModelConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "backend": {
+          "default": "codex",
+          "enum": [
+            "codex",
+            "fixture"
+          ],
+          "title": "Backend",
+          "type": "string"
+        },
+        "executable": {
+          "default": "codex",
+          "title": "Executable",
+          "type": "string"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "reasoning_effort": {
+          "default": "low",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "title": "Reasoning Effort",
+          "type": "string"
+        },
+        "timeout_seconds": {
+          "default": 240,
+          "maximum": 1800,
+          "minimum": 10,
+          "title": "Timeout Seconds",
+          "type": "integer"
+        },
+        "token_reservation": {
+          "default": 100000,
+          "minimum": 100,
+          "title": "Token Reservation",
+          "type": "integer"
+        },
+        "max_searches_per_call": {
+          "default": 3,
+          "maximum": 10,
+          "minimum": 1,
+          "title": "Max Searches Per Call",
+          "type": "integer"
+        }
+      },
+      "title": "ModelConfig",
+      "type": "object"
+    },
+    "Scope": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "identified_target",
+          "enum": [
+            "corpus_bounded",
+            "identified_target"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "candidate_universe": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Candidate Universe"
+        },
+        "expected_count": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Expected Count",
+          "type": "integer"
+        },
+        "allow_retrospective": {
+          "default": false,
+          "title": "Allow Retrospective",
+          "type": "boolean"
+        },
+        "description": {
+          "default": "Identify the specified target; no open-web completeness claim.",
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "title": "Scope",
+      "type": "object"
+    },
+    "SourceInput": {
+      "additionalProperties": false,
+      "properties": {
+        "origin": {
+          "title": "Origin",
+          "type": "string"
+        },
+        "title": {
+          "default": "",
+          "title": "Title",
+          "type": "string"
+        },
+        "published_at": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published At"
+        },
+        "date_basis": {
+          "default": "unknown",
+          "title": "Date Basis",
+          "type": "string"
+        },
+        "category": {
+          "default": "primary",
+          "enum": [
+            "primary",
+            "secondary",
+            "fixture"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "redistributable": {
+          "default": false,
+          "title": "Redistributable",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "origin"
+      ],
+      "title": "SourceInput",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "mode": {
+      "default": "live",
+      "enum": [
+        "fixture",
+        "live"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/SourceInput"
+      },
+      "title": "Sources",
+      "type": "array"
+    },
+    "allowed_domains": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Allowed Domains",
+      "type": "array"
+    },
+    "crawl_depth": {
+      "default": 0,
+      "maximum": 3,
+      "minimum": 0,
+      "title": "Crawl Depth",
+      "type": "integer"
+    },
+    "max_sources": {
+      "default": 20,
+      "maximum": 200,
+      "minimum": 1,
+      "title": "Max Sources",
+      "type": "integer"
+    },
+    "as_of": {
+      "format": "date",
+      "title": "As Of",
+      "type": "string"
+    },
+    "scope": {
+      "$ref": "#/$defs/Scope"
+    },
+    "generator": {
+      "$ref": "#/$defs/ModelConfig"
+    },
+    "expander": {
+      "$ref": "#/$defs/ModelConfig"
+    },
+    "verifier": {
+      "$ref": "#/$defs/ModelConfig"
+    },
+    "solver": {
+      "$ref": "#/$defs/ModelConfig"
+    },
+    "search_provider": {
+      "default": "codex",
+      "enum": [
+        "codex",
+        "none",
+        "fixture"
+      ],
+      "title": "Search Provider",
+      "type": "string"
+    },
+    "budget": {
+      "$ref": "#/$defs/Budget"
+    },
+    "target_tasks": {
+      "default": 10,
+      "maximum": 10000,
+      "minimum": 1,
+      "title": "Target Tasks",
+      "type": "integer"
+    },
+    "max_seed_attempts": {
+      "default": 20,
+      "maximum": 10000,
+      "minimum": 1,
+      "title": "Max Seed Attempts",
+      "type": "integer"
+    },
+    "layers": {
+      "default": 1,
+      "maximum": 5,
+      "minimum": 0,
+      "title": "Layers",
+      "type": "integer"
+    },
+    "browsing_attempts": {
+      "default": 5,
+      "maximum": 10,
+      "minimum": 1,
+      "title": "Browsing Attempts",
+      "type": "integer"
+    },
+    "max_revisions": {
+      "default": 1,
+      "maximum": 3,
+      "minimum": 0,
+      "title": "Max Revisions",
+      "type": "integer"
+    },
+    "concurrency": {
+      "default": 1,
+      "maximum": 2,
+      "minimum": 1,
+      "title": "Concurrency",
+      "type": "integer"
+    },
+    "shortcut_audit_rate": {
+      "default": 0.1,
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Shortcut Audit Rate",
+      "type": "number"
+    },
+    "fixture_file": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fixture File"
+    }
+  },
+  "required": [
+    "as_of"
+  ],
+  "title": "RunConfig",
+  "type": "object"
+}
