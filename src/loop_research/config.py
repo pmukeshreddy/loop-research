@@ -73,6 +73,7 @@ class Gate(Strict):
 
 class Loop(Strict):
     train_batch_size: int = Field(5, ge=1)
+    parallel_tasks: int = Field(4, ge=1)
 
 class Config(Strict):
     models: Models = Field(default_factory=Models)

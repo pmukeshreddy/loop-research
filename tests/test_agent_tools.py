@@ -1,4 +1,6 @@
 import json
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
@@ -61,6 +63,16 @@ def test_prompt_order(benchmark, task):
     assert source == "today_fallback" and asof in prompt
 
 
+def test_prompt_documents_batched_discovery_and_fetching(benchmark, task):
+    prompt, _, _ = make_prompt(task, benchmark.output_contract(task), "")
+    tools, method = prompt.split("TOOLS\n")[1].split("METHOD\n")
+    assert "search_batched(queries, k=8)" in tools
+    assert "fetch_batched(urls, focus='')" in tools
+    assert "input order" in tools
+    method = method.split("OUTPUT CONTRACT\n")[0]
+    assert "search_batched" in method and "fetch_batched" in method
+
+
 def test_search_fetch_cache_and_ledger(ctx):
     hits = {"results": [{"title": "good", "url": "https://example.org/a", "snippet": "text"},
                         {"title": "bad", "url": "file:///tmp/secret", "snippet": "invalid"}]}
@@ -74,6 +86,116 @@ def test_search_fetch_cache_and_ledger(ctx):
     assert len(backend.calls) == 3
     assert ctx.load("url_ledger.json") == ["https://example.org/a"]
     assert ResearchTools(Replies(), ctx).fetch("https://example.org/a") == "faithful page text"
+
+
+@pytest.mark.parametrize("kind", ["search", "fetch"])
+def test_batched_tools_overlap_preserve_order_cache_and_ledger(ctx, kind):
+    ctx.config.codex.max_concurrent = 2
+    barrier, second_done = threading.Barrier(2, timeout=5), threading.Event()
+    counter_lock = threading.Lock()
+    calls, completed = [], []
+    active = peak = 0
+
+    def cache_lock_available():
+        # Other workers may briefly hold the lock to persist their results.
+        acquired = tools.lock.acquire(timeout=2)
+        if acquired:
+            tools.lock.release()
+        return acquired
+
+    class Backend:
+        def complete(self, prompt, **kwargs):
+            nonlocal active, peak
+            with ThreadPoolExecutor(max_workers=1) as probe:
+                assert probe.submit(cache_lock_available).result(timeout=5), "Cache lock held during backend call"
+            index = next(i for i in range(3) if f"fixture-{i}" in prompt)
+            with counter_lock:
+                calls.append(index)
+                active += 1
+                peak = max(peak, active)
+            try:
+                if index < 2:
+                    barrier.wait()
+                if index == 0:
+                    assert second_done.wait(5)
+                if kind == "search":
+                    result = json.dumps({"results": [{"title": f"fixture-{index}",
+                        "url": f"https://example.org/fixture-{index}", "snippet": "Fixture evidence"}]})
+                else:
+                    result = f"Fixture page {index}" if index < 2 else "FETCH_FAILED"
+                completed.append(index)
+                return result
+            finally:
+                with counter_lock:
+                    active -= 1
+                if index == 1:
+                    second_done.set()
+
+    tools = ResearchTools(Backend(), ctx)
+    batch = getattr(tools, kind + "_batched")
+    inputs = [f"fixture-{i}" if kind == "search" else f"https://example.org/fixture-{i}" for i in range(3)]
+    alias = " FIXTURE-0 " if kind == "search" else "https://EXAMPLE.org/fixture-0#section"
+    options = {"k": 1} if kind == "search" else {"focus": "Fixture focus"}
+    result = batch([*inputs, alias, inputs[1]], **options)
+    expected = [[{"title": f"fixture-{i}", "url": f"https://example.org/fixture-{i}",
+                  "snippet": "Fixture evidence"}] for i in range(3)] if kind == "search" else [
+                      "Fixture page 0", "Fixture page 1", "FETCH_FAILED"]
+    assert result == [*expected, expected[0], expected[1]]
+    assert peak == 2 and completed.index(1) < completed.index(0)
+    assert sorted(calls) == [0, 1, 2]
+    assert ctx.load("tool_cache.json") == tools.cache and len(tools.cache) == 3
+    ledger = [f"https://example.org/fixture-{i}" for i in range(3 if kind == "search" else 2)]
+    assert ctx.load("url_ledger.json") == ledger and tools.ledger == set(ledger)
+    for value, expected_value in zip(inputs, expected):
+        assert getattr(tools, kind)(value, **options) == expected_value
+    restored = ResearchTools(Replies(), ctx)
+    assert getattr(restored, kind + "_batched")(inputs, **options) == expected
+    assert batch([], **options) == [] and len(calls) == 3
+
+
+@pytest.mark.parametrize("kind", ["search", "fetch"])
+def test_duplicate_inflight_requests_share_cache_and_propagate_failure(ctx, kind, monkeypatch):
+    from concurrent.futures import Future
+    from loop_research import repl_tools
+    waiting = threading.Event()
+
+    class ObservedFuture(Future):
+        def result(self, timeout=None):
+            waiting.set()
+            return super().result(timeout=timeout)
+
+    monkeypatch.setattr(repl_tools, "Future", ObservedFuture, raising=False)
+    calls = []
+
+    class Backend:
+        def complete(self, prompt, **kwargs):
+            calls.append(prompt)
+            if len(calls) == 1:
+                assert waiting.wait(5), "Duplicate request did not wait for its cache entry"
+                raise RuntimeError("Fixture backend failure")
+            return '{"results": []}' if kind == "search" else "Fixture page"
+
+    tools = ResearchTools(Backend(), ctx)
+    value = "fixture" if kind == "search" else "https://example.org/"
+    call = getattr(tools, kind)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        futures = [pool.submit(call, value) for _ in range(2)]
+        for future in futures:
+            with pytest.raises(RuntimeError, match="Fixture backend failure"):
+                future.result(timeout=10)
+    assert len(calls) == 1 and tools.cache == {} and tools.ledger == set()
+    expected = [] if kind == "search" else "Fixture page"
+    assert call(value) == call(value) == expected
+    assert len(calls) == 2
+
+
+def test_batched_tools_work_inside_thread_restricted_repl(ctx):
+    tools = ResearchTools(Replies('{"results": []}', "Fixture page"), ctx)
+    with ResearchREPL(custom_tools=tools.injected()) as repl:
+        result = repl.execute_code('print(search_batched(["fixture"]))\n'
+                                   'print(fetch_batched(["https://example.org/"]))')
+    assert result.stderr == ""
+    assert result.stdout == "[[]]\n['Fixture page']\n"
 
 
 @pytest.mark.parametrize("code", ["open('gold.csv')", "import os", "search.__globals__", "getattr(search, 'x')"])

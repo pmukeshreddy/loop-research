@@ -1,4 +1,5 @@
 """Resumable WideSearch learning and benchmark-independent run execution."""
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 import math
 from pathlib import Path
@@ -118,9 +119,10 @@ def execute_task(task, benchmark, library, ctx, *, grade=True, research=True):
 
 
 def execute_run(ctx, tasks, benchmark, library, *, grade=True, research=True):
-    grades = {}
-    for task in tasks:
-        grades[task.task_id] = execute_task(task, benchmark, library, ctx.task(task.task_id), grade=grade, research=research)
+    with ThreadPoolExecutor(max_workers=ctx.config.loop.parallel_tasks) as pool:
+        futures = [pool.submit(execute_task, task, benchmark, library, ctx.task(task.task_id),
+                               grade=grade, research=research) for task in tasks]
+        grades = {task.task_id: future.result() for task, future in zip(tasks, futures)}
     summary = ctx.load("run_summary.json")
     summary.update(status="complete" if grade else "researched", task_count=len(tasks))
     ctx.save("run_summary.json", summary)

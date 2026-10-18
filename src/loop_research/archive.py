@@ -93,7 +93,7 @@ class RunContext:
         self.path.mkdir(parents=True, exist_ok=True)
         snapshot = self.config.model_dump()
         existing = self.load("config.json")
-        if existing is not None and existing != snapshot:
+        if existing is not None and Config.model_validate(existing).model_dump() != snapshot:
             raise ValueError("Cannot resume with changed configuration")
         if existing is None:
             self.save("config.json", snapshot)

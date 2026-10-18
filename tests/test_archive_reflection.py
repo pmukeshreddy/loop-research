@@ -31,6 +31,19 @@ def test_archive_resume_preserves_config_and_library(ctx):
         root.initialize("fixture-sha")
 
 
+def test_resume_config_without_parallel_tasks_preserves_snapshot(ctx):
+    ctx.initialize("fixture-sha")
+    snapshot = ctx.load("config.json")
+    del snapshot["loop"]["parallel_tasks"]
+    ctx.save("config.json", snapshot)
+    before = (ctx.path / "config.json").read_bytes()
+    ctx.initialize("fixture-sha")
+    assert (ctx.path / "config.json").read_bytes() == before
+    ctx.config.loop.parallel_tasks = 2
+    with pytest.raises(ValueError, match="configuration"):
+        ctx.initialize("fixture-sha")
+
+
 def test_jsonl_and_real_trajectory_fields(ctx):
     path = ctx.path / "trajectory.jsonl"
     iteration = {"type": "iteration", "iteration": 1, "code_blocks": [{"code": "print('fixture')",

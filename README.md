@@ -25,6 +25,8 @@ loop-research verify
 
 Settings are in [config.yaml](config.yaml). `models.root`, `models.sub` and `models.reflect` default to the Codex default model. Adjust concurrency, per-call/task timeouts, call budget, reflection batches, gate thresholds and repeat counts there. `wandr.final_n_tasks: null` selects the full final set. A saved split/subset is immutable for its configuration; use a separate workspace to change it.
 
+`loop.parallel_tasks` defaults to 4 concurrent task workers; set it to 1 for sequential execution. Each task keeps its own research process and archive. `codex.max_concurrent` remains the global file-lock limit for Codex calls across workers.
+
 Global options precede the command. `--root` selects the workspace, and a relative `--config` path is resolved within that workspace:
 
 ```sh
@@ -62,6 +64,8 @@ WANDR runs the pinned generated official harness with project-owned browser and 
 Every grader uses `models.root`, or the Codex default when it is null. WANDR preserves the exact stage prompts and SDK strict schemas/response parser. Its original model, token limit and provider parameters remain in the archived request cache for provenance; Codex uses `models.reasoning_effort` and does not reproduce provider generation controls that lack verified CLI equivalents. The Perplexity SDK is an import dependency of the unchanged upstream fetch module; the adapter constructs no provider API clients.
 
 The agent's `fetch()` returns a model rendering of a page, not raw HTML. WANDR re-fetches independently and judges excerpt faithfulness, so quotations can fail even when research returned text successfully. Citation checks flag source URLs absent from the task's URL ledger; flagged values remain part of the graded answer.
+
+The REPL also exposes `search_batched(queries, k=8)` and `fetch_batched(urls, focus="")`. Both preserve input order and share the single-call tools' cache and URL ledger. Each batch uses at most `codex.max_concurrent` threads; duplicate in-flight requests share one backend call.
 
 ## Files and archives
 

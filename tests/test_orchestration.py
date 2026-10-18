@@ -1,5 +1,6 @@
 """Offline orchestration tests; all task data and model results here are fixtures."""
 from datetime import date
+import threading
 
 import pytest
 
@@ -73,6 +74,97 @@ def orchestration(tmp_path, monkeypatch):
     monkeypatch.setattr(loop, "reflect", reflection)
     monkeypatch.setattr(evaluate, "_benchmark", lambda name, root, cfg: benchmark)
     return tmp_path, config, benchmark, history
+
+
+def test_parallel_tasks_config():
+    from pydantic import ValidationError
+    assert Config().loop.parallel_tasks == 4
+    with pytest.raises(ValidationError):
+        Config.model_validate({"loop": {"parallel_tasks": 0}})
+
+
+@pytest.mark.parametrize("grade", [True, False])
+@pytest.mark.parametrize("parallel_tasks", [1, 2, 3])
+def test_parallel_run_matches_sequential_archives_and_resume(orchestration, monkeypatch, grade, parallel_tasks):
+    from loop_research import archive, loop
+    root, config, benchmark, history = orchestration
+    config.loop.parallel_tasks = parallel_tasks
+    tasks = benchmark.load_tasks()
+    monkeypatch.setattr(archive, "stamp", lambda: "2026-01-01T00:00:00+00:00")
+    sequential, frozen = loop.open_run(root / "sequential", config, "fixture", tasks, root / "skills")
+    expected = {task.task_id: loop.execute_task(task, benchmark, frozen, sequential.task(task.task_id), grade=grade)
+                for task in tasks}
+    summary = sequential.load("run_summary.json")
+    summary.update(status="complete" if grade else "researched", task_count=len(tasks))
+    sequential.save("run_summary.json", summary)
+
+    research = loop.run_task
+    barrier, lock = threading.Barrier(parallel_tasks, timeout=5), threading.Lock()
+    second_done = threading.Event()
+    active = peak = 0
+
+    def overlapping(*args):
+        nonlocal active, peak
+        with lock:
+            active += 1
+            peak = max(peak, active)
+        try:
+            barrier.wait()
+            if parallel_tasks > 1 and args[0] == tasks[0]:
+                assert second_done.wait(5)
+            result = research(*args)
+            if args[0] == tasks[1]:
+                second_done.set()
+            return result
+        finally:
+            with lock:
+                active -= 1
+
+    monkeypatch.setattr(loop, "run_task", overlapping)
+    parallel, frozen = loop.open_run(root / "parallel", config, "fixture", tasks, root / "skills")
+    result = loop.execute_run(parallel, tasks, benchmark, frozen, grade=grade)
+    assert peak == config.loop.parallel_tasks
+    assert list(result) == list(expected) and result == expected
+    if parallel_tasks > 1:
+        order = [task_id for _, task_id, _ in history["agent"][len(tasks):]]
+        assert order.index(tasks[1].task_id) < order.index(tasks[0].task_id)
+
+    def files(ctx):
+        return {str(p.relative_to(ctx.path)): p.read_bytes() for p in ctx.path.rglob("*") if p.is_file()}
+
+    assert files(parallel) == files(sequential)
+    before, calls = files(parallel), {key: list(value) for key, value in history.items()}
+    parallel, frozen = loop.open_run(root / "parallel", config, "fixture", tasks, root / "skills")
+    assert loop.execute_run(parallel, tasks, benchmark, frozen, grade=grade) == expected
+    assert files(parallel) == before and history == calls
+
+
+def test_parallel_failure_resumes_only_unfinished_grades(orchestration, monkeypatch):
+    from loop_research import loop
+    root, config, benchmark, history = orchestration
+    config.loop.parallel_tasks = 2
+    tasks = benchmark.load_tasks()[:2]
+    ctx, frozen = loop.open_run(root, config, "fixture-failure", tasks, root / "skills")
+    grade = benchmark.grade
+    barrier = threading.Barrier(2, timeout=5)
+
+    def interrupted(task, submission, ctx):
+        barrier.wait()
+        if task == tasks[0]:
+            raise RuntimeError("Fixture interrupted grade")
+        return grade(task, submission, ctx)
+
+    monkeypatch.setattr(benchmark, "grade", interrupted)
+    with pytest.raises(RuntimeError, match="interrupted grade"):
+        loop.execute_run(ctx, tasks, benchmark, frozen)
+    assert ctx.load("run_summary.json").get("status") != "complete"
+    completed = ctx.task(tasks[1].task_id).load("completed.json")
+    assert completed and ctx.task(tasks[0].task_id).load("completed.json") is None
+    monkeypatch.setattr(benchmark, "grade", grade)
+    results = loop.execute_run(ctx, tasks, benchmark, frozen)
+    assert list(results) == [task.task_id for task in tasks]
+    assert len(history["agent"]) == len(history["grade"]) == 2
+    assert ctx.task(tasks[1].task_id).load("completed.json") == completed
 
 
 def test_final_evaluation_pairs_tasks_and_reuses_complete_archives(orchestration):
