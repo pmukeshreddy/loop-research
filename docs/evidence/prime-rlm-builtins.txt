@@ -1,0 +1,176 @@
+Offline installed-source inspection; no model calls, REPL execution, or source changes.
+$ .venv/bin/python -c <following script>
+import hashlib, importlib.metadata, json
+from pathlib import Path
+import rlm.environments.local_repl as module
+upstream = Path('.verification/rlm/rlm/environments/local_repl.py')
+installed = Path(module.__file__)
+print('installed_local_repl:', installed)
+print('pinned_source_sha256:', hashlib.sha256(upstream.read_bytes()).hexdigest())
+print('installed_source_sha256:', hashlib.sha256(installed.read_bytes()).hexdigest())
+print('source_bytes_match:', upstream.read_bytes() == installed.read_bytes())
+print('direct_url:', json.loads(importlib.metadata.distribution('rlms').read_text('direct_url.json')))
+print('blocked_builtins:', {key: module._SAFE_BUILTINS[key] for key in ('input', 'eval', 'exec', 'compile', 'globals', 'locals')})
+
+stdout:
+installed_local_repl: /Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/lib/python3.12/site-packages/rlm/environments/local_repl.py
+pinned_source_sha256: cee6bcfc530b01cef4b39f722b2efc084dd2fa08fe495b88ceda7efa63b5e31e
+installed_source_sha256: cee6bcfc530b01cef4b39f722b2efc084dd2fa08fe495b88ceda7efa63b5e31e
+source_bytes_match: True
+direct_url: {'url': 'https://github.com/alexzhang13/rlm.git', 'vcs_info': {'vcs': 'git', 'commit_id': 'd04208afbad29ca675ab13478c40ee8bebc84bfe', 'requested_revision': 'd04208afbad29ca675ab13478c40ee8bebc84bfe'}}
+blocked_builtins: {'input': None, 'eval': None, 'exec': None, 'compile': None, 'globals': None, 'locals': None}
+stderr:
+exit=0
+
+Pinned LocalREPL source excerpts:
+   50	# =============================================================================
+   51	# Safe Builtins
+   52	# =============================================================================
+   53
+   54	# Safe builtins - blocks dangerous operations like eval/exec/input
+   55	_SAFE_BUILTINS = {
+   56	    # Core types and functions
+   57	    "print": print,
+   58	    "len": len,
+   59	    "str": str,
+   60	    "int": int,
+   61	    "float": float,
+   62	    "list": list,
+   63	    "dict": dict,
+   64	    "set": set,
+   65	    "tuple": tuple,
+   66	    "bool": bool,
+   67	    "type": type,
+   68	    "isinstance": isinstance,
+   69	    "issubclass": issubclass,
+   70	    "enumerate": enumerate,
+   71	    "zip": zip,
+   72	    "map": map,
+   73	    "filter": filter,
+   74	    "sorted": sorted,
+   75	    "reversed": reversed,
+   76	    "range": range,
+   77	    "min": min,
+   78	    "max": max,
+   79	    "sum": sum,
+   80	    "abs": abs,
+   81	    "round": round,
+   82	    "any": any,
+   83	    "all": all,
+   84	    "pow": pow,
+   85	    "divmod": divmod,
+   86	    "chr": chr,
+   87	    "ord": ord,
+   88	    "hex": hex,
+   89	    "bin": bin,
+   90	    "oct": oct,
+   91	    "repr": repr,
+   92	    "ascii": ascii,
+   93	    "format": format,
+   94	    "hash": hash,
+   95	    "id": id,
+   96	    "iter": iter,
+   97	    "next": next,
+   98	    "slice": slice,
+   99	    "callable": callable,
+  100	    "hasattr": hasattr,
+  101	    "getattr": getattr,
+  102	    "setattr": setattr,
+  103	    "delattr": delattr,
+  104	    "dir": dir,
+  105	    "vars": vars,
+  106	    "bytes": bytes,
+  107	    "bytearray": bytearray,
+  108	    "memoryview": memoryview,
+  109	    "complex": complex,
+  110	    "object": object,
+  111	    "super": super,
+  112	    "property": property,
+  113	    "staticmethod": staticmethod,
+  114	    "classmethod": classmethod,
+  115	    "__import__": __import__,
+  116	    "open": open,
+  117	    # Exceptions
+  118	    "Exception": Exception,
+  119	    "BaseException": BaseException,
+  120	    "ValueError": ValueError,
+  121	    "TypeError": TypeError,
+  122	    "KeyError": KeyError,
+  123	    "IndexError": IndexError,
+  124	    "AttributeError": AttributeError,
+  125	    "FileNotFoundError": FileNotFoundError,
+  126	    "OSError": OSError,
+  127	    "IOError": IOError,
+  128	    "RuntimeError": RuntimeError,
+  129	    "NameError": NameError,
+  130	    "ImportError": ImportError,
+  131	    "StopIteration": StopIteration,
+  132	    "AssertionError": AssertionError,
+  133	    "NotImplementedError": NotImplementedError,
+  134	    "ArithmeticError": ArithmeticError,
+  135	    "LookupError": LookupError,
+  136	    "Warning": Warning,
+  137	    # Blocked
+  138	    "input": None,
+  139	    "eval": None,
+  140	    "exec": None,
+  141	    "compile": None,
+  142	    "globals": None,
+  143	    "locals": None,
+  144	}
+  190	        # Validate custom tools don't override reserved names
+  191	        validate_custom_tools(self.custom_tools)
+  192
+  193	        # Setup globals, locals, and modules in environment.
+  194	        self.setup()
+  195
+  196	        if compaction:
+  197	            self._compaction_history: list[Any] = []
+  198	            self.locals["history"] = self._compaction_history
+  199
+  200	        # Load context if provided
+  201	        if context_payload is not None:
+  202	            self.load_context(context_payload)
+  203
+  204	        # Run setup code if provided
+  205	        if setup_code:
+  206	            self.execute_code(setup_code)
+  207
+  208	    def setup(self):
+  209	        """Setup the environment."""
+  210	        # Create sandboxed globals
+  211	        self.globals: dict[str, Any] = {
+  212	            "__builtins__": _SAFE_BUILTINS.copy(),
+  213	            "__name__": "__main__",
+  214	        }
+  215	        self.locals: dict[str, Any] = {}
+  216
+  217	        # Track LLM calls made during code execution
+  218	        self._pending_llm_calls: list[RLMChatCompletion] = []
+  219	        # Captured the first time the model sets ``answer["ready"] = True``.
+  220	        self._last_final_answer: str | None = None
+  221
+  222	        # Add helper functions
+  223	        self.globals["SHOW_VARS"] = self._show_vars
+  224	        self.globals["llm_query"] = self._llm_query
+  225	        self.globals["llm_query_batched"] = self._llm_query_batched
+  226	        self.globals["rlm_query"] = self._rlm_query
+  227	        self.globals["rlm_query_batched"] = self._rlm_query_batched
+  228
+  229	        # The model marks completion via ``answer["ready"] = True``; the
+  230	        # custom dict captures the content as soon as that happens so we
+  231	        # don't have to probe the namespace after every cell.
+  232	        self.locals["answer"] = _AnswerDict(on_ready=self._capture_answer)
+  233
+  234	        # Add custom tools to globals
+  235	        # Tools can be either plain values or (value, description) tuples
+  236	        for name, entry in self.custom_tools.items():
+  237	            value = extract_tool_value(entry)
+  238	            if callable(value):
+  239	                self.globals[name] = value
+  240	            else:
+  241	                # For non-callable values (constants, data), add to locals
+  242	                self.locals[name] = value
+  243
+  244	    def _capture_answer(self, content: Any) -> None:
+  245	        self._last_final_answer = str(content)

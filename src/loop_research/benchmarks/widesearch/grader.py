@@ -1,7 +1,6 @@
 """Load unchanged pinned scoring source; replace only its provider transport."""
 import builtins
 import ast
-from collections import Counter
 from contextlib import redirect_stdout
 from contextvars import ContextVar
 from dataclasses import asdict
@@ -18,7 +17,6 @@ from .data import WideSearchData, DATASET_REVISION, CODE_REVISION
 from .. import GradeResult
 from ...archive import digest, read_json, write_json
 from ...codex_backend import CodexBackend
-from ...skills import normalize_text
 
 _BACKEND = ContextVar("widesearch_backend")
 _MODULE_LOCK = threading.Lock()
@@ -39,7 +37,7 @@ def official_modules(code):
             path = backend.ctx.path / "judge_cache" / (key + ".json")
             cached = read_json(path)
             response = cached["content"] if cached is not None else backend.complete(
-                prompt, purpose="grade", model=backend.ctx.config.models.root)
+                prompt, purpose="grade", model=backend.ctx.config.models.judge)
             # The official parser expects fenced JSON; fail a malformed judge rather than silently awarding zeros.
             parsed = private["src.evaluation.metric_utils"].parse_markdown_json(response)
             if not isinstance(parsed, dict):
@@ -126,31 +124,3 @@ class WideSearchBenchmark(WideSearchData):
             primary_metric="f1_by_row", errors=errors, judge=run_ctx.config.judge_label,
             provenance={"dataset_revision": DATASET_REVISION, "code_revision": CODE_REVISION,
                         "official_message": result.msg, "alignment": str(path) if path.exists() else None})
-
-
-def build_leakage_index(benchmark, min_len=4):
-    """All-gold filtering only: never return this index to a model or an agent."""
-    occurrence = Counter()
-    ids = [json.loads(x)["instance_id"] for x in (benchmark.download / "widesearch.jsonl").read_text().splitlines()]
-    for task_id in ids:
-        _, _, frame = answers.load_query_parts(benchmark.download, task_id)
-        occurrence.update({normalize_text(value) for value in frame.to_numpy().flat if pd.notna(value)})
-    common = {"none", "null", "unknown", "not available", "nan", "true", "false", "不详", "未知"}
-    return {v for v, n in occurrence.items() if len(v) >= min_len and v not in common and n <= max(2, len(ids) // 10)}
-
-
-def aggregate(grades_by_task):
-    if not grades_by_task or any(not values for values in grades_by_task.values()):
-        raise ValueError("Cannot aggregate missing task results")
-    repeats = {len(values) for values in grades_by_task.values()}
-    if len(repeats) != 1:
-        raise ValueError("Every task must have the same number of repeats")
-    names = set(next(iter(grades_by_task.values()))[0].metrics)
-    result = {}
-    for metric in sorted(names):
-        series = [[g.metrics[metric] for g in group] for group in grades_by_task.values()]
-        result[metric] = {"avg_n": sum(sum(v) / len(v) for v in series) / len(series),
-                          "max_n": sum(max(v) for v in series) / len(series),
-                          "min_n": sum(min(v) for v in series) / len(series)}
-    result["pass_at_n"] = result["score"]["max_n"]
-    return result

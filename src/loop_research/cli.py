@@ -1,33 +1,34 @@
-"""Command entry points. Live research runs only when its command is invoked."""
+"""CLI for continual research. Model calls occur only in research and stream."""
 import base64
+from enum import Enum
 import hashlib
 import importlib
 from importlib import metadata
 import json
 from pathlib import Path
+import shutil
 import subprocess
 from typing import Annotated
 from urllib.parse import unquote, urlparse
-from uuid import uuid4
 
 import typer
-import yaml
 
-from .archive import RunContext
 from .benchmarks.widesearch.data import WideSearchData
-from .codex_backend import CallBudget, CodexBackend
 from .config import Config
-from .repl_tools import ResearchTools
-from .skills import init_library
 
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_enable=False,
-                  help="Subscription-backed research, skill learning, and final evaluation.")
+                  help="Subscription-backed research with a continual harness.")
 RLM_REVISION = "d04208afbad29ca675ab13478c40ee8bebc84bfe"
+
+
+class Benchmark(str, Enum):
+    widesearch = "widesearch"
+    wandr = "wandr"
 
 
 @app.callback()
 def main(ctx: typer.Context,
-         root: Annotated[Path, typer.Option(help="Workspace containing data, skills, runs and reports.")] = Path("."),
+         root: Annotated[Path, typer.Option(help="Workspace containing data, harness, runs and reports.")] = Path("."),
          config: Annotated[Path, typer.Option(help="Config file, relative to the workspace unless absolute.")] = Path("config.yaml")):
     root = root.resolve()
     ctx.obj = (root, config if config.is_absolute() else root / config)
@@ -40,23 +41,23 @@ def settings(ctx):
 
 @app.command()
 def init(ctx: typer.Context):
-    """Create the workspace and a separate Git repository for learned skills."""
+    """Create a workspace, copying the repository config only when absent."""
+    from .harness import Harness
     root, path = ctx.obj
     for name in ("data", "runs", "reports", "docs"):
         (root / name).mkdir(parents=True, exist_ok=True)
     if not path.exists():
+        source = Path(__file__).resolve().with_name("config.yaml")
+        if not source.exists():
+            source = Path(__file__).resolve().parents[2] / "config.yaml"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(yaml.safe_dump(Config().model_dump(), sort_keys=False))
+        shutil.copyfile(source, path)
     Config.load(path)
-    init_library(root / "skills")
+    Harness(root / "harness")
     verified = root / "docs/VERIFIED.md"
     if not verified.exists():
         verified.write_text("# Verification record\n\nStatus: unverified. No findings have been recorded.\n\n"
-            "## RLM\n\nUnverified: pinned source, client interface, REPL injection, logger and usage.\n\n"
-            "## Codex\n\nUnverified: version, flags, ChatGPT authentication and retry signals.\n\n"
-            "## WideSearch\n\nUnverified: dataset/evaluator pins, formats, metrics and judge transport.\n\n"
-            "## WANDR\n\nUnverified: dataset/harness pins, browser fetch, schemas, metrics and judge transport.\n\n"
-            "## Open questions\n\nRun verification and record source paths, line references and command output.\n")
+            "Run verify and record source paths, line references and command output.\n")
     typer.echo(str(root))
 
 
@@ -95,14 +96,15 @@ def verify_rlm():
 
 @app.command()
 def verify(ctx: typer.Context):
-    """Check local dependencies, authentication, pinned sources and browser readiness."""
-    from .evaluate import verify_wandr
+    """Check local sources, authentication, browser readiness and OS isolation."""
+    from .benchmarks.wandr.grader import WandrBenchmark
+    from .isolation import verify_isolation
     root, config = settings(ctx)
     rows = []
     def check(name, action):
         try:
             detail = action()
-        except (OSError, ValueError, ImportError, subprocess.SubprocessError) as exc:
+        except (OSError, ValueError, RuntimeError, ImportError, subprocess.SubprocessError) as exc:
             rows.append((name, False, str(exc)))
         else:
             rows.append((name, True, str(detail or "verified")))
@@ -126,11 +128,12 @@ def verify(ctx: typer.Context):
     check("Codex exec flags", flags)
     check("Codex ChatGPT auth", authentication)
     check("RLM installed source", verify_rlm)
+    check("REPL isolation", verify_isolation)
     benchmark = WideSearchData(root, config)
     check("WideSearch dataset", benchmark.verify_data)
     check("WideSearch evaluator", benchmark.verify_code)
     try:
-        rows.extend(verify_wandr(root, config))
+        rows.extend(WandrBenchmark(root, config).verify())
     except (OSError, ValueError, RuntimeError, ImportError, subprocess.SubprocessError) as exc:
         rows.append(("WANDR", False, str(exc)))
     typer.echo("STATUS\tCHECK\tDETAIL")
@@ -142,98 +145,52 @@ def verify(ctx: typer.Context):
 
 @app.command("prepare-data")
 def prepare_data(ctx: typer.Context):
-    """Acquire and verify pinned sources; persist deterministic data selections."""
-    from .evaluate import prepare_wandr
+    """Download and verify pinned datasets and unchanged evaluator sources."""
+    from .benchmarks.wandr.data import WandrData
     root, config = settings(ctx)
     WideSearchData(root, config).prepare()
-    prepare_wandr(root, config)
+    WandrData(root, config).prepare()
     typer.echo(str(root / "data"))
 
 
-def smoke_run(root, config):
-    """Run a plain call, search, fetch and non-benchmark RLM computation."""
-    from rlm.logger import RLMLogger
-    from .rlm_codex_client import CodexRLM
-    ctx = RunContext(Path(root), "smoke-" + uuid4().hex, config)
-    ctx.initialize("empty", kind="smoke", benchmark="toy")
-    task_ctx = ctx.task("smoke")
-    task_ctx.path.mkdir(parents=True, exist_ok=True)
-    budget = CallBudget(config.agent.max_codex_calls, config.agent.task_timeout_s)
-    backend = CodexBackend(task_ctx, budget=budget)
-    plain = backend.complete("Reply with exactly READY.", purpose="root", model=config.models.root)
-    if plain.strip() != "READY":
-        raise ValueError("Plain smoke call did not return READY")
-    tools = ResearchTools(backend, task_ctx)
-    hits = tools.search("Python programming language official website", k=1)
-    if not hits:
-        raise ValueError("Smoke search returned no valid URLs")
-    page = tools.fetch("https://www.python.org/")
-    if not page.strip() or page == "FETCH_FAILED":
-        raise ValueError("Smoke fetch failed")
-    logger = RLMLogger(log_dir=str(task_ctx.path))
-    logger.log_file_path = str(task_ctx.path / "trajectory.jsonl")
-    rlm = CodexRLM(backend, root_model=config.models.root, sub_model=config.models.sub,
-        max_depth=config.rlm.max_depth, max_iterations=config.rlm.max_iterations,
-        max_timeout=budget.remaining(), max_concurrent_subcalls=config.codex.max_concurrent,
-        custom_tools=tools.injected(), logger=logger)
-    prompt = ('Use the Python REPL to compute sum([2, 3]). Set answer["content"] to the string result '
-              'and answer["ready"] to True. Return only the result. This is a non-benchmark toy task.')
-    result = rlm.completion(prompt, root_prompt=prompt)
-    if result.response.strip() != "5":
-        raise ValueError("RLM smoke computation returned an incorrect result")
-    task_ctx.save("smoke.json", {"plain": plain, "search": hits, "fetch_url": "https://www.python.org/", "rlm": result.response})
-    summary = ctx.load("run_summary.json")
-    ctx.save("run_summary.json", {**summary, "status": "complete"})
-    return ctx.run_id
+@app.command()
+def research(ctx: typer.Context,
+             question: Annotated[str, typer.Argument(help="Research question to answer with a cited table.")],
+             columns: Annotated[list[str] | None, typer.Option("--columns", help="Output column; repeat for multiple columns.")] = None):
+    """Research one question and print its cited table and archive ID."""
+    if not question.strip():
+        raise typer.BadParameter("Question must not be empty", param_hint="QUESTION")
+    if columns is not None and (any(not column.strip() for column in columns) or len(set(columns)) != len(columns)):
+        raise typer.BadParameter("Columns must be nonempty and unique", param_hint="--columns")
+    from .stream import research as research_question
+    from .report import render_table
+    result = research_question(*settings(ctx), question, columns or [])
+    typer.echo(render_table(result["output"]))
+    check = result.get("self_check")
+    if check is not None:
+        typer.echo("Self-check: " + ("passed" if check["ok"] else "issues found"))
+        for issue in check["issues"]:
+            typer.echo("- " + str(issue))
+    typer.echo("Archive: " + result["run_id"])
+    if result.get("error"):
+        typer.echo("Research failed: " + result["error"], err=True)
+        raise typer.Exit(1)
 
 
 @app.command()
-def smoke(ctx: typer.Context):
-    """Make live subscription and web calls on a non-benchmark toy task."""
-    typer.echo(smoke_run(*settings(ctx)))
-
-
-@app.command()
-def run(ctx: typer.Context, split: Annotated[str, typer.Option()] = "train",
-        n: Annotated[int, typer.Option(min=1)] = 1):
-    """Research WideSearch training tasks without grading them."""
-    if split != "train":
-        raise typer.BadParameter("run only accepts --split train; use evaluate for validation/final tasks")
-    from .loop import run_train
-    root, config = settings(ctx)
-    typer.echo(run_train(root, config, n))
-
-
-@app.command()
-def grade(ctx: typer.Context, run: Annotated[str, typer.Option("--run")]):
-    """Grade a completed research archive using its original configuration."""
-    from .evaluate import grade_run
-    typer.echo(grade_run(ctx.obj[0], run))
-
-
-@app.command()
-def improve(ctx: typer.Context, rounds: Annotated[int, typer.Option(min=1)],
-            resume: Annotated[bool, typer.Option()] = False):
-    """Learn skills from WideSearch train tasks and gate them on validation tasks."""
-    from .loop import improve as improve_loop
-    root, config = settings(ctx)
-    typer.echo(improve_loop(root, config, rounds, resume=resume))
-
-
-@app.command()
-def evaluate(ctx: typer.Context, benchmark: Annotated[str, typer.Option()],
-             split: Annotated[str | None, typer.Option()] = None,
-             final: Annotated[bool, typer.Option()] = False):
-    """Evaluate validation tasks or compare final and empty libraries with --final."""
-    from .evaluate import evaluate as evaluate_benchmark
-    root, config = settings(ctx)
-    result = evaluate_benchmark(root, config, benchmark, split=split, final=final)
-    typer.echo(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False))
+def stream(ctx: typer.Context,
+           benchmark: Annotated[Benchmark, typer.Option(help="Pinned benchmark to research in deterministic order.")],
+           no_learning: Annotated[bool, typer.Option("--no-learning", help="Use the same starting harness without learning updates.")] = False):
+    """Research a benchmark stream and archive independent grading reports."""
+    from .stream import stream as stream_tasks
+    result = stream_tasks(*settings(ctx), benchmark.value, no_learning=no_learning)
+    typer.echo("Archive: " + result["run_id"])
+    typer.echo("Report: " + str(ctx.obj[0] / "reports" / result["run_id"] / "stream.json"))
 
 
 @app.command()
 def report(ctx: typer.Context):
-    """Build the summary, rounds CSV and curve from archived files only."""
+    """Build a task CSV, rolling learning curve and summary from reports on disk."""
     from .report import build_report
     typer.echo(str(build_report(ctx.obj[0])))
 

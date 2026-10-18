@@ -1,0 +1,38 @@
+Offline macOS isolation verification
+Recorded: 2026-10-18T21:49:28.272599+00:00
+Platform: macOS-26.3-arm64-arm-64bit
+Python: 3.12.12 (main, Jan 14 2026, 23:36:32) [Clang 21.1.4 ]
+Command: PYTHONPATH=src .venv/bin/python -m pytest tests/test_isolation.py -vv
+Exit code: 0
+============================= test session starts ==============================
+platform darwin -- Python 3.12.12, pytest-9.1.1, pluggy-1.7.0 -- /Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/mukeshreddypochamreddy/Desktop/loop-research
+configfile: pyproject.toml
+plugins: platformdirs-4.13.4, anyio-4.15.1
+collecting ... collected 17 items
+
+tests/test_isolation.py::test_full_python_in_stock_localrepl PASSED      [  5%]
+tests/test_isolation.py::test_protected_data_denied_directly_and_through_symlink[gold.json] PASSED [ 11%]
+tests/test_isolation.py::test_protected_data_denied_directly_and_through_symlink[grades.json] PASSED [ 17%]
+tests/test_isolation.py::test_protected_data_denied_directly_and_through_symlink[other_run/trace.json] PASSED [ 23%]
+tests/test_isolation.py::test_child_process_inherits_read_and_write_denials PASSED [ 29%]
+tests/test_isolation.py::test_source_files_cannot_be_written[repl_tools.py] PASSED [ 35%]
+tests/test_isolation.py::test_source_files_cannot_be_written[benchmarks/widesearch/grader.py] PASSED [ 41%]
+tests/test_isolation.py::test_source_files_cannot_be_written[selfcheck.py] PASSED [ 47%]
+tests/test_isolation.py::test_network_allows_local_brokers_and_denies_external_connect PASSED [ 52%]
+tests/test_isolation.py::test_stock_lmhandler_and_localrepl_communicate_inside_sandbox PASSED [ 58%]
+tests/test_isolation.py::test_unix_socket_outside_worker_is_denied PASSED [ 64%]
+tests/test_isolation.py::test_worker_cannot_signal_host_process PASSED   [ 70%]
+tests/test_isolation.py::test_environment_excludes_host_secrets_and_python_injection PASSED [ 76%]
+tests/test_isolation.py::test_unsupported_platform_fails_closed PASSED   [ 82%]
+tests/test_isolation.py::test_missing_sandbox_executable_fails_closed PASSED [ 88%]
+tests/test_isolation.py::test_workdir_must_not_expose_repository PASSED  [ 94%]
+tests/test_isolation.py::test_offline_verification_probe PASSED          [100%]
+
+============================== 17 passed in 1.04s ==============================
+
+
+Command: PYTHONPATH=src .venv/bin/python -c "from loop_research.isolation import verify_isolation; print(verify_isolation())"
+macOS Seatbelt verified: full-Python LocalREPL, threads, asyncio, and scratch I/O work; protected reads, symlink reads, source writes, and child-process protected reads denied.
+No live model calls or research network requests. TCP model fixture was local and deterministic.

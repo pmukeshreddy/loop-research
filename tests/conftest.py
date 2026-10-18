@@ -8,9 +8,18 @@ from loop_research.benchmarks.widesearch.data import WideSearchData
 from loop_research.config import Config
 
 
+def load_config():
+    return Config.load(Path(__file__).resolve().parents[1] / "config.yaml")
+
+
 @pytest.fixture
-def ctx(tmp_path):
-    return RunContext(tmp_path, "unit", Config(), "fixture")
+def config():
+    return load_config()
+
+
+@pytest.fixture
+def ctx(tmp_path, config):
+    return RunContext(tmp_path, "unit", config, "fixture")
 
 
 @pytest.fixture
@@ -20,8 +29,8 @@ def task():
 
 
 @pytest.fixture
-def benchmark(tmp_path):
-    benchmark = WideSearchData(tmp_path, Config())
+def benchmark(tmp_path, config):
+    benchmark = WideSearchData(tmp_path, config)
     benchmark.code = widesearch_source("data/vendor/widesearch", ".verification/widesearch")
     return benchmark
 

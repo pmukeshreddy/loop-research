@@ -1,17 +1,18 @@
 """Research-only worker and output validation. No graders or answer stores."""
 from datetime import date
 import json
-import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 from pydantic import BaseModel
-from .archive import RunContext, count_codex_calls, write_json, read_json
-from .codex_backend import CodexBackend, CallBudget
+from .archive import write_json, read_json
+from .codex_backend import BudgetExceeded
 from .config import Config
-from .repl_tools import ResearchTools, normalized_url
-from .skills import render_playbook
+from .repl_tools import normalized_url
+from .isolation import isolated_command, worker_env
+from .bridge import Server, Client, Remote
+from .selfcheck import constraints_for
 
 
 class AgentResult(BaseModel):
@@ -76,7 +77,7 @@ def citation_check(output, ledger):
     return failures
 
 
-def make_prompt(task, contract, playbook):
+def make_prompt(task, contract, entries):
     asof = task.as_of_date
     if asof is None:
         fallback = task.raw.get("fallback_as_of_date")
@@ -84,17 +85,25 @@ def make_prompt(task, contract, playbook):
     source = "task" if task.as_of_date else "today_fallback"
     prompt = (f"TASK\n{task.question}\nSPEC\n{json.dumps(task.spec, ensure_ascii=False)}\n\n"
         f"AS-OF DATE\n{asof.isoformat()} (source: {source}). Honor all dates/periods in the task text.\n\n"
-        f"RESEARCH PLAYBOOK\n{playbook}\n\nTOOLS\n"
+        f"RELEVANT HARNESS\n{json.dumps(entries, ensure_ascii=False)}\n\nTOOLS\n"
         "search(query, k=8): live web hits with title, url, snippet. Never invent URLs.\n"
-        "search_batched(queries, k=8): concurrent searches; one hit list per query, in input order.\n"
+        "search_many(queries, k=8): concurrent searches; one hit list per query, in input order.\n"
         "fetch(url, focus=''): model-rendered page text, not raw HTML; FETCH_FAILED on failure.\n"
-        "fetch_batched(urls, focus=''): concurrent fetches; one page text or FETCH_FAILED per URL, in input order.\n"
+        "fetch_many(urls, focus=''): concurrent fetches; one page text or FETCH_FAILED per URL, in input order.\n"
         "llm_query(prompt): stateless sub-model, no independent tools; give it fetched evidence.\n"
         "llm_query_batched(prompts): parallel sub-model calls over supplied evidence.\n"
-        "Python imports: json, re, math, statistics, collections, itertools, datetime, decimal. "
-        "Filesystem, network clients, shell, introspection and private attributes are unavailable.\n\n"
-        "METHOD\nGo wide: use search_batched for independent discovery queries and keep candidates in REPL variables. "
-        "Go deep: fetch candidate pages with fetch_batched, then fill fields using parallel "
+        "Full Python is available, including threading and asyncio, inside an OS-isolated worker.\n"
+        "harness.create(kind,title,content), get(kind,id), read(kind,id), update(kind,id,title,content), "
+        "delete(kind,id), list(kind=None), search(query,kind=None,limit=10). "
+        "Kinds: prompt, memory, skill, subagent. Edits may specify trigger and module (Python source for skills).\n"
+        "refine.run(focus=None): plan a small edit in the background; applies at a turn boundary. "
+        "refine.rollback(id): queue an inverse edit at the next turn boundary.\n"
+        "record_discovery(query, entities): record discovered entity names after EVERY search, [] if none new.\n"
+        "check_constraint(row, constraint, verdict, url, quote): record each constraint check with fetched evidence. "
+        "Use row paths /rows/0 or /files/<filename>/0 and constraint ids listed below.\n"
+        f"CONSTRAINT IDS\n{json.dumps(constraints_for(task), ensure_ascii=False)}\n\n"
+        "METHOD\nGo wide: use search_many for independent discovery queries and keep candidates in REPL variables. "
+        "Go deep: fetch candidate pages with fetch_many, then fill fields using parallel "
         "llm_query_batched calls on fetched pages. Verify every task "
         "constraint for every entity. Cite every value using a verbatim quote from fetched text. "
         "Do not search for benchmark answer keys, grader outputs, or other runs.\n\n"
@@ -103,46 +112,50 @@ def make_prompt(task, contract, playbook):
     return prompt, asof.isoformat(), source
 
 
-def run_task(task, benchmark, library_dir, run_ctx):
-    budget = CallBudget(run_ctx.config.agent.max_codex_calls, run_ctx.config.agent.task_timeout_s)
-    run_ctx.path.mkdir(parents=True, exist_ok=True)
+def run_task(task, benchmark, session):
+    ctx, budget = session.ctx, session.budget
+    ctx.path.mkdir(parents=True, exist_ok=True)
     contract = benchmark.output_contract(task)
-    playbook = render_playbook(task, library_dir, run_ctx.config.skills.max_playbook_chars) if library_dir else ""
-    prompt, asof, source = make_prompt(task, contract, playbook)
-    (run_ctx.path / "prompt.txt").write_text(prompt)
-    (run_ctx.path / "playbook.txt").write_text(playbook)
-    run_ctx.save("task.json", task.model_dump(mode="json"))
-    with tempfile.TemporaryDirectory(prefix="loop-task-") as tmp:
-        tmp = Path(tmp)
-        request = {"root": str(run_ctx.root), "run_id": run_ctx.run_id, "task_id": run_ctx.task_id,
-                   "config": run_ctx.config.model_dump(), "prompt": prompt,
-                   "deadline": budget.deadline,
-                   "result_path": str(tmp / "result.json")}
-        write_json(tmp / "request.json", request)
-        env = os.environ.copy()
-        env["PYTHONPATH"] = str(Path(__file__).resolve().parents[1])
-        with (run_ctx.path / "worker.log").open("a") as log:
+    entries = session.retrieve()
+    prompt, asof, source = make_prompt(task, contract, entries)
+    (ctx.path / "prompt.txt").write_text(prompt)
+    ctx.save("task.json", task.model_dump(mode="json"))
+    with tempfile.TemporaryDirectory(prefix="lr-", dir="/tmp") as directory:
+        work = Path(directory).resolve()
+        request = {"config": ctx.config.model_dump(), "prompt": prompt, "entries": entries,
+                   "socket": str(work / "host.sock"), "timeout": budget.remaining(),
+                   "result_path": str(work / "result.json")}
+        write_json(work / "request.json", request)
+        with Server(work / "host.sock", session.dispatch), (ctx.path / "worker.log").open("a") as log:
             try:
-                process = run_ctx.run_process([sys.executable, "-m", "loop_research.agent", str(tmp / "request.json")],
-                    cwd=tmp, env=env, stdout=log, stderr=log, start_new_session=True, timeout=budget.remaining())
+                process = ctx.run_process(isolated_command(work, [sys.executable, "-m", "loop_research.agent", str(work / "request.json")]),
+                    cwd=work, env=worker_env(work), stdout=log, stderr=log,
+                    start_new_session=True, timeout=budget.remaining())
             except subprocess.TimeoutExpired as exc:
+                session.status['timeout'] = True
                 raise TimeoutError("Task hard deadline exceeded") from exc
+            finally:
+                session.close_worker()
         if process.returncode:
-            raise RuntimeError(f"Research worker failed ({process.returncode}); see {run_ctx.path / 'worker.log'}")
-        result = read_json(tmp / "result.json")
-        budget.remaining()
-        budget.count = count_codex_calls(run_ctx.path, exclude_purposes=("grade",))
-        output, errors, repaired = parse_output(result["text"], contract, CodexBackend(run_ctx, budget=budget))
-        budget.remaining()
+            session.status['worker_error'] = True
+            if budget.count >= budget.limit:
+                session.status['call_limit'] = True
+            raise RuntimeError(f"Research worker failed ({process.returncode}); see {ctx.path / 'worker.log'}")
+        result = read_json(work / "result.json")
+        try:
+            budget.remaining()
+            output, errors, repaired = parse_output(result["text"], contract, session.repair_backend)
+            budget.remaining()
+        except BudgetExceeded:
+            session.status['call_limit' if budget.count >= budget.limit else 'timeout'] = True
+            raise
+    session.output = output
     result = AgentResult(output=output, errors=errors, repaired=repaired,
-        uncited=citation_check(output, run_ctx.load("url_ledger.json", [])), as_of_date=asof, date_source=source)
-    run_ctx.save("output.json", output)
-    run_ctx.save("agent_result.json", result.model_dump())
-    run_ctx.save("submission.json", benchmark.to_submission(task, output))
-    for name, empty in (("tool_cache.json", {}), ("url_ledger.json", [])):
-        if not (run_ctx.path / name).exists():
-            run_ctx.save(name, empty)
-    (run_ctx.path / "trajectory.jsonl").touch(exist_ok=True)
+        uncited=citation_check(output, session.tools.evidence['fetched']), as_of_date=asof, date_source=source)
+    ctx.save("output.json", output)
+    ctx.save("agent_result.json", result.model_dump())
+    ctx.save("submission.json", benchmark.to_submission(task, output))
+    session.tools.persist()
     return result
 
 
@@ -150,22 +163,24 @@ def worker(request_path):
     from rlm.logger import RLMLogger
     from .rlm_codex_client import CodexRLM
     request = read_json(Path(request_path))
-    config = Config.model_validate(request["config"])
-    ctx = RunContext(Path(request["root"]), request["run_id"], config, request["task_id"])
-    budget = CallBudget(config.agent.max_codex_calls, config.agent.task_timeout_s)
-    budget.deadline = request.get("deadline", budget.deadline)
-    budget.count = count_codex_calls(ctx.path, exclude_purposes=("grade",))
-    backend = CodexBackend(ctx, budget=budget)
-    tools = ResearchTools(backend, ctx)
-    logger = RLMLogger(log_dir=str(ctx.path))
-    logger.log_file_path = str(ctx.path / "trajectory.jsonl")
-    rlm = CodexRLM(backend, root_model=config.models.root, sub_model=config.models.sub,
+    config = Config.model_validate(request['config'])
+    client = Client(request['socket'])
+    class TrajectoryLogger(RLMLogger):
+        def log(self, iteration):
+            super().log(iteration)
+            client.call('iteration', self._iterations[-1])
+    methods = ('search', 'fetch', 'search_many', 'fetch_many', 'check_constraint', 'record_discovery')
+    remote = Remote(client, 'tools.', methods)
+    tools = {name: getattr(remote, name) for name in methods}
+    tools['harness'] = Remote(client, 'harness.', ('create', 'get', 'read', 'update', 'delete', 'list', 'search'))
+    tools['refine'] = Remote(client, 'refine.', ('run', 'rollback'))
+    rlm = CodexRLM(client, root_model=config.models.root, sub_model=config.models.sub,
         max_depth=config.rlm.max_depth, max_iterations=config.rlm.max_iterations,
-        max_timeout=budget.remaining(), max_concurrent_subcalls=config.codex.max_concurrent,
-        custom_tools=tools.injected(), logger=logger)
-    result = rlm.completion(request["prompt"], root_prompt=request["prompt"])
-    write_json(Path(request["result_path"]), {"text": result.response})
+        max_timeout=request['timeout'], max_concurrent_subcalls=config.codex.max_concurrent,
+        custom_tools=tools, skill_modules=request['entries'], logger=TrajectoryLogger())
+    result = rlm.completion(request['prompt'], root_prompt=request['prompt'])
+    write_json(Path(request['result_path']), {'text': result.response})
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     worker(sys.argv[1])

@@ -1,12 +1,10 @@
 import hashlib
 import json
 from pathlib import Path
-import random
 import subprocess
 import urllib.request
 from pydantic import ConfigDict, Field, create_model
 from .. import OutputContract, Task
-from ...archive import read_json, write_json
 
 DATASET_REVISION = "066ee3d71cd332cb2fb4f49146cad7f9c7249f86"
 CODE_REVISION = "ccb0baeb96f1c77a48e47f92122c57479ee99700"
@@ -15,14 +13,6 @@ FILES = {
     "release-manifest.json": "2083cfab62fc170623db893168865ad89ccd0a8de768fcf4690b0036a2721909",
     "data/test.jsonl": "52e76377088a5d96f08c24dc2e00d2988040ef5a68bc60f5b00b0b68a9cbc764",
 }
-
-
-def final_subset(tasks, n, seed):
-    ids = sorted(task.task_id for task in tasks)
-    random.Random(seed).shuffle(ids)
-    if n is not None and n > len(ids):
-        raise ValueError("WANDR final_n_tasks exceeds the release")
-    return ids if n is None else ids[:n]
 
 
 class WandrData:
@@ -96,26 +86,3 @@ class WandrData:
             subprocess.run(["git", "clone", "--quiet", "--no-checkout", "https://github.com/perplexityai/wandr.git", str(self.code)], check=True)
             subprocess.run(["git", "-C", str(self.code), "checkout", "--quiet", "--detach", CODE_REVISION], check=True)
         self.verify_sources()
-        self.prepare_final_subset(self.config.wandr.seed)
-
-    def prepare_final_subset(self, seed):
-        data = {"dataset_revision": DATASET_REVISION, "code_revision": CODE_REVISION,
-                "seed": seed, "n": self.config.wandr.final_n_tasks,
-                "task_ids": final_subset(self.load_tasks(), self.config.wandr.final_n_tasks, seed)}
-        path = self.root / "data/wandr_final.json"
-        existing = read_json(path)
-        if existing is not None and existing != data:
-            raise ValueError("WANDR final subset differs; use a separate workspace for another subset")
-        write_json(path, data)
-        return data
-
-    def final_tasks(self):
-        saved = read_json(self.root / "data/wandr_final.json")
-        expected = {"dataset_revision": DATASET_REVISION, "code_revision": CODE_REVISION,
-                    "seed": self.config.wandr.seed, "n": self.config.wandr.final_n_tasks}
-        if saved is None or any(saved.get(k) != value for k, value in expected.items()):
-            raise ValueError("Run prepare-data with matching WANDR configuration")
-        tasks = {task.task_id: task for task in self.load_tasks()}
-        if saved["task_ids"] != final_subset(list(tasks.values()), saved["n"], saved["seed"]):
-            raise ValueError("WANDR final subset has been changed")
-        return [tasks[task_id] for task_id in saved["task_ids"]]

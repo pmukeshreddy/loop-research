@@ -4,13 +4,12 @@ import hashlib
 import io
 import json
 from pathlib import Path
-import random
 import subprocess
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from .. import Task, OutputContract
-from ...archive import digest, read_json, write_json
+from ...archive import write_json
 
 DATASET_REVISION = "6531a7e5b497d44c8912407e0cb3dc95bd98cc09"
 CODE_REVISION = "9825ba7b140b71d81b364793f86dabe4cfed6749"
@@ -103,7 +102,6 @@ class WideSearchData:
             subprocess.run(["git", "-C", str(self.code), "checkout", "--quiet", "--detach", CODE_REVISION], check=True)
         self.verify_code()
         write_json(self.download / "revision.json", {"dataset": DATASET_REVISION, "code": CODE_REVISION})
-        self.prepare_splits(self.config.data.seed)
 
     def verify_data(self):
         # Acquisition integrity only; no gold values are parsed or returned to a solver.
@@ -115,49 +113,3 @@ class WideSearchData:
         dirty = subprocess.check_output(["git", "-C", str(self.code), "status", "--porcelain", "--untracked-files=no"], text=True)
         if sha != CODE_REVISION or dirty:
             raise ValueError("Official WideSearch checkout is not clean at the pinned revision")
-
-    def prepare_splits(self, seed):
-        tasks = self.load_tasks()
-        split = deterministic_split(tasks, seed, self.config.data.split.model_dump())
-        meta = {"revision": DATASET_REVISION, "seed": seed, "languages": self.config.data.languages,
-                "ratios": self.config.data.split.model_dump(), "splits": split}
-        path = self.root / "data/splits.json"
-        previous = read_json(path)
-        if previous is not None and previous != meta:
-            raise ValueError("Saved splits differ; use a separate workspace for a different split")
-        write_json(path, meta)
-        rng = random.Random(seed)
-        candidates = sorted(split["val"])
-        rng.shuffle(candidates)
-        n = self.config.gate.val_batch_size
-        if n > len(candidates):
-            raise ValueError("gate.val_batch_size exceeds validation split")
-        gate = {"split_hash": digest(meta), "task_ids": candidates[:n], "seed": seed}
-        gate["id"] = digest(gate)
-        previous = read_json(self.root / "data/gate_batch.json")
-        if previous is not None and previous != gate:
-            raise ValueError("Saved gate batch differs; use a separate workspace")
-        write_json(self.root / "data/gate_batch.json", gate)
-        return split
-
-    def split_tasks(self, name):
-        meta = read_json(self.root / "data/splits.json")
-        if not meta or meta["revision"] != DATASET_REVISION or meta["seed"] != self.config.data.seed or meta["languages"] != self.config.data.languages or meta["ratios"] != self.config.data.split.model_dump():
-            raise ValueError("Prepare data with matching configuration first")
-        tasks = {t.task_id: t for t in self.load_tasks()}
-        if meta["splits"] != deterministic_split(list(tasks.values()), self.config.data.seed,
-                                                self.config.data.split.model_dump()):
-            raise ValueError("Saved splits differ from the deterministic dataset partition")
-        return [tasks[x] for x in meta["splits"][name]]
-
-
-def deterministic_split(tasks, seed, proportions):
-    rng = random.Random(seed)
-    splits = {k: [] for k in ("train", "val", "test")}
-    for language in sorted({t.language for t in tasks}):
-        ids = sorted(t.task_id for t in tasks if t.language == language)
-        rng.shuffle(ids)
-        a, b = int(len(ids) * proportions["train"]), int(len(ids) * proportions["val"])
-        for name, values in zip(splits, (ids[:a], ids[a:a+b], ids[a+b:])):
-            splits[name].extend(values)
-    return splits

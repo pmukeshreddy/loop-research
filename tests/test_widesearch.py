@@ -6,9 +6,9 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from loop_research.benchmarks.widesearch.grader import error_breakdown, official_modules
-from loop_research.benchmarks.widesearch.data import deterministic_split
 
 
 def fixture_query(modules):
@@ -59,22 +59,11 @@ def test_error_breakdown_uses_official_alignment():
         "partial_rows": [{"entity": {"entity": "partial"}, "columns": ["value"]}]}
 
 
-def test_split_determinism_and_disjointness(task):
-    tasks = [task.model_copy(update={"task_id": f"fixture-{lang}-{i}", "language": lang})
-             for lang in ("en", "zh") for i in range(10)]
-    proportions = {"train": .6, "val": .2, "test": .2}
-    splits = deterministic_split(tasks, 42, proportions)
-    assert splits == deterministic_split(list(reversed(tasks)), 42, proportions)
-    assert splits != deterministic_split(tasks, 43, proportions)
-    assert len(set().union(*map(set, splits.values()))) == len(tasks)
-    assert sum(map(len, splits.values())) == len(tasks)
-    assert all(sum(lang in item for item in splits[split]) == n
-               for split, n in (("train", 6), ("val", 2), ("test", 2)) for lang in ("en", "zh"))
-
-
 def test_adapter_grade_preserves_metrics_and_label(ctx, benchmark, task, output, capsys):
     from loop_research.benchmarks.widesearch.grader import WideSearchBenchmark
 
+    ctx.config.models.root = "fixture-root"
+    ctx.config.models.judge = "fixture-judge"
     graded = WideSearchBenchmark(ctx.root, ctx.config)
     graded.code = benchmark.code
     graded.download.mkdir(parents=True)
@@ -88,15 +77,12 @@ def test_adapter_grade_preserves_metrics_and_label(ctx, benchmark, task, output,
     query.answer.to_csv(gold / "fixture.csv", index=False)
     result = graded.grade(task, graded.to_submission(task, output), ctx)
     assert result.metrics["score"] == result.metrics["f1_by_row"] == result.metrics["f1_by_item"] == 1
-    assert result.judge == "codex/default"
+    assert result.judge == "codex/fixture-judge"
     assert result.primary_metric == "f1_by_row"
     assert result.errors == {"missing_entities": [], "wrong_additions": [], "partial_rows": []}
     assert (ctx.path / "alignment.csv").exists()
     captured = capsys.readouterr()
     assert captured.out == captured.err == ""
-
-
-import pytest
 
 
 @pytest.mark.parametrize("verdict", [None, {}, {"idx_0": .5}, {"idx_0": True}, {"idx_1": 1}, {"idx_0": 1, "extra": 0}])
@@ -118,8 +104,11 @@ def test_official_judge_rejects_malformed_scores(ctx, benchmark, verdict):
     assert not list((ctx.path / "judge_cache").glob("*.json"))
 
 
-def test_official_judge_uses_codex_and_reuses_valid_verdict(ctx, benchmark):
+@pytest.mark.parametrize("judge", [None, "fixture-judge"])
+def test_official_judge_uses_codex_and_reuses_valid_verdict(ctx, benchmark, judge):
     from loop_research.benchmarks.widesearch.grader import _BACKEND
+    ctx.config.models.root = "fixture-root"
+    ctx.config.models.judge = judge
     calls = []
     class Judge:
         def __init__(self):
@@ -135,6 +124,7 @@ def test_official_judge_uses_codex_and_reuses_valid_verdict(ctx, benchmark):
     finally:
         _BACKEND.reset(token)
     assert len(calls) == 1
+    assert calls[0][1] == {"purpose": "grade", "model": judge}
     assert calls[0][0] == metric.eval_column_prompt.format(criterion="Fixture criterion", response={"idx_0": {"response": "fixture-response", "target": "fixture-target"}})
 
 
@@ -152,15 +142,25 @@ def test_preparation_rejects_corrupted_pinned_downloads(benchmark, monkeypatch, 
         benchmark.prepare()
 
 
-def test_saved_splits_cannot_move_test_tasks_into_training(benchmark, task, monkeypatch):
-    from loop_research.archive import read_json, write_json
-    tasks = [task.model_copy(update={'task_id': f'fixture-{i}'}) for i in range(10)]
-    monkeypatch.setattr(benchmark, 'load_tasks', lambda: tasks)
-    benchmark.config.gate.val_batch_size = 2
-    benchmark.prepare_splits(42)
-    path = benchmark.root / 'data/splits.json'
-    saved = read_json(path)
-    saved['splits']['train'][0], saved['splits']['test'][0] = saved['splits']['test'][0], saved['splits']['train'][0]
-    write_json(path, saved)
-    with pytest.raises(ValueError, match='split'):
-        benchmark.split_tasks('train')
+def test_preparation_exposes_complete_release_without_saved_partitions(benchmark, monkeypatch, widesearch_download):
+    import shutil
+    from loop_research.archive import read_json
+    from loop_research.benchmarks.widesearch import data
+
+    shutil.copytree(widesearch_download, benchmark.download)
+    def no_network(*args, **kwargs):
+        raise AssertionError('The pinned release is already downloaded')
+    monkeypatch.setattr(data.urllib.request, 'urlopen', no_network)
+    benchmark.prepare()
+    benchmark.verify_data()
+    release = [json.loads(line) for line in (widesearch_download / 'widesearch.jsonl').read_text().splitlines()]
+    assert {task.task_id for task in benchmark.load_tasks()} == {row['instance_id'] for row in release}
+    assert read_json(benchmark.download / 'revision.json') == {
+        'dataset': data.DATASET_REVISION, 'code': data.CODE_REVISION}
+    assert not (benchmark.root / 'data/splits.json').exists()
+    assert not (benchmark.root / 'data/gate_batch.json').exists()
+
+    benchmark.config.data.languages = ['zh']
+    tasks = benchmark.load_tasks()
+    assert {task.task_id for task in tasks} == {row['instance_id'] for row in release if row['language'] == 'zh'}
+    assert all(task.language == 'zh' for task in tasks)
