@@ -167,6 +167,75 @@ def test_parallel_failure_resumes_only_unfinished_grades(orchestration, monkeypa
     assert ctx.task(tasks[1].task_id).load("completed.json") == completed
 
 
+def test_failed_run_does_not_start_remaining_tasks(orchestration, monkeypatch):
+    from loop_research import loop
+    root, config, benchmark, history = orchestration
+    config.loop.parallel_tasks = 1
+    tasks = benchmark.load_tasks()
+    ctx, frozen = loop.open_run(root, config, "fixture-stop", tasks, root / "skills")
+
+    def fail(*args):
+        raise RuntimeError("Fixture first grade failed")
+
+    monkeypatch.setattr(benchmark, "grade", fail)
+    with pytest.raises(RuntimeError, match="first grade failed"):
+        loop.execute_run(ctx, tasks, benchmark, frozen)
+    assert [task_id for _, task_id, _ in history["agent"]] == [tasks[0].task_id]
+
+
+def test_sigint_stops_research_process_and_pending_tasks(tmp_path):
+    import os
+    from pathlib import Path
+    import signal
+    import subprocess
+    import sys
+
+    code = '''
+import os, signal, subprocess, sys
+from pathlib import Path
+from loop_research import agent, loop
+from loop_research.benchmarks import Task
+from loop_research.benchmarks.widesearch.data import WideSearchData
+from loop_research.config import Config
+root = Path(sys.argv[1])
+config = Config()
+config.loop.parallel_tasks = 1
+tasks = [Task(task_id=f"fixture-{i}", benchmark="widesearch", question="Fixture",
+              spec={"columns": ["entity"], "keys": ["entity"]}, language="en") for i in range(4)]
+ctx, _ = loop.open_run(root, config, "fixture-interrupt", tasks, None)
+popen = subprocess.Popen
+def sleeper(command, **kwargs):
+    process = popen([sys.executable, "-c", "import time; time.sleep(30)"], **kwargs)
+    with (root / "pids").open("a") as handle:
+        handle.write(str(process.pid) + "\\n")
+    os.kill(os.getpid(), signal.SIGINT)
+    return process
+agent.subprocess.Popen = sleeper
+try:
+    loop.execute_run(ctx, tasks, WideSearchData(root, config), None, grade=False)
+except KeyboardInterrupt:
+    print("interrupted")
+'''
+    env = {**os.environ, "PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")}
+    try:
+        result = subprocess.run([sys.executable, "-c", code, str(tmp_path)], env=env,
+                                text=True, capture_output=True, timeout=5)
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip() == "interrupted"
+        pids = (tmp_path / "pids").read_text().splitlines()
+        assert len(pids) == 1
+        with pytest.raises(ProcessLookupError):
+            os.kill(int(pids[0]), 0)
+        assert not list((tmp_path / "runs").rglob("output.json"))
+    finally:
+        if (tmp_path / "pids").exists():
+            for pid in (tmp_path / "pids").read_text().splitlines():
+                try:
+                    os.killpg(int(pid), signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
+
 def test_final_evaluation_pairs_tasks_and_reuses_complete_archives(orchestration):
     from loop_research.evaluate import evaluate
     root, config, _, history = orchestration

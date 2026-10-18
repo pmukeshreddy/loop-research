@@ -54,7 +54,7 @@ class CallBudget:
 class CodexBackend:
     def __init__(self, run_ctx: RunContext, *, budget=None, runner=None, sleep=time.sleep, jitter=random.random):
         self.ctx, self.config, self.budget = run_ctx, run_ctx.config, budget
-        self.runner, self.sleep, self.jitter = runner or subprocess.run, sleep, jitter
+        self.runner, self.sleep, self.jitter = runner or run_ctx.run_process, sleep, jitter
         self.local = threading.local()
 
     def _acquire_slot(self, timeout):
@@ -64,6 +64,7 @@ class CodexBackend:
         directory.mkdir(exist_ok=True)
         deadline = time.monotonic() + timeout
         while True:
+            self.ctx.check_cancelled()
             for number in range(self.config.codex.max_concurrent):
                 slot = (directory / str(number)).open("a")
                 try:
@@ -103,6 +104,7 @@ class CodexBackend:
             "API_KEY" in k or k.startswith(("OPENAI_", "AZURE_OPENAI_", "CODEX_API_KEY")))}
         last = None
         for attempt in range(self.config.codex.max_retries + 1):
+            self.ctx.check_cancelled()
             timeout = self.config.codex.timeout_s
             if self.budget:
                 timeout = min(timeout, self.budget.remaining())
@@ -169,5 +171,11 @@ class CodexBackend:
                 delay = min(60, 2 ** attempt + self.jitter())
                 if self.budget:
                     delay = min(delay, self.budget.remaining())
-                self.sleep(delay)
+                if self.ctx.cancellation is None or self.sleep is not time.sleep:
+                    self.sleep(delay)
+                else:
+                    try:
+                        self.ctx.cancellation.result(timeout=delay)
+                    except TimeoutError:
+                        pass
         raise last

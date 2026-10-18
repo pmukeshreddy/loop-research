@@ -3,7 +3,6 @@ from datetime import date
 import json
 import os
 from pathlib import Path
-import signal
 import subprocess
 import sys
 import tempfile
@@ -123,23 +122,13 @@ def run_task(task, benchmark, library_dir, run_ctx):
         env = os.environ.copy()
         env["PYTHONPATH"] = str(Path(__file__).resolve().parents[1])
         with (run_ctx.path / "worker.log").open("a") as log:
-            process = subprocess.Popen([sys.executable, "-m", "loop_research.agent", str(tmp / "request.json")],
-                cwd=tmp, env=env, stdout=log, stderr=log, start_new_session=True)
-            finished = False
             try:
-                code = process.wait(timeout=budget.remaining())
-                finished = True
+                process = run_ctx.run_process([sys.executable, "-m", "loop_research.agent", str(tmp / "request.json")],
+                    cwd=tmp, env=env, stdout=log, stderr=log, start_new_session=True, timeout=budget.remaining())
             except subprocess.TimeoutExpired as exc:
                 raise TimeoutError("Task hard deadline exceeded") from exc
-            finally:
-                if not finished:
-                    try:
-                        os.killpg(process.pid, signal.SIGKILL)
-                    except ProcessLookupError:
-                        pass  # The worker may have exited between interruption and cleanup.
-                    process.wait()
-        if code:
-            raise RuntimeError(f"Research worker failed ({code}); see {run_ctx.path / 'worker.log'}")
+        if process.returncode:
+            raise RuntimeError(f"Research worker failed ({process.returncode}); see {run_ctx.path / 'worker.log'}")
         result = read_json(tmp / "result.json")
         budget.remaining()
         budget.count = count_codex_calls(run_ctx.path, exclude_purposes=("grade",))
