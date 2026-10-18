@@ -1,117 +1,115 @@
 # loop-research
 
-A research agent using RLM and a ChatGPT-authenticated Codex CLI. WideSearch training tasks produce candidate research skills; a fixed validation batch gates each edit. Final evaluation compares the learned library with an empty library on the same tasks. Model weights never change.
+A continual research agent using RLM and a ChatGPT-authenticated Codex CLI. It answers questions with cited tables and carries reusable prompts, memories, skills and subagent instructions between tasks in a versioned harness. Model weights never change.
 
-All model calls, including benchmark judges, use the Codex subscription login. Research search/fetch uses Codex web search. WANDR grading re-fetches pages with the pinned harness's Camoufox browser and routes its triage, canonicalization, deduplication and judge calls through Codex. It requires no provider API keys.
+The researcher runs full Python in an isolated process. A trusted host provides search, fetch, model calls and harness operations. Deterministic self-checks record evidence and coverage issues; refinement can update the harness during and after research. Benchmark grading is independent: grades and answer keys stay outside the researcher and refiner, and scores are used only for reports.
 
 ## Setup
 
-Use Python 3.12 or newer, Git, `uv`, and an installed Codex CLI with a ChatGPT subscription login. From this repository:
+Use **macOS**, Python 3.12 or newer, Git, `uv`, and an installed Codex CLI authenticated with a ChatGPT subscription. The full-Python worker requires macOS Seatbelt (`sandbox-exec`); unsupported or unenforced isolation fails closed.
+
+From this repository:
 
 ```sh
 uv venv --python 3.12
 uv pip install '.[test]'
-source .venv/bin/activate
-python -m camoufox fetch
+.venv/bin/python -m camoufox fetch
 codex login
-loop-research init
-loop-research prepare-data
-loop-research verify
+.venv/bin/loop-research init
+.venv/bin/loop-research prepare-data
+.venv/bin/loop-research verify
 ```
 
-`prepare-data` downloads the pinned datasets and unchanged official evaluator sources, verifies their contents, and persists the WideSearch splits, validation gate batch and WANDR final subset. It makes no model calls. `verify` checks local source integrity, required Codex flags, ChatGPT authentication, and browser readiness; it does not research or grade tasks. Browser readiness may launch an empty browser. Findings and source references are in [docs/VERIFIED.md](docs/VERIFIED.md).
+`init` copies the repository's [config.yaml](config.yaml) when the target config is absent, initializes `harness/` as a separate Git repository, and preserves existing configuration and verification notes. `prepare-data` downloads and verifies pinned datasets and unchanged official evaluator sources. It makes no model calls. `verify` checks Codex flags and authentication, installed RLM provenance, dataset and evaluator integrity, WANDR browser readiness, and kernel-enforced worker isolation. Its browser probe opens an empty page; its isolation probe uses local fixtures. It does not research or grade tasks.
 
-`init` preserves existing configuration and verification notes and initializes `skills/` as its own Git repository. The parent project ignores this library, datasets, run archives and generated reports. Keep learned skill changes committed; the pipeline rejects unrelated dirty library state.
+The YAML file is the sole source of configuration values. Every setting is required, types and ranges are validated, and unknown keys are rejected. `models.root`, `models.sub`, `models.refine`, and `models.judge` independently select Codex models; `null` uses the Codex default. `models.reasoning_effort` applies to Codex calls. Adjust call concurrency and retry limits, research timeouts and budgets, RLM limits, harness retrieval count, and report rolling window there. There are no embedding models or train/validation/test splits. `wandr.final_n_tasks: null` includes the entire available WANDR release; a positive integer limits the stream.
 
-Settings are in [config.yaml](config.yaml). `models.root`, `models.sub` and `models.reflect` default to the Codex default model. Adjust concurrency, per-call/task timeouts, call budget, reflection batches, gate thresholds and repeat counts there. `wandr.final_n_tasks: null` selects the full final set. A saved split/subset is immutable for its configuration; use a separate workspace to change it.
-
-`loop.parallel_tasks` defaults to 4 concurrent task workers; set it to 1 for sequential execution. Each task keeps its own research process and archive. `codex.max_concurrent` remains the global file-lock limit for Codex calls across workers.
-
-Global options precede the command. `--root` selects the workspace, and a relative `--config` path is resolved within that workspace:
+Global options precede commands. A relative `--config` path is resolved inside `--root`:
 
 ```sh
-loop-research --root /path/to/workspace --config config.yaml init
-loop-research --root /path/to/workspace --config config.yaml verify
+.venv/bin/loop-research --root /path/to/workspace --config config.yaml init
+.venv/bin/loop-research --root /path/to/workspace verify
 ```
 
-## Commands
+## Research and continual learning
 
-The commands below are available for the user to run. `smoke`, `run`, `grade`, `improve` and `evaluate` make live subscription/web calls; they were not executed during implementation.
+Research one question, optionally specifying each table column:
 
-| Command | Behavior |
-| --- | --- |
-| `loop-research init` | Create directories, config if absent, verification template if absent, and the skills Git repository. |
-| `loop-research verify` | Print a pass/fail table for Codex, RLM, both pinned datasets/evaluators, and WANDR browser readiness; exit nonzero on a failed check. |
-| `loop-research smoke` | One plain Codex call, one search, one fetch, and an RLM computation on a tiny non-benchmark question. |
-| `loop-research prepare-data` | Acquire pinned source/data and save deterministic selections. |
-| `loop-research run --split train --n 1` | Research WideSearch train tasks and print the run ID. |
-| `loop-research grade --run RUN_ID` | Grade that archive using its original configuration; reuse completed valid grades. |
-| `loop-research improve --rounds 1` | Run training, reflection, leakage/dedup checks and validation gates; commit accepted skills. |
-| `loop-research improve --rounds 3 --resume` | Resume the latest improvement session toward a total of three completed rounds. |
-| `loop-research evaluate --benchmark widesearch --split val` | Evaluate the current library on validation tasks. |
-| `loop-research evaluate --benchmark widesearch --split test --final` | Paired final/empty-library WideSearch test evaluation. |
-| `loop-research evaluate --benchmark wandr --final` | Paired final/empty-library evaluation on the saved WANDR final subset. |
-| `loop-research report` | Build a summary, rounds CSV and validation curve from archived files. |
+```sh
+.venv/bin/loop-research research "Which public datasets document urban tree inventories?" \
+  --columns dataset --columns city --columns publisher --columns access
+```
 
-WideSearch test and every WANDR run require `--final`. Training, reflection and skill gates never load WANDR. Research and reflection never import the WideSearch gold-answer store. Final evaluation uses the same tasks, settings and repeat count for both libraries. Repeating the same evaluation reuses completed tasks and judge caches. Resume checks configuration, task selections and library identities before continuing.
+The command prints a Markdown table with per-cell source links, the self-check result, and an archive ID. Without `--columns`, the table uses `entity` and `answer`. These commands make live subscription and web calls when you invoke them.
 
-## Scoring and provenance
+Run the full configured benchmark stream in deterministic order:
 
-WideSearch wraps the unchanged official scorer. Its primary metric is Row F1; reports also contain the official success and item metrics, repeated-run aggregations, and row-alignment diagnostics. Judge prompts and scoring stay unchanged, while the judge model is the configured Codex model; reports label this `judge: codex/<model>`.
+```sh
+.venv/bin/loop-research stream --benchmark widesearch
+.venv/bin/loop-research stream --benchmark widesearch --no-learning
+.venv/bin/loop-research stream --benchmark wandr
+.venv/bin/loop-research stream --benchmark wandr --no-learning
+.venv/bin/loop-research report
+```
 
-WANDR runs the pinned generated official harness with project-owned browser and Codex service adapters. It reports `fetch: wandr-browser` and `judge: codex/<model>`. This browser-primary fetch path is a user-authorized adaptation, not an upstream key-free fetch mode. The project primary metric is **full-lineage soft F1**; the upstream harness's primary reward is **full-lineage soft recall**. Reports preserve soft/hard precision, recall and F1, per-record diagnostics, excerpt-failure rate and unjudged-record counts. Operational failures surface instead of becoming fabricated scores.
+A stream researches tasks sequentially, records independent official grades, checks the research evidence, and refines the harness. The agent can also request refinement or edit relevant harness entries during a task. Entries preserve versions, evidence run IDs, usage and self-check outcomes in Git history. Replaying an already seen task starts from its earlier harness state rather than learning from a copy of that same task's prior result.
 
-Every grader uses `models.root`, or the Codex default when it is null. WANDR preserves the exact stage prompts and SDK strict schemas/response parser. Its original model, token limit and provider parameters remain in the archived request cache for provenance; Codex uses `models.reasoning_effort` and does not reproduce provider generation controls that lack verified CLI equivalents. The Perplexity SDK is an import dependency of the unchanged upstream fetch module; the adapter constructs no provider API clients.
+`--no-learning` uses the matching starting harness with learning edits disabled. It retains research and grading so the results can be compared against a learning stream. Run both modes with the same config and task selection. Reports compare them only when the benchmark, ordered task IDs, starting harness SHA, judge and execution settings match. Reporting window and full-text logging settings do not change comparison eligibility. A comparison uses only tasks scored in both streams and displays the paired count; failures are listed separately.
 
-The agent's `fetch()` returns a model rendering of a page, not raw HTML. WANDR re-fetches independently and judges excerpt faithfulness, so quotations can fail even when research returned text successfully. Citation checks flag source URLs absent from the task's URL ledger; flagged values remain part of the graded answer.
+The commands are `init`, `prepare-data`, `verify`, `research`, `stream`, and `report`. The previous round-based training and final-evaluation commands have been removed.
 
-The REPL also exposes `search_batched(queries, k=8)` and `fetch_batched(urls, focus="")`. Both preserve input order and share the single-call tools' cache and URL ledger. Each batch uses at most `codex.max_concurrent` threads; duplicate in-flight requests share one backend call.
+## Evidence, grading and limits
 
-## Files and archives
+The research tools include single and batched search/fetch, plus evidence recording for discovery and constraint checks. Search and fetch use Codex web search; `fetch()` returns the model's rendering of a page, not raw HTML. Self-checks test whether quoted text appears in fetched material, source URLs were fetched, and each recorded task constraint has an evidence check. They also surface missing citations, empty or stalled searches, tool failures and execution limits. **These checks establish recorded coverage and quotation consistency, not factual truth, exhaustive discovery, or correct interpretation of a constraint.**
+
+All model calls, including judges, use the Codex subscription login. The two official grading adapters retain their pinned scoring logic and label results `judge: codex/<models.judge or default>`. WideSearch reports the official row F1, item metrics and success metric. WANDR uses full-lineage soft F1 as the project primary metric and preserves the upstream soft-recall primary metric in provenance, alongside soft/hard metrics and excerpt-failure diagnostics.
+
+WANDR independently re-fetches cited pages through the official harness's Camoufox browser and uses Codex for triage, canonicalization, deduplication and judging. The browser-primary service adapter is a project adaptation; the upstream source is unchanged. It requires no provider API keys. Quotes returned during research may fail independent excerpt checking. Official prompts and strict schemas are retained, but provider generation controls without verified Codex equivalents are not reproduced.
+
+The isolated worker can use Python libraries, threads, asynchronous code and subprocesses in its scratch directory. Kernel restrictions protect host archives, benchmark gold, grading reports and trusted source code; children inherit the restrictions. Web access goes through trusted research tools. Refinement receives research observations and deterministic self-checks, never benchmark grades or gold tables. A passed offline verification probe does not establish live model availability, web access or benchmark performance.
+
+## Files and reports
 
 ```text
-skills/                          learned Markdown skills; separate Git history
-data/splits.json                 fixed WideSearch train/val/test selection
-data/gate_batch.json             fixed validation gate selection
-data/wandr_final.json            fixed WANDR final subset
-data/downloads/                  pinned datasets
-data/vendor/                     unchanged official evaluators
-runs/<run_id>/
-  config.json                    configuration snapshot
-  skills_sha.txt                 library identity, or empty for the baseline
-  run_summary.json               run metadata and completion state
-  tasks.json                     solver-facing task manifest
-  <task_id>/
-    prompt.txt                   research prompt
-    playbook.txt                 skills shown to the agent
-    trajectory.jsonl             RLM trajectory
-    output.json                  validated agent output
-    submission.json              official submission representation
-    grade.json                   metrics, diagnostics and provenance
-    codex_calls.jsonl            completed call metadata and optional full text
-    codex_attempts/              durable starts, including interrupted attempts
-    tool_cache.json              task-local search/fetch cache
-    url_ledger.json              observed source URLs
-reports/rounds.csv               completed improvement rounds
-reports/validation_curve.png     created when completed rounds exist
-reports/final_<benchmark>.json   paired final results and archive references
-reports/summary.md               report built from files on disk
+config.yaml                     explicit configuration values
+harness/                        versioned supplemental state and edit history
+  harness_state.json            prompts, memories, skills, subagents and usage
+  edits/                        recorded edits with trigger and evidence
+data/downloads/                 pinned datasets
+data/vendor/                    unchanged official evaluators
+runs/<run_id>/<task_id>/         research-only artifacts
+  config.json                   configuration snapshot
+  prompt.txt                    research instructions
+  trajectory.jsonl              model, tool and worker events
+  output.json                   validated output
+  submission.json               official submission representation
+  self_check.json               deterministic evidence and coverage checks
+  codex_calls.jsonl              completed model call metadata
+  codex_attempts/                durable attempt starts
+reports/<run_id>/
+  stream.json                   task order, starting harness, outcomes and scores
+  grading/                      official grades, diagnostics and judge caches
+reports/tasks.csv               task scores, failures and rolling means
+reports/learning_curve.png      rolling available-score means by stream
+reports/summary.md              stream summaries and eligible comparisons
 ```
 
-Improvement archives also contain step journals and accepted/rejected skill decisions. WANDR task archives retain official harness artifacts and judge caches. Call logs always include purpose, timing, status and prompt/response sizes; full text is controlled by `codex.log_full_text`. Reports link their values to run/report files. No benchmark performance claims are included in this repository documentation.
+The exact task archive also contains tool caches and evidence records. `codex.log_full_text` controls full prompt/response logging. Grader artifacts remain under reports, separate from research observations.
+
+`report` reads archived stream files without model or dataset access. Missing scores remain blank in the CSV and explicit in the summary; an operational failure never becomes an invented zero. Rolling means consider scored tasks among the last `stream.rolling_window` task attempts, with the contributing count in the CSV. Curves for different streams are descriptive; the comparison table enforces the matching conditions above. No benchmark scores are claimed in this documentation.
 
 ## Tests
 
-Default tests are offline. They use hand-written fixtures and injected transports, enforce import/data boundaries, and exercise parsing, repair, citations, official scoring adapters, skills, gates, resume behavior, CLI checks and report generation:
+The default suite is offline and uses hand-written fixtures and injected external transports. It covers strict configuration, isolation, tools, self-checks, harness state, refinement, official grading adapters, orchestration, CLI and reports:
 
 ```sh
-pytest
+.venv/bin/python -m pytest
 ```
 
-Exactly three live tests are opt-in: the smoke path, one WideSearch train task through grading, and one WANDR task through paired official-harness evaluation. Prepare data, install the browser and log in before running them. They use temporary output workspaces with links to the pinned local datasets/sources:
+One research example is marked `live` and excluded by default. It makes subscription and web calls only if you explicitly select it after setup:
 
 ```sh
-pytest -m live
+.venv/bin/python -m pytest -m live
 ```
 
-Offline tests cannot establish live model availability, web access, task completion or benchmark performance. Live tests have been defined but not executed during implementation.
+The live test is defined but was not executed during implementation. Offline tests do not measure research quality or benchmark performance. Source verification evidence and any unresolved questions are in [docs/VERIFIED.md](docs/VERIFIED.md).

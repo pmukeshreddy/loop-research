@@ -12,7 +12,7 @@ from openai.lib._parsing._completions import type_to_response_format_param
 from loop_research.agent import citation_check, parse_output
 from loop_research.archive import read_json, write_json
 from loop_research.benchmarks import Task
-from loop_research.benchmarks.wandr.data import CODE_REVISION, final_subset
+from loop_research.benchmarks.wandr.data import CODE_REVISION
 from loop_research.benchmarks.wandr.grader import CodexTransport, WandrBenchmark, install_services, load_verifier, record_errors
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -95,34 +95,17 @@ def test_release_and_canonical_instructions(wandr):
         assert by_id[row['task_id']].question == (wandr.package(row['task_id']) / 'instruction.md').read_text()
 
 
-def test_subset_is_deterministic_and_tampering_rejected(wandr, fixture_task, monkeypatch):
-    tasks = [fixture_task.model_copy(update={'task_id': f'fixture-{i}'}) for i in range(10)]
-    monkeypatch.setattr(wandr, 'load_tasks', lambda: tasks)
-    wandr.config.wandr.final_n_tasks = 3
-    ids = final_subset(tasks, 3, 42)
-    assert ids == final_subset(tasks[::-1], 3, 42)
-    assert ids != final_subset(tasks, 3, 43)
-    assert len(final_subset(tasks, None, 42)) == 10
-    with pytest.raises(ValueError, match='exceeds'):
-        final_subset(tasks, 11, 42)
-    wandr.prepare_final_subset(42)
-    assert [t.task_id for t in wandr.final_tasks()] == ids
-    path = wandr.root / 'data/wandr_final.json'
-    value = read_json(path)
-    value['task_ids'] = ids[::-1]
-    write_json(path, value)
-    with pytest.raises(ValueError, match='changed'):
-        wandr.final_tasks()
-
-
 class FixtureVerdict(BaseModel):
     excerpts_faithful: bool
     reasoning: str
 
 
-def test_judge_exact_sdk_schema_parser_usage_and_cache(ctx, verifier, monkeypatch):
+@pytest.mark.parametrize("judge", [None, "fixture-judge"])
+def test_judge_exact_sdk_schema_parser_usage_and_cache(ctx, verifier, monkeypatch, judge):
     from loop_research.benchmarks.wandr import grader
     from src.runtime.llm import LLMRequest, llm_completion
+    ctx.config.models.root = "fixture-root"
+    ctx.config.models.judge = judge
     calls = []
     class Backend:
         def __init__(self, context):
@@ -141,7 +124,7 @@ def test_judge_exact_sdk_schema_parser_usage_and_cache(ctx, verifier, monkeypatc
     assert len(calls) == 1
     assert json.loads(calls[0][0].split('\n', 1)[1]) == [
         {'role': 'system', 'content': request.system}, {'role': 'user', 'content': request.prompt}]
-    assert calls[0][1] == {'purpose': 'grade', 'model': None,
+    assert calls[0][1] == {'purpose': 'grade', 'model': judge,
                          'schema': type_to_response_format_param(FixtureVerdict)['json_schema']['schema']}
     asyncio.run(llm_completion(transport, request._replace(prompt='record https://example.org/b')))
     asyncio.run(llm_completion(transport, request._replace(prompt='changed record https://example.org/a')))
@@ -207,6 +190,8 @@ def test_error_breakdown_keeps_verdicts_and_unknown_rate():
 
 
 def test_empty_submission_uses_actual_official_zero_and_cached_result(ctx, wandr, monkeypatch):
+    ctx.config.models.root = "fixture-root"
+    ctx.config.models.judge = "fixture-judge"
     task = wandr.load_tasks()[0]
     task_ctx = ctx.task(task.task_id)
     submission = wandr.to_submission(task, wandr.output_contract(task).empty)
@@ -214,7 +199,7 @@ def test_empty_submission_uses_actual_official_zero_and_cached_result(ctx, wandr
     assert result.primary_metric == 'soft_f1_full'
     assert result.provenance['harness_primary_metric'] == 'soft_recall_full'
     assert result.provenance['fetch'] == 'wandr-browser'
-    assert result.judge == 'codex/default'
+    assert result.judge == 'codex/fixture-judge'
     assert len(result.metrics) == 14 and set(result.metrics.values()) == {0}
     assert result.errors['invalid_submission'] is True
     assert result.errors['excerpt_failure_rate'] is None
@@ -276,12 +261,14 @@ def test_unchanged_pipeline_all_judge_stages_and_metrics(ctx, verifier, monkeypa
     from src.config import TaskConfig, KeySpec, EvalConfig, CanonConfig, CanonKeyConfig, DedupConfig, DedupKeyConfig
     from src.metrics import metrics_for_tasks
     from src.runtime import clients
+    ctx.config.models.root = "fixture-root"
+    ctx.config.models.judge = "fixture-judge"
     stages = []
     class Backend:
         def __init__(self, context):
             self.ctx, self.config, self.last_usage = context, context.config, None
         def complete(self, prompt, *, schema, **kwargs):
-            assert kwargs == {'purpose': 'grade', 'model': None}
+            assert kwargs == {'purpose': 'grade', 'model': 'fixture-judge'}
             properties = schema['properties']
             if 'usable' in properties:
                 stages.append('triage')

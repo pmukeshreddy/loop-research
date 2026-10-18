@@ -1,4 +1,4 @@
-> Current status: the complete WideSearch/WANDR implementation and key-free WANDR adaptation supersede the historical deferral below. See “Implementation completion” and the final “Open questions” section at the end.
+> Current status (2026-10-18): the continual harness replaces the historical gated self-improvement design. The pinned Prime Agent/paper findings, explicit project overrides, and separate offline implementation verification appear at the end of this document. No live tests, research, streams, or performance measurements were run. Earlier WideSearch/WANDR records below remain historical evidence.
 
 # Verify-first findings
 
@@ -813,7 +813,7 @@ Full final unit output is retained in
 were skipped or weakened to obtain a pass. The three live tests are deselected
 by the requested default test configuration.
 
-## Open questions
+## Historical open questions (before the continual-harness redesign)
 
 None block implementation or the verified local setup. Live Codex/web behavior,
 real research/grades, improvement cycles and final evaluations remain unexecuted
@@ -826,3 +826,346 @@ Whitespace-only cleanup removed trailing spaces/tabs and extra end-of-file blank
 lines from recorded evidence. Commands, findings, source line numbers, and
 non-whitespace content are preserved. The full offline suite passed again before
 publication; live tests remained deselected.
+
+## Continual harness: pinned reference verification (2026-10-18)
+
+This section records source inspection and the requested adaptation. It does not
+claim that a new harness, stream, refiner, or comparison run has been implemented
+or executed. No live model calls, research tasks, benchmark grading, or task
+streams were run during this verification. Only the requested public reference
+material was fetched. The earlier test results above belong to the previous
+implementation and are not evidence that the new design passes.
+
+### Reference identity and evidence
+
+The official [Prime Agent repository](https://github.com/PrimeIntellect-ai/prime-agent)
+was inspected in the clean, read-only checkout `.verification/prime-agent` at
+**`7cbffa77b38facd7c87277fa3c82bcadbe816880`**. This is the Rust implementation,
+including its Python kernel library, rather than the historical TypeScript
+implementation. The commit date is 2026-10-16. The repository's `AGENTS.md` and
+MIT license were read; its source was not edited and its Rust tests were not run.
+
+Commands executed and their complete results are in
+[prime-pin.txt](evidence/prime-pin.txt):
+
+```text
+$ git -C .verification/prime-agent remote get-url origin
+https://github.com/PrimeIntellect-ai/prime-agent
+$ git -C .verification/prime-agent rev-parse HEAD
+7cbffa77b38facd7c87277fa3c82bcadbe816880
+$ git -C .verification/prime-agent status --porcelain
+<empty; exit 0>
+```
+
+[prime-source-evidence.txt](evidence/prime-source-evidence.txt) contains file
+SHA-256 hashes, inspected line ranges, immutable source links, and the scheduling
+field search. The state, CRUD, planner, executor, ranking, session refinement,
+automatic trigger, master switch, and digest modules were read, including the
+relevant boundary consumers and refinement skill. Source links below are
+permalinks to the pinned commit; paths and ranges refer to that checkout.
+
+The paper is [Continual Harness: Online Adaptation for Self-Improving Foundation
+Agents, arXiv:2605.09998v1](https://arxiv.org/html/2605.09998v1), dated 11 May 2026.
+Its retrieval URL, HTTP status, byte count, SHA-256, and inspected sections are
+recorded in [prime-paper.txt](evidence/prime-paper.txt).
+
+### Paper model and limits of attribution
+
+The paper defines four components: prompt, subagents, skills, and memory. A
+refiner uses recent trajectory windows after warm-up, edits those components,
+and lets the agent continue without resetting the environment. It shares the
+agent's model; executable skills can be repaired from observed failures.
+The separate co-learning experiment additionally updates model weights using
+process rewards and teacher relabeling; that is not this project's design.
+[Sections 2.2–3.3](https://arxiv.org/html/2605.09998v1#S2.SS2).
+
+The experiments include frozen and continuing bootstrap conditions. Appendix C
+reports unused authored entries and regressions when inherited subagents are
+abandoned. These results motivate tracking actual use and observed outcomes;
+they do not prove this project's research performance. The requested task-level
+cadence and deterministic self-check signal are project choices, not the
+paper's evaluation protocol. [Section 4.1](https://arxiv.org/html/2605.09998v1#S4.SS1),
+[Appendix C](https://arxiv.org/html/2605.09998v1#A3).
+
+### Persistent harness state
+
+The current source has **five** kinds: `prompt`, `memory`, `skill`, `subagent`,
+and `factory`. The requested project has exactly the first four; omitting
+`factory` is an intentional override, not a claim about the current upstream
+schema. The factory kind describes state-machine workflows and has its own
+opt-in policy. [Kinds and schema, `refinement/mod.rs:9–108`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/refinement/mod.rs#L9-L108).
+
+`HarnessEntry` contains `id`, `kind`, `title`, `content`, `path`, `scope`,
+`reference`, `arguments`, `metadata`, `source`, `created_at`, `updated_at`, and
+`version`. Python defaults include local scope, `path="general"`,
+`source="agent"`, and version 1. The persisted document is
+`{schema: 1, entries: {kind: {id: entry}}, refinements: [...]}`. A successful
+update increments the entry version and preserves its creation time.
+[Python types, `harness.py:194–222`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/prime-agent-runtime/src/rlm/harness.py#L194-L222),
+[serialization and updates, `harness.py:627–798`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/prime-agent-runtime/src/rlm/harness.py#L627-L798).
+
+The default local store is the session's `harness/harness_state.json`; global
+state is under the agent directory's `harness/`. Python resolves explicit state
+directories, `RLM_HARNESS_STATE_DIR`, `RLM_SESSION_DIR`, and
+`RLM_GLOBAL_HARNESS_STATE_DIR`. A missing local session path raises rather than
+silently targeting the global store. Host prompt construction merges both
+scopes, preserving conflicting global and local IDs with a display prefix for
+the latter. It does not overwrite the global entry with the local entry.
+[Path resolution, `harness.py:127–191`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/prime-agent-runtime/src/rlm/harness.py#L127-L191),
+[host merge, `refinement/mod.rs:230–270`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/refinement/mod.rs#L230-L270).
+
+Both writers lock, reload, and atomically replace the JSON store. The Python
+cache checks file modification time to notice host writes. Corrupt/unreadable
+state loads as empty upstream; this behavior is a reference fact, not a required
+project recovery policy. Upstream persists JSON state and before/after edit
+snapshots; these modules do **not** implement one Git commit per edit.
+[Python synchronization, `harness.py:442–676`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/prime-agent-runtime/src/rlm/harness.py#L442-L676),
+[host persistence, `refinement/mod.rs:279–326`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/refinement/mod.rs#L279-L326).
+
+### Agent CRUD and retrieval API
+
+`rlm.harness.*` is synchronous. `rlm.get_harness_state(state_dir=None,
+global_=False)` returns the selected cached store. The generic methods are
+`create`, `get`, `update`, `delete`, `list`, and `upsert`; helpers exist for each
+kind. Create fails on duplicate IDs; update fails on missing IDs; delete returns
+a boolean. Omitting optional update fields preserves existing values, while an
+explicit `{}` replaces the corresponding mapping. These checks occur inside
+the locked mutation. [Generic methods, `harness.py:678–930`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/prime-agent-runtime/src/rlm/harness.py#L678-L930).
+
+| Surface | Verified contract | Pinned source |
+| --- | --- | --- |
+| Memories | `create_memory(title, content, *, id=None, path="general", metadata=None, global_=False)`, corresponding update/delete | [`harness.py:932–959`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/prime-agent-runtime/src/rlm/harness.py#L932-L959) |
+| Prompt notes | Create/update/delete supplemental prompt records; default grouping path `policy` | [`harness.py:961–988`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/prime-agent-runtime/src/rlm/harness.py#L961-L988) |
+| Skills | Create requires a Python reference with `type="python"`, `import`/`python_import`, and `callable`/`call_pattern`; update can preserve the existing reference | [`harness.py:229–246`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/prime-agent-runtime/src/rlm/harness.py#L229-L246), [`990–1049`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/prime-agent-runtime/src/rlm/harness.py#L990-L1049) |
+| Subagents | Create/update/delete reusable textual delegation specifications; execution is a separate runtime operation | [`harness.py:1051–1078`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/prime-agent-runtime/src/rlm/harness.py#L1051-L1078) |
+| Refinement records | `record_refinement(trigger, changes, *, evidence="", outcome="", id=None, global_=False)` appends caller-supplied strings; `plan_refinement(...)` returns suggested steps only | [`harness.py:1159–1207`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/prime-agent-runtime/src/rlm/harness.py#L1159-L1207) |
+| Inspection | `overview(max_entries_per_kind=20)`, `search(query, kind=None, limit=10)`, and `snapshot()` | [`harness.py:1209–1343`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/prime-agent-runtime/src/rlm/harness.py#L1209-L1343) |
+
+The project may store optional inline Python modules with skill records. That is
+an explicit extension: the inspected upstream skill entry describes an installed
+Python import and callable; its CRUD layer does not compile inline module source.
+Upstream refiner validation additionally requires a skill `arguments` object,
+whereas the Python CRUD signature permits omitted arguments. Prompt refinement
+is supplemental; the refiner rejects `base_system_prompt` edits.
+[Planner policy and validation, `planner.rs:10–54,194–284`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/refinement/planner.rs#L10-L284).
+
+Upstream search is **weighted TF-IDF-style substring overlap**, not BM25. It
+deduplicates query terms; scores title, content, and combined path/ID field
+coverage; multiplies by `log(1 + N / df)`; and breaks explicit-search ties by
+recency. It lacks BM25 term-frequency saturation and document-length
+normalization. Host digest ranking uses related weighted overlap within each
+kind, with a deterministic path/title/ID tie-break.
+[Python search, `harness.py:1264–1329`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/prime-agent-runtime/src/rlm/harness.py#L1264-L1329),
+[host ranking, `ranking.rs:104–175,235–262`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/refinement/ranking.rs#L104-L262).
+
+The default host digest includes three entries per kind, 140-character content
+snippets, and ten recent refinements. It is a separate model-facing
+`[harness-digest]` context message delivered at session start/resume/compaction
+boundaries. Query weights come from the active goal and four recent messages;
+the state fingerprint excludes the query terms so a delivered digest is stable.
+[Defaults, `refinement/mod.rs:16–19`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/refinement/mod.rs#L16-L19),
+[delivery and query inputs, `harness_digest.rs:1–190`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/session_engine/harness_digest.rs#L1-L190),
+[freshness check, `harness_digest.rs:440–565`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/session_engine/harness_digest.rs#L440-L565).
+
+### `/refine`: scheduling, planning, and boundary application
+
+The user command accepts `/refine [--global] [instructions]` and
+`/refine rollback <refinement-id>`. The Python skill's
+`await refine.run(instructions=None, global_=False)` sends a host request and
+returns a scheduling result immediately. Repeated requests in one turn merge
+into one pending request. The host consumes it after the current turn settles,
+after any requested compaction. Direct synchronous CRUD remains a separate
+immediate-write surface; it is not deferred through this scheduler.
+[Command parser, `slash_commands.rs:37–84`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/session_engine/slash_commands.rs#L37-L84),
+[skill bridge, `skills/refine/src/refine/__init__.py:15–50`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/skills/refine/src/refine/__init__.py#L15-L50),
+[scheduling, `turn_boundary.rs:298–378`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/session_engine/turn_boundary.rs#L298-L378),
+[consumption, `turn_boundary.rs:416–464`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/session_engine/turn_boundary.rs#L416-L464).
+
+The current Rust implementation explicitly says the TypeScript background
+planning path was not ported: kernel `refine.status()` reports the pending flag
+and `in_flight=false`, because its cell cannot observe the synchronous
+between-turn refinement. The skill prose still says the system prompt is
+rebuilt, but the actual Rust consumer appends this run's outcome and notice rows
+to live context and explicitly avoids a full rebuild. The implementation is the
+authority for this pin. [Status, `turn_boundary.rs:312–316`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/session_engine/turn_boundary.rs#L312-L316),
+[context application, `compaction_arms.rs:420–473`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/session_engine/compaction_arms.rs#L420-L473).
+
+The planner receives an overview of current entries (at most 40 per kind with
+240-character content snippets), the last 20 refinement results, a recent
+conversation tail (initially capped at 80,000 characters), scope policy, and
+optional instructions. It requests JSON containing `summary`, `rationale`,
+`expectedOutcome`, and CRUD `edits`; an empty edit list is valid. It trims the
+conversation further to fit the model's context and caps output at 32,000 tokens.
+Planning itself does not mutate state.
+[Planner inputs, `executor.rs:38–127,194–286`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/refinement/executor.rs#L38-L286),
+[request fitting, `planner.rs:567–630`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/refinement/planner.rs#L567-L630).
+
+The session captures the target store before planning, then locks and rereads it
+before applying. Edits whose entry changed since that baseline are rejected
+individually. Valid edits apply sequentially, so a proposal can partly succeed;
+there is no all-or-nothing success assumption. Applied rows carry before/after
+snapshots, `applied`, optional `error`, and the edit reason. The new state is
+saved atomically, global results additionally append to
+`refinement_history.jsonl`, and session audit/outcome/notice rows are recorded.
+A storage failure can occur after durable edits; the source does not pretend
+state and every log form one atomic transaction.
+[Session flow, `refine.rs:334–467`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/session_engine/refine.rs#L334-L467),
+[apply checks, `planner.rs:310–500`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/refinement/planner.rs#L310-L500).
+
+The reference has policies the user expressly does not want copied. Its master
+`harnessRefinements` switch controls scheduling, planning, apply, reads/writes,
+and model-context delivery. Automatic compaction-triggered refinement has a
+separate model review that returns `shouldRefine`, plus enabled/compact flags
+and a 20-minute cooldown. `AutoRefineGates` stores a default `turn_interval=25`,
+but repository-wide Rust search finds that field only in configuration/defaults
+and tests, not an interval scheduler; this pin is not verified to run every 25
+turns. An approved review is retained if the agent is streaming and runs at a
+later boundary; branch changes discard stale reviews.
+[Review call, `executor.rs:347–419`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/refinement/executor.rs#L347-L419),
+[defaults, `refine.rs:29–64`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/session_engine/refine.rs#L29-L64),
+[automatic trigger, `auto_refine_trigger.rs:13–261`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/session_engine/auto_refine_trigger.rs#L13-L261),
+[master switch, `refinement_gate.rs:1–80`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/session_engine/refinement_gate.rs#L1-L80).
+
+### Outcome records and rollback
+
+The reference has three distinct uses of outcome language:
+
+1. Python `RefinementEvent.outcome` is a free string supplied to
+   `record_refinement`; it is not computed by a checker.
+2. The model's `expectedOutcome` becomes `RefinementResult.expected_outcome`.
+   Critically, the host copies that same prediction directly into
+   `HarnessRefinementEvent.outcome` when applying the proposal.
+3. `refinement_outcome` is a UI/session message with the refinement ID, summary,
+   scope, applied-edit rows, and optional rollback ID. It reports edit application,
+   not benchmark quality.
+
+These are auditable application records and expectations, **not actual benchmark
+evaluation or measured success**. The only verified success flags here mean an
+edit applied. [Record types, `refinement/mod.rs:73–93,334–387`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/refinement/mod.rs#L73-L387),
+[prediction copied into outcome, `planner.rs:471–500`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/refinement/planner.rs#L471-L500),
+[outcome/notice messages, `refine.rs:112–160`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/session_engine/refine.rs#L112-L160).
+
+Rollback finds a prior result in merged history, infers its scope, and builds
+inverse edits from successful rows in reverse order: undo a create by deleting;
+undo a delete by recreating the before snapshot; undo an update by restoring its
+before content and metadata through an update. It runs through normal apply and
+records `rollbackOf`. It is snapshot-based compensation, not Git history reset,
+and failed edits are not inverted. The concurrency check compares against the
+state just before rollback planning; it does not guarantee that later intervening
+edits will be preserved when explicitly rolling back an older refinement.
+[Rollback planning, `executor.rs:205–229`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/refinement/executor.rs#L205-L229),
+[inverse edits, `planner.rs:503–546`](https://github.com/PrimeIntellect-ai/prime-agent/blob/7cbffa77b38facd7c87277fa3c82bcadbe816880/crates/pa-core/src/refinement/planner.rs#L503-L546).
+
+### Explicit project overrides, not upstream claims
+
+| Requested project behavior | Difference from the verified reference |
+| --- | --- |
+| Exactly four entry kinds: prompt, memory, skill, subagent | Current Prime Agent additionally has `factory`. |
+| A Git repository with one commit per persistent edit | Reference storage is atomic JSON plus refinement history and snapshots. |
+| BM25 retrieval over the harness entries | Reference uses weighted TF-IDF-style field overlap. |
+| Automatic refinement after every task, with agent-triggered requests also available | Reference exposes user/agent requests and a gated compaction-triggered review path. |
+| Background planning with application at a model-turn boundary | The inspected Rust reference plans synchronously between settled turns; its source explicitly says the prior background path was not ported. |
+| No approval gates, benchmark promotion gates, cooldowns, or operational off switches; a frozen comparison mode is the explicit exception | Reference has live master/automatic switches, a review decision, and cooldowns. Serialization and shape validation are correctness checks, not quality-promotion gates. |
+| Optional inline Python skill modules | Reference entries point to installed Python imports/call patterns. |
+| Observed task outcomes derived **only from deterministic `selfcheck`** | Reference `outcome` is caller text or the model's expected outcome. Grades, answer keys, benchmark metrics, and judge feedback must never feed refinement or its outcome records. |
+
+The permitted future comparison is separate from adaptation. It may assess
+frozen baseline/evolved harness snapshots with benchmark graders, but those
+scores cannot become a promotion gate or a refiner input. Source inspection
+does not validate any future measured improvement.
+
+### Stock pinned RLM and full-builtins adaptation
+
+The research runtime remains the separately pinned
+[`alexzhang13/rlm` at `d04208afbad29ca675ab13478c40ee8bebc84bfe`](https://github.com/alexzhang13/rlm/tree/d04208afbad29ca675ab13478c40ee8bebc84bfe),
+not Prime Agent's Python package with the same `rlm` import name. Offline import
+inspection confirmed that installed `LocalREPL` source exactly matches that pin:
+both SHA-256 hashes are
+`cee6bcfc530b01cef4b39f722b2efc084dd2fa08fe495b88ceda7efa63b5e31e`.
+The installed distribution's `direct_url.json` records the pinned Git commit.
+Commands and output are in [prime-rlm-builtins.txt](evidence/prime-rlm-builtins.txt).
+
+Stock `LocalREPL.setup()` installs a copy of `_SAFE_BUILTINS` in
+`self.globals["__builtins__"]`. That map sets `input`, `eval`, `exec`, `compile`,
+`globals`, and `locals` to `None`; it already includes `open` and `__import__`.
+Therefore stock behavior must not be described as full Python builtins.
+[Builtin map, `local_repl.py:50–144`](https://github.com/alexzhang13/rlm/blob/d04208afbad29ca675ab13478c40ee8bebc84bfe/rlm/environments/local_repl.py#L50-L144),
+[instance namespace, `local_repl.py:208–242`](https://github.com/alexzhang13/rlm/blob/d04208afbad29ca675ab13478c40ee8bebc84bfe/rlm/environments/local_repl.py#L208-L242).
+
+The implemented project adaptation constructs the stock `LocalREPL` and then
+sets its instance namespace to the full builtin mapping,
+`repl.globals["__builtins__"] = dict(vars(builtins))`, before model-authored cells
+execute. It does not edit installed/upstream RLM source or introduce a
+replacement REPL implementation. The source identity evidence above and the
+isolated worker tests below verify different parts of this integration.
+
+## Open questions after reference verification
+
+No unresolved reference question blocks the requested adaptation. The differences
+above are explicit project choices. Remaining limits are recorded rather than
+silently filled in:
+
+- The inspected Rust pin differs from inherited TypeScript-oriented skill prose
+  about background planning and prompt rebuilds. The current Rust behavior is
+  cited above; no uninspected historical implementation is assumed.
+- The stored `turn_interval` setting has no identified Rust scheduling consumer.
+  This does not affect the requested every-task cadence, which is a project
+  requirement.
+- The reference does not provide the requested deterministic outcome evaluator,
+  BM25 implementation, per-edit Git history, or inline-module loader. Their
+  project implementations are verified separately below.
+- Local source inspection does not establish live Codex availability, research
+  quality, performance gains, or real stream/comparison results. Those remain
+  unexecuted under the user's instruction; no simulated result is presented as
+  a live measurement.
+
+## Continual harness implementation verification (2026-10-18)
+
+This section describes the built code, separately from the reference findings.
+It supersedes historical completion records about the removed loop. No open
+design question blocks use; live availability and research quality remain
+unmeasured at the user's explicit instruction.
+
+| Requirement | Implementation and offline evidence |
+| --- | --- |
+| Four entry kinds and shared generic CRUD | `src/loop_research/harness.py:30,88,123`; `session.py:103`; four-kind round trips in `tests/test_harness.py`. |
+| Relevant retrieval without embedding or character cap | BM25 with stable ties and CJK bigrams, `harness.py:19,105`; relevant and long-entry tests. |
+| Git edit records, trigger, evidence, usage and outcomes | `harness.py:123,216,231`; one commit per edit, separate bookkeeping commits, actual self-check outcomes attached to originating edit commits through Git notes. No grade fields enter this path. |
+| Compensating rollback | `harness.py:177`; restores content/module and deleted-entry history, keeps unrelated edits and lineage exposure; tested against module addition and deletion. |
+| Background planning and boundary apply | `refine.py:60,83,92`; `session.py:38,134`; stale target plans replan, branch changes discard plans, invalid model JSON is audited without suppressing the next automatic refinement. Final-cell rollback is drained at task end. |
+| Immutable checker and evidence | `selfcheck.py:7,27`; checks every output row against the full question plus each structured spec item. `repl_tools.py:116,153,167` owns fetch/quote/constraint/discovery records. Tests catch fabricated quotes, unfetched URLs, missing constraints and operational failures. |
+| Full Python and skill modules | Stock `LocalREPL` instance in `rlm_codex_client.py:81`; modules load as `skill_<id>` and in `loaded_skills`. `tests/test_worker.py` executes classes, eval/exec/compile, threads, asyncio, child processes, parallel tools, subcalls and a selected skill module in real isolated workers. |
+| OS isolation verified on this machine | macOS Seatbelt, `isolation.py:38,86`. Real tests deny gold/grade/archive reads, symlink escapes, trusted-source writes, external connections, foreign Unix sockets and parent signaling; descendants retain restrictions. [Isolation output](evidence/isolation-tests.txt). |
+| Concurrent tools without backend lock contention | `repl_tools.py:40,111,148`; ordered results, shared cache/ledger and duplicate in-flight suppression. Lock-ownership tests and real isolated batched tool calls pass. |
+| Bounded worker shutdown | `session.py:34,66`; task-owned cancellation terminates dispatched Codex processes and prevents late tool/harness/trajectory writes. The bridge closes partial sockets. Delayed-dispatch and hard-deadline regressions cover these paths. Host refinement/format repair have separate contexts. |
+| Grade separation and ordering | `stream.py:37`; `archive.py:158` (`GradeContext`); WANDR child also uses `GradeContext` at `benchmarks/wandr/grader.py:119`. Research precedes independent grading, then final self-check/refinement. Grader errors and judge logs stay under reports. Secret-marker tests inspect refiner input and harness state. |
+| Learn once per lineage | `harness.py:205`; `stream.py:90,102`. Exposure is committed before research. Replay forks before exposure; matching streams use a common initial commit; no-learning restores the live branch. Tests cover repeat tasks, rollback, baseline restoration and identical task order. |
+| Single config source and judge model | All values in root `config.yaml`; strict, required fields in `config.py`. WANDR uses `final_n_tasks: null`; legacy subset/split/gate artifacts and code removed. WideSearch judge uses `models.judge` at `benchmarks/widesearch/grader.py:40`; WANDR at `benchmarks/wandr/grader.py:51`; result labels include that selection. |
+| Reports | `report.py:88,148`; ordered scores and rolling available-score mean, explicit null failures, compatible paired learning/no-learning comparisons. Report tests use clearly synthetic fixtures only. |
+
+`fetch()` is a Codex-rendered excerpt, not a raw HTTP capture. A completed
+`open_page` event confirms the exact URL was opened; the deterministic checker
+then verifies verbatim membership in the cached rendering. It does not prove
+that the model faithfully copied the remote page. Likewise, per-row constraint
+coverage verifies a supported recorded verdict for the whole question and
+each structured spec item; it does not mechanically prove the semantic verdict
+or split arbitrary natural language into independently verified predicates.
+Discovery stagnation is based on recorded entity identifiers. These are explicit
+measurement limits, not hidden claims of truth or exhaustive search.
+
+An editable-install check found that its macOS `.pth` file inherited
+`UF_HIDDEN`, which Python 3.12's `site.py:176–179` explicitly ignores. Clearing
+that flag on `.venv/lib/python3.12/site-packages/_editable_impl_loop_research.pth`
+temporarily restored the source import, but the flag recurred. The final install
+therefore uses the freshly built wheel without an editable path file; repeated
+plain imports and installed command help checks pass. Setup uses a regular
+install for this reason. The wheel was independently extracted into a temporary
+directory: all modules imported from it, `init`
+copied its packaged root YAML byte-for-byte, and created the separate harness
+repository. These probes made no model calls.
+
+All 270 offline tests passed in 27.59 seconds. Full suite output is preserved in
+[continual-unit-tests.txt](evidence/continual-unit-tests.txt). The only deselected
+test has the explicit `live` marker; it was not run. Deleted legacy tests covered
+the removed features; archive/transport/source-integrity coverage was retained
+and the new architecture has dedicated regression tests.

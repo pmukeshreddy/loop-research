@@ -139,7 +139,7 @@ class RunContext:
     def load(self, name, default=None):
         return read_json(self.path / name, default)
 
-    def initialize(self, skills_sha, **metadata):
+    def initialize(self, harness_sha, **metadata):
         self.path.mkdir(parents=True, exist_ok=True)
         snapshot = self.config.model_dump()
         existing = self.load("config.json")
@@ -147,9 +147,18 @@ class RunContext:
             raise ValueError("Cannot resume with changed configuration")
         if existing is None:
             self.save("config.json", snapshot)
-        sha_file = self.path / "skills_sha.txt"
-        if sha_file.exists() and sha_file.read_text().strip() != skills_sha:
-            raise ValueError("Run library identity changed")
-        sha_file.write_text(skills_sha + "\n")
+        sha_file = self.path / "harness_sha.txt"
+        if sha_file.exists() and sha_file.read_text().strip() != harness_sha:
+            raise ValueError("Run harness identity changed")
+        sha_file.write_text(harness_sha + "\n")
         if not (self.path / "run_summary.json").exists():
-            self.save("run_summary.json", {"created": stamp(), "skills_sha": skills_sha, **metadata})
+            self.save("run_summary.json", {"created": stamp(), "harness_sha": harness_sha, **metadata})
+
+
+class GradeContext(RunContext):
+    @property
+    def run_dir(self):
+        return self.root / 'reports' / self.run_id / 'grading'
+
+    def task(self, task_id):
+        return GradeContext(self.root, self.run_id, self.config, task_id, self.cancellation)

@@ -1,7 +1,8 @@
 models:
   root: null
   sub: null
-  reflect: null
+  refine: null
+  judge: null
   reasoning_effort: null
 codex:
   bin: codex
@@ -20,29 +21,10 @@ data:
   languages:
   - en
   - zh
-  split:
-    train: 0.6
-    val: 0.2
-    test: 0.2
 wandr:
-  final_n_tasks: 50
+  final_n_tasks: null
   seed: 42
-final:
-  repeats: 1
-skills:
-  max_playbook_chars: 6000
-reflect:
-  max_ops: 3
-  max_chars: 20000
-  batch_size: 1
-gate:
-  val_batch_size: 20
-  repeats: 1
-  min_delta: 0.01
-  max_regressions: 2
-  regression_tol: 0.1
-  dedup_threshold: 0.85
-  leakage_min_len: 4
-loop:
-  train_batch_size: 5
-  parallel_tasks: 4
+harness:
+  retrieval_limit: 10
+stream:
+  rolling_window: 10

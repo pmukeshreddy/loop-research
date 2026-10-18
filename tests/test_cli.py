@@ -1,142 +1,212 @@
 import base64
 import hashlib
 import importlib
-import importlib.util
 import json
+from pathlib import Path
 import subprocess
-from types import SimpleNamespace
+import sys
+from types import ModuleType, SimpleNamespace
 
 import pytest
+import yaml
 from typer.testing import CliRunner
 
 
 def cli_module():
-    assert importlib.util.find_spec("loop_research.cli") is not None, "The CLI is not implemented"
-    return importlib.import_module("loop_research.cli")
+    return importlib.import_module('loop_research.cli')
 
 
-def test_init_is_idempotent_and_preserves_verification(tmp_path):
+def save_config(root, config, filename='config.yaml'):
+    (root / filename).write_text(yaml.safe_dump(config.model_dump()))
+
+
+@pytest.fixture
+def stream_module(monkeypatch):
+    module = ModuleType('loop_research.stream')
+    monkeypatch.setitem(sys.modules, module.__name__, module)
+    return module
+
+
+def test_init_is_idempotent_and_preserves_config_and_verification(tmp_path, config):
     cli = cli_module()
     runner = CliRunner()
-    result = runner.invoke(cli.app, ["--root", str(tmp_path), "init"])
-    assert result.exit_code == 0, result.output
-    for name in ("skills", "runs", "reports", "data", "docs"):
+    result = runner.invoke(cli.app, ['--root', str(tmp_path), 'init'])
+    assert result.exit_code == 0, f'{result.output}\n{result.exception}'
+    for name in ('harness', 'runs', 'reports', 'data', 'docs'):
         assert (tmp_path / name).is_dir()
-    assert (tmp_path / "skills/.git").is_dir()
-    assert (tmp_path / "config.yaml").is_file()
-    verification = tmp_path / "docs/VERIFIED.md"
-    assert "unverified" in verification.read_text().lower()
-    verification.write_text("Existing verified evidence\n")
-    again = runner.invoke(cli.app, ["--root", str(tmp_path), "init"])
-    assert again.exit_code == 0, again.output
-    assert verification.read_text() == "Existing verified evidence\n"
+    assert (tmp_path / 'harness/.git').is_dir()
+    assert (tmp_path / 'harness/harness_state.json').is_file()
+    assert (tmp_path / 'config.yaml').read_bytes() == (Path(__file__).resolve().parents[1] / 'config.yaml').read_bytes()
+    verification = tmp_path / 'docs/VERIFIED.md'
+    assert 'unverified' in verification.read_text().lower()
+    verification.write_text('Existing verified evidence\n')
+    config.data.seed = 73
+    save_config(tmp_path, config)
+    again = runner.invoke(cli.app, ['--root', str(tmp_path), 'init'])
+    assert again.exit_code == 0, f'{again.output}\n{again.exception}'
+    assert verification.read_text() == 'Existing verified evidence\n'
+    assert yaml.safe_load((tmp_path / 'config.yaml').read_text())['data']['seed'] == 73
 
 
-@pytest.mark.parametrize("arguments", [
-    ["run", "--split", "test", "--n", "1"],
-    ["run", "--split", "val", "--n", "1"],
-    ["run", "--n", "0"],
-    ["evaluate", "--benchmark", "widesearch", "--split", "test"],
-    ["evaluate", "--benchmark", "wandr"],
-])
-def test_cli_rejects_forbidden_scope_before_research(tmp_path, arguments):
+def test_init_uses_packaged_template_outside_a_repository(tmp_path, config, monkeypatch):
     cli = cli_module()
-    (tmp_path / "config.yaml").write_text("{}\n")
-    result = CliRunner().invoke(cli.app, ["--root", str(tmp_path), *arguments])
-    assert result.exit_code != 0
-    assert not (tmp_path / "runs").exists()
+    package = tmp_path / 'site-packages/loop_research'
+    package.mkdir(parents=True)
+    config.data.seed = 73
+    save_config(package, config)
+    monkeypatch.setattr(cli, '__file__', str(package / 'cli.py'))
+    workspace = tmp_path / 'workspace'
+    result = CliRunner().invoke(cli.app, ['--root', str(workspace), 'init'])
+    assert result.exit_code == 0, f'{result.output}\n{result.exception}'
+    assert (workspace / 'config.yaml').read_bytes() == (package / 'config.yaml').read_bytes()
+    assert (workspace / 'harness/harness_state.json').is_file()
 
 
-def test_cli_uses_explicit_config_and_returns_archive_id(tmp_path, monkeypatch):
+def test_research_uses_explicit_config_and_prints_cited_table(tmp_path, config, output, stream_module):
     cli = cli_module()
-    from loop_research import loop
-    (tmp_path / "custom.yaml").write_text("data:\n  seed: 73\n")
-    def run(root, config, n):
-        assert root == tmp_path and config.data.seed == 73 and n == 2
-        return "train-fixture"
-    monkeypatch.setattr(loop, "run_train", run)
-    result = CliRunner().invoke(cli.app, ["--root", str(tmp_path), "--config", "custom.yaml", "run", "--n", "2"])
-    assert result.exit_code == 0, result.output
-    assert result.stdout.strip() == "train-fixture"
+    config.data.seed = 73
+    save_config(tmp_path, config, 'custom.yaml')
+    def research(root, settings, question, columns):
+        assert root == tmp_path and settings.data.seed == 73
+        assert question == 'Find the fixture' and columns == ['entity', 'value']
+        return {'run_id': 'research-fixture', 'output': output, 'self_check': {'ok': True, 'issues': []}}
+    stream_module.research = research
+    result = CliRunner().invoke(cli.app, ['--root', str(tmp_path), '--config', 'custom.yaml',
+        'research', 'Find the fixture', '--columns', 'entity', '--columns', 'value'])
+    assert result.exit_code == 0, f'{result.output}\n{result.exception}'
+    assert '| entity | value |' in result.stdout
+    assert '[1](<https://example.org>)' in result.stdout
+    assert 'Archive: research-fixture' in result.stdout
 
 
-def test_verify_reports_failed_checks_without_live_calls(tmp_path, monkeypatch):
+def test_research_without_columns_passes_empty_selection(tmp_path, config, stream_module):
     cli = cli_module()
-    from loop_research import evaluate
-    (tmp_path / "config.yaml").write_text("{}\n")
+    save_config(tmp_path, config)
+    def research(root, settings, question, columns):
+        assert columns == []
+        return {'run_id': 'empty-fixture', 'output': {'rows': []}, 'self_check': {'ok': False, 'issues': ['fixture issue']}}
+    stream_module.research = research
+    result = CliRunner().invoke(cli.app, ['--root', str(tmp_path), 'research', 'Fixture question'])
+    assert result.exit_code == 0, f'{result.output}\n{result.exception}'
+    assert 'No rows returned.' in result.stdout
+    assert 'fixture issue' in result.stdout
+
+
+def test_research_failure_keeps_archive_visible_and_returns_nonzero(tmp_path, config, stream_module):
+    save_config(tmp_path, config)
+    stream_module.research = lambda *args: {
+        'run_id': 'failed-fixture', 'output': {'rows': []},
+        'self_check': {'ok': False, 'issues': ['worker_error']}, 'error': 'fixture timeout',
+    }
+    result = CliRunner().invoke(cli_module().app, ['--root', str(tmp_path), 'research', 'Fixture question'])
+    assert result.exit_code == 1
+    assert 'Archive: failed-fixture' in result.stdout
+    assert 'fixture timeout' in result.output
+
+
+@pytest.mark.parametrize('benchmark,no_learning', [('widesearch', False), ('wandr', True)])
+def test_stream_routes_benchmark_and_learning_mode(tmp_path, config, stream_module, benchmark, no_learning):
+    cli = cli_module()
+    save_config(tmp_path, config)
+    def stream(root, settings, selected, no_learning=False):
+        assert root == tmp_path and selected == benchmark
+        assert no_learning is (benchmark == 'wandr')
+        return {'run_id': 'stream-fixture'}
+    stream_module.stream = stream
+    args = ['--root', str(tmp_path), 'stream', '--benchmark', benchmark]
+    if no_learning:
+        args.append('--no-learning')
+    result = CliRunner().invoke(cli.app, args)
+    assert result.exit_code == 0, f'{result.output}\n{result.exception}'
+    assert 'stream-fixture' in result.stdout
+    assert 'reports/stream-fixture/stream.json' in result.stdout
+
+
+@pytest.mark.parametrize('arguments', [['stream', '--benchmark', 'unknown'], ['research', '  ']])
+def test_invalid_research_requests_fail_before_loading_config(tmp_path, arguments):
+    result = CliRunner().invoke(cli_module().app, ['--root', str(tmp_path), *arguments])
+    assert result.exit_code == 2, f'{result.output}\n{result.exception}'
+    assert not (tmp_path / 'runs').exists()
+
+
+def test_stream_help_has_single_no_learning_switch():
+    result = CliRunner().invoke(cli_module().app, ['stream', '--help'])
+    assert result.exit_code == 0
+    assert '--no-learning' in result.stdout
+    assert '--no-no-learning' not in result.stdout
+
+
+def test_prepare_data_uses_both_pinned_adapters(tmp_path, config, monkeypatch):
+    cli = cli_module()
+    from loop_research.benchmarks.wandr.data import WandrData
+    save_config(tmp_path, config)
+    calls = []
+    def prepare(self):
+        calls.append((type(self).__name__, self.root, self.config.model_dump()))
+    monkeypatch.setattr(cli.WideSearchData, 'prepare', prepare)
+    monkeypatch.setattr(WandrData, 'prepare', prepare)
+    result = CliRunner().invoke(cli.app, ['--root', str(tmp_path), 'prepare-data'])
+    assert result.exit_code == 0, f'{result.output}\n{result.exception}'
+    assert [name for name, _, _ in calls] == ['WideSearchData', 'WandrData']
+    assert all(root == tmp_path and data == config.model_dump() for _, root, data in calls)
+
+
+@pytest.mark.parametrize('authenticated,isolation_ok', [(False, True), (True, False), (True, True)])
+def test_verify_checks_auth_sources_and_isolation_without_live_calls(tmp_path, config, monkeypatch, authenticated, isolation_ok):
+    cli = cli_module()
+    from loop_research import isolation
+    from loop_research.benchmarks.wandr.grader import WandrBenchmark
+    save_config(tmp_path, config)
+    required = '--sandbox --skip-git-repo-check --cd --output-last-message --output-schema --model --config --json --color --ephemeral --ignore-user-config read-only stdin'
     def command(args, **kwargs):
-        assert args[1:] in (["--version"], ["exec", "--help"], ["login", "status"])
-        text = "codex fixture" if args[1:] == ["--version"] else "Logged in using an API key"
-        return subprocess.CompletedProcess(args, 0, text, "")
-    monkeypatch.setattr(cli.subprocess, "run", command)
-    monkeypatch.setattr(cli, "verify_rlm", lambda: "pinned fixture")
-    monkeypatch.setattr(cli.WideSearchData, "verify_code", lambda self: None)
-    monkeypatch.setattr(cli.WideSearchData, "verify_data", lambda self: None)
-    monkeypatch.setattr(evaluate, "verify_wandr", lambda *args: [("WANDR browser", True, "ready")])
-    result = CliRunner().invoke(cli.app, ["--root", str(tmp_path), "verify"])
-    assert result.exit_code == 1, result.output
-    assert "FAIL" in result.output and "ChatGPT" in result.output and "WANDR browser" in result.output
+        assert args[1:] in (['--version'], ['exec', '--help'], ['login', 'status'])
+        text = {'--version': 'codex fixture', 'exec': required,
+                'login': 'Logged in using ChatGPT' if authenticated else 'Logged in using an API key'}[args[1]]
+        return subprocess.CompletedProcess(args, 0, text, '')
+    def probe():
+        if not isolation_ok:
+            raise RuntimeError('fixture isolation unavailable')
+        return 'fixture kernel checks passed'
+    monkeypatch.setattr(cli.subprocess, 'run', command)
+    monkeypatch.setattr(cli, 'verify_rlm', lambda: 'pinned fixture')
+    monkeypatch.setattr(cli.WideSearchData, 'verify_code', lambda self: None)
+    monkeypatch.setattr(cli.WideSearchData, 'verify_data', lambda self: None)
+    monkeypatch.setattr(WandrBenchmark, 'verify', lambda self: [('WANDR browser', True, 'ready')])
+    monkeypatch.setattr(isolation, 'verify_isolation', probe)
+    result = CliRunner().invoke(cli.app, ['--root', str(tmp_path), 'verify'])
+    assert result.exit_code == (0 if authenticated and isolation_ok else 1), f'{result.output}\n{result.exception}'
+    assert 'ChatGPT' in result.output and 'WANDR browser' in result.output and 'isolation' in result.output.lower()
+    if not authenticated:
+        assert 'FAIL\tCodex ChatGPT auth' in result.output
+    if not isolation_ok:
+        assert 'fixture isolation unavailable' in result.output
 
 
 def test_rlm_verification_checks_import_location_and_installed_hash(tmp_path, monkeypatch):
     cli = cli_module()
-    source = tmp_path / "rlm/__init__.py"
+    source = tmp_path / 'rlm/__init__.py'
     source.parent.mkdir()
-    source.write_text("# fixture package\n")
-    digest = base64.urlsafe_b64encode(hashlib.sha256(source.read_bytes()).digest()).decode().rstrip("=")
+    source.write_text('# fixture package\n')
+    digest = base64.urlsafe_b64encode(hashlib.sha256(source.read_bytes()).digest()).decode().rstrip('=')
     class Entry:
-        hash = SimpleNamespace(mode="sha256", value=digest)
+        hash = SimpleNamespace(mode='sha256', value=digest)
         def __str__(self):
-            return "rlm/__init__.py"
+            return 'rlm/__init__.py'
     distribution = SimpleNamespace(
         files=[Entry()],
-        read_text=lambda name: json.dumps({"url": "https://github.com/alexzhang13/rlm.git", "vcs_info": {
-            "vcs": "git", "commit_id": "d04208afbad29ca675ab13478c40ee8bebc84bfe"}}),
+        read_text=lambda name: json.dumps({'url': 'https://github.com/alexzhang13/rlm.git', 'vcs_info': {
+            'vcs': 'git', 'commit_id': 'd04208afbad29ca675ab13478c40ee8bebc84bfe'}}),
         locate_file=lambda path: tmp_path / str(path),
     )
-    monkeypatch.setattr(cli.metadata, "distribution", lambda name: distribution)
-    monkeypatch.setattr(cli.importlib, "import_module", lambda name: SimpleNamespace(__file__=str(source)))
-    assert "d04208a" in cli.verify_rlm()
-    source.write_text("# altered package\n")
-    with pytest.raises(ValueError, match="integrity"):
+    monkeypatch.setattr(cli.metadata, 'distribution', lambda name: distribution)
+    monkeypatch.setattr(cli.importlib, 'import_module', lambda name: SimpleNamespace(__file__=str(source)))
+    assert 'd04208a' in cli.verify_rlm()
+    source.write_text('# altered package\n')
+    with pytest.raises(ValueError, match='integrity'):
         cli.verify_rlm()
 
 
-def test_smoke_archives_each_real_component_boundary(tmp_path, monkeypatch):
-    cli = cli_module()
-    from loop_research import rlm_codex_client
-    from loop_research.config import Config
-    from loop_research.archive import read_json
-    calls = []
-    class Backend:
-        def __init__(self, ctx, **kwargs):
-            self.ctx = ctx
-        def complete(self, prompt, **kwargs):
-            calls.append(kwargs["purpose"])
-            return {"root": "READY", "search": json.dumps({"results": [{"title": "Python", "url": "https://www.python.org/", "snippet": "Python"}]}),
-                    "fetch": "Python programming language"}[kwargs["purpose"]]
-    class RLM:
-        def __init__(self, backend, **kwargs):
-            assert set(kwargs["custom_tools"]) >= {"search", "fetch"}
-            assert 0 < kwargs["max_timeout"] < 3600
-            self.logger = kwargs["logger"]
-        def completion(self, prompt, **kwargs):
-            assert "REPL" in prompt
-            self.logger.log_metadata(SimpleNamespace(to_dict=lambda: {"fixture": "smoke"}))
-            return SimpleNamespace(response="5")
-    monkeypatch.setattr(cli, "CodexBackend", Backend)
-    monkeypatch.setattr(rlm_codex_client, "CodexRLM", RLM)
-    run_id = cli.smoke_run(tmp_path, Config())
-    saved = read_json(tmp_path / "runs" / run_id / "smoke/smoke.json")
-    assert saved["plain"] == "READY" and saved["rlm"] == "5"
-    assert calls == ["root", "search", "fetch"]
-    assert (tmp_path / "runs" / run_id / "smoke/tool_cache.json").exists()
-    assert (tmp_path / "runs" / run_id / "smoke/trajectory.jsonl").stat().st_size > 0
-
-
-def test_report_works_without_model_or_dataset(tmp_path):
-    cli = cli_module()
-    (tmp_path / "config.yaml").write_text("{}\n")
-    result = CliRunner().invoke(cli.app, ["--root", str(tmp_path), "report"])
-    assert result.exit_code == 0, result.output
-    assert (tmp_path / "reports/summary.md").is_file()
+def test_report_works_without_model_dataset_or_configuration(tmp_path):
+    result = CliRunner().invoke(cli_module().app, ['--root', str(tmp_path), 'report'])
+    assert result.exit_code == 0, f'{result.output}\n{result.exception}'
+    assert (tmp_path / 'reports/summary.md').is_file()

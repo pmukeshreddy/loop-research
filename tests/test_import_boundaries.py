@@ -50,25 +50,8 @@ def reachable(graph, start, stop=()):
     return seen
 
 
-@pytest.mark.parametrize("module", ["agent", "reflect", "repl_tools"])
-def test_research_cannot_reach_widesearch_answers(module):
+@pytest.mark.parametrize("module", ["agent", "refine", "harness", "selfcheck", "session", "repl_tools", "rlm_codex_client"])
+def test_research_and_refinement_cannot_import_graders_or_answers(module):
     graph = import_graph()
-    assert "loop_research.benchmarks.widesearch.answers" not in reachable(graph, "loop_research." + module)
-
-
-@pytest.mark.parametrize("module", ["loop", "reflect", "gate"])
-def test_learning_cannot_reach_wandr(module):
-    graph = import_graph()
-    assert not any(name.startswith("loop_research.benchmarks.wandr")
-                   for name in reachable(graph, "loop_research." + module))
-
-
-def test_wandr_is_reachable_only_through_evaluation():
-    graph = import_graph()
-    for module, targets in graph.items():
-        if module.startswith("loop_research.benchmarks.wandr") or module == "loop_research.evaluate":
-            continue
-        assert not any(name.startswith("loop_research.benchmarks.wandr") for name in targets), module
-    assert "loop_research.cli" in graph
-    assert not any(name.startswith("loop_research.benchmarks.wandr")
-                   for name in reachable(graph, "loop_research.cli", stop={"loop_research.evaluate"}))
+    found = reachable(graph, "loop_research." + module)
+    assert not any(name.endswith((".grader", ".answers")) for name in found)

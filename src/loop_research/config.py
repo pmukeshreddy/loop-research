@@ -1,97 +1,83 @@
+"""Validate explicit configuration; deployment values live in config.yaml."""
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
+
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
 
 class Strict(BaseModel):
-    model_config = ConfigDict(extra="forbid", validate_assignment=True)
+    model_config = ConfigDict(extra="forbid", strict=True, validate_assignment=True, allow_inf_nan=False)
+
+
+ModelName = Annotated[str, Field(min_length=1)]
+
 
 class Models(Strict):
-    root: str | None = None
-    sub: str | None = None
-    reflect: str | None = None
-    reasoning_effort: str | None = None
+    root: ModelName | None
+    sub: ModelName | None
+    refine: ModelName | None
+    judge: ModelName | None
+    reasoning_effort: ModelName | None
+
 
 class Codex(Strict):
-    bin: str = "codex"
-    max_concurrent: int = Field(4, ge=1)
-    timeout_s: float = Field(600, gt=0)
-    max_retries: int = Field(4, ge=0)
-    log_full_text: bool = False
+    bin: str = Field(min_length=1)
+    max_concurrent: int = Field(ge=1)
+    timeout_s: float = Field(gt=0)
+    max_retries: int = Field(ge=0)
+    log_full_text: bool
+
 
 class RLM(Strict):
-    max_iterations: int = Field(30, ge=1)
-    max_depth: int = Field(1, ge=1)
+    max_iterations: int = Field(ge=1)
+    max_depth: int = Field(ge=1)
+
 
 class Agent(Strict):
-    task_timeout_s: float = Field(3600, gt=0)
-    max_codex_calls: int = Field(300, ge=1)
+    task_timeout_s: float = Field(gt=0)
+    max_codex_calls: int = Field(ge=1)
 
-class Split(Strict):
-    train: float = Field(.6, gt=0, lt=1)
-    val: float = Field(.2, gt=0, lt=1)
-    test: float = Field(.2, gt=0, lt=1)
-    @model_validator(mode="after")
-    def total(self):
-        if abs(self.train + self.val + self.test - 1) > 1e-9:
-            raise ValueError("split proportions must sum to one")
-        return self
 
 class Data(Strict):
-    seed: int = 42
-    languages: list[Literal["en", "zh"]] = Field(default_factory=lambda: ["en", "zh"], min_length=1)
-    split: Split = Field(default_factory=Split)
-    @model_validator(mode="after")
-    def unique(self):
-        if len(set(self.languages)) != len(self.languages):
+    seed: int = Field(ge=0)
+    languages: list[Literal["en", "zh"]] = Field(min_length=1)
+
+    @field_validator("languages")
+    @classmethod
+    def unique_languages(cls, languages):
+        if len(set(languages)) != len(languages):
             raise ValueError("languages must be unique")
-        return self
+        return languages
+
 
 class Wandr(Strict):
-    final_n_tasks: int | None = Field(50, ge=1)
-    seed: int = 42
+    final_n_tasks: int | None = Field(ge=1)
+    seed: int = Field(ge=0)
 
-class Final(Strict):
-    repeats: int = Field(1, ge=1)
 
-class Skills(Strict):
-    max_playbook_chars: int = Field(6000, ge=0)
+class Harness(Strict):
+    retrieval_limit: int = Field(ge=1)
 
-class Reflect(Strict):
-    max_ops: int = Field(3, ge=1)
-    max_chars: int = Field(20000, ge=1)
-    batch_size: int = Field(1, ge=1)
 
-class Gate(Strict):
-    val_batch_size: int = Field(20, ge=1)
-    repeats: int = Field(1, ge=1)
-    min_delta: float = Field(.01, ge=0, le=1)
-    max_regressions: int = Field(2, ge=0)
-    regression_tol: float = Field(.10, ge=0, le=1)
-    dedup_threshold: float = Field(.85, ge=0, le=1)
-    leakage_min_len: int = Field(4, ge=1)
+class Stream(Strict):
+    rolling_window: int = Field(ge=1)
 
-class Loop(Strict):
-    train_batch_size: int = Field(5, ge=1)
-    parallel_tasks: int = Field(4, ge=1)
 
 class Config(Strict):
-    models: Models = Field(default_factory=Models)
-    codex: Codex = Field(default_factory=Codex)
-    rlm: RLM = Field(default_factory=RLM)
-    agent: Agent = Field(default_factory=Agent)
-    data: Data = Field(default_factory=Data)
-    wandr: Wandr = Field(default_factory=Wandr)
-    final: Final = Field(default_factory=Final)
-    skills: Skills = Field(default_factory=Skills)
-    reflect: Reflect = Field(default_factory=Reflect)
-    gate: Gate = Field(default_factory=Gate)
-    loop: Loop = Field(default_factory=Loop)
+    models: Models
+    codex: Codex
+    rlm: RLM
+    agent: Agent
+    data: Data
+    wandr: Wandr
+    harness: Harness
+    stream: Stream
 
     @classmethod
-    def load(cls, path: Path | str = "config.yaml"):
-        return cls.model_validate(yaml.safe_load(Path(path).read_text()) or {})
+    def load(cls, path: Path | str):
+        return cls.model_validate(yaml.safe_load(Path(path).read_text()))
 
     @property
     def judge_label(self):
-        return "codex/" + (self.models.root or "default")
+        return "codex/" + (self.models.judge or "default")

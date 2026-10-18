@@ -1,6 +1,6 @@
 import json
 import threading
-from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import CancelledError, Future, ThreadPoolExecutor
 from urllib.parse import urlsplit, urlunsplit
 from .archive import read_json, write_json
 
@@ -24,13 +24,22 @@ class ResearchTools:
         self.ledger = set(read_json(ctx.path / "url_ledger.json", []))
         self.lock = threading.RLock()
         self.pending = {}
+        self.evidence = read_json(ctx.path / 'evidence.json', {
+            'fetched': {}, 'checks': [], 'searches': [], 'discoveries': [], 'failures': []})
+        self.entities = {entity for d in self.evidence['discoveries'] for entity in d['entities']}
 
     def persist(self):
         write_json(self.ctx.path / "tool_cache.json", self.cache)
         write_json(self.ctx.path / "url_ledger.json", sorted(self.ledger))
+        write_json(self.ctx.path / 'evidence.json', self.evidence)
+
+    def snapshot(self):
+        with self.lock:
+            return json.loads(json.dumps(self.evidence))
 
     def _cached(self, key, call):
         with self.lock:
+            self.ctx.check_cancelled()
             if key in self.cache:
                 return self.cache[key]
             pending = self.pending.get(key)
@@ -41,12 +50,23 @@ class ResearchTools:
         try:
             result, urls = call()
             with self.lock:
+                self.ctx.check_cancelled()
                 self.cache[key] = result
                 self.ledger.update(urls)
                 self.persist()
             future.set_result(result)
             return result
         except BaseException as exc:
+            with self.lock:
+                if not isinstance(exc, CancelledError):
+                    try:
+                        self.ctx.check_cancelled()
+                    except CancelledError:
+                        pass
+                    else:
+                        operation, target, *_ = json.loads(key)
+                        self.evidence['failures'].append({'operation': operation, 'target': target, 'error': str(exc)})
+                        self.persist()
             # Release every waiter even if the owner is interrupted.
             future.set_exception(exc)
             raise
@@ -81,11 +101,14 @@ class ResearchTools:
                 result.append({x: hit[x] for x in ("title", "url", "snippet")})
                 if len(result) == k:
                     break
+            with self.lock:
+                self.ctx.check_cancelled()
+                self.evidence['searches'].append({'query': query, 'hits': len(result)})
             return result, urls
 
         return self._cached(key, call)
 
-    def search_batched(self, queries: list[str], k: int = 8) -> list[list[dict]]:
+    def search_many(self, queries: list[str], k: int = 8) -> list[list[dict]]:
         """Search concurrently and return one hit list per query in input order."""
         with ThreadPoolExecutor(max_workers=self.ctx.config.codex.max_concurrent) as pool:
             return list(pool.map(lambda query: self.search(query, k), queries))
@@ -103,15 +126,60 @@ class ResearchTools:
                 purpose="fetch", web=True, model=self.ctx.config.models.sub).strip()
             if not result:
                 result = "FETCH_FAILED"
+            opened = []
+            for action in self.backend.last_web_actions:
+                if action.get('type') == 'open_page' and action.get('url'):
+                    try:
+                        opened.append(normalized_url(action['url']))
+                    except ValueError:
+                        continue
+            if url not in opened:
+                result = 'FETCH_FAILED'
+            with self.lock:
+                self.ctx.check_cancelled()
+                if result == 'FETCH_FAILED':
+                    self.evidence['failures'].append({'operation': 'fetch', 'url': url})
+                else:
+                    self.evidence['fetched'].setdefault(url, []).append(result)
             return result, [url] if result != "FETCH_FAILED" else []
 
         return self._cached(key, call)
 
-    def fetch_batched(self, urls: list[str], focus: str = "") -> list[str]:
+    def fetch_many(self, urls: list[str], focus: str = "") -> list[str]:
         """Fetch concurrently and return one page text or FETCH_FAILED per URL in input order."""
         with ThreadPoolExecutor(max_workers=self.ctx.config.codex.max_concurrent) as pool:
             return list(pool.map(lambda url: self.fetch(url, focus), urls))
 
+    def check_constraint(self, row, constraint, verdict, url, quote):
+        """Record a row path's constraint verdict and its fetched supporting quote."""
+        if not all(isinstance(v, str) and v for v in (row, constraint, url, quote)) or type(verdict) is not bool:
+            raise ValueError('Expected row/constraint ids, a boolean verdict, URL and quote')
+        url = normalized_url(url)
+        with self.lock:
+            self.ctx.check_cancelled()
+            if not any(quote in page for page in self.evidence['fetched'].get(url, [])):
+                raise ValueError('Constraint quote must appear in fetched evidence')
+            self.evidence['checks'].append({'row': row, 'constraint': constraint, 'verdict': verdict,
+                                            'url': url, 'quote': quote})
+            self.persist()
+        return True
+
+    def record_discovery(self, query, entities):
+        """Record entity ids found by a search, including [] when discovery stalls."""
+        if not isinstance(query, str) or not isinstance(entities, list) or not all(isinstance(e, str) and e.strip() for e in entities):
+            raise ValueError('Expected query text and a list of entity ids')
+        with self.lock:
+            self.ctx.check_cancelled()
+            if not any(s['query'] == query for s in self.evidence['searches']):
+                raise ValueError('Query was not searched in this run')
+            normalized = sorted({' '.join(e.split()).casefold() for e in entities})
+            new = sorted(set(normalized) - self.entities)
+            self.entities.update(normalized)
+            self.evidence['discoveries'].append({'query': query, 'entities': normalized, 'new_entities': new})
+            self.persist()
+        return new
+
     def injected(self):
         return {tool.__name__: {"tool": tool, "description": tool.__doc__}
-                for tool in (self.search, self.fetch, self.search_batched, self.fetch_batched)}
+                for tool in (self.search, self.fetch, self.search_many, self.fetch_many,
+                             self.check_constraint, self.record_discovery)}

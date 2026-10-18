@@ -10,7 +10,7 @@ from types import SimpleNamespace
 from openai.lib._parsing._completions import _parse_content, type_to_response_format_param
 from .data import CODE_REVISION, DATASET_REVISION, WandrData
 from .. import GradeResult
-from ...archive import RunContext, digest, read_json, write_json
+from ...archive import GradeContext, digest, read_json, write_json
 from ...codex_backend import CodexBackend
 from ...config import Config
 
@@ -48,7 +48,7 @@ class CodexTransport:
                 prompt = 'Execute this judge conversation. Return only its requested response.\n' + json.dumps(request['messages'], ensure_ascii=False)
                 def call():
                     text = self.backend.complete(prompt, purpose='grade', schema=schema,
-                                                 model=self.backend.config.models.root)
+                                                 model=self.backend.config.models.judge)
                     if response_format is not None:
                         _parse_content(response_format, text)
                     result = {'text': text, 'usage': self.backend.last_usage, 'request': identity}
@@ -116,7 +116,7 @@ def load_verifier(package):
 
 def worker(request_path):
     request = read_json(Path(request_path))
-    ctx = RunContext(Path(request['root']), request['run_id'], Config.model_validate(request['config']), request['task_id'])
+    ctx = GradeContext(Path(request['root']), request['run_id'], Config.model_validate(request['config']), request['task_id'])
     package, work = Path(request['package']), Path(request['work'])
     verifier = load_verifier(package)
     install_services(verifier, ctx, work / 'judge_cache')
@@ -171,7 +171,6 @@ class WandrBenchmark(WandrData):
 
     def verify(self):
         self.verify_sources()
-        self.final_tasks()
         package = self.package(self.load_tasks()[0].task_id)
         script = """import asyncio, sys
 from pathlib import Path

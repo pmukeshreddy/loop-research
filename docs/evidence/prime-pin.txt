@@ -1,0 +1,20 @@
+Reference verification recorded 2026-10-18T21:45:39.928423+00:00
+Read-only source inspection; no live model calls or benchmark runs.
+$ git -C .verification/prime-agent remote get-url origin
+https://github.com/PrimeIntellect-ai/prime-agent
+exit=0
+$ git -C .verification/prime-agent rev-parse HEAD
+7cbffa77b38facd7c87277fa3c82bcadbe816880
+exit=0
+$ git -C .verification/prime-agent show -s --format=%H%n%ci%n%s HEAD
+7cbffa77b38facd7c87277fa3c82bcadbe816880
+2026-10-16 16:07:33 -0700
+Open the scoped agents view for a session without subagents (#3654)
+exit=0
+$ git -C .verification/prime-agent status --porcelain
+exit=0
+$ git -C .verification/rlm rev-parse HEAD
+d04208afbad29ca675ab13478c40ee8bebc84bfe
+exit=0
+$ git -C .verification/rlm status --porcelain
+exit=0
