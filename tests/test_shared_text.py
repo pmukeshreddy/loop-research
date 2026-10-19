@@ -20,7 +20,7 @@ def compact(value):
 
 
 def wire(payload, strings=None):
-    return {"format": "shared-text-v1", "shared_texts": strings or [], "payload": payload}
+    return {"format": "shared-text-v2", "shared_texts": strings or [], "payload": payload}
 
 
 @pytest.mark.parametrize("payload", [
@@ -31,7 +31,7 @@ def wire(payload, strings=None):
 def test_round_trip_preserves_json_scalar_types_and_exact_strings(payload):
     encoded = encode(payload)
     assert set(encoded) == {"format", "shared_texts", "payload"}
-    assert encoded["format"] == "shared-text-v1"
+    assert encoded["format"] == "shared-text-v2"
     assert compact(decode(json.loads(compact(encoded)))) == compact(payload)
 
 
@@ -158,7 +158,7 @@ def test_seeded_nested_json_round_trips_without_value_coercion():
 
 
 @pytest.mark.parametrize("wrapper", [
-    None, [], {}, {"format": "shared-text-v2", "shared_texts": [], "payload": None},
+    None, [], {}, {"format": "unknown-version", "shared_texts": [], "payload": None},
     {"format": "shared-text-v1", "payload": None},
     {"format": "shared-text-v1", "shared_texts": [], "payload": None, "extra": 1},
     {"format": "shared-text-v1", "shared_texts": "text", "payload": None},

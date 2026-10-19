@@ -177,7 +177,10 @@ must account for every presented issue/signal group and each additional candidat
 evidence references and a reason for accepting or declining it. The edit limit is a ceiling,
 and an empty edit list remains valid.
 Planner inputs use a reversible shared-text representation: repeated exact strings appear in
-a visible table, and each occurrence has a reference. No evidence field or string is shortened.
+a visible table, and each occurrence has a reference. Exact quoted spans and lines embedded
+inside different strings can also be shared: ordered literal pieces and references reconstruct
+the original string without adding separators. The encoder selects by complete JSON size,
+not task content or a model limit. No evidence field or string is shortened.
 Original observations, exact transmitted prompts/schemas, and logical/transmitted payload
 sizes and hashes remain archived. Evidence validation uses the original logical input.
 Each planning snapshot also supplies a visible list of existing evidence anchors, and the

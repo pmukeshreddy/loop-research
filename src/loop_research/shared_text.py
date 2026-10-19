@@ -1,4 +1,4 @@
-"""Lossless, inspectable sharing of exact repeated JSON string values.
+"""Lossless, inspectable sharing of exact JSON strings and embedded text.
 
 The versioned wrapper is always returned, including when its string table is
 empty. Savings are measured in compact JSON characters (ensure_ascii=False),
@@ -8,10 +8,12 @@ No content is shortened, normalized, compressed or inferred.
 from collections import Counter
 import json
 import math
+import re
 
 
-_FORMAT = "shared-text-v1"
-_MARKERS = {"$shared_text", "$literal_object"}
+_FORMAT = "shared-text-v2"
+_MARKERS = {"$shared_text", "$shared_text_parts", "$literal_object"}
+_QUOTED = re.compile(r'''"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*' ''', re.DOTALL | re.VERBOSE)
 
 
 def _compact(value):
@@ -55,34 +57,54 @@ def _string_counts(value):
     return counts
 
 
-def _encode_node(value, indices):
+def _fragments(value):
+    """Partition exact quoted spans and surrounding lines, retaining separators."""
+    position = 0
+    for match in _QUOTED.finditer(value):
+        yield from value[position:match.start()].splitlines(keepends=True)
+        yield match[0]
+        position = match.end()
+    yield from value[position:].splitlines(keepends=True)
+
+
+def _encode_node(value, indices, *, fragments=False, used=None):
     if isinstance(value, str):
-        return {"$shared_text": indices[value]} if value in indices else value
+        if value in indices:
+            if used is not None:
+                used.add(indices[value])
+            return {"$shared_text": indices[value]}
+        if not fragments:
+            return value
+        parts = []
+        references = set()
+        for part in _fragments(value):
+            if part in indices:
+                parts.append({"$shared_text": indices[part]})
+                references.add(indices[part])
+            elif parts and isinstance(parts[-1], str):
+                parts[-1] += part
+            else:
+                parts.append(part)
+        candidate = {"$shared_text_parts": parts}
+        if references and len(_compact(candidate)) < len(_compact(value)):
+            if used is not None:
+                used.update(references)
+            return candidate
+        return value
     if isinstance(value, list):
-        return [_encode_node(item, indices) for item in value]
+        return [_encode_node(item, indices, fragments=fragments, used=used) for item in value]
     if isinstance(value, dict):
-        mapping = {key: _encode_node(item, indices) for key, item in value.items()}
+        mapping = {key: _encode_node(item, indices, fragments=fragments, used=used)
+                   for key, item in value.items()}
         # Escape the mapping itself once. Its values have already been encoded,
         # including any nested literal objects that contain reserved keys.
         return {"$literal_object": mapping} if _MARKERS.intersection(value) else mapping
     return value
 
 
-def encode_shared_text(payload):
-    """Return a shared-text-v1 wrapper, without modifying the JSON payload.
-
-    Repeated strings are considered in first-occurrence order. Each selected
-    entry must reduce compact JSON cost at its actual table index; interning is
-    retained only when the complete result is smaller than the original JSON.
-    An empty table preserves the same API when there is no net saving. Invalid
-    JSON values, including non-string keys, cycles and nonfinite numbers, raise
-    ValueError rather than being coerced.
-    """
-    counts = _string_counts(payload)
-    strings = []
-    indices = {}
+def _add_profitable(counts, strings, indices):
     for value, count in counts.items():
-        if count < 2:
+        if count < 2 or value in indices:
             continue
         literal_chars = len(_compact(value))
         reference_chars = len(_compact({"$shared_text": len(strings)}))
@@ -90,9 +112,42 @@ def encode_shared_text(payload):
         if count * (literal_chars - reference_chars) > table_chars:
             indices[value] = len(strings)
             strings.append(value)
-    wrapper = {"format": _FORMAT, "shared_texts": strings,
+
+
+def encode_shared_text(payload):
+    """Return a shared-text-v2 wrapper, without modifying the JSON payload.
+
+    Repeated strings are considered in first-occurrence order. Each selected
+    entry must reduce compact JSON cost at its actual table index; interning is
+    retained only when the complete result is smaller than the original JSON.
+    Unique strings can share exact quoted spans or lines through concatenation.
+    Adjacent literal pieces stay together; unreferenced table entries are removed.
+    Selection compares complete JSON costs, never a caller's input limit.
+    An empty table preserves the same API when there is no net saving. Invalid
+    JSON values, including non-string keys, cycles and nonfinite numbers, raise
+    ValueError rather than being coerced.
+    """
+    counts = _string_counts(payload)
+    strings = []
+    indices = {}
+    _add_profitable(counts, strings, indices)
+    wrapper = {"format": _FORMAT, "shared_texts": strings[:],
                "payload": _encode_node(payload, indices)}
-    if strings and len(_compact(wrapper)) >= len(_compact(payload)):
+    fragments = Counter()
+    for value, count in counts.items():
+        if value not in indices:
+            for part in _fragments(value):
+                fragments[part] += count
+    _add_profitable(fragments, strings, indices)
+    used = set()
+    _encode_node(payload, indices, fragments=True, used=used)
+    strings = [value for index, value in enumerate(strings) if index in used]
+    indices = {value: index for index, value in enumerate(strings)}
+    candidate = {"format": _FORMAT, "shared_texts": strings,
+                 "payload": _encode_node(payload, indices, fragments=True)}
+    if len(_compact(candidate)) < len(_compact(wrapper)):
+        wrapper = candidate
+    if wrapper['shared_texts'] and len(_compact(wrapper)) >= len(_compact(payload)):
         wrapper = {"format": _FORMAT, "shared_texts": [],
                    "payload": _encode_node(payload, {})}
     return wrapper
@@ -108,8 +163,9 @@ def decode_shared_text(wrapper):
     _string_counts(wrapper)
     if (type(wrapper) is not dict
             or set(wrapper) != {"format", "shared_texts", "payload"}
-            or wrapper["format"] != _FORMAT):
-        raise ValueError("Expected a shared-text-v1 wrapper")
+            or type(wrapper['format']) is not str
+            or wrapper["format"] not in {"shared-text-v1", _FORMAT}):
+        raise ValueError("Expected a supported shared-text wrapper")
     strings = wrapper["shared_texts"]
     if type(strings) is not list or any(type(value) is not str for value in strings):
         raise ValueError("shared_texts must be a list of literal strings")
@@ -118,6 +174,14 @@ def decode_shared_text(wrapper):
         if isinstance(value, list):
             return [decode(item) for item in value]
         if isinstance(value, dict):
+            if wrapper['format'] == _FORMAT and '$shared_text_parts' in value:
+                parts = value['$shared_text_parts']
+                if set(value) != {'$shared_text_parts'} or type(parts) is not list:
+                    raise ValueError('Invalid shared-text parts')
+                if any(type(part) is not str and
+                       not (type(part) is dict and set(part) == {'$shared_text'}) for part in parts):
+                    raise ValueError('String parts require literals or shared-text references')
+                return ''.join(decode(part) for part in parts)
             if "$shared_text" in value:
                 index = value["$shared_text"]
                 if (set(value) != {"$shared_text"} or type(index) is not int

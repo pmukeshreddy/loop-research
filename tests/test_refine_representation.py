@@ -35,7 +35,7 @@ def test_planner_wire_input_reconstructs_every_observed_field_and_archives_sizes
     prompt, kwargs = planner.calls[0]
     wire_text = prompt.removeprefix(INSTRUCTIONS)
     wire = json.loads(wire_text)
-    assert wire.get('format') == 'shared-text-v1'
+    assert wire.get('format') == 'shared-text-v2'
     from loop_research.shared_text import decode_shared_text
     state = ctx.load('refine_state.json')
     expected = planning_input(state) | {'max_edits': ctx.config.refine.max_edits}
@@ -50,7 +50,7 @@ def test_planner_wire_input_reconstructs_every_observed_field_and_archives_sizes
     logical_text = json.dumps(expected, ensure_ascii=False)
     metadata = state['planner_representation']
     assert metadata == {
-        'format': 'shared-text-v1',
+        'format': 'shared-text-v2',
         'logical_payload_chars': len(logical_text),
         'logical_payload_sha256': hashlib.sha256(logical_text.encode()).hexdigest(),
         'wire_payload_chars': len(wire_text),

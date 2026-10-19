@@ -56,7 +56,9 @@ tool results, code, stdout, errors and final answers remain. The full trajectory
 archive is unchanged; this avoids quadratic repetition of history and page variables.
 
 Serialize that observation losslessly for planning with a visible shared-text table and
-references for repeated exact strings. Preserve all logical fields and string occurrences;
+references for repeated exact strings. Share repeated quoted spans and lines inside otherwise
+different strings through lossless ordered concatenation of literals and references. Select
+only by complete representation cost; never trim content to fit a limit. Preserve all logical fields and string occurrences;
 escape literal objects that collide with representation markers. Archive the original job,
 exact wire prompt/schema, and both logical and wire payload sizes/hashes. Validate proposal
 evidence references against the original logical payload, not the representation wrapper.

@@ -188,9 +188,12 @@ No answer keys or grades are available. Preserve procedures and failure modes, n
 Skills may include a standalone Python module as source text; it will execute only in the isolated REPL.
 Use create/update/delete, the existing bare ids, and full title/content for create/update.
 For delete use null title/content/module. For create use null id. Return the requested JSON schema.
-The input is a lossless shared-text-v1 representation, not a summary. Its shared_texts array
+The input is a lossless shared-text-v2 representation, not a summary. Its shared_texts array
 contains exact literal strings. In payload, {"$shared_text": N} means that complete string
-at zero-based index N. {"$literal_object": OBJECT} escapes an original object with a reserved
+at zero-based index N. {"$shared_text_parts": PARTS} means concatenate the listed literal
+strings and shared-text references in order, with no added separators or normalization.
+This preserves repeated text embedded inside otherwise different prompts and code blocks.
+{"$literal_object": OBJECT} escapes an original object with a reserved
 marker shape: keep that object's keys and recursively decode its values. Decode references
 recursively; every original field and string occurrence is retained. Evidence pointers address
 the decoded logical payload, not this representation's wrapper or shared_texts table.
