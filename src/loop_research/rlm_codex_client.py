@@ -1,6 +1,7 @@
 """Codex clients and project-owned RLM/LocalREPL subclasses; upstream is unchanged."""
 import builtins
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 import sys
 import json
@@ -10,6 +11,7 @@ from types import ModuleType
 from uuid import uuid4
 from rlm import RLM
 from rlm.clients.base_lm import BaseLM
+from rlm.core.comms_utils import LMRequest, LMResponse, send_lm_request, send_lm_request_batched
 from rlm.core.lm_handler import LMHandler
 from rlm.core.types import ModelUsageSummary, UsageSummary, RLMChatCompletion
 from rlm.environments.local_repl import LocalREPL
@@ -103,6 +105,53 @@ class CodexHandler(LMHandler):
         return UsageSummary(merged)
 
 
+class CodexREPL(LocalREPL):
+    """Keep failed transports distinct from successful model response text."""
+    def __init__(self, *args, lm_timeout, **kwargs):
+        self.lm_timeout = lm_timeout
+        super().__init__(*args, **kwargs)
+
+    def _responses(self, responses):
+        errors = []
+        for index, response in enumerate(responses):
+            if response.success:
+                self._pending_llm_calls.append(response.chat_completion)
+            else:
+                errors.append(f'sub-call {index}: {response.error}')
+        if errors:
+            raise RuntimeError('; '.join(errors))
+        return [response.chat_completion.response for response in responses]
+
+    def _llm_query(self, prompt, model=None):
+        response = send_lm_request(self.lm_handler_address,
+                                   LMRequest(prompt=prompt, model=model, depth=self.depth),
+                                   timeout=self.lm_timeout)
+        return self._responses([response])[0]
+
+    def _llm_query_batched(self, prompts, model=None):
+        responses = send_lm_request_batched(self.lm_handler_address, prompts, model=model,
+                                           depth=self.depth, timeout=self.lm_timeout)
+        return self._responses(responses)
+
+    def _rlm_query(self, prompt, model=None):
+        if self.subcall_fn is None:  # The configured depth limit is a plain LM base case.
+            return self._llm_query(prompt, model)
+        completion = self.subcall_fn(prompt, model)
+        self._pending_llm_calls.append(completion)
+        return completion.response
+
+    def _rlm_query_batched(self, prompts, model=None):
+        if self.subcall_fn is None:
+            return self._llm_query_batched(prompts, model)
+        def call(prompt):
+            try:
+                return LMResponse.success_response(self.subcall_fn(prompt, model))
+            except Exception as exc:
+                return LMResponse.error_response(f'{type(exc).__name__}: {exc}')
+        with ThreadPoolExecutor(max_workers=self.max_concurrent_subcalls) as pool:
+            return self._responses(list(pool.map(call, prompts)))
+
+
 class CodexRLM(RLM):
     def __init__(self, transport, *, root_model, sub_model, skill_modules=(), trace_enabled=False, parent_rlm_id=None, **kwargs):
         if any(not isinstance(model, str) or not model.strip() for model in (root_model, sub_model)):
@@ -165,12 +214,14 @@ class CodexRLM(RLM):
     def _spawn_completion_context(self, prompt):
         root = CodexLM(self.transport, self.root_model, "root" if self.depth == 0 else "sub")
         sub = CodexLM(self.transport, self.sub_model, "sub")
-        handler = CodexHandler(root, other_backend_client=sub)
+        handler = CodexHandler(root, other_backend_client=sub,
+                               batch_max_concurrent=self.max_concurrent_subcalls)
         handler.register_client(sub.model_name, sub)
         handler.start()
         env = None
         try:
-            env = LocalREPL(lm_handler_address=(handler.host, handler.port), context_payload=prompt,
+            env = CodexREPL(lm_handler_address=(handler.host, handler.port), context_payload=prompt,
+                lm_timeout=self.max_timeout,
                 depth=self.depth + 1, subcall_fn=self._subcall if self.max_depth > 1 else None,
                 custom_tools=self.custom_tools, custom_sub_tools=self.custom_sub_tools,
                 max_concurrent_subcalls=self.max_concurrent_subcalls)
