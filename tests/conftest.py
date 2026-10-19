@@ -1,5 +1,6 @@
 from pathlib import Path
 import subprocess
+import tempfile
 
 import pytest
 
@@ -9,10 +10,21 @@ from loop_research.benchmarks.widesearch.data import WideSearchData
 from loop_research.config import Config
 
 
+@pytest.fixture(scope='session')
+def offline_process_temp():
+    with tempfile.TemporaryDirectory(prefix='loop-unit-') as directory:
+        yield directory
+
+
 @pytest.fixture(autouse=True)
-def forbid_live_codex(request, monkeypatch):
+def forbid_live_codex(request, monkeypatch, offline_process_temp):
     if request.node.get_closest_marker('live'):
         return
+    # Fake transports still exercise real cross-process slot locks. Keep those
+    # locks shared within this test session, separate from live research. Spawned
+    # children inherit TMPDIR; the parent also needs tempfile's cached value reset.
+    monkeypatch.setenv('TMPDIR', offline_process_temp)
+    monkeypatch.setattr(tempfile, 'tempdir', offline_process_temp)
     popen = subprocess.Popen
     def offline_only(command, *args, **kwargs):
         words = command if isinstance(command, (list, tuple)) else str(command).split()
