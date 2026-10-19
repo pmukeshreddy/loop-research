@@ -1233,3 +1233,20 @@ tool lock held. Report comparisons require matching task content digests and
 resolved dates, as well as matching order, base, judge and execution settings.
 Independent review identified these recovery and provenance gaps; regression
 coverage now verifies their fixes. `git diff --check` is clean.
+
+## Research tracing (2026-10-18)
+
+The full offline suite passed with **446 passed, 1 deselected in 46.26 seconds**
+using `.venv/bin/python -m pytest -q`. The live-marked test was not selected.
+Trace regressions compare real isolated workers with injected transports: model
+prompts/options, tool results, final output, saved prompt and self-check are
+identical with tracing enabled/disabled. Additional checks cover live flushing,
+concurrent edge counts, cancellation, retries/usage, scored retrieval, recursive
+REPL attribution, refinement commits/rollbacks, failure summaries and CLI routing.
+Review caught and fixed batched-call cancellation semantics before any live run.
+Trace files are separate from trajectory/evidence and never enter refinement.
+
+The local package was installed editable for the requested debug run. macOS had
+marked its generated `.pth` file hidden; Python skipped that file. Clearing the
+hidden flag restored the source import, verified by `loop_research.__file__` and
+the CLI's `research --help` showing `--trace`.

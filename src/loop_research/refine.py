@@ -1,5 +1,6 @@
 """Background planning, precise host-side edits at model-turn boundaries."""
 from concurrent.futures import Future, ThreadPoolExecutor
+from contextvars import copy_context
 import copy
 import json
 import threading
@@ -60,6 +61,7 @@ class Refiner:
         self.focus = None
 
     def audit(self, status, **details):
+        self.ctx.trace.emit('Refine', status, focus=self.focus, **details)
         append_json(self.ctx.path / 'refinements.jsonl', {'created_at': stamp(), 'status': status,
                                                        'focus': self.focus, **details})
 
@@ -75,7 +77,7 @@ class Refiner:
                 self.pending = Future()
                 self.pending.set_result(job)
             else:
-                self.pending = self.pool.submit(self._plan, job)
+                self.pending = self.pool.submit(copy_context().run, self._plan, job)
             return True
 
     def run(self, focus=None, *, request_id=None):
@@ -100,10 +102,15 @@ class Refiner:
             job = {'status': 'planning', 'focus': focus, 'snapshot': snapshot, 'observed': observed,
                    'branch': self.harness.branch, 'proposal': None, 'request_id': request_id or uuid4().hex}
             self.ctx.save('refine_state.json', job)
-            self.pending = self.pool.submit(self._plan, job)
+            self.ctx.trace.emit('Refine', 'scheduled', focus=focus, request_id=job['request_id'])
+            self.pending = self.pool.submit(copy_context().run, self._plan, job)
             return {'scheduled': True}
 
     def _plan(self, job):
+        with self.ctx.trace.span('Refine', 'planning', focus=job['focus'], request_id=job['request_id']):
+            return self._plan_job(job)
+
+    def _plan_job(self, job):
         prompt = INSTRUCTIONS + json.dumps({'focus': job['focus'], 'entries': list(job['snapshot']['entries'].values()),
                                             **job['observed']}, ensure_ascii=False)
         schema = Proposal.model_json_schema()
@@ -117,6 +124,7 @@ class Refiner:
             for edit in proposal.edits:
                 if edit.id is not None:
                     self.harness._key(edit.kind, edit.id)
+            self.ctx.trace.emit('Refine', 'proposal', summary=proposal.summary, edits=[edit.model_dump() for edit in proposal.edits])
             job.update(status='planned', proposal=proposal.model_dump(),
                        operations=['refine_' + uuid4().hex for _ in proposal.edits])
             self.ctx.save('refine_state.json', job)
@@ -135,7 +143,10 @@ class Refiner:
             job = future.result()
             with self.harness.transaction():
                 try:
-                    return self._apply(job)
+                    with self.ctx.trace.span('Refine', 'apply', focus=job['focus']) as details:
+                        result = self._apply(job)
+                        details['commits'] = result
+                        return result
                 except Exception as exc:
                     self.audit('failed', reason='apply_failed', error=str(exc), proposal=job['proposal'])
                     raise
@@ -172,20 +183,23 @@ class Refiner:
                 continue
             kwargs = {'trigger': self.focus or 'after task', 'evidence': [self.ctx.run_id + '/' + self.ctx.task_id],
                       'operation_id': operation}
-            if edit.action == 'create':
-                self.harness.create(edit.kind, edit.title, edit.content, id=operation.removeprefix('refine_'),
-                                    module=edit.module, **kwargs)
-            elif edit.action == 'update':
-                previous = self.harness.get(edit.kind, edit.id)
-                self.harness.update(edit.kind, edit.id, edit.title, edit.content, module=edit.module,
-                                    expected_version=previous['version'] if previous else None, **kwargs)
-            else:
-                previous = self.harness.get(edit.kind, edit.id)
-                if not self.harness.delete(edit.kind, edit.id,
-                        expected_version=previous['version'] if previous else None, **kwargs):
-                    self.audit('skipped_delete', reason='entry_missing', kind=edit.kind, id=edit.id)
-                    continue
+            with self.ctx.trace.span('Harness', 'refine_edit', action=edit.action, kind=edit.kind, id=edit.id):
+                if edit.action == 'create':
+                    self.harness.create(edit.kind, edit.title, edit.content, id=operation.removeprefix('refine_'),
+                                        module=edit.module, **kwargs)
+                elif edit.action == 'update':
+                    previous = self.harness.get(edit.kind, edit.id)
+                    self.harness.update(edit.kind, edit.id, edit.title, edit.content, module=edit.module,
+                                        expected_version=previous['version'] if previous else None, **kwargs)
+                else:
+                    previous = self.harness.get(edit.kind, edit.id)
+                    if not self.harness.delete(edit.kind, edit.id,
+                            expected_version=previous['version'] if previous else None, **kwargs):
+                        self.audit('skipped_delete', reason='entry_missing', kind=edit.kind, id=edit.id)
+                        continue
             commits.append(self.harness.head)
+            self.ctx.trace.emit('Refine', 'edit_applied', commit=self.harness.head,
+                                edit=edit.model_dump(), operation_id=operation)
         self.audit('applied', summary=proposal.summary, commits=commits)
         job['status'] = 'applied'
         self.ctx.save('refine_state.json', job)
@@ -194,7 +208,10 @@ class Refiner:
     def rollback(self, id, *, operation_id=None):
         if not self.enabled:
             raise ValueError('Harness writes disabled for no-learning comparison')
-        result = self.harness.rollback(id, operation_id=operation_id)
+        with self.ctx.trace.span('Refine', 'rollback', id=id, operation_id=operation_id) as details:
+            result = self.harness.rollback(id, operation_id=operation_id)
+            if self.ctx.trace.enabled:
+                details.update(commit=self.harness.head, result=result)
         if result is False:
             self.audit('skipped_delete', reason='entry_missing', rollback=id)
         return result

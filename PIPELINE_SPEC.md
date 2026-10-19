@@ -86,7 +86,7 @@ Codex runs with ChatGPT authentication forced, provider-key environment variable
 - `init`: create directories and initialize the separate harness repository; preserve existing configuration and verification findings.
 - `prepare-data`: acquire and verify pinned benchmark data and evaluator sources.
 - `verify`: offline dependency, authentication, source integrity, browser readiness and OS-isolation checks.
-- `research "<question>" --columns <name> ... --keys <name> ... --language <language>`: require explicit unique columns, unique keys drawn from those columns, and a nonempty answer language; return a cited table and refine from this run.
+- `research "<question>" --columns <name> ... --keys <name> ... --language <language> [--trace]`: require explicit unique columns, unique keys drawn from those columns, and a nonempty answer language; return a cited table and refine from this run. Optional tracing writes live, flushed component events to `runs/<run_id>/trace.jsonl` and `trace.log`, then prints/saves `trace_summary.md` with inclusive timings, call counts, connection edges, final citations, self-check issues, and refinement edits. Trace observations never enter model prompts or refinement inputs.
 - `stream --benchmark widesearch|wandr [--base SHA]`: fixed seeded task order; each task runs research, then report-only grading, then self-check, then refinement before the next task.
 - `stream --benchmark ... --no-learning --base SHA`: require the intended explicit starting harness commit, with refinement and agent CRUD writes disabled, for comparison only.
 - `stream --benchmark ... --resume RUN_ID`: continue the explicit archived stream, preserving its configuration, order, mode, base and lineage; never rerun completed tasks or completed phases.

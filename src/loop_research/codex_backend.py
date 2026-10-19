@@ -148,6 +148,8 @@ class CodexBackend:
                         on_attempt({**attempt_event, "status": "dispatched", "error": None})
                     response, stdout, stderr, code, usage, terminal = "", "", "", None, None, []
                     web_actions = []
+                    trace_component = 'Codex backend (' + purpose + ')'
+                    self.ctx.trace.emit(trace_component, 'exec.start', parent=self.ctx.trace.current.get(), **record)
                     try:
                         proc = self.runner(cmd, input=full, text=True, capture_output=True,
                                            cwd=cwd, env=env, timeout=timeout)
@@ -162,6 +164,12 @@ class CodexBackend:
                             if isinstance(partial_stderr, bytes):
                                 partial_stderr = partial_stderr.decode(errors='replace')
                             stderr += '\n' + partial_stderr
+                    except BaseException as exc:
+                        self.ctx.trace.emit(trace_component, 'exec.end', duration_s=time.monotonic() - started,
+                            call_id=record['call_id'], purpose=purpose, model=model, attempt=attempt,
+                            exit_code=code, usage=usage, web_action_count=0, retries=attempt,
+                            error=f'{type(exc).__name__}: {exc}')
+                        raise
                     for line in stdout.splitlines():
                         try:
                             event = json.loads(line)
@@ -190,6 +198,9 @@ class CodexBackend:
                         (self.ctx.path / 'codex_stderr.txt').write_text(stderr)
                         self.ctx.save('baseline_response.json', {'response': response, 'error': record['error']})
                     append_json(self.ctx.path / "codex_calls.jsonl", record)
+                    self.ctx.trace.emit(trace_component, "exec.end", duration_s=elapsed,
+                        **{k: v for k, v in record.items() if k not in {"duration_s", "timestamp", "prompt", "response"}},
+                        web_action_count=len(web_actions), retries=attempt)
                     self.local.usage = usage
                     self.local.web_actions = web_actions
                     if on_attempt is not None:
@@ -204,6 +215,8 @@ class CodexBackend:
                 delay = min(self.config.codex.retry_delay_cap_s, 2 ** attempt + self.jitter())
                 if self.budget:
                     delay = min(delay, self.budget.remaining())
+                self.ctx.trace.emit("Codex backend (" + purpose + ")", "retry",
+                                    attempt=attempt, next_attempt=attempt + 1, delay_s=delay, error=str(last))
                 if self.ctx.cancellation is None or self.sleep is not time.sleep:
                     self.sleep(delay)
                 else:

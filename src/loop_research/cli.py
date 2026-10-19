@@ -159,7 +159,8 @@ def research(ctx: typer.Context,
              question: Annotated[str, typer.Argument(help="Research question to answer with a cited table.")],
              columns: Annotated[list[str], typer.Option("--columns", help="Output column; repeat for multiple columns.")],
              keys: Annotated[list[str], typer.Option("--keys", help="Unique key column; repeat for composite keys.")],
-             language: Annotated[str, typer.Option("--language", help="Language for the research answer.")]):
+             language: Annotated[str, typer.Option("--language", help="Language for the research answer.")],
+             trace: Annotated[bool, typer.Option("--trace", help="Write live component traces and a connection summary.")] = False):
     """Research one question and print its cited table and archive ID."""
     if not question.strip():
         raise typer.BadParameter("Question must not be empty", param_hint="QUESTION")
@@ -170,7 +171,8 @@ def research(ctx: typer.Context,
         raise typer.BadParameter(str(exc)) from exc
     from .stream import research as research_question
     from .report import render_table
-    result = research_question(*settings(ctx), question, columns, keys, language)
+    options = {"trace": True} if trace else {}
+    result = research_question(*settings(ctx), question, columns, keys, language, **options)
     typer.echo(render_table(result["output"]))
     check = result.get("self_check")
     if check is not None:

@@ -126,7 +126,7 @@ class Harness:
         return sorted((e for e in self.snapshot()['entries'].values() if kind is None or e['kind'] == kind),
                       key=lambda e: (e['kind'], e['title'], e['id']))
 
-    def search(self, query, kind=None, limit=10):
+    def search(self, query, kind=None, limit=10, *, on_retrieved=None):
         if not isinstance(query, str) or type(limit) is not int or limit < 1:
             raise ValueError('Search requires text and a positive limit')
         entries = self.list(kind)
@@ -142,7 +142,10 @@ class Harness:
                 if tf:
                     scores[i] += idf * tf * 2.5 / (tf + 1.5 * (.25 + .75 * lengths[i] / average))
         ranked = sorted(zip(scores, entries), key=lambda pair: (-pair[0], pair[1]['id']))
-        return [e for score, e in ranked if score > 0][:limit]
+        selected = [(score, e) for score, e in ranked if score > 0][:limit]
+        if on_retrieved is not None:
+            on_retrieved([{'id': e['id'], 'title': e['title'], 'score': score} for score, e in selected])
+        return [e for score, e in selected]
 
     def _edit(self, action, kind, id, title=None, content=None, *, trigger='agent', evidence=(), module=_UNSET,
               expected_version=None, rollback_of=None, restore=None, operation_id=None):

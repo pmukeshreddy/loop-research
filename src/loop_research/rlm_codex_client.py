@@ -81,13 +81,37 @@ class CodexHandler(LMHandler):
 
 
 class CodexRLM(RLM):
-    def __init__(self, transport, *, root_model, sub_model, skill_modules=(), **kwargs):
+    def __init__(self, transport, *, root_model, sub_model, skill_modules=(), trace_enabled=False, **kwargs):
         if any(not isinstance(model, str) or not model.strip() for model in (root_model, sub_model)):
             raise ValueError("Explicit root and sub model names are required")
         self.transport, self.root_model, self.sub_model = transport, root_model, sub_model
         self.skill_modules = skill_modules
+        self.trace_enabled = trace_enabled
+        self.trace_iteration = 0
         super().__init__(backend="codex", backend_kwargs={"model_name": root_model},
                          environment="local", **kwargs)
+
+    @contextmanager
+    def _observe(self, component, event, **details):
+        if not self.trace_enabled:
+            yield details
+            return
+        parent = ('RLM sub' if self.depth else 'RLM root') if component == 'REPL' else ('REPL' if self.depth else 'Worker')
+        self.transport.call('trace', component, event + '.start', parent=parent, depth=self.depth, **details)
+        start = time.monotonic()
+        try:
+            yield details
+        except BaseException as exc:
+            details['error'] = f'{type(exc).__name__}: {exc}'
+            raise
+        finally:
+            self.transport.call('trace', component, event + '.end', duration_s=time.monotonic() - start,
+                                depth=self.depth, **details)
+
+    def _completion_turn(self, prompt, lm_handler, environment):
+        self.trace_iteration += 1
+        with self._observe('RLM iteration', 'iteration', iteration=self.trace_iteration):
+            return super()._completion_turn(prompt, lm_handler, environment)
 
     @contextmanager
     def _spawn_completion_context(self, prompt):
@@ -102,6 +126,14 @@ class CodexRLM(RLM):
                 depth=self.depth + 1, subcall_fn=self._subcall if self.max_depth > 1 else None,
                 custom_tools=self.custom_tools, custom_sub_tools=self.custom_sub_tools,
                 max_concurrent_subcalls=self.max_concurrent_subcalls)
+            if self.trace_enabled:
+                execute = env.execute_code
+                def observed_code(code):
+                    with self._observe('REPL', 'code', first_lines='\n'.join(code.splitlines()[:8])) as details:
+                        result = execute(code)
+                        details.update(stdout=result.stdout[:1000], error=result.stderr or None)
+                        return result
+                env.execute_code = observed_code
             env.globals['__builtins__'] = vars(builtins).copy()
             loaded = {}
             for entry in self.skill_modules:
@@ -138,5 +170,5 @@ class CodexRLM(RLM):
             depth=next_depth, max_depth=self.max_depth, max_iterations=self.max_iterations,
             max_timeout=self.max_timeout, custom_system_prompt=self.system_prompt,
             custom_tools=self.custom_sub_tools, custom_sub_tools=self.custom_sub_tools,
-            logger=self.logger, max_concurrent_subcalls=self.max_concurrent_subcalls)
+            logger=self.logger, max_concurrent_subcalls=self.max_concurrent_subcalls, trace_enabled=self.trace_enabled)
         return child.completion(prompt)

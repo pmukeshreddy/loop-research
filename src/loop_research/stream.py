@@ -5,6 +5,7 @@ import fcntl
 import json
 from pathlib import Path
 import re
+import shlex
 from uuid import uuid4
 
 from .agent import AgentResult, run_task
@@ -15,6 +16,7 @@ from .harness import Harness
 from .isolation import verify_isolation
 from .research import ResearchData, validate_research_spec
 from .session import Session
+from .trace import Trace
 
 
 def load_benchmark(name, root, config):
@@ -92,20 +94,45 @@ def _task(task, benchmark, ctx, harness, learning, *, grade):
         session.refiner.close()
 
 
-def research(root, config, question, columns, keys, language):
+def research(root, config, question, columns, keys, language, *, trace=False):
     if not isinstance(question, str) or not question.strip():
         raise ValueError('A nonempty research question is required')
     validate_research_spec(columns, keys, language)
     root = Path(root).resolve()
-    verify_isolation()
-    harness = Harness(root / 'harness')
     task = Task(task_id=digest({'question': question, 'columns': columns, 'keys': keys, 'language': language})[:24],
                 benchmark='research', question=question, spec={'columns': columns, 'keys': keys}, language=language)
     run_id = 'research-' + uuid4().hex
     ctx = RunContext(root, run_id, config, task.task_id)
-    with workspace(harness):
-        result = _task(task, ResearchData(), ctx, harness, True, grade=False)
-    return {'run_id': run_id, **result}
+    if trace:
+        ctx.trace = Trace(ctx.run_dir)
+        print('Watch live: tail -f ' + shlex.quote(str(ctx.run_dir / 'trace.log')), flush=True)
+    result, error = None, None
+    try:
+        with ctx.trace.span('Config', 'resolve', models=config.models.model_dump(),
+                            limits={name: getattr(config, name).model_dump() for name in
+                                    ('codex', 'rlm', 'agent', 'harness', 'refine', 'bridge', 'verify')}):
+            pass
+        with ctx.trace.span('Isolation', 'check') as details:
+            details['result'] = verify_isolation()
+        harness = Harness(root / 'harness')
+        with workspace(harness), ctx.trace.span('Research', 'run') as details:
+            if trace:
+                ctx.trace.emit('Harness', 'head_before', sha=harness.head)
+            try:
+                result = _task(task, ResearchData(), ctx, harness, True, grade=False)
+            finally:
+                if trace:
+                    ctx.trace.emit('Harness', 'head_after', sha=harness.head)
+        return {'run_id': run_id, **result}
+    except BaseException as exc:
+        error = f'{type(exc).__name__}: {exc}'
+        raise
+    finally:
+        if trace:
+            output = result['output'] if result else ctx.load('output.json', {'rows': []})
+            report = result['self_check'] if result else ctx.load('self_check.json', {})
+            summary = ctx.trace.summary(output, report, error=error or (result or {}).get('error'))
+            print(summary, flush=True)
 
 
 def _base(harness, tasks, base=None):

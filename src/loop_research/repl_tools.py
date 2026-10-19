@@ -1,8 +1,10 @@
+from contextvars import copy_context
 import json
 import threading
 from concurrent.futures import CancelledError, Future, ThreadPoolExecutor
 from urllib.parse import urlsplit, urlunsplit
 from .archive import read_json, write_json
+from .trace import observed
 
 
 def normalized_url(url):
@@ -95,6 +97,8 @@ class ResearchTools:
         with self.lock:
             self.ctx.check_cancelled()
             pending = self.pending.get(key)
+            self.ctx.trace.emit('tools.' + operation, 'cache', target=target,
+                                cache='hit' if key in self.cache else 'shared' if pending is not None else 'miss')
             request = None
             if operation == 'fetch':
                 source = 'cache' if key in self.cache else 'shared' if pending is not None else 'backend'
@@ -119,6 +123,10 @@ class ResearchTools:
                 self.persist()
         try:
             result, urls = (pending.result(), []) if pending is not None else call()
+            if pending is None and self.ctx.trace.enabled:
+                self.ctx.trace.emit('tools.' + operation, 'web', target=target,
+                    urls_opened=[a['url'] for a in self.backend.last_web_actions
+                                 if a.get('type') == 'open_page' and a.get('url')])
             with self.lock:
                 self.ctx.check_cancelled()
                 failed = operation == 'fetch' and result == 'FETCH_FAILED'
@@ -158,6 +166,7 @@ class ResearchTools:
                     del self.pending[key]
                     self.pending_fetches.pop(key, None)
 
+    @observed('tools.search')
     def search(self, query: str, k: int = 8) -> list[dict]:
         """Search the live web; return title, URL and snippet for up to k real hits."""
         if not isinstance(query, str) or not query.strip() or not 1 <= k <= 50:
@@ -203,11 +212,14 @@ class ResearchTools:
 
         return self._cached(key, call)
 
+    @observed('tools.search_many')
     def search_many(self, queries: list[str], k: int = 8) -> list[list[dict]]:
         """Search concurrently and return one hit list per query in input order."""
+        context = copy_context()
         with ThreadPoolExecutor(max_workers=self.ctx.config.codex.max_concurrent) as pool:
-            return list(pool.map(lambda query: self.search(query, k), queries))
+            return list(pool.map(lambda query: context.copy().run(self.search, query, k), queries))
 
+    @observed('tools.fetch')
     def fetch(self, url: str, focus: str = "") -> str:
         """Return model-rendered page text (not raw HTML), or FETCH_FAILED."""
         with self.lock:
@@ -249,11 +261,14 @@ class ResearchTools:
 
         return self._cached(key, call)
 
+    @observed('tools.fetch_many')
     def fetch_many(self, urls: list[str], focus: str = "") -> list[str]:
         """Fetch concurrently and return one page text or FETCH_FAILED per URL in input order."""
+        context = copy_context()
         with ThreadPoolExecutor(max_workers=self.ctx.config.codex.max_concurrent) as pool:
-            return list(pool.map(lambda url: self.fetch(url, focus), urls))
+            return list(pool.map(lambda url: context.copy().run(self.fetch, url, focus), urls))
 
+    @observed('tools.check_constraint')
     def check_constraint(self, row, constraint, verdict, url, quote):
         """Record a row path's constraint verdict and its fetched supporting quote."""
         if not all(isinstance(v, str) and v for v in (row, constraint, url, quote)) or type(verdict) is not bool:
@@ -268,6 +283,7 @@ class ResearchTools:
             self.persist()
         return True
 
+    @observed('tools.record_discovery')
     def record_discovery(self, query, entities):
         """Record entity ids found by a search, including [] when discovery stalls."""
         if not isinstance(query, str) or not isinstance(entities, list) or not all(isinstance(e, str) and e.strip() for e in entities):

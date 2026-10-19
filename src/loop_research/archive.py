@@ -11,6 +11,7 @@ import signal
 import subprocess
 import tempfile
 from .config import Config
+from .trace import Trace
 
 
 def stamp():
@@ -70,6 +71,8 @@ class RunContext:
     task_id: str | None = None
     cancellation: Future | None = field(default=None, repr=False, compare=False)
 
+    trace: Trace = field(default_factory=Trace, repr=False, compare=False)
+
     def __post_init__(self):
         self.root = self.root.resolve()
         for value in (self.run_id, self.task_id):
@@ -85,13 +88,13 @@ class RunContext:
         return self.run_dir / self.task_id if self.task_id else self.run_dir
 
     def task(self, task_id):
-        return RunContext(self.root, self.run_id, self.config, task_id, self.cancellation)
+        return RunContext(self.root, self.run_id, self.config, task_id, self.cancellation, self.trace)
 
     def check_cancelled(self):
         if self.cancellation is not None and self.cancellation.cancelled():
             raise CancelledError("Run cancelled")
 
-    def run_process(self, command, *, input=None, capture_output=False, timeout=None, **kwargs):
+    def run_process(self, command, *, input=None, capture_output=False, timeout=None, trace_component=None, **kwargs):
         """Run a child, terminating it and its owned process group on cancellation."""
         self.check_cancelled()
         if input is not None:
@@ -100,6 +103,8 @@ class RunContext:
             kwargs.update(stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         session = kwargs.pop("start_new_session", self.cancellation is not None)
         process = subprocess.Popen(command, start_new_session=session, **kwargs)
+        if trace_component:
+            self.trace.emit(trace_component, "spawned", pid=process.pid)
         finished = False
 
         def stop():
@@ -161,4 +166,4 @@ class GradeContext(RunContext):
         return self.root / 'reports' / self.run_id / 'grading'
 
     def task(self, task_id):
-        return GradeContext(self.root, self.run_id, self.config, task_id, self.cancellation)
+        return GradeContext(self.root, self.run_id, self.config, task_id, self.cancellation, self.trace)

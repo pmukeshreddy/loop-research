@@ -1,4 +1,5 @@
 """Trusted research services; no graders or answer stores are imported here."""
+from collections import Counter
 import json
 import threading
 from concurrent.futures import Future
@@ -63,13 +64,23 @@ class Session:
             raise RuntimeError(self.fatal) from exc
 
     def retrieve(self):
-        entries = self.harness.search(self.task.question + ' ' + json.dumps(self.task.spec, ensure_ascii=False),
-                                      limit=self.ctx.config.harness.retrieval_limit)
-        self.harness.record_usage(entries, self.run_id)
-        return entries
+        query = self.task.question + ' ' + json.dumps(self.task.spec, ensure_ascii=False)
+        trace = self.ctx.trace
+        with trace.span('Harness', 'retrieve', query=query) as details:
+            if trace.enabled:
+                details['head_before'] = self.harness.head
+            options = {'on_retrieved': lambda entries: details.update(entries=entries)} if trace.enabled else {}
+            entries = self.harness.search(query, limit=self.ctx.config.harness.retrieval_limit, **options)
+            self.harness.record_usage(entries, self.run_id)
+            if trace.enabled:
+                details['head_after'] = self.harness.head
+            return entries
 
     def self_check(self):
-        report = check(self.task, self.output, self.tools.snapshot(), self.status)
+        with self.ctx.trace.span('Output', 'self_check') as details:
+            report = check(self.task, self.output, self.tools.snapshot(), self.status)
+            details.update(ok=report['ok'], issues_by_type=dict(Counter(i['type'] for i in report['issues'])),
+                           issues=report['issues'])
         self.ctx.save('self_check.json', report)
         return report
 
@@ -85,16 +96,18 @@ class Session:
             model = self.ctx.config.models.root if purpose == 'root' else self.ctx.config.models.sub
             if 'model' in kwargs and kwargs['model'] != model:
                 raise ValueError('Worker must use the configured model for its role')
-            prompt = args[0]
-            if purpose == 'root':
-                with self.lifecycle, self.turn_lock:
-                    self.research_ctx.check_cancelled()
-                    self.apply_refinement()
-                    self.turns += 1
-                    if self.turns > self.ctx.config.rlm.max_iterations:
-                        self.status['iteration_limit'] = True
-                    prompt += '\nCURRENT RELEVANT HARNESS ENTRIES\n' + json.dumps(self.retrieve(), ensure_ascii=False)
-            text = self.backend.complete(prompt, purpose=purpose, model=model)
+            with self.ctx.trace.span('RLM ' + purpose, 'model', model=model) as details:
+                prompt = args[0]
+                if purpose == 'root':
+                    with self.lifecycle, self.turn_lock:
+                        self.research_ctx.check_cancelled()
+                        self.apply_refinement()
+                        self.turns += 1
+                        if self.turns > self.ctx.config.rlm.max_iterations:
+                            self.status['iteration_limit'] = True
+                        prompt += '\nCURRENT RELEVANT HARNESS ENTRIES\n' + json.dumps(self.retrieve(), ensure_ascii=False)
+                text = self.backend.complete(prompt, purpose=purpose, model=model)
+                details.update(response_chars=len(text), usage=self.backend.last_usage)
             with self.lifecycle:
                 self.research_ctx.check_cancelled()
                 append_json(self.ctx.path / 'trajectory.jsonl', {'type': 'model', 'purpose': purpose,
@@ -127,7 +140,12 @@ class Session:
                     raise ValueError('Unsupported harness edit fields')
                 kwargs['evidence'] = [self.run_id]
                 kwargs.setdefault('trigger', 'agent mid-task edit')
-            result = getattr(self.harness, name)(*args, **kwargs)
+            with self.ctx.trace.span('Harness', name, args=args, kwargs=kwargs) as details:
+                if self.ctx.trace.enabled:
+                    details['head_before'] = self.harness.head
+                result = getattr(self.harness, name)(*args, **kwargs)
+                if self.ctx.trace.enabled:
+                    details.update(head_after=self.harness.head, result=result)
             if name == 'delete' and result is False:
                 self.refiner.audit('skipped_delete', reason='entry_missing', args=args, kwargs=kwargs)
             if name in {'read', 'get', 'list', 'search'} and result:
@@ -144,6 +162,11 @@ class Session:
                 self.rollbacks.append({'id': args[0], 'operation_id': 'refine_' + uuid4().hex})
                 self.checkpoint()
             return {'scheduled': True}
+        if method == 'trace':
+            if len(args) != 2 or args[0] not in {'RLM iteration', 'REPL'}:
+                raise ValueError('Invalid worker trace event')
+            self.ctx.trace.emit(*args, **kwargs)
+            return True
         if method == 'iteration':
             if len(args) != 1 or kwargs:
                 raise ValueError('Expected one trajectory event')

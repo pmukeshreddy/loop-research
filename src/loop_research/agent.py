@@ -1,5 +1,6 @@
 """Research-only worker and output validation. No graders or answer stores."""
 from datetime import date
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -25,15 +26,19 @@ class AgentResult(BaseModel):
     repaired: bool = False
 
 
-def parse_output(text, contract, backend):
+def parse_output(text, contract, backend, *, trace=None):
     errors = []
+    from .trace import Trace
+    trace = trace or Trace()
     for attempt in range(2):
         try:
-            output = contract.model.model_validate_json(text).model_dump(mode="json", by_alias=True)
+            with trace.span("Output", "parse", attempt=attempt):
+                output = contract.model.model_validate_json(text).model_dump(mode="json", by_alias=True)
             return output, errors, bool(attempt)
         except (ValueError, TypeError) as exc:
             errors.append(str(exc))
         if attempt == 0:
+            trace.emit("Output", "repair", attempt=attempt + 1, reason=errors[-1])
             text = backend.complete("Reformat only the existing content to this JSON contract. "
                 "Do not research, add facts, rows, sources, or records. Remove malformed entries if needed.\n"
                 + contract.prompt + "\nJSON schema:\n" + json.dumps(contract.schema, ensure_ascii=False)
@@ -129,19 +134,23 @@ def run_task(task, benchmark, session):
     entries = session.retrieve()
     prompt, asof, source = make_prompt(task, contract, entries, as_of=ctx.config.agent.as_of,
                                       date_archive=ctx.path / "as_of.json")
-    (ctx.path / "prompt.txt").write_text(prompt)
+    with ctx.trace.span("Prompt", "save", size_chars=len(prompt), size_bytes=len(prompt.encode()),
+                        sha256=hashlib.sha256(prompt.encode()).hexdigest(), path=str(ctx.path / "prompt.txt")):
+        (ctx.path / "prompt.txt").write_text(prompt)
     ctx.save("task.json", task.model_dump(mode="json"))
     with tempfile.TemporaryDirectory(prefix="lr-", dir="/tmp") as directory:
         work = Path(directory).resolve()
         request = {"config": ctx.config.model_dump(), "prompt": prompt, "entries": entries,
                    "socket": str(work / "host.sock"), "timeout": budget.remaining(),
-                   "result_path": str(work / "result.json")}
+                   "result_path": str(work / "result.json"), "trace": ctx.trace.enabled}
         write_json(work / "request.json", request)
-        with Server(work / "host.sock", session.dispatch, socket_timeout_s=ctx.config.bridge.socket_timeout_s), (ctx.path / "worker.log").open("a") as log:
+        with Server(work / "host.sock", session.dispatch, socket_timeout_s=ctx.config.bridge.socket_timeout_s, trace=ctx.trace), (ctx.path / "worker.log").open("a") as log:
             try:
-                process = ctx.run_process(isolated_command(work, [sys.executable, "-m", "loop_research.agent", str(work / "request.json")]),
-                    cwd=work, env=worker_env(work), stdout=log, stderr=log,
-                    start_new_session=True, timeout=budget.remaining())
+                with ctx.trace.span("Worker", "run") as details:
+                    process = ctx.run_process(isolated_command(work, [sys.executable, "-m", "loop_research.agent", str(work / "request.json")]),
+                        cwd=work, env=worker_env(work), stdout=log, stderr=log, trace_component="Worker",
+                        start_new_session=True, timeout=budget.remaining())
+                    details["exit_code"] = process.returncode
             except subprocess.TimeoutExpired as exc:
                 session.status['timeout'] = True
                 raise TimeoutError("Task hard deadline exceeded") from exc
@@ -155,14 +164,17 @@ def run_task(task, benchmark, session):
         result = read_json(work / "result.json")
         try:
             budget.remaining()
-            output, errors, repaired = parse_output(result["text"], contract, session.repair_backend)
+            output, errors, repaired = parse_output(result["text"], contract, session.repair_backend, trace=ctx.trace)
             budget.remaining()
         except BudgetExceeded:
             session.status['call_limit' if budget.count >= budget.limit else 'timeout'] = True
             raise
     session.output = output
+    with ctx.trace.span("Output", "citation_check") as details:
+        uncited = citation_check(output, session.tools.evidence["fetched"])
+        details.update(uncited=uncited, success=not uncited, repaired=repaired, parse_errors=errors)
     result = AgentResult(output=output, errors=errors, repaired=repaired,
-        uncited=citation_check(output, session.tools.evidence['fetched']), as_of_date=asof, date_source=source,
+        uncited=uncited, as_of_date=asof, date_source=source,
         status=session.status)
     ctx.save("output.json", output)
     ctx.save("submission.json", benchmark.to_submission(task, output))
@@ -189,7 +201,8 @@ def worker(request_path):
     rlm = CodexRLM(client, root_model=config.models.root, sub_model=config.models.sub,
         max_depth=config.rlm.max_depth, max_iterations=config.rlm.max_iterations,
         max_timeout=request['timeout'], max_concurrent_subcalls=config.codex.max_concurrent,
-        custom_tools=tools, skill_modules=request['entries'], logger=TrajectoryLogger())
+        custom_tools=tools, skill_modules=request['entries'], logger=TrajectoryLogger(),
+        trace_enabled=request.get('trace', False))
     result = rlm.completion(request['prompt'], root_prompt=request['prompt'])
     write_json(Path(request['result_path']), {'text': result.response})
 

@@ -229,3 +229,15 @@ def test_report_works_without_model_dataset_or_configuration(tmp_path):
     result = CliRunner().invoke(cli_module().app, ['--root', str(tmp_path), 'report'])
     assert result.exit_code == 0, f'{result.output}\n{result.exception}'
     assert (tmp_path / 'reports/summary.md').is_file()
+
+
+def test_research_forwards_trace_option(tmp_path, config, output, stream_module):
+    save_config(tmp_path, config)
+    def research(*args, trace=False):
+        assert trace is True
+        return {'run_id': 'traced-fixture', 'output': output}
+    stream_module.research = research
+    result = CliRunner().invoke(cli_module().app, ['--root', str(tmp_path), 'research', 'Fixture',
+        '--columns', 'entity', '--columns', 'value', '--keys', 'entity', '--language', 'en', '--trace'])
+    assert result.exit_code == 0, result.exception
+    assert 'Archive: traced-fixture' in result.stdout

@@ -3,10 +3,12 @@ import json
 import socket
 import socketserver
 import threading
+from .trace import Trace
 
 
 class Server:
-    def __init__(self, path, dispatch, *, socket_timeout_s):
+    def __init__(self, path, dispatch, *, socket_timeout_s, trace=None):
+        trace = trace or Trace()
         active, lock = set(), threading.Lock()
         class Handler(socketserver.StreamRequestHandler):
             def handle(self):
@@ -15,7 +17,12 @@ class Server:
                 try:
                     self.request.settimeout(socket_timeout_s)
                     request = json.loads(self.rfile.readline())
-                    result = {'result': dispatch(request['method'], request.get('args', []), request.get('kwargs', {}))}
+                    method = request['method']
+                    caller = ('REPL' if method.startswith(('tools.', 'harness.', 'refine.')) else
+                              ('REPL' if request.get('kwargs', {}).get('purpose') == 'sub' else 'RLM iteration')
+                              if method == 'complete' else 'Worker')
+                    with trace.span('Bridge', 'rpc', parent=caller, method=method):
+                        result = {'result': dispatch(method, request.get('args', []), request.get('kwargs', {}))}
                 except Exception as exc:
                     result = {'error': f'{type(exc).__name__}: {exc}'}
                 try:

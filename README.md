@@ -45,6 +45,18 @@ Research one question with explicit columns, unique key columns, and answer lang
 
 The command prints a Markdown table with per-cell source links, the self-check result, and an archive ID. Columns and keys must be nonempty and unique, and every key must name a selected column. No table schema or language is inferred. These commands make live subscription and web calls when you invoke them.
 
+Add `--trace` to watch all component boundaries live. Before isolation or model work starts,
+the command prints the exact `tail -f` command for `runs/<run_id>/trace.log`.
+The same events are flushed to `trace.jsonl`, including timing, RPC methods, cache
+outcomes, actual opened URLs, model usage, retrieval scores, REPL snippets, and
+refinement edits/commits. At completion (including failures), the command saves
+and prints `runs/<run_id>/trace_summary.md` with component call counts and inclusive
+times, the connection map, cited table, self-check issues, and refinement edits.
+Nested and concurrent durations overlap; they do not sum to wall time. Tracing
+adds no model/tool calls, changes no prompts or results, and stays out of the
+research trajectory and refinement observations. Trace-only RPCs carry worker
+iteration/REPL observations to the trusted host; the worker cannot write the logs.
+
 Run the full configured benchmark stream in deterministic order:
 
 ```sh
