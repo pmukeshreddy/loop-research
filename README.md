@@ -165,6 +165,10 @@ Learning runs describe when to request evidence-grounded mid-task refinement. Th
 must account for every presented issue/signal group and each additional candidate, with
 evidence references and a reason for accepting or declining it. The edit limit is a ceiling,
 and an empty edit list remains valid.
+Planner inputs use a reversible shared-text representation: repeated exact strings appear in
+a visible table, and each occurrence has a reference. No evidence field or string is shortened.
+Original observations, exact transmitted prompts/schemas, and logical/transmitted payload
+sizes and hashes remain archived. Evidence validation uses the original logical input.
 
 `report` reads archived stream files without model or dataset access. Every completed task must have a finite official score; report generation rejects completed rows with missing or nonfinite scores. Rolling means include every completed task in the last `stream.rolling_window` positions, including official empty-submission scores for failures, with the contributing count in the CSV. Interrupted streams show their count, active task, phase, pending count, and error. CSV, summary and curve labels identify all four model roles; archived judge labels must match the configured judge. Curves for different streams are descriptive; the comparison table enforces the matching conditions above. No benchmark scores are claimed in this documentation.
 

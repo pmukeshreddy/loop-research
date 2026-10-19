@@ -3,6 +3,7 @@ import json
 import threading
 
 from loop_research.harness import Harness
+from loop_research.shared_text import decode_shared_text
 from loop_research.refine import INSTRUCTIONS, Refiner
 from test_harness import commits
 
@@ -20,7 +21,7 @@ class Planner:
 def accounted_fixture(response, prompt):
     """Complete synthetic decisions for lifecycle tests; raw validation tests bypass this."""
     response = copy.deepcopy(response)
-    payload = json.loads(prompt.removeprefix(INSTRUCTIONS))
+    payload = decode_shared_text(json.loads(prompt.removeprefix(INSTRUCTIONS)))
     response['additional_candidates'] = []
     response['decisions'] = [
         {'candidate_id': candidate['id'], 'decision': 'declined',

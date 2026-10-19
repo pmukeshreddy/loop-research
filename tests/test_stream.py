@@ -134,7 +134,11 @@ def test_failed_research_receives_official_empty_grade_and_failure_selfcheck(tmp
     row = result['tasks'][0]
     assert row['score'] == 0.0 and row['status'] == 'failed' and 'fixture timeout' in row['error']
     assert offline.adapter.calls == [('fixture', {'rows': []})]
-    assert len(offline.plans) == 1 and '"type": "timeout"' in offline.plans[0]
+    from loop_research.refine import INSTRUCTIONS
+    from loop_research.shared_text import decode_shared_text
+    assert len(offline.plans) == 1
+    planner_input = decode_shared_text(json.loads(offline.plans[0].removeprefix(INSTRUCTIONS)))
+    assert any(issue['type'] == 'timeout' for issue in planner_input['self_check']['issues'])
     ctx = RunContext(tmp_path, result['run_id'], config, 'fixture')
     assert any(item['type'] == 'timeout' for item in ctx.load('self_check.json')['issues'])
     graded = GradeContext(tmp_path, result['run_id'], config, 'fixture').load('grade.json')

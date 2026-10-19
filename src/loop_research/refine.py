@@ -2,6 +2,7 @@
 from concurrent.futures import Future, ThreadPoolExecutor
 from contextvars import copy_context
 import copy
+import hashlib
 import json
 import threading
 from typing import Annotated, Literal
@@ -10,6 +11,7 @@ from uuid import uuid4
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 from .archive import append_json, digest, stamp
+from .shared_text import encode_shared_text
 
 
 class Edit(BaseModel):
@@ -170,6 +172,13 @@ No answer keys or grades are available. Preserve procedures and failure modes, n
 Skills may include a standalone Python module as source text; it will execute only in the isolated REPL.
 Use create/update/delete, the existing bare ids, and full title/content for create/update.
 For delete use null title/content/module. For create use null id. Return the requested JSON schema.
+The input is a lossless shared-text-v1 representation, not a summary. Its shared_texts array
+contains exact literal strings. In payload, {"$shared_text": N} means that complete string
+at zero-based index N. {"$literal_object": OBJECT} escapes an original object with a reserved
+marker shape: keep that object's keys and recursively decode its values. Decode references
+recursively; every original field and string occurrence is retained. Evidence pointers address
+the decoded logical payload, not this representation's wrapper or shared_texts table.
+Return ordinary strings in the proposal, never shared-text markers.
 '''
 
 
@@ -210,7 +219,8 @@ class Refiner:
                 if 'planner_prompt' in job:
                     # A new model attempt must not overwrite the prior input or rejected response.
                     job = {key: value for key, value in job.items()
-                           if key not in {'planner_prompt', 'planner_schema', 'response_text', 'error', 'operations'}}
+                           if key not in {'planner_prompt', 'planner_schema', 'planner_representation',
+                                          'response_text', 'error', 'operations'}}
                     job.update(job_id=uuid4().hex, status='planning')
                     self._save_job(job)
                 self.pending = self.pool.submit(copy_context().run, self._plan, job)
@@ -254,10 +264,19 @@ class Refiner:
         job.update(accounting_version=1, candidate_inventory=candidate_inventory(job['observed']))
         payload = planning_input(job)
         payload['max_edits'] = self.ctx.config.refine.max_edits
-        prompt = INSTRUCTIONS + json.dumps(payload, ensure_ascii=False)
+        logical_text = json.dumps(payload, ensure_ascii=False)
+        wire = encode_shared_text(payload)
+        wire_text = json.dumps(wire, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
+        prompt = INSTRUCTIONS + wire_text
         schema = Proposal.model_json_schema()
         schema['properties']['edits']['maxItems'] = self.ctx.config.refine.max_edits
-        job.update(planner_prompt=prompt, planner_schema=schema)
+        job.update(planner_prompt=prompt, planner_schema=schema, planner_representation={
+            'format': wire['format'],
+            'logical_payload_chars': len(logical_text),
+            'logical_payload_sha256': hashlib.sha256(logical_text.encode()).hexdigest(),
+            'wire_payload_chars': len(wire_text),
+            'wire_payload_sha256': hashlib.sha256(wire_text.encode()).hexdigest(),
+        })
         self._save_job(job)
         text = None
         try:

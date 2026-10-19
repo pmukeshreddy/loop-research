@@ -6,6 +6,7 @@ import pytest
 
 from loop_research.archive import read_jsonl
 from loop_research.harness import Harness
+from loop_research.shared_text import decode_shared_text
 from loop_research.refine import INSTRUCTIONS, Refiner, candidate_inventory
 from loop_research.trace import Trace
 from test_refine import Planner, proposal
@@ -18,7 +19,7 @@ class RawPlanner:
         self.schemas = []
 
     def complete(self, prompt, **kwargs):
-        self.prompts.append(json.loads(prompt.removeprefix(INSTRUCTIONS)))
+        self.prompts.append(decode_shared_text(json.loads(prompt.removeprefix(INSTRUCTIONS))))
         self.schemas.append(kwargs['schema'])
         return json.dumps(self.response)
 
@@ -329,7 +330,7 @@ def test_each_refinement_request_keeps_its_input_inventory_and_declines(ctx):
     for index, request_id in enumerate(('mid-task', 'after-task')):
         job = by_request[request_id]
         assert job['candidate_inventory'] == backend.prompts[index]['candidate_inventory']
-        assert json.loads(job['planner_prompt'].removeprefix(INSTRUCTIONS)) == backend.prompts[index]
+        assert decode_shared_text(json.loads(job['planner_prompt'].removeprefix(INSTRUCTIONS))) == backend.prompts[index]
         assert job['planner_schema'] == backend.schemas[index]
         assert job['proposal']['decisions'] == accounted_response()['decisions']
         trace = [row for row in read_jsonl(ctx.run_dir / 'trace.jsonl') if row['event'] == 'proposal']

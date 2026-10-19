@@ -55,6 +55,12 @@ full REPL locals snapshots are omitted from the planner input. Sub-model inputs,
 tool results, code, stdout, errors and final answers remain. The full trajectory
 archive is unchanged; this avoids quadratic repetition of history and page variables.
 
+Serialize that observation losslessly for planning with a visible shared-text table and
+references for repeated exact strings. Preserve all logical fields and string occurrences;
+escape literal objects that collide with representation markers. Archive the original job,
+exact wire prompt/schema, and both logical and wire payload sizes/hashes. Validate proposal
+evidence references against the original logical payload, not the representation wrapper.
+
 Persist the proposal, snapshot, request identity and per-edit operation identities before applying edits. Resume recognizes already committed edits and continues unfinished application without duplicate edits. Persist finalization and rollback progress; record discarded proposals and skipped deletes with explicit reasons.
 
 `refine.rollback(id)` queues a compensating edit for the next boundary when invoked inside the REPL. Host rollback accepts a refinement id or its commit SHA.

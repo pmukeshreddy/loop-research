@@ -1411,7 +1411,7 @@ dialect validation. `64e36b6` fixes both; the targeted regressions went from
 The real isolated-worker integration verifies native typed values, schema
 archival, call accounting, and identical prompts/results with tracing off/on.
 Fresh final default suite: **571 passed, 1 deselected in 69.24 seconds** at
-`runs/round2/unit_suite.log`. The previous 568-test run is preserved in
+`runs/round2/unit_suite.before_prompt_contract.log`. The previous 568-test run is preserved in
 `runs/round2/unit_suite.before_structured_review.log`. No live four-arm result
 is claimed by these offline tests; the restarted proof remains to be executed.
 
@@ -1424,3 +1424,27 @@ The initial root prompt again contains the complete task contract and retrieved 
 The pinned execution method synchronized new bindings only after a successful block. A later exception therefore discarded completed tool-result assignments, causing recovery to repeat work or raise a missing-name error. The project subclass now retains completed bindings and restores its scaffold in finally, with unchanged stdout/stderr, call metadata and answer-capture semantics. Upstream remains unmodified. The fix does not retry a model, accept invalid evidence, suppress an error, or change refinement scheduling.
 
 The state regressions failed twice before the fix; review found and tested the failed plain-dictionary answer-rebinding edge before integration. Six added tests include an isolated-worker recovery that reuses one fetched value and one sub-model response without repeated calls. Targeted: **11 passed in5.11seconds**. Full suite: **580 passed, 1 live test deselected in69.23seconds**. No existing test was removed or weakened. Four proof arms must run on the same corrected source.
+
+## Lossless planner input representation
+
+A live finalizer exceeded the provider input-character limit because exact strings
+were repeated across trajectory, self-check, and harness outcome fields. Planner
+serialization now uses a visible, reversible shared-text table. Every original
+field and string occurrence is retained; literal marker objects are escaped.
+Proposal validation still resolves evidence against the original logical payload.
+The job archives exact wire input/schema and logical/wire character counts and
+hashes. Failed-job resume starts a new archived attempt with fresh representation
+metadata. Scheduling and edit decisions remain agent-controlled.
+
+The saved oversized payload round-trips exactly: 1,090,254 logical JSON characters
+become 975,326 wire characters (978,249 including all current planner/backend
+instructions). This measures transport size, not model comprehension or success.
+Live saved-input verification remains a separate required gate.
+
+Serializer tests recorded 63 failures before implementation, then 63 passes; the
+refiner integration test also failed before implementation. The first full suite
+exposed one timeout assertion tied to JSON whitespace. It now decodes the exact
+wire payload and checks the timeout issue at its actual field, preserving the
+requirement. Fresh full suite: **644 passed, 1 live test deselected in 68.69 seconds**,
+recorded in `runs/round2/unit_suite_shared_text_final.log`. Existing assertions were
+not removed or relaxed. No root/REPL input or output is suppressed.
