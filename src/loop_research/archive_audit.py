@@ -436,17 +436,29 @@ def iteration_records(models, matched, trace, execs, task, run):
             continue
         call = model['_call']
         exec_line = execs.get(call.get('call_id'), {}).get('_line')
-        candidates = [span for span in spans if span['iteration'] == iteration['event']['iteration']
-            and exec_line is not None and span['start']['_line'] < exec_line < span['end']['_line']]
-        span = max(candidates, key=lambda item: item['depth']) if candidates else None
+        # The worker logger is shared with child RLMs, which reset/increment its
+        # counter. Identity comes from the exact prompt/response match and its
+        # backend call inside the innermost per-RLM trace span, not that counter.
+        candidates = [span for span in spans if exec_line is not None
+            and span['start']['_line'] < exec_line < span['end']['_line']]
+        deepest = max((span['depth'] for span in candidates), default=None)
+        candidates = [span for span in candidates if span['depth'] == deepest]
+        span = candidates[0] if len(candidates) == 1 else None
         info = dict(rlm_id=span['rlm_id'] if span else None,
             parent_rlm_id=span['parent_rlm_id'] if span else None, depth=span['depth'] if span else None,
-            iteration=iteration['event']['iteration'], model_trajectory_line=model['_line'], trajectory_line=iteration['_line'],
+            iteration=span['iteration'] if span else iteration['event']['iteration'],
+            worker_iteration=iteration['event']['iteration'],
+            model_trajectory_line=model['_line'], trajectory_line=iteration['_line'],
             trace_start_line=span['start']['_line'] if span else None, trace_end_line=span['end']['_line'] if span else None,
             trace_link=link(run / 'trace.jsonl', span['end']['_line']) if span else None,
             call_id=call.get('call_id'), prompt_sha256=call.get('prompt_sha256'), backend_chars=call.get('prompt_chars'))
         if span is None:
-            info['trace_unavailable_reason'] = 'matching_completed_iteration_span_not_archived'
+            info['trace_unavailable_reason'] = ('ambiguous_overlapping_iteration_spans' if candidates
+                else 'matching_completed_iteration_span_not_archived')
+            if candidates:
+                info['candidate_iteration_spans'] = [dict(rlm_id=item['rlm_id'], depth=item['depth'],
+                    iteration=item['iteration'], trace_start_line=item['start']['_line'],
+                    trace_end_line=item['end']['_line']) for item in candidates]
         details.append(info)
         for block in iteration['event'].get('code_blocks', []):
             head = '\n'.join(block['code'].splitlines()[:8])
@@ -470,7 +482,7 @@ def iteration_records(models, matched, trace, execs, task, run):
     return details, blocks, states
 
 
-def largest_prompt(attempts, matched, execs, task, run):
+def largest_prompt(attempts, matched, execs, task, run, iteration_details=()):
     roots = [call for call in attempts if call.get('purpose') == 'root']
     measured = [call for call in roots if isinstance(call.get('prompt_chars'), int)]
     if not measured:
@@ -478,6 +490,8 @@ def largest_prompt(attempts, matched, execs, task, run):
     call = max(measured, key=lambda item: item['prompt_chars'])
     model, full = call.get('_model'), call.get('_full')
     iteration = matched.get(model['_line']) if model else None
+    iteration_info = next((info for info in iteration_details
+        if model and info['model_trajectory_line'] == model['_line']), {})
     prompt = dict(total=call['prompt_chars'], sha256=call.get('prompt_sha256'), parts=None)
     reason = None
     if iteration is None:
@@ -502,7 +516,8 @@ def largest_prompt(attempts, matched, execs, task, run):
         prompt['text_unavailable_reason'] = 'full_backend_prompt_not_archived_or_verifiable'
     trace_line = execs.get(call.get('call_id'), {}).get('_line')
     prompt.update(trajectory_line=model['_line'] if model else None,
-        iteration=iteration['event']['iteration'] if iteration else None,
+        iteration=iteration_info.get('iteration', iteration['event']['iteration'] if iteration else None),
+        worker_iteration=iteration['event']['iteration'] if iteration else None,
         iteration_trajectory_line=iteration['_line'] if iteration else None, trace_line=trace_line,
         call_id=call.get('call_id'), trace_link=link(run / 'trace.jsonl', trace_line) if trace_line else None)
     if trace_line is None:
@@ -537,12 +552,13 @@ def _audit_task(task, run, excerpt_trace_lines):
     matched = match_iterations(models, [item for item in trajectory if item.get('type') == 'worker_iteration'])
     execs = {item['details']['call_id']: item for item in trace if item['event'] == 'exec.end'}
     iteration_details, blocks, states = iteration_records(models, matched, trace, execs, task, run)
-    full, prompt = largest_prompt(attempts, matched, execs, task, run)
+    full, prompt = largest_prompt(attempts, matched, execs, task, run, iteration_details)
     linked_iterations = {item['_line'] for item in matched.values()}
     for iteration in trajectory:
         if iteration.get('type') != 'worker_iteration' or iteration['_line'] in linked_iterations:
             continue
         info = dict(rlm_id=None, parent_rlm_id=None, depth=None, iteration=iteration['event']['iteration'],
+            worker_iteration=iteration['event']['iteration'],
             model_trajectory_line=None, trajectory_line=iteration['_line'], trace_start_line=None, trace_end_line=None,
             trace_link=None, call_id=None, prompt_sha256=None, backend_chars=None,
             model_unavailable_reason='matching_model_transcript_not_archived',

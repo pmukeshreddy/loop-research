@@ -351,3 +351,152 @@ def test_indistinguishable_concurrent_calls_do_not_claim_unique_call_identity(tm
     assert all(sub['call_linkage_unavailable_reason'] == 'indistinguishable_archived_calls' for sub in result['subcalls'])
     assert all(sub['candidate_call_ids'] == ['one', 'two'] for sub in result['subcalls'])
     assert result['subcall_count'] == 2
+
+
+def nested_iteration_archive(tmp_path, *, standalone_child=False, child_worker_start=1):
+    """Archive call nesting without using the worker's shared counter as identity."""
+    run, task, _, _, _ = archive(tmp_path)
+    brief = (task / 'root_prompt.txt').read_text()
+    page = 'Exact retained page evidence with a sufficiently long repeated passage. ' * 2
+    trajectory, calls, trace, expected = [], [], [], []
+    root_messages = [{'role': 'system', 'content': 'Research system.'},
+                     {'role': 'user', 'content': 'Answer: ' + brief}]
+    child_messages = [{'role': 'system', 'content': 'Child system.'},
+                      {'role': 'user', 'content': 'Inspect this supplied evidence: ' + page}]
+
+    def emit(component, event, **details):
+        trace.append(dict(component=component, event=event, details=details))
+        return len(trace)
+
+    def start_turn(rlm_id, ordinal, worker_ordinal, messages, codes, stdout='repeat\n'):
+        depth = int(rlm_id == 'child')
+        identity = dict(rlm_id=rlm_id, parent_rlm_id='root' if depth else None, depth=depth)
+        start = emit('RLM iteration', 'iteration.start', **identity, iteration=ordinal)
+        prompt = transcript(messages)
+        response = '\n'.join('```repl\n' + code + '\n```' for code in codes)
+        full = INSTRUCTION + prompt
+        call_id = f'{rlm_id}-{ordinal}'
+        call = dict(call_id=call_id, purpose='sub' if depth else 'root', attempt=0,
+                    error=None, exit_code=0, prompt_chars=len(full),
+                    prompt_sha256=hashlib.sha256(full.encode()).hexdigest(),
+                    response_chars=len(response))
+        calls.append(call)
+        emit('Codex', 'exec.end', call_id=call_id)
+        trajectory.append(dict(type='model', purpose=call['purpose'], prompt=prompt, response=response))
+        model_line = len(trajectory)
+        first_code_start = emit('REPL', 'code.start', **identity, first_lines=codes[0])
+        return dict(identity=identity, ordinal=ordinal, worker_ordinal=worker_ordinal,
+                    messages=list(messages), codes=codes, stdout=stdout, response=response,
+                    call=call, start=start, model_line=model_line, first_code_start=first_code_start)
+
+    def finish_turn(turn, messages):
+        ends, starts, code_blocks = [], [], []
+        for index, code in enumerate(turn['codes']):
+            starts.append(turn['first_code_start'] if index == 0 else
+                          emit('REPL', 'code.start', **turn['identity'], first_lines=code))
+            ends.append(emit('REPL', 'code.end', **turn['identity'], first_lines=code,
+                             stdout=turn['stdout'][:1000], error=None))
+            code_blocks.append(dict(code=code, result=dict(stdout=turn['stdout'], stderr='', locals={})))
+        end = emit('RLM iteration', 'iteration.end', **turn['identity'], iteration=turn['ordinal'])
+        trajectory.append(dict(type='worker_iteration', event=dict(iteration=turn['worker_ordinal'],
+            prompt=turn['messages'], response=turn['response'], code_blocks=code_blocks)))
+        expected.append(dict(**turn, trajectory_line=len(trajectory), end=end, code_ends=ends, code_starts=starts))
+        messages.extend([{'role': 'assistant', 'content': turn['response']},
+                         {'role': 'user', 'content': 'REPL output: ' + turn['stdout']}])
+
+    if not standalone_child:
+        finish_turn(start_turn('root', 1, 1, root_messages, ['print(context)'], stdout=page), root_messages)
+        parent = start_turn('root', 2, 3, root_messages, ['child = rlm_query(context)'])
+    for index in range(2):
+        finish_turn(start_turn('child', index + 1, child_worker_start + index,
+                               child_messages, ['print("repeat")']), child_messages)
+    emit('RLM', 'completion.end', rlm_id='child', parent_rlm_id='root', depth=1, iterations=2)
+    if not standalone_child:
+        finish_turn(parent, root_messages)
+        # Shared logger labels remain offset after child completion. Repeated
+        # code also appears inside the child and twice in the same root turn.
+        finish_turn(start_turn('root', 3, 4, root_messages, ['print("repeat")'] * 2), root_messages)
+        finish_turn(start_turn('root', 4, 5, root_messages, ['print("repeat")']), root_messages)
+        emit('RLM', 'completion.end', rlm_id='root', parent_rlm_id=None, depth=0, iterations=4)
+    write_lines(task / 'trajectory.jsonl', trajectory)
+    write_lines(task / 'codex_calls.jsonl', calls)
+    write_lines(run / 'trace.jsonl', trace)
+    write_json(task / 'evidence.json', {'fetched': {'https://example.invalid/page': [page]}, 'fetches': []})
+    return run, task, expected, calls, page
+
+
+def assert_iteration_links(result, expected):
+    by_model = {record['model_trajectory_line']: record for record in result['iterations']}
+    assert set(by_model) == {turn['model_line'] for turn in expected}
+    for turn in expected:
+        record = by_model[turn['model_line']]
+        assert record['rlm_id'] == turn['identity']['rlm_id']
+        assert record['depth'] == turn['identity']['depth']
+        assert record['parent_rlm_id'] == turn['identity']['parent_rlm_id']
+        assert record['iteration'] == turn['ordinal']
+        assert record['worker_iteration'] == turn['worker_ordinal']
+        assert record['trajectory_line'] == turn['trajectory_line']
+        assert record['trace_start_line'] == turn['start']
+        assert record['trace_end_line'] == turn['end']
+        assert record['prompt_sha256'] == turn['call']['prompt_sha256']
+        blocks = [block for block in result['blocks'] if block['model_trajectory_line'] == turn['model_line']]
+        assert [block['trace_line'] for block in blocks] == turn['code_ends']
+        assert [block['code_start_trace_line'] for block in blocks] == turn['code_starts']
+        assert [block['code'] for block in blocks] == turn['codes']
+        assert all(block['stdout'] == turn['stdout'] for block in blocks)
+
+
+def test_child_and_repeated_post_child_blocks_join_by_call_span_not_shared_counter(tmp_path):
+    run, task, expected, calls, page = nested_iteration_archive(tmp_path)
+    original = {path: path.read_bytes() for path in run.rglob('*') if path.is_file()}
+    result = module().audit_task(task, run)
+    counts = {item['rlm_id']: (len(item['iteration_records']), item['repl_blocks']) for item in result['rlms']}
+    assert counts == {'root': (4, 5), 'child': (2, 2)}
+    assert_iteration_links(result, expected)
+    largest = result['largest_prompt']
+    assert largest['iteration'] == 4
+    assert largest['worker_iteration'] == 5
+    assert largest['total'] == calls[-1]['prompt_chars']
+    assert largest['sha256'] == calls[-1]['prompt_sha256']
+    assert sum(largest['parts'].values()) == largest['total']
+    assert hashlib.sha256(result['_largest_prompt_text'].encode()).hexdigest() == largest['sha256']
+    assert result['overlap']['ngram_chars'] == 50
+    assert result['overlap']['covered_chars'] == result['overlap']['total_chars'] == len(page)
+    assert {path: path.read_bytes() for path in original} == original
+
+
+@pytest.mark.parametrize('worker_start', [1, 7])
+def test_standalone_child_archive_uses_own_spans_without_parent_records(tmp_path, worker_start):
+    run, task, expected, _, _ = nested_iteration_archive(
+        tmp_path, standalone_child=True, child_worker_start=worker_start)
+    result = module().audit_task(task, run)
+    assert_iteration_links(result, expected)
+    assert len(result['rlms']) == 1
+    assert result['rlms'][0]['rlm_id'] == 'child'
+    assert result['rlms'][0]['repl_blocks'] == 2
+    assert all(sub['is_child_rlm_turn'] for sub in result['subcalls'])
+    assert result['largest_prompt']['total'] is None
+
+
+def test_overlapping_concurrent_child_spans_do_not_claim_arbitrary_identity(tmp_path):
+    run, task, expected, _, _ = nested_iteration_archive(tmp_path, standalone_child=True)
+    trace = [json.loads(line) for line in (run / 'trace.jsonl').read_text().splitlines()]
+    # A sibling's long-running turn overlaps both calls in this child's archive.
+    # The backend events carry no RLM id, so depth/time cannot distinguish them.
+    sibling = dict(rlm_id='sibling', parent_rlm_id='root', depth=1, iteration=1)
+    trace.insert(0, dict(component='RLM iteration', event='iteration.start', details=sibling))
+    trace.append(dict(component='RLM iteration', event='iteration.end', details=sibling))
+    write_lines(run / 'trace.jsonl', trace)
+    result = module().audit_task(task, run)
+    for record, turn in zip(result['iterations'], expected):
+        assert record['rlm_id'] is None
+        assert record['trace_link'] is None
+        assert record['trace_unavailable_reason'] == 'ambiguous_overlapping_iteration_spans'
+        assert {span['rlm_id'] for span in record['candidate_iteration_spans']} == {'child', 'sibling'}
+        assert all(span['depth'] == 1 for span in record['candidate_iteration_spans'])
+        assert record['worker_iteration'] == turn['worker_ordinal']
+        assert record['model_trajectory_line'] == turn['model_line']
+        assert record['backend_chars'] == turn['call']['prompt_chars']
+        assert record['prompt_sha256'] == turn['call']['prompt_sha256']
+    assert all(block['trace_line'] is None for block in result['blocks'])
+    assert [block['stdout'] for block in result['blocks']] == [turn['stdout'] for turn in expected]
