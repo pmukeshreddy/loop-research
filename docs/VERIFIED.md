@@ -1257,3 +1257,19 @@ with `uv pip install --python .venv/bin/python --no-deps --reinstall .`, matchin
 the documented non-editable setup; every installed Python module's SHA-256 was
 verified equal to its source counterpart. This removes dependence on `.pth`
 processing. The following live debug run uses that installation.
+
+The user-authorized traced research run
+`research-3265370f49e64ebbbc3c3bf0c24af6de` completed in **142.274 seconds**.
+It asked for the SI unit names/symbols of five quantities, using NIST sources,
+with explicit `--columns quantity --columns unit --columns symbol --keys quantity
+--language en --trace`. It exercised single and batched search/fetch, two sub-LM
+calls, six RLM iterations, evidence recording and automatic refinement.
+The archive contains 327 trace events and 15 successful Codex calls, with no
+component errors, retries or format repair. All 35 citation/quotation checks and
+20 constraint-coverage checks passed. The self-check retained three
+`stalled_search` issues from empty discovery records; it did not pass overall.
+Refinement created the memory "Inspect search results before recording
+discoveries" in harness commit `2a423027212fe1c430dfd200bdd55f3a27b22d70`.
+The final table, all counts/timings/edges, issues and exact edit are saved in
+`runs/research-3265370f49e64ebbbc3c3bf0c24af6de/trace_summary.md`.
+This is a live debugging example, not a benchmark measurement.
