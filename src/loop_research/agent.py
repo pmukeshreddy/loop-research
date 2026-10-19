@@ -133,6 +133,10 @@ def make_prompt(task, contract, entries, *, as_of, config, date_archive=None, le
         "fetch_many(urls, focus=''): concurrent fetches; one page text or FETCH_FAILED per URL, in input order.\n"
         "llm_query(prompt): stateless sub-model, no independent tools; give it fetched evidence.\n"
         "llm_query_batched(prompts): parallel sub-model calls over supplied evidence.\n"
+        "llm_query_json(prompt, schema), llm_query_json_batched(prompts, schema): schema-validated sub-model "
+        "extraction returning native Python values, in input order for a batch. Supply an explicit JSON Schema "
+        "for all nested field types; object schemas should require every field and forbid additionalProperties. "
+        "Invalid responses raise; they are not coerced, dropped, or automatically repaired.\n"
         "Full Python is available, including threading and asyncio, inside an OS-isolated worker.\n"
         "harness.create(kind,title,content), get(kind,id), read(kind,id), update(kind,id,title,content), "
         "delete(kind,id), list(kind=None), search(query,kind=None,limit=10). "
@@ -233,6 +237,9 @@ def worker(request_path):
     methods = ('search', 'fetch', 'search_many', 'fetch_many', 'check_constraint', 'record_discovery')
     remote = Remote(client, 'tools.', methods)
     tools = {name: getattr(remote, name) for name in methods}
+    models = Remote(client, 'models.', ('query_json', 'query_json_batched'))
+    tools['llm_query_json'] = models.query_json
+    tools['llm_query_json_batched'] = models.query_json_batched
     tools['budget'] = lambda: client.call('budget')
     tools['harness'] = Remote(client, 'harness.', ('create', 'get', 'read', 'update', 'delete', 'list', 'search'))
     tools['refine'] = Remote(client, 'refine.', ('run', 'rollback'))

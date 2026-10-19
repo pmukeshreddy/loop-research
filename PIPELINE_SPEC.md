@@ -85,6 +85,8 @@ The worker runs in a fresh temporary directory under a verified macOS Seatbelt p
 
 The host exposes only enumerated RPC operations. Root/sub-model completions, tools and CRUD share this boundary; there is no grade RPC or arbitrary host-path operation. Parent-owned evidence remains independent of worker-supplied trajectory annotations.
 
+The worker can inspect its configured limits and read the current research call allowance through `budget()` without reserving a call. Structured semantic extraction uses `llm_query_json(prompt, schema)` or its batched variant: the host sends the schema to the configured sub-model, validates the returned JSON, and archives the schema and raw response. Invalid output raises rather than being coerced or silently dropped. Batches preserve input order and configured concurrency; structured calls share the ordinary research budget. Schema references must not trigger network retrieval.
+
 ## 7. Tools and transport
 
 `search(query, k=8)` and `fetch(url, focus='')` use `codex exec` and one task cache/URL ledger. `search_many(queries, k=8)` and `fetch_many(urls, focus='')` run concurrently up to `codex.max_concurrent`, returning results in input order. Duplicate in-flight requests share results. Record each fetch attempt, including backend calls, cache hits, shared requests, validation failures, exceptions and cancellation. Failed fetches are retryable and do not become cached evidence. Keep dropped malformed, invalid-URL and excess search hits with their reasons. No cache/ledger lock is held during a Codex call or while waiting for another request.

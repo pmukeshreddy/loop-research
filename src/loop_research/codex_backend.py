@@ -118,6 +118,7 @@ class CodexBackend:
         model = configured_model
         plain = purpose == 'baseline'
         full = prompt if plain else INSTRUCTION + prompt
+        schema_text = json.dumps(schema) if schema is not None else None
         retries = 0 if plain else self.config.codex.max_retries
         # Inherited provider credentials must not bypass the ChatGPT login.
         env = {k: v for k, v in os.environ.items() if not (
@@ -140,13 +141,16 @@ class CodexBackend:
                     output = base / "response.txt"
                     schema_path = base / "schema.json" if schema is not None else None
                     if schema_path:
-                        schema_path.write_text(json.dumps(schema))
+                        schema_path.write_text(schema_text)
                     cmd = self.command(cwd, output, web=web, schema_file=schema_path, model=model)
                     started = time.monotonic()
                     record = {"call_id": uuid4().hex, "timestamp": stamp(), "purpose": purpose,
                               "model": model, "attempt": attempt,
                               "prompt_sha256": hashlib.sha256(full.encode()).hexdigest(),
                               "prompt_chars": len(full)}
+                    if schema_text is not None:
+                        record.update(schema_chars=len(schema_text),
+                                      schema_sha256=hashlib.sha256(schema_text.encode()).hexdigest())
                     self.ctx.path.mkdir(parents=True, exist_ok=True)
                     (self.ctx.path / "codex_calls.jsonl").touch(exist_ok=True)
                     # Persist dispatch evidence before invoking Codex. A killed worker

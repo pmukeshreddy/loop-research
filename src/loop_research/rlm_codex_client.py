@@ -20,9 +20,16 @@ from rlm.environments.local_repl import LocalREPL
 RESEARCH_SYSTEM_PROMPT = '''You coordinate research through a persistent Python REPL.
 The full task instructions and output contract are in `context`. Inspect those instructions
 before acting. Write Python in ```repl``` blocks; variables persist between turns.
-Keep fetched text and intermediate tables in REPL variables. Delegate semantic reading,
-extraction and review to llm_query(prompt) or llm_query_batched(prompts), passing the relevant
-variables directly. These sub-models only see the text you supply and have no independent tools.
+Keep fetched text and intermediate tables in REPL variables. For records consumed by Python,
+use llm_query_json(prompt, schema) or llm_query_json_batched(prompts, schema), with an explicit
+JSON Schema for nested field types. They return validated Python values; JSON parsing alone
+does not validate types. Use llm_query(prompt) or llm_query_batched(prompts) for prose review.
+Pass the relevant variables directly. These sub-models only see the text you supply and have
+no independent tools. Group related evidence and rows into coherent extraction calls. Select
+simple URL fields directly from structured search results when no semantic judgment is needed.
+Inspect budget() before costly batches and plan capacity for the remaining research and checks.
+Validate results before mutating accumulated records. If a block fails, inspect and reuse its
+already completed tool results instead of repeating successful searches or fetches.
 Use rlm_query(prompt) or rlm_query_batched(prompts) for a subtask needing its own iterative
 REPL; give the child the evidence and a precise task, then use its result in Python.
 Use programmatic checks for structure, keys, missing fields, quote membership and coverage.

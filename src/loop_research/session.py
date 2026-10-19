@@ -11,6 +11,7 @@ from .codex_backend import CodexBackend, CallBudget, BudgetExceeded
 from .refine import Refiner
 from .repl_tools import ResearchTools
 from .selfcheck import check
+from .structured_models import StructuredModels
 
 
 class Session:
@@ -23,6 +24,9 @@ class Session:
         self.backend = backend or CodexBackend(self.research_ctx, budget=self.budget)
         self.repair_backend = backend or CodexBackend(ctx, budget=self.budget)
         self.tools = ResearchTools(self.backend, self.research_ctx)
+        self.structured_models = StructuredModels(
+            lambda prompt, schema: self._complete_model(prompt, 'sub', schema=schema)['text'],
+            max_concurrent=ctx.config.codex.max_concurrent)
         self.lifecycle = threading.RLock()
         self.status = {}
         self.output = {'rows': []}
@@ -115,6 +119,28 @@ class Session:
             self.status['call_limit' if self.budget.count >= self.budget.limit else 'timeout'] = True
             raise
 
+    def _complete_model(self, prompt, purpose, *, schema=None):
+        self.research_ctx.check_cancelled()
+        model = self.ctx.config.models.root if purpose == 'root' else self.ctx.config.models.sub
+        with self.ctx.trace.span('RLM ' + purpose, 'model', model=model,
+                                 structured=schema is not None) as details:
+            if purpose == 'root':
+                with self.lifecycle, self.turn_lock:
+                    self.research_ctx.check_cancelled()
+                    self.apply_refinement()
+                    self.turns += 1
+                    if self.turns > self.ctx.config.rlm.max_iterations:
+                        self.status['iteration_limit'] = True
+                    prompt += '\nCURRENT RELEVANT HARNESS ENTRIES\n' + json.dumps(self.retrieve(), ensure_ascii=False)
+            options = {'schema': schema} if schema is not None else {}
+            text = self.backend.complete(prompt, purpose=purpose, model=model, **options)
+            details.update(response_chars=len(text), usage=self.backend.last_usage)
+        with self.lifecycle:
+            self.research_ctx.check_cancelled()
+            append_json(self.ctx.path / 'trajectory.jsonl', {'type': 'model', 'purpose': purpose,
+                        'model': model, 'prompt': prompt, 'response': text, **options})
+        return {'text': text, 'usage': self.backend.last_usage}
+
     def _dispatch(self, method, args, kwargs):
         self.research_ctx.check_cancelled()
         if method == 'complete':
@@ -124,23 +150,15 @@ class Session:
             model = self.ctx.config.models.root if purpose == 'root' else self.ctx.config.models.sub
             if 'model' in kwargs and kwargs['model'] != model:
                 raise ValueError('Worker must use the configured model for its role')
-            with self.ctx.trace.span('RLM ' + purpose, 'model', model=model) as details:
-                prompt = args[0]
-                if purpose == 'root':
-                    with self.lifecycle, self.turn_lock:
-                        self.research_ctx.check_cancelled()
-                        self.apply_refinement()
-                        self.turns += 1
-                        if self.turns > self.ctx.config.rlm.max_iterations:
-                            self.status['iteration_limit'] = True
-                        prompt += '\nCURRENT RELEVANT HARNESS ENTRIES\n' + json.dumps(self.retrieve(), ensure_ascii=False)
-                text = self.backend.complete(prompt, purpose=purpose, model=model)
-                details.update(response_chars=len(text), usage=self.backend.last_usage)
-            with self.lifecycle:
-                self.research_ctx.check_cancelled()
-                append_json(self.ctx.path / 'trajectory.jsonl', {'type': 'model', 'purpose': purpose,
-                            'model': model, 'prompt': prompt, 'response': text})
-            return {'text': text, 'usage': self.backend.last_usage}
+            return self._complete_model(args[0], purpose)
+        if method.startswith('models.'):
+            functions = {'query_json': self.structured_models.llm_query_json,
+                         'query_json_batched': self.structured_models.llm_query_json_batched}
+            name = method.removeprefix('models.')
+            if name not in functions:
+                raise ValueError('Unknown structured model operation')
+            with self.ctx.trace.span('RLM sub', name):
+                return functions[name](*args, **kwargs)
         if method.startswith('tools.'):
             name = method.removeprefix('tools.')
             functions = {name: value['tool'] for name, value in self.tools.injected().items()}

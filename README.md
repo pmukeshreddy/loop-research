@@ -153,6 +153,12 @@ and sub-calls, compact diagnostics, and direct submission of the validated Pytho
 Printed output still reaches later root prompts with the pinned RLM's existing per-block
 truncation; no output filter enforces this policy. Retrieved procedures omit usage/outcome
 history from researcher prompts while the harness and refiner retain that history.
+The root and REPL receive configured resource limits. `budget()` reports cumulative reserved
+research calls and remaining allowance without consuming a call; retries and in-flight calls
+are included. `llm_query_json(prompt, schema)` and `llm_query_json_batched(prompts, schema)`
+return native Python values validated against an explicit JSON Schema. They use the configured
+sub-model, shared research budget and concurrency limit, and reject malformed or incorrectly
+typed output without coercion or automatic repair. Schemas and raw responses remain archived.
 Learning runs describe when to request evidence-grounded mid-task refinement. The planner
 must account for every presented issue/signal group and each additional candidate, with
 evidence references and a reason for accepting or declining it. The edit limit is a ceiling,

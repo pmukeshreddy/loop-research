@@ -22,7 +22,7 @@ class Server:
                     self.request.settimeout(socket_timeout_s)
                     request = json.loads(self.rfile.readline())
                     method = request['method']
-                    caller = ('REPL' if method.startswith(('tools.', 'harness.', 'refine.')) else
+                    caller = ('REPL' if method == 'budget' or method.startswith(('tools.', 'harness.', 'refine.', 'models.')) else
                               ('REPL' if request.get('kwargs', {}).get('purpose') == 'sub' else 'RLM iteration')
                               if method == 'complete' else 'Worker')
                     with trace.span('Bridge', 'rpc', parent=caller, method=method):
