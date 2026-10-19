@@ -1366,5 +1366,22 @@ text is measured independently. Telemetry stays outside research/refiner inputs.
 
 Fresh default suite: **500 passed, 1 deselected in 56.15 seconds**. The deselected
 case is the opt-in live test; no tests or criteria were weakened. The full log is
-`runs/round2/unit_suite.log`. The user has explicitly requested the subsequent
+`runs/round2/unit_suite.before_queue_fix.log`. The user has explicitly requested the subsequent
 traced proof arms; their results belong in the append-only Round 2 report.
+
+Round 2's first A attempt was interrupted after a batched sub-call exposed an
+integration failure. The 20 completed responses from a 22-prompt batch were valid
+JSON; pinned LocalREPL masks failed slots as `Error: ...` text. Their exact live
+exceptions were not archived. A synchronized offline Unix socket burst reproduced
+connection refusals at the bridge's default backlog, and a regression proved the
+flat LM handler ignored configured concurrency. `e74505d` uses the OS socket
+backlog; `27899b1` honors configured flat-batch concurrency and uses an unmodified-
+upstream LocalREPL subclass to propagate flat/child transport failures as errors.
+The project subclass also uses the configured RLM timeout for its sub-call socket.
+No retries, response-text heuristics or JSON-parsing fallback were added.
+
+The real isolated-worker regression returns all 22 indexed sub-call results.
+Fresh full suite after both fixes: **510 passed, 1 deselected in 64.58 seconds**,
+recorded in `runs/round2/unit_suite.log`. The interrupted live attempt remains at
+`research-dffc69e58f7f42ec9d4fd0056440aa83`; its learned edits must be compensated
+before the restarted proof from BASE. No successful four-arm result is claimed here.
