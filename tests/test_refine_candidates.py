@@ -4,9 +4,11 @@ import json
 
 import pytest
 
+from loop_research.archive import read_jsonl
 from loop_research.harness import Harness
 from loop_research.refine import INSTRUCTIONS, Refiner, candidate_inventory
-from test_refine import proposal
+from loop_research.trace import Trace
+from test_refine import Planner, proposal
 
 
 class RawPlanner:
@@ -299,3 +301,130 @@ def test_unplanned_legacy_job_must_receive_and_return_complete_accounting(ctx):
     assert state['accounting_version'] == 1
     assert state['candidate_inventory'] == backend.prompts[0]['candidate_inventory']
     assert state['proposal']['decisions'] == accounted_response()['decisions']
+
+
+def test_each_refinement_request_keeps_its_input_inventory_and_declines(ctx):
+    ctx.trace = Trace(ctx.run_dir)
+    h = Harness(ctx.root / 'harness')
+    observation = observed()
+    backend = RawPlanner(accounted_response())
+    refiner = Refiner(h, ctx, backend, lambda: copy.deepcopy(observation))
+    try:
+        refiner.run('during task', request_id='mid-task')
+        refiner.boundary(wait=True)
+        first = ctx.load('refine_state.json')
+        observation['trajectory'].append({'type': 'tool', 'result': 'later evidence'})
+        refiner.run('after task', request_id='after-task')
+        refiner.boundary(wait=True)
+        latest = ctx.load('refine_state.json')
+    finally:
+        refiner.close()
+    archives = [json.loads(path.read_text()) for path in (ctx.path / 'refine_requests').glob('*/*.json')]
+    assert len(archives) == 2
+    by_request = {job['request_id']: job for job in archives}
+    assert by_request['mid-task'] == first
+    assert by_request['after-task'] == latest
+    assert first['observed']['trajectory'] == []
+    assert latest['observed']['trajectory'] == [{'type': 'tool', 'result': 'later evidence'}]
+    for index, request_id in enumerate(('mid-task', 'after-task')):
+        job = by_request[request_id]
+        assert job['candidate_inventory'] == backend.prompts[index]['candidate_inventory']
+        assert json.loads(job['planner_prompt'].removeprefix(INSTRUCTIONS)) == backend.prompts[index]
+        assert job['planner_schema'] == backend.schemas[index]
+        assert job['proposal']['decisions'] == accounted_response()['decisions']
+        trace = [row for row in read_jsonl(ctx.run_dir / 'trace.jsonl') if row['event'] == 'proposal']
+        assert trace[index]['details']['request_id'] == request_id
+        assert trace[index]['details']['job_id'] == job['job_id']
+    audits = [row for row in read_jsonl(ctx.path / 'refinements.jsonl') if row['status'] == 'applied']
+    assert [row['request_id'] for row in audits] == ['mid-task', 'after-task']
+
+
+def test_replanning_same_request_preserves_discarded_input_and_proposal(ctx):
+    h = Harness(ctx.root / 'harness')
+    entry = h.create('memory', 'Procedure', 'original')
+    backend = Planner(proposal('update', id=entry['id']))
+    refiner = Refiner(h, ctx, backend, lambda: {'trajectory': [], 'self_check': {}})
+    try:
+        refiner.run(request_id='same-request')
+        refiner.pending.result(5)
+        h.update('memory', entry['id'], 'Procedure', 'concurrent change')
+        assert refiner.boundary(wait=True) == []
+        refiner.boundary(wait=True)
+    finally:
+        refiner.close()
+    archives = [json.loads(path.read_text()) for path in (ctx.path / 'refine_requests').glob('*/*.json')]
+    assert len(archives) == 2
+    assert {job['request_id'] for job in archives} == {'same-request'}
+    assert len({job['job_id'] for job in archives}) == 2
+    discarded = next(job for job in archives if job['status'] == 'discarded')
+    applied = next(job for job in archives if job['status'] == 'applied')
+    assert discarded['snapshot']['entries']['memory:' + entry['id']]['body'] == 'original'
+    assert applied['snapshot']['entries']['memory:' + entry['id']]['body'] == 'concurrent change'
+    assert discarded['proposal']['decisions'] and applied['proposal']['decisions']
+    assert ctx.load('refine_state.json') == applied
+
+
+def test_job_archive_is_durable_before_latest_checkpoint_and_resume_reuses_it(ctx, monkeypatch):
+    h = Harness(ctx.root / 'harness')
+    backend = Planner(proposal())
+    observation = lambda: {'trajectory': [], 'self_check': {}}
+    refiner = Refiner(h, ctx, backend, observation)
+    save = ctx.save
+
+    def interrupted(name, value):
+        if name == 'refine_state.json' and value['status'] == 'applied':
+            archives = [json.loads(path.read_text()) for path in (ctx.path / 'refine_requests').glob('*/*.json')]
+            assert len(archives) == 1 and archives[0] == value
+            raise OSError('latest checkpoint interrupted')
+        return save(name, value)
+
+    monkeypatch.setattr(ctx, 'save', interrupted)
+    try:
+        refiner.run(request_id='durable')
+        with pytest.raises(OSError, match='checkpoint interrupted'):
+            refiner.boundary(wait=True)
+    finally:
+        refiner.close()
+    head = h.head
+    job_id = ctx.load('refine_state.json')['job_id']
+    monkeypatch.setattr(ctx, 'save', save)
+    resumed = Refiner(h, ctx, backend, observation)
+    try:
+        assert resumed.resume()
+        resumed.boundary(wait=True)
+    finally:
+        resumed.close()
+    archives = [json.loads(path.read_text()) for path in (ctx.path / 'refine_requests').glob('*/*.json')]
+    assert len(archives) == 1 and archives[0]['job_id'] == job_id
+    assert archives[0] == ctx.load('refine_state.json')
+    assert h.head == head and len(backend.prompts) == 1
+
+
+def test_retry_keeps_failed_planner_input_and_raw_proposal(ctx):
+    h = Harness(ctx.root / 'harness')
+    invalid = {'summary': 'Missing accounting', 'edits': []}
+    backend = RawPlanner(invalid)
+    refiner = Refiner(h, ctx, backend, observed)
+    try:
+        refiner.run(request_id='retry-request')
+        with pytest.raises(ValueError, match='decisions'):
+            refiner.boundary(wait=True)
+    finally:
+        refiner.close()
+    failed = ctx.load('refine_state.json')
+    backend.response = accounted_response()
+    resumed = Refiner(h, ctx, backend, observed)
+    try:
+        assert resumed.resume()
+        resumed.boundary(wait=True)
+    finally:
+        resumed.close()
+    archives = [json.loads(path.read_text()) for path in (ctx.path / 'refine_requests').glob('*/*.json')]
+    assert len(archives) == 2
+    assert next(job for job in archives if job['status'] == 'failed') == failed
+    assert json.loads(failed['response_text']) == invalid
+    applied = next(job for job in archives if job['status'] == 'applied')
+    assert json.loads(applied['response_text']) == accounted_response()
+    assert applied['request_id'] == failed['request_id']
+    assert applied['job_id'] != failed['job_id']
+    assert ctx.load('refine_state.json') == applied

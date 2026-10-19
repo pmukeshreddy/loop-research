@@ -9,7 +9,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
-from .archive import append_json, stamp
+from .archive import append_json, digest, stamp
 
 
 class Edit(BaseModel):
@@ -187,6 +187,12 @@ class Refiner:
         append_json(self.ctx.path / 'refinements.jsonl', {'created_at': stamp(), 'status': status,
                                                        'focus': self.focus, **details})
 
+    def _save_job(self, job):
+        job.setdefault('job_id', uuid4().hex)
+        # Archive first: advancing the resumable latest pointer must never erase an earlier input.
+        self.ctx.save(f"refine_requests/{digest(job['request_id'])}/{job['job_id']}.json", job)
+        self.ctx.save('refine_state.json', job)
+
     def resume(self):
         with self.lock:
             job = self.ctx.load('refine_state.json')
@@ -195,10 +201,18 @@ class Refiner:
             if not self.enabled:
                 raise ValueError('Cannot resume refinement with learning disabled')
             self.focus = job['focus']
+            if 'job_id' not in job:
+                self._save_job(job)
             if job.get('proposal') is not None:
                 self.pending = Future()
                 self.pending.set_result(job)
             else:
+                if 'planner_prompt' in job:
+                    # A new model attempt must not overwrite the prior input or rejected response.
+                    job = {key: value for key, value in job.items()
+                           if key not in {'planner_prompt', 'planner_schema', 'response_text', 'error', 'operations'}}
+                    job.update(job_id=uuid4().hex, status='planning')
+                    self._save_job(job)
                 self.pending = self.pool.submit(copy_context().run, self._plan, job)
             return True
 
@@ -216,6 +230,8 @@ class Refiner:
                 return {'scheduled': False, 'reason': 'planning already in progress'}
             if self.resume():
                 return {'scheduled': True, 'resumed': True}
+            if previous:
+                self._save_job(previous)
             snapshot = self.harness.snapshot()
             observed = self.observation()
             if set(observed) != {'trajectory', 'self_check'}:
@@ -224,27 +240,30 @@ class Refiner:
             job = {'status': 'planning', 'focus': focus, 'snapshot': snapshot, 'observed': observed,
                    'branch': self.harness.branch, 'proposal': None, 'request_id': request_id or uuid4().hex}
             job.update(accounting_version=1, candidate_inventory=candidate_inventory(observed))
-            self.ctx.save('refine_state.json', job)
-            self.ctx.trace.emit('Refine', 'scheduled', focus=focus, request_id=job['request_id'])
+            self._save_job(job)
+            self.ctx.trace.emit('Refine', 'scheduled', focus=focus, request_id=job['request_id'], job_id=job['job_id'])
             self.pending = self.pool.submit(copy_context().run, self._plan, job)
             return {'scheduled': True}
 
     def _plan(self, job):
-        with self.ctx.trace.span('Refine', 'planning', focus=job['focus'], request_id=job['request_id']):
+        with self.ctx.trace.span('Refine', 'planning', focus=job['focus'], request_id=job['request_id'], job_id=job['job_id']):
             return self._plan_job(job)
 
     def _plan_job(self, job):
         # Unplanned historical jobs upgrade here; already-planned jobs keep their recorded schema.
         job.update(accounting_version=1, candidate_inventory=candidate_inventory(job['observed']))
-        self.ctx.save('refine_state.json', job)
         payload = planning_input(job)
         payload['max_edits'] = self.ctx.config.refine.max_edits
         prompt = INSTRUCTIONS + json.dumps(payload, ensure_ascii=False)
         schema = Proposal.model_json_schema()
         schema['properties']['edits']['maxItems'] = self.ctx.config.refine.max_edits
+        job.update(planner_prompt=prompt, planner_schema=schema)
+        self._save_job(job)
         text = None
         try:
             text = self.backend.complete(prompt, purpose='refine', model=self.ctx.config.models.refine, schema=schema)
+            job['response_text'] = text
+            self._save_job(job)
             proposal = Proposal.model_validate_json(text)
             if len(proposal.edits) > self.ctx.config.refine.max_edits:
                 raise ValueError('Proposal exceeds refine.max_edits')
@@ -252,15 +271,16 @@ class Refiner:
             for edit in proposal.edits:
                 if edit.id is not None:
                     self.harness._key(edit.kind, edit.id)
-            self.ctx.trace.emit('Refine', 'proposal', **proposal.model_dump())
+            self.ctx.trace.emit('Refine', 'proposal', request_id=job['request_id'], job_id=job['job_id'], **proposal.model_dump())
             job.update(status='planned', proposal=proposal.model_dump(),
                        operations=['refine_' + uuid4().hex for _ in proposal.edits])
-            self.ctx.save('refine_state.json', job)
+            self._save_job(job)
             return job
         except Exception as exc:
             job.update(status='failed', error=str(exc))
-            self.ctx.save('refine_state.json', job)
-            self.audit('discarded', reason='planning_failed', error=str(exc), proposal=text)
+            self._save_job(job)
+            self.audit('discarded', request_id=job['request_id'], job_id=job['job_id'],
+                       reason='planning_failed', error=str(exc), proposal=text)
             raise
 
     def boundary(self, wait=False):
@@ -271,18 +291,20 @@ class Refiner:
             job = future.result()
             with self.harness.transaction():
                 try:
-                    with self.ctx.trace.span('Refine', 'apply', focus=job['focus']) as details:
+                    with self.ctx.trace.span('Refine', 'apply', focus=job['focus'],
+                                             request_id=job['request_id'], job_id=job['job_id']) as details:
                         result = self._apply(job)
                         details['commits'] = result
                         return result
                 except Exception as exc:
-                    self.audit('failed', reason='apply_failed', error=str(exc), proposal=job['proposal'])
+                    self.audit('failed', request_id=job['request_id'], job_id=job['job_id'],
+                               reason='apply_failed', error=str(exc), proposal=job['proposal'])
                     raise
 
     def _discard(self, job, reason):
-        self.audit('discarded', reason=reason, proposal=job['proposal'])
+        self.audit('discarded', request_id=job['request_id'], job_id=job['job_id'], reason=reason, proposal=job['proposal'])
         job['status'] = 'discarded'
-        self.ctx.save('refine_state.json', job)
+        self._save_job(job)
 
     def _apply(self, job):
         if job['branch'] != self.harness.branch:
@@ -329,14 +351,16 @@ class Refiner:
                     previous = self.harness.get(edit.kind, edit.id)
                     if not self.harness.delete(edit.kind, edit.id,
                             expected_version=previous['version'] if previous else None, **kwargs):
-                        self.audit('skipped_delete', reason='entry_missing', kind=edit.kind, id=edit.id)
+                        self.audit('skipped_delete', request_id=job['request_id'], job_id=job['job_id'],
+                                   reason='entry_missing', kind=edit.kind, id=edit.id)
                         continue
             commits.append(self.harness.head)
             self.ctx.trace.emit('Refine', 'edit_applied', commit=self.harness.head,
+                                request_id=job['request_id'], job_id=job['job_id'],
                                 edit=edit.model_dump(), operation_id=operation)
-        self.audit('applied', **proposal.model_dump(), commits=commits)
+        self.audit('applied', request_id=job['request_id'], job_id=job['job_id'], **proposal.model_dump(), commits=commits)
         job['status'] = 'applied'
-        self.ctx.save('refine_state.json', job)
+        self._save_job(job)
         return commits
 
     def rollback(self, id, *, operation_id=None):
