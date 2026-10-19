@@ -104,9 +104,10 @@ def test_schema_must_itself_be_json_data_before_dispatch(schema):
     assert calls == []
 
 
-def test_nested_explicit_draft_schema_is_checked_under_its_own_rules():
+@pytest.mark.parametrize("items", [[], [{"type": "string"}]])
+def test_nested_explicit_draft_schema_is_checked_under_its_own_rules(items):
     schema = {"$schema": "http://json-schema.org/draft-07/schema#", "properties": {"value": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema", "items": []}}}
+        "$schema": "https://json-schema.org/draft/2020-12/schema", "items": items}}}
     calls = []
     with pytest.raises(SchemaError):
         adapter(lambda *args: calls.append(args) or '{}').llm_query_json("one", schema)
@@ -220,6 +221,50 @@ def test_invalid_batch_instance_raises_validation_error():
     with pytest.raises(ValidationError):
         adapter(lambda prompt, _: json.dumps(prompt)).llm_query_json_batched(
             ["one", "two"], {"type": "integer"})
+
+
+@pytest.mark.parametrize("failure_kind", ["validation", "transport"])
+def test_later_batch_failure_stops_queued_dispatch_while_first_call_is_blocked(failure_kind):
+    first_started = threading.Event()
+    failure_returned = threading.Event()
+    release_first = threading.Event()
+    queued_started = threading.Event()
+    calls = []
+    transport_failure = RuntimeError("original transport failure")
+
+    def complete(prompt, schema):
+        calls.append(prompt)
+        if prompt == "first":
+            first_started.set()
+            assert release_first.wait(3)
+            return '{"entities": ["first"]}'
+        if prompt == "bad":
+            assert first_started.wait(3)
+            failure_returned.set()
+            if failure_kind == "transport":
+                raise transport_failure
+            return '{"entities": [{"name": "wrong nested type"}]}'
+        queued_started.set()
+        return '{"entities": ["queued"]}'
+
+    model = adapter(complete, max_concurrent=2)
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        result = executor.submit(model.llm_query_json_batched,
+                                 ["first", "bad", *[f"queued-{i}" for i in range(20)]], ENTITY_SCHEMA)
+        try:
+            assert failure_returned.wait(3)
+            queued_was_dispatched = queued_started.wait(0.2)
+        finally:
+            release_first.set()
+        expected = ValidationError if failure_kind == "validation" else RuntimeError
+        with pytest.raises(expected) as error:
+            result.result(timeout=3)
+    if failure_kind == "validation":
+        assert list(error.value.path) == ["entities", 0]
+    else:
+        assert error.value is transport_failure
+    assert not queued_was_dispatched
+    assert calls == ["first", "bad"]
 
 
 @pytest.mark.parametrize("prompts", ["one", ["one", 2], ["one", None]])

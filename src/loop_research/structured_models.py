@@ -1,5 +1,5 @@
 """Validated JSON submodel calls over the host's existing model transport."""
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import CancelledError, ThreadPoolExecutor, as_completed
 from contextvars import copy_context
 from copy import deepcopy
 import json
@@ -44,6 +44,7 @@ def _check_subschema_drafts(schema, validator):
     # Traverse only schema locations for this draft, never const/default data.
     for subschema in specification.subresources_of(schema):
         nested_validator = _validator_class(subschema, validator)
+        nested_validator.check_schema(subschema)
         _check_subschema_drafts(subschema, nested_validator)
 
 
@@ -88,8 +89,10 @@ class StructuredModels:
         self.max_concurrent = max_concurrent
         self._slots = threading.BoundedSemaphore(max_concurrent)
 
-    def _query(self, prompt, schema, validator):
+    def _query(self, prompt, schema, validator, abort=None):
         with self._slots:
+            if abort is not None and abort.is_set():
+                raise CancelledError()
             raw = self.complete(prompt, deepcopy(schema))
         if not isinstance(raw, str):
             raise TypeError("Structured model completion must return text")
@@ -121,12 +124,36 @@ class StructuredModels:
         prepared, validator = _schema_validator(schema)
         if not prompts:
             return []
-        with ThreadPoolExecutor(max_workers=self.max_concurrent) as executor:
-            futures = [executor.submit(copy_context().run, self._query, prompt, prepared, validator)
-                       for prompt in prompts]
+        abort = threading.Event()
+        failure_lock = threading.Lock()
+        first_failure = []
+
+        def query(prompt):
             try:
-                return [future.result() for future in futures]
+                return self._query(prompt, prepared, validator, abort)
+            except BaseException as error:
+                # Close dispatch before this worker can take another queued job.
+                # Retain the cause even if a cancelled future is observed first.
+                with failure_lock:
+                    if not first_failure:
+                        first_failure.append(error)
+                    abort.set()
+                raise
+
+        with ThreadPoolExecutor(max_workers=self.max_concurrent) as executor:
+            futures = {executor.submit(copy_context().run, query, prompt): index
+                       for index, prompt in enumerate(prompts)}
+            results = [None] * len(prompts)
+            try:
+                for future in as_completed(futures):
+                    results[futures[future]] = future.result()
+                return results
             except BaseException:
+                abort.set()
                 for future in futures:
                     future.cancel()
+                with failure_lock:
+                    failure = first_failure[0] if first_failure else None
+                if failure is not None:
+                    raise failure
                 raise
