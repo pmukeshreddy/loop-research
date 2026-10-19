@@ -1382,6 +1382,33 @@ No retries, response-text heuristics or JSON-parsing fallback were added.
 
 The real isolated-worker regression returns all 22 indexed sub-call results.
 Fresh full suite after both fixes: **510 passed, 1 deselected in 64.58 seconds**,
-recorded in `runs/round2/unit_suite.log`. The interrupted live attempt remains at
+recorded in `runs/round2/unit_suite.before_budget_schema.log`. The interrupted live attempt remains at
 `research-dffc69e58f7f42ec9d4fd0056440aa83`; its learned edits must be compensated
 before the restarted proof from BASE. No successful four-arm result is claimed here.
+
+
+The second Round 2 A attempt, `research-6feeae9df01947bcb034f7a0322d8962`,
+consumed its unchanged 300-call research allowance after generated code assumed
+untyped sub-model entities were strings. Valid JSON contained objects, causing
+an unhashable-dict error, then the agent repeated search work. The worker ended
+with BudgetExceeded before operator interruption of finalization. Its mid-task
+edit was compensated through the harness rollback and the exact BASE was forked
+again. Both interrupted attempts remain archived; neither is a completed proof arm.
+
+`e0c5e6f` exposes configured limits and a read-only budget snapshot, without
+increasing the allowance or reserving calls for inspection. `de363ac` and
+`8a9af7b` provide explicit schema-validated sub-model calls through the existing
+isolated bridge, configured sub-model, shared budget, and concurrency limit.
+Schemas and raw responses are archived; the exact schema-file size/hash is logged
+separately from prompt size. Invalid data raises without coercion, omission,
+automatic repair, or a fallback. Remote schema retrieval is disabled.
+
+Review identified queued spending after a batch failure and incomplete nested-
+dialect validation. `64e36b6` fixes both; the targeted regressions went from
+3 failures to 49 passes, and follow-up review confirmed both findings closed.
+The real isolated-worker integration verifies native typed values, schema
+archival, call accounting, and identical prompts/results with tracing off/on.
+Fresh final default suite: **571 passed, 1 deselected in 69.24 seconds** at
+`runs/round2/unit_suite.log`. The previous 568-test run is preserved in
+`runs/round2/unit_suite.before_structured_review.log`. No live four-arm result
+is claimed by these offline tests; the restarted proof remains to be executed.
