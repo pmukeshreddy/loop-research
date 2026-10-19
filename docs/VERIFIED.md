@@ -1250,3 +1250,10 @@ The local package was installed editable for the requested debug run. macOS had
 marked its generated `.pth` file hidden; Python skipped that file. Clearing the
 hidden flag restored the source import, verified by `loop_research.__file__` and
 the CLI's `research --help` showing `--trace`.
+
+The editable install's hidden flag recurred before launch, preventing the CLI
+from importing. No run or model call started. Reinstalled the normal package
+with `uv pip install --python .venv/bin/python --no-deps --reinstall .`, matching
+the documented non-editable setup; every installed Python module's SHA-256 was
+verified equal to its source counterpart. This removes dependence on `.pth`
+processing. The following live debug run uses that installation.
