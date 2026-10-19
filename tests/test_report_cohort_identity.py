@@ -35,8 +35,14 @@ def cohort(tmp_path):
     here = root / "runs/round2"
     here.mkdir(parents=True)
     (root / ".gitignore").write_text("runs/\n")
+    source = root / "src/loop_research/provenance_fixture.py"
+    source.parent.mkdir(parents=True)
+    source.write_bytes(b"VALUE = 1\n")
+    installed = tmp_path / "installed/loop_research/provenance_fixture.py"
+    installed.parent.mkdir(parents=True)
+    installed.write_bytes(source.read_bytes())
     subprocess.run(["git", "init", "-q", str(root)], check=True)
-    subprocess.run(["git", "-C", str(root), "add", ".gitignore"], check=True)
+    subprocess.run(["git", "-C", str(root), "add", ".gitignore", "src"], check=True)
     subprocess.run(["git", "-C", str(root), "-c", "user.name=Fixture", "-c", "user.email=fixture@example.org",
                     "commit", "-qm", "Fixture baseline"], check=True)
     commit = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
@@ -143,7 +149,13 @@ def cohort(tmp_path):
     (here / "suite.log").write_text("1 passed\n")
     suite = {"exit_code": 0, "passed": 1, "log": str(here / "suite.log")}
     manifest.update(unit_suite=suite, reporting_unit_suite=suite, replay_coordinator=str(here / "coordinator.json"))
-    write(here / "coordinator.json", {"preflight": {"source": {"commit": commit, "modules": []}}})
+    source_receipt = {"commit": commit, "package_root": str(installed.parent),
+                      "modules": [{"source": str(source.relative_to(root)), "installed": str(installed),
+                                   "bytes": len(source.read_bytes()), "sha256": sha(source.read_bytes())}]}
+    write(here / "coordinator.json", {"status": "complete", "preflight": {"source": source_receipt},
+          "arms": {label: {"status": "complete", "exit_code": 0, "source_commit": commit,
+                           "source_unchanged": True, "run_id": manifest["runs"][label],
+                           "run_path": str(outputs[label, "current"].parent.parent)} for label in LABELS}})
     write(here / "manifest.json", manifest)
     return here
 

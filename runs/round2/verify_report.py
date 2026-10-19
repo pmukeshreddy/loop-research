@@ -18,6 +18,88 @@ def read(path):
 def sha(data):
     return hashlib.sha256(data).hexdigest()
 
+def verify_source_provenance(manifest):
+    """Verify historical execution receipts and current report bytes separately."""
+    prefix = Path('src/loop_research')
+    def git_modules(commit):
+        tree = subprocess.check_output(['git', 'ls-tree', '-r', '-z', commit, '--', str(prefix)], cwd=ROOT)
+        modules = {}
+        for record in tree.split(b'\0'):
+            if not record:
+                continue
+            metadata, path_bytes = record.split(b'\t', 1)
+            path = path_bytes.decode()
+            if not path.endswith('.py'):
+                continue
+            mode, kind, object_id = metadata.split()
+            assert mode in (b'100644', b'100755') and kind == b'blob', path
+            modules[path] = subprocess.check_output(['git', 'cat-file', 'blob', object_id.decode()], cwd=ROOT)
+        assert modules, f'No Python modules at {commit}'
+        return modules
+
+    coordinator = read(Path(manifest['replay_coordinator']))
+    runtime = coordinator['preflight']['source']
+    assert runtime['commit'] == manifest['source_commit']
+    historical = git_modules(runtime['commit'])
+    captured = runtime['modules']
+    assert len(captured) == len({module['source'] for module in captured})
+    assert {module['source'] for module in captured} == set(historical)
+    package_root = Path(runtime['package_root'])
+    assert package_root.is_absolute()
+    for module in captured:
+        content = historical[module['source']]
+        assert module['sha256'] == sha(content) and module['bytes'] == len(content), module['source']
+        expected = package_root / Path(module['source']).relative_to(prefix)
+        assert Path(module['installed']).resolve() == expected.resolve(), module['source']
+
+    # These immutable receipts attest checks performed at completion. They are
+    # not new measurements of an installation that no longer exists.
+    assert coordinator['status'] == 'complete'
+    assert set(coordinator['arms']) == set(manifest['runs']) - {'explicit'}
+    receipts = dict(coordinator['arms'])
+    if 'explicit' in manifest['runs']:
+        receipts['explicit'] = read(HERE / 'explicit_execution.json')
+    verified_receipts = []
+    for label, receipt in sorted(receipts.items()):
+        assert receipt['run_id'] == manifest['runs'][label]
+        assert receipt['source_commit'] == runtime['commit']
+        assert receipt['source_unchanged'] is True
+        assert receipt['status'] == 'complete' and receipt['exit_code'] == 0
+        archive = Path(receipt['run_path'])
+        assert archive.name == receipt['run_id']
+        owner = read(archive / 'research.json')
+        assert owner['run_id'] == receipt['run_id'] and owner['status'] == 'complete' and not owner['error']
+        audit = read(HERE / f'{label}.audit.json')
+        assert owner['task_id'] == Path(audit['task_path']).name
+        assert owner == read(Path(audit['task_path']).parent / 'research.json')
+        verified_receipts.append({'label': label, 'run_id': receipt['run_id'],
+                                  'run_path': str(archive), 'source_commit': runtime['commit'],
+                                  'source_unchanged': True})
+
+    current = git_modules(manifest['report_source_commit'])
+    assert {str(path.relative_to(ROOT)) for path in (ROOT / prefix).rglob('*.py')} == set(current)
+    installed_paths = {str(prefix / path.relative_to(package_root)) for path in package_root.rglob('*.py')}
+    assert installed_paths == set(current)
+    for path, content in current.items():
+        assert (ROOT / path).read_bytes() == content, path
+        assert (package_root / Path(path).relative_to(prefix)).read_bytes() == content, path
+
+    changed = []
+    for path in sorted(set(historical) | set(current)):
+        before, after = historical.get(path), current.get(path)
+        if before != after:
+            changed.append({'source': path,
+                            'change': 'added' if before is None else 'deleted' if after is None else 'modified',
+                            'runtime_sha256': sha(before) if before is not None else None,
+                            'report_sha256': sha(after) if after is not None else None})
+    return {'runtime_commit': runtime['commit'], 'report_commit': manifest['report_source_commit'],
+            'runtime_module_count': len(historical), 'report_module_count': len(current),
+            'runtime_modules_verified': True, 'report_modules_verified': True,
+            'completion_receipts': verified_receipts,
+            'completion_receipt_meaning': 'Captured completion checks attest the original source and installed '
+                                          'bytes; historical installed bytes are not remeasured.',
+            'changed_modules': changed}
+
 def normalized(value):
     return ''.join(c for c in unicodedata.normalize('NFKD', str(value)).casefold() if c.isalnum())
 
@@ -273,16 +355,13 @@ assert subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT, text=
 for suite in (manifest['unit_suite'], manifest['reporting_unit_suite']):
     assert suite['exit_code'] == 0
     assert f"{suite['passed']} passed" in Path(suite['log']).read_text()
-runtime = read(Path(manifest['replay_coordinator']))['preflight']['source']
-assert runtime['commit'] == manifest['source_commit']
-for module in runtime['modules']:
-    assert sha((ROOT / module['source']).read_bytes()) == module['sha256']
-    assert sha(Path(module['installed']).read_bytes()) == module['sha256']
+source_provenance = verify_source_provenance(manifest)
 result = {'report_sha256': sha(report.read_bytes()), 'original_sha256': sha(original),
           'original_bytes': len(original), 'original_unchanged_before_append': True,
           'verified_local_links': len(links), 'controls_equal': True,
           'source_commit': manifest['source_commit'], 'report_source_commit': manifest['report_source_commit'],
-          'research_modules_unchanged': True, 'source_clean': True, 'runs': checked,
+          'research_modules_unchanged': not source_provenance['changed_modules'],
+          'source_provenance': source_provenance, 'source_clean': True, 'runs': checked,
           'identity_reviews': identity_reviews, 'recorded_recovered_errors': len(observed_errors),
           'recorded_validation_errors': sum(item['classification'] == 'validation_recovered' for item in observed_errors),
           'recorded_capacity_error_events': sum(item['classification'] == 'external_capacity_retried' for item in observed_errors)}
