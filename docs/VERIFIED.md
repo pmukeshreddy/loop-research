@@ -1295,3 +1295,48 @@ after; independent review found no blocker. Full suite: **454 passed, 1 deselect
 in 46.97 seconds**. The proof is rerun from the original BASE, not resumed from
 the persisted oversized planning job. This removes duplication, not a general
 bound on arbitrary future task/evidence sizes.
+
+## Completed traced proof (2026-10-18)
+
+With source commit `c944f51`, the final proof runs completed:
+
+| Run | Archive | Root iterations | Codex attempts | Issues | Signals |
+| --- | --- | ---: | ---: | ---: | ---: |
+| A, Chemistry | `research-2903d5a9ba3744aaaa894dbff69cec32` | 21 | 150 | 0 | 58 |
+| B1, Physics with learning | `research-7855ad7a472341bea97828cf8a104409` | 16 | 125 | 0 | 36 |
+| B0, Physics from BASE without learning | `research-50e10a73a30a45fea4461a2b1b88832e` | 14 | 121 | 0 | 51 |
+
+All three ended answer-ready and returned 28 cited rows with zero uncited cells.
+All archived self-checks were independently recomputed and matched. B1 took
+778.965 seconds versus B0's 681.376 seconds; this pair does not establish a
+performance benefit. A crossed a long interruption: its UTC wall span was
+6778.080 seconds versus 1413.605 seconds measured by the monotonic trace clock.
+Fetched-text/largest-root-prompt ratios were 0.099, 0.179 and 0.170, so the
+requested large-context advantage was not demonstrated.
+
+A's automatic refinement created “Use boolean verdicts in constraint checks”
+in harness commit `be22b9c3159359252b4edac1dad426af7ab26820`. B1 retrieved it
+and used boolean verdicts, but B0 also did so without the entry; causal influence
+is not established. Neither run refined mid-task. B1's subsequent edit ended at
+`6c8f6e1361489ff027007edb00562c1b97a68640`; B0 restored that active HEAD.
+Successful refinement inputs were 555,222 and 623,198 characters.
+
+No child RLM spawned naturally. The explicitly requested extra traced check,
+`research-dce3477bcf9141be8ebae3c66d384318`, spawned one depth-1 child with
+three iterations and three REPL blocks, ending answer-ready. Its root used six
+iterations and returned two cited rows with no issues, signals or component
+errors. It also restored the active B1 harness afterward.
+
+The Nobel fetch audit found no requested/opened URL mismatches in failed A
+fetches. Suspicious paths came from search results, not root URL construction;
+the fetch backend itself returned FETCH_FAILED. Per-page HTTP statuses were not
+archived, so these are backend-reported access failures, not proof of a specific
+HTTP status for every page. No fetch-code change or rollback was warranted.
+
+The report at `runs/proof_report.md` leads with the RLM and self-improvement
+verdicts and includes exact commands, provenance, context/call measurements,
+REPL excerpts, parallel timings, every issue/signal, A's exact refinement edit,
+component verdicts, and all final cited tables. Its 193 local evidence links,
+all rendered tables, self-checks and lineage restoration were verified. One pair
+is mechanism evidence, not a statistical result. No source changes followed the
+454-test passing suite; this commit records the live evidence only.
