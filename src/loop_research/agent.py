@@ -83,7 +83,17 @@ def citation_check(output, ledger):
     return failures
 
 
-def make_prompt(task, contract, entries, *, as_of, date_archive=None):
+def learning_policy(enabled):
+    if not enabled:
+        return 'LEARNING DISABLED\nDo not request refinement or edit the harness.\n'
+    return ('LEARNING ENABLED\nWhen current research reveals a repeated tool failure, a recovered execution '
+            'error, or a successful reusable procedure, request refine.run(focus="the observed procedure or problem") '
+            'during the task, grounded in evidence already collected. The planner may decline unsupported edits. '
+            'Do not repeat a pending request. Continue research while planning runs in the background; completed '
+            'edits apply before later root calls and appear in CURRENT RELEVANT HARNESS ENTRIES.\n')
+
+
+def make_prompt(task, contract, entries, *, as_of, date_archive=None, learning=True):
     identity = {"policy": as_of, "task_date": task.as_of_date.isoformat() if task.as_of_date else None}
     archived = read_json(date_archive) if date_archive is not None else None
     if archived is not None:
@@ -117,6 +127,7 @@ def make_prompt(task, contract, entries, *, as_of, date_archive=None):
         "check_constraint(row, constraint, verdict, url, quote): record each constraint check with fetched evidence. "
         "Use row paths /rows/0 or /files/<filename>/0 and constraint ids listed below.\n"
         f"CONSTRAINT IDS\n{json.dumps(constraints_for(task), ensure_ascii=False)}\n\n"
+        f"{learning_policy(learning)}\n"
         "METHOD\nGo wide: use search_many for independent discovery queries and keep candidates in REPL variables. "
         "Go deep: fetch candidate pages with fetch_many, then fill fields using parallel "
         "llm_query_batched calls on fetched pages stored in variables. Keep extracted rows in Python; "
@@ -134,9 +145,10 @@ def run_task(task, benchmark, session):
     contract = benchmark.output_contract(task)
     entries = session.retrieve()
     prompt, asof, source = make_prompt(task, contract, entries, as_of=ctx.config.agent.as_of,
-                                      date_archive=ctx.path / "as_of.json")
+                                      date_archive=ctx.path / "as_of.json", learning=session.learning)
     root_prompt = (f"TASK\n{task.question}\nSPEC\n{json.dumps(task.spec, ensure_ascii=False)}\n"
                    f"LANGUAGE\n{task.language}\nAS-OF DATE\n{asof} (source: {source})\n"
+                   f"{learning_policy(session.learning)}\n"
                    "Read the full instructions and output contract in the REPL context.")
     with ctx.trace.span("Prompt", "save", size_chars=len(prompt), size_bytes=len(prompt.encode()),
                         sha256=hashlib.sha256(prompt.encode()).hexdigest(), path=str(ctx.path / "prompt.txt")):
