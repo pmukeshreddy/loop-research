@@ -127,6 +127,7 @@ runs/<run_id>/<task_id>/         research-only artifacts
   task_state.json               research and finalization progress
   session_state.json            pending rollback and finalization state
   refine_state.json             durable refinement proposal and edit identities
+  refine_requests/              every planning snapshot, exact input and decisions
   refinements.jsonl             applied, discarded, skipped, and failed edits
   codex_calls.jsonl              completed model call metadata
   codex_attempts/                durable attempt starts
@@ -139,7 +140,23 @@ reports/learning_curve.png      rolling task-score means by stream
 reports/summary.md              stream summaries and eligible comparisons
 ```
 
-The exact task archive also contains tool caches and evidence records. `codex.log_full_text` controls full prompt/response logging. Grader artifacts remain under reports, separate from research observations.
+The exact task archive also contains tool caches and evidence records. `fetch_telemetry.json`
+records returned character counts and links fetch attempts to the complete Codex web events in
+`codex_calls.jsonl`. Raw opened-page character counts remain unavailable when those events
+expose only result metadata; returned model text is not a raw-page size measurement.
+`codex.log_full_text` controls full prompt/response logging. Grader artifacts remain under
+reports, separate from research observations.
+
+The project RLM subclass gives the root a short task brief; the full task contract stays in
+the persistent REPL context. Its coordination prompt asks for page processing in variables
+and sub-calls, compact diagnostics, and direct submission of the validated Python value.
+Printed output still reaches later root prompts with the pinned RLM's existing per-block
+truncation; no output filter enforces this policy. Retrieved procedures omit usage/outcome
+history from researcher prompts while the harness and refiner retain that history.
+Learning runs describe when to request evidence-grounded mid-task refinement. The planner
+must account for every presented issue/signal group and each additional candidate, with
+evidence references and a reason for accepting or declining it. The edit limit is a ceiling,
+and an empty edit list remains valid.
 
 `report` reads archived stream files without model or dataset access. Every completed task must have a finite official score; report generation rejects completed rows with missing or nonfinite scores. Rolling means include every completed task in the last `stream.rolling_window` positions, including official empty-submission scores for failures, with the contributing count in the CSV. Interrupted streams show their count, active task, phase, pending count, and error. CSV, summary and curve labels identify all four model roles; archived judge labels must match the configured judge. Curves for different streams are descriptive; the comparison table enforces the matching conditions above. No benchmark scores are claimed in this documentation.
 

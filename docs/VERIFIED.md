@@ -1340,3 +1340,31 @@ component verdicts, and all final cited tables. Its 193 local evidence links,
 all rendered tables, self-checks and lineage restoration were verified. One pair
 is mechanism evidence, not a statistical result. No source changes followed the
 454-test passing suite; this commit records the live evidence only.
+
+## Round 2 implementation verification
+
+The disk audit traced page leakage to printed REPL output retained by the pinned
+RLM, the stock orchestrator's printed-candidate requirement, duplicated full task
+context in the initial root prompt, and retrieved usage/outcome history. Project
+subclasses now use a coordination prompt and task brief; full evidence remains in
+Python variables/sub-calls, and printed stdout is still observable under the
+unchanged upstream truncation. This is guidance, not a claim of live context
+advantage. A negative test confirms deliberately printed page text still reaches
+the root. The pinned RLM source integrity check passed unchanged.
+
+Mid-task refinement already existed. The prompt now describes observed triggers
+and learning mode. An isolated-worker fixture proves a background proposal commits
+and is retrieved at a later root turn before worker completion. Candidate accounting
+requires evidence-linked decisions for all presented issue/signal groups and model
+added candidates, while allowing zero edits. Each planning job retains exact input,
+schema, raw response and decisions across requests, stale replans and retries.
+
+Codex completed web events in existing disk archives expose opened URLs and result
+metadata, but no raw opened-page character count. Complete web events and separate
+fetch telemetry now preserve that limitation explicitly; model-rendered returned
+text is measured independently. Telemetry stays outside research/refiner inputs.
+
+Fresh default suite: **500 passed, 1 deselected in 56.15 seconds**. The deselected
+case is the opt-in live test; no tests or criteria were weakened. The full log is
+`runs/round2/unit_suite.log`. The user has explicitly requested the subsequent
+traced proof arms; their results belong in the append-only Round 2 report.
