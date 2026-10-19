@@ -13,7 +13,7 @@ from rlm import RLM
 from rlm.clients.base_lm import BaseLM
 from rlm.core.comms_utils import LMRequest, LMResponse, send_lm_request, send_lm_request_batched
 from rlm.core.lm_handler import LMHandler
-from rlm.core.types import ModelUsageSummary, UsageSummary, RLMChatCompletion
+from rlm.core.types import ModelUsageSummary, UsageSummary, RLMChatCompletion, REPLResult
 from rlm.environments.local_repl import LocalREPL
 
 
@@ -116,10 +116,43 @@ class CodexHandler(LMHandler):
 
 
 class CodexREPL(LocalREPL):
-    """Keep failed transports distinct from successful model response text."""
+    """Preserve completed Python work and surface transport failures as errors."""
     def __init__(self, *args, lm_timeout, **kwargs):
         self.lm_timeout = lm_timeout
         super().__init__(*args, **kwargs)
+
+    def execute_code(self, code):
+        # The pinned implementation commits bindings only after a successful
+        # block. Keep its capture/scaffold/result contract, including errors,
+        # but retain completed assignments when a later statement fails.
+        start = time.perf_counter()
+        self._pending_llm_calls = []
+        with self._capture_output() as (stdout_buf, stderr_buf), self._temp_cwd():
+            combined = {**self.globals, **self.locals}
+            completed = False
+            try:
+                try:
+                    exec(code, combined, combined)
+                    completed = True
+                finally:
+                    captured_answer = self._last_final_answer
+                    for key, value in combined.items():
+                        if key not in self.globals and not key.startswith('_'):
+                            self.locals[key] = value
+                    self._restore_scaffold()
+                    if not completed:
+                        # Restoration must not submit a plain answer dict from
+                        # a failed block; retain only an existing callback capture.
+                        self._last_final_answer = captured_answer
+                stderr = stderr_buf.getvalue()
+            except Exception as exc:
+                stderr = stderr_buf.getvalue() + f'\n{type(exc).__name__}: {exc}'
+            stdout = stdout_buf.getvalue()
+        final_answer = self._last_final_answer
+        self._last_final_answer = None
+        return REPLResult(stdout=stdout, stderr=stderr, locals=self.locals.copy(),
+            execution_time=time.perf_counter() - start,
+            rlm_calls=self._pending_llm_calls.copy(), final_answer=final_answer)
 
     def _responses(self, responses):
         errors = []

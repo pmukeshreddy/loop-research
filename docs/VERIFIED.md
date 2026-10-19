@@ -1418,3 +1418,9 @@ is claimed by these offline tests; the restarted proof remains to be executed.
 ## Root input preservation audit
 
 The initial root prompt again contains the complete task contract and retrieved entries retain all fields. The coordination guidance does not filter printed output, and refinement timing remains agent-controlled. Regression tests retain the original prompt test with positive full-input/history requirements and add whole-entry equality; no coverage was removed. The new assertions failed twice before the fix and passed afterward. The full offline suite passed: **574 passed, 1 live test deselected in 66.89 seconds**. A fixture provenance comment was generalized without changing its data or assertions. The four proof arms require replay on this source.
+
+## Persistent REPL recovery verification
+
+The pinned execution method synchronized new bindings only after a successful block. A later exception therefore discarded completed tool-result assignments, causing recovery to repeat work or raise a missing-name error. The project subclass now retains completed bindings and restores its scaffold in finally, with unchanged stdout/stderr, call metadata and answer-capture semantics. Upstream remains unmodified. The fix does not retry a model, accept invalid evidence, suppress an error, or change refinement scheduling.
+
+The state regressions failed twice before the fix; review found and tested the failed plain-dictionary answer-rebinding edge before integration. Six added tests include an isolated-worker recovery that reuses one fetched value and one sub-model response without repeated calls. Targeted: **11 passed in5.11seconds**. Full suite: **580 passed, 1 live test deselected in69.23seconds**. No existing test was removed or weakened. Four proof arms must run on the same corrected source.

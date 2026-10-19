@@ -151,7 +151,9 @@ The project RLM subclass gives the root the full task contract, also available i
 the persistent REPL context. Its coordination prompt asks for page processing in variables
 and sub-calls, compact diagnostics, and direct submission of the validated Python value.
 Printed output still reaches later root prompts with the pinned RLM's existing per-block
-truncation; no output filter enforces this policy. Retrieved entries retain all fields,
+truncation; no output filter enforces this policy. Completed Python assignments survive a later
+exception in the same block, with the error still visible, so recovery can reuse collected results.
+Retrieved entries retain all fields,
 including usage and outcome history, in researcher prompts.
 The root and REPL receive configured resource limits. `budget()` reports cumulative reserved
 research calls and remaining allowance without consuming a call; retries and in-flight calls
