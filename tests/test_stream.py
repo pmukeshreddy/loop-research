@@ -11,6 +11,7 @@ from loop_research.archive import GradeContext, RunContext, read_json
 from loop_research.benchmarks import GradeResult
 from loop_research.harness import Harness
 from loop_research.research import ResearchData
+from test_refine import accounted_fixture
 
 
 class Benchmark(ResearchData):
@@ -45,7 +46,7 @@ def offline(tmp_path, task, output, monkeypatch):
             if state.plan_failures or len(state.plans) == state.plan_failure_at:
                 state.plan_failures = max(0, state.plan_failures - 1)
                 raise ValueError('fixture refinement failed')
-            return json.dumps({'summary': 'Fixture procedure', 'edits': state.edits})
+            return json.dumps(accounted_fixture({'summary': 'Fixture procedure', 'edits': state.edits}, prompt))
 
     monkeypatch.setattr(session_module, 'CodexBackend', lambda *args, **kwargs: Planner())
     monkeypatch.setattr(stream, 'load_benchmark', lambda *args: state.adapter)
