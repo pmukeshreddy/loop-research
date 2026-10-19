@@ -255,3 +255,48 @@ def test_batched_tools_cancel_queued_calls_after_failure(ctx, monkeypatch):
             getattr(tool, batch)(['bad', *map(str, range(8))])
         assert any(future.cancelled() for future in futures)
         assert len(calls) < 9
+
+
+def test_trace_identifies_each_child_and_answer_ready_termination(tmp_path):
+    from loop_research.rlm_codex_client import CodexRLM
+    from loop_research.trace import Trace
+    trace = Trace(tmp_path)
+    class Transport:
+        last_usage = {'input_tokens': 1, 'output_tokens': 1}
+        def call(self, method, *args, **kwargs):
+            trace.emit(*args, **kwargs)
+        def complete(self, prompt, *, purpose, model):
+            if purpose == 'root':
+                return '```repl\nresults = [rlm_query("first"), rlm_query("second")]\nanswer["content"] = str(results)\nanswer["ready"] = True\n```'
+            return '```repl\nanswer["content"] = "child"\nanswer["ready"] = True\n```'
+    result = CodexRLM(Transport(), root_model='root', sub_model='sub', max_depth=2,
+                      max_iterations=2, trace_enabled=True).completion('fixture')
+    assert result.response == "['child', 'child']"
+    events = read_jsonl(tmp_path / 'trace.jsonl')
+    completed = [e['details'] for e in events if e['component'] == 'RLM' and e['event'] == 'completion.end']
+    assert len(completed) == 3
+    assert len({e['rlm_id'] for e in completed}) == 3
+    root = next(e for e in completed if e['depth'] == 0)
+    for item in completed:
+        assert item['termination'] == 'answer_ready' and item['iterations'] == 1
+        if item['depth']:
+            assert item['parent_rlm_id'] == root['rlm_id']
+        blocks = [e for e in events if e['component'] == 'REPL' and e['event'] == 'code.end'
+                  and e['details']['rlm_id'] == item['rlm_id']]
+        assert len(blocks) == 1 and blocks[0]['details']['answer_ready'] is True
+
+
+def test_trace_distinguishes_iteration_limit_from_ready_answer(tmp_path):
+    from loop_research.rlm_codex_client import CodexRLM
+    from loop_research.trace import Trace
+    trace = Trace(tmp_path)
+    class Transport:
+        last_usage = {'input_tokens': 1, 'output_tokens': 1}
+        def call(self, method, *args, **kwargs):
+            trace.emit(*args, **kwargs)
+        def complete(self, prompt, *, purpose, model):
+            return 'No ready answer'
+    CodexRLM(Transport(), root_model='root', sub_model='sub', max_iterations=1,
+             trace_enabled=True).completion('fixture')
+    end = [e for e in read_jsonl(tmp_path / 'trace.jsonl') if e['event'] == 'completion.end']
+    assert end[0]['details']['termination'] == 'iteration_limit'

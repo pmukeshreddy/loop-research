@@ -236,7 +236,7 @@ def test_fetch_backend_retries_keep_failure_evidence_after_success_and_cache(ctx
     assert failure['request_id'] == owner['id'] and failure['call_id'] == attempts[0]['call_id']
     assert failure['reason'] == 'backend_attempt_failed' and 'transient fetch failure' in failure['error']
     assert any(item['type'] == 'failed_fetch' and item['call_id'] == attempts[0]['call_id']
-               for item in check(task, {'rows': []}, evidence, {})['issues'])
+               for item in check(task, {'rows': []}, evidence, {})['signals'])
     assert ctx.load('evidence.json') == evidence
     assert ctx.load("evidence.json") == tools.snapshot()
 

@@ -92,13 +92,16 @@ class Trace:
         lines += ['', '## Connection map', '', '| Connection | Calls |', '| --- | ---: |']
         lines += [f'| {source} → {target} | {count} |' for (source, target), count in sorted(edges.items())]
         lines += ['', '## Final cited table', '', render_table(output), '', '## Self-check issues', '']
-        grouped = defaultdict(list)
-        for issue in self_check.get('issues', []):
-            grouped[issue['type']].append(issue)
-        if not grouped:
-            lines.append('None recorded.' if self_check.get('ok') else 'Self-check did not complete.')
-        for kind, issues in sorted(grouped.items()):
-            lines.append(f'- **{kind}** ({len(issues)}): ' + json.dumps(issues, ensure_ascii=False))
+        for category in ('issues', 'signals'):
+            if category == 'signals':
+                lines += ['', '## Self-check signals', '']
+            grouped = defaultdict(list)
+            for item in self_check.get(category, []):
+                grouped[item['type']].append(item)
+            if not grouped:
+                lines.append('None recorded.' if self_check else 'Self-check did not complete.')
+            for kind, items in sorted(grouped.items()):
+                lines.append(f'- **{kind}** ({len(items)}): ' + json.dumps(items, ensure_ascii=False))
         lines += ['', '## Harness edits from refinement', '']
         edits = [e['details'] for e in events if e['component'] == 'Refine' and
                  (e['event'] == 'edit_applied' or (e['event'] == 'rollback.end' and

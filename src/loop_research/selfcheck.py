@@ -25,7 +25,7 @@ def rows_of(output):
 
 
 def check(task, output, evidence, status):
-    issues, citations, coverage = [], [], []
+    issues, signals, citations, coverage = [], [], [], []
     fetched = evidence.get('fetched', {})
 
     def cited(url, quote, path):
@@ -69,20 +69,20 @@ def check(task, output, evidence, status):
                 issues.append({'type': 'failed_constraint', 'row': path, 'constraint': constraint['id']})
     for item in evidence.get('searches', []):
         if not item['hits']:
-            issues.append({'type': 'empty_search', 'query': item['query']})
+            signals.append({'type': 'empty_search', 'query': item['query']})
         if not any(d['query'] == item['query'] for d in evidence.get('discoveries', [])):
             issues.append({'type': 'unrecorded_discovery', 'query': item['query']})
     for item in evidence.get('discoveries', []):
         if not item['new_entities']:
-            issues.append({'type': 'stalled_search', 'query': item['query']})
+            signals.append({'type': 'stalled_search', 'query': item['query']})
     for failure in evidence.get('failures', []):
-        issues.append({'type': 'failed_fetch' if failure['operation'] == 'fetch' else 'failed_search', **failure})
+        signals.append({'type': 'failed_fetch' if failure['operation'] == 'fetch' else 'failed_search', **failure})
     for dropped in evidence.get('dropped_search_hits', []):
-        issues.append({'type': 'dropped_search_hit', **dropped})
+        signals.append({'type': 'dropped_search_hit', **dropped})
     for flag in ('iteration_limit', 'timeout', 'call_limit', 'worker_error'):
         if status.get(flag):
             issues.append({'type': flag})
-    return {'ok': not issues, 'issues': issues, 'citations': citations, 'constraint_coverage': coverage,
+    return {'ok': not issues, 'issues': issues, 'signals': signals, 'citations': citations, 'constraint_coverage': coverage,
             'searches': evidence.get('searches', []), 'discoveries': evidence.get('discoveries', []),
             'fetches': evidence.get('fetches', []), 'dropped_search_hits': evidence.get('dropped_search_hits', []),
             'status': status}

@@ -422,3 +422,43 @@ def test_freeform_research_uses_own_adapter_and_metadata(tmp_path, config, offli
     assert summary['kind'] == summary['benchmark'] == 'research'
     assert set(Harness(tmp_path / 'harness').snapshot()['seen']) == {'research:' + task.task_id}
     assert offline.adapter.calls == [] and len(offline.plans) == 1
+
+
+def test_research_comparison_uses_explicit_base_and_restores_learning_branch(tmp_path, config, offline):
+    with pytest.raises(ValueError, match='--no-learning requires --base'):
+        stream.research(tmp_path, config, 'Fixture A', ['entity', 'value'], ['entity'], 'en', no_learning=True)
+    harness = Harness(tmp_path / 'harness')
+    base = harness.head
+    offline.edits = [{'action': 'create', 'kind': 'memory', 'id': None, 'title': 'Fixture procedure',
+                      'content': 'Inspect fixture source evidence.', 'module': None}]
+    first = stream.research(tmp_path, config, 'Fixture A', ['entity', 'value'], ['entity'], 'en')
+    second = stream.research(tmp_path, config, 'Fixture B', ['entity', 'value'], ['entity'], 'en')
+    assert first['base_sha'] == base and second['base_sha'] == first['harness_after']
+    branch, head = harness.branch, harness.head
+    plans = len(offline.plans)
+    baseline = stream.research(tmp_path, config, 'Fixture B', ['entity', 'value'], ['entity'], 'en',
+                               no_learning=True, base=base, trace=True)
+    assert baseline['base_sha'] == base and baseline['learning'] is False
+    assert baseline['lineage'] != second['lineage'] and len(offline.plans) == plans
+    assert offline.observed[-1] == []
+    assert harness.branch == branch and harness.head == head
+    manifest = read_json(tmp_path / 'runs' / baseline['run_id'] / 'research.json')
+    assert manifest['base_sha'] == base and manifest['return_branch'] == branch
+    assert manifest['status'] == 'complete' and manifest['learning'] is False
+    with pytest.raises(ValueError, match='already contains research'):
+        stream.research(tmp_path, config, 'Fixture B', ['entity', 'value'], ['entity'], 'en', base=head)
+    assert harness.branch == branch and harness.head == head
+
+
+def test_research_no_learning_restores_branch_on_finalization_failure(tmp_path, config, offline, monkeypatch):
+    harness = Harness(tmp_path / 'harness')
+    base, branch = harness.head, harness.branch
+    def fail(*args, **kwargs):
+        raise RuntimeError('fixture finalization error')
+    monkeypatch.setattr(stream.Session, 'finish', fail)
+    with pytest.raises(RuntimeError, match='finalization error'):
+        stream.research(tmp_path, config, 'Fixture', ['entity', 'value'], ['entity'], 'en',
+                        no_learning=True, base=base)
+    assert harness.head == base and harness.branch == branch
+    manifest = read_json(next((tmp_path / 'runs').glob('*/research.json')))
+    assert manifest['status'] == 'interrupted' and 'finalization error' in manifest['error']

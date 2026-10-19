@@ -21,7 +21,8 @@ def test_all_rows_constraints_quotes_and_operational_failures(task, output):
                 'failures': [{'operation': 'fetch', 'url': 'https://failed.example/'}]}
     report = check(task, output, evidence, {'iteration_limit': True, 'timeout': True})
     kinds = {x['type'] for x in report['issues']}
-    assert {'empty_search', 'stalled_search', 'failed_fetch', 'iteration_limit', 'timeout'} <= kinds
+    assert {'iteration_limit', 'timeout'} <= kinds
+    assert {'empty_search', 'stalled_search', 'failed_fetch'} <= {s['type'] for s in report['signals']}
     assert 'fabricated_quote' not in kinds and 'unchecked_constraint' not in kinds
 
 
@@ -41,5 +42,23 @@ def test_selfcheck_exposes_fetch_audit_and_every_dropped_hit(task, output):
     report = check(task, output, evidence, {})
     assert report['fetches'] == fetches
     assert report['dropped_search_hits'] == dropped
-    assert [item for item in report['issues'] if item['type'] == 'dropped_search_hit'] == [
+    assert [item for item in report['signals'] if item['type'] == 'dropped_search_hit'] == [
         {'type': 'dropped_search_hit', **item} for item in dropped]
+
+
+def test_operational_signals_do_not_fail_supported_answer(task, output):
+    evidence = {'fetched': {'https://example.org/': ['fixture-a fixture-value']},
+        'checks': [{'row': '/rows/0', 'constraint': c['id'], 'verdict': True,
+                    'url': 'https://example.org/', 'quote': 'fixture-value'} for c in constraints_for(task)],
+        'searches': [{'query': 'empty', 'hits': 0}],
+        'discoveries': [{'query': 'empty', 'new_entities': []}],
+        'failures': [{'operation': 'fetch', 'url': 'https://example.org/', 'reason': 'backend_attempt_failed'}],
+        'dropped_search_hits': [{'query': 'empty', 'reason': 'excess_k'}]}
+    report = check(task, output, evidence, {})
+    assert report['ok'] and report['issues'] == []
+    assert {s['type'] for s in report['signals']} == {'empty_search', 'stalled_search', 'failed_fetch', 'dropped_search_hit'}
+    evidence['fetched'] = {}
+    report = check(task, output, evidence, {'timeout': True})
+    assert not report['ok']
+    assert {'unfetched_url', 'unchecked_constraint', 'timeout'} <= {i['type'] for i in report['issues']}
+    assert any(s['type'] == 'failed_fetch' for s in report['signals'])

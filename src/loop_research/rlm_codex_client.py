@@ -7,6 +7,7 @@ import json
 import threading
 import time
 from types import ModuleType
+from uuid import uuid4
 from rlm import RLM
 from rlm.clients.base_lm import BaseLM
 from rlm.core.lm_handler import LMHandler
@@ -81,13 +82,16 @@ class CodexHandler(LMHandler):
 
 
 class CodexRLM(RLM):
-    def __init__(self, transport, *, root_model, sub_model, skill_modules=(), trace_enabled=False, **kwargs):
+    def __init__(self, transport, *, root_model, sub_model, skill_modules=(), trace_enabled=False, parent_rlm_id=None, **kwargs):
         if any(not isinstance(model, str) or not model.strip() for model in (root_model, sub_model)):
             raise ValueError("Explicit root and sub model names are required")
         self.transport, self.root_model, self.sub_model = transport, root_model, sub_model
         self.skill_modules = skill_modules
         self.trace_enabled = trace_enabled
         self.trace_iteration = 0
+        self.rlm_id = uuid4().hex if trace_enabled else None
+        self.parent_rlm_id = parent_rlm_id
+        self.trace_answer_ready = False
         super().__init__(backend="codex", backend_kwargs={"model_name": root_model},
                          environment="local", **kwargs)
 
@@ -96,6 +100,7 @@ class CodexRLM(RLM):
         if not self.trace_enabled:
             yield details
             return
+        details.update(rlm_id=self.rlm_id, parent_rlm_id=self.parent_rlm_id)
         parent = ('RLM sub' if self.depth else 'RLM root') if component == 'REPL' else ('REPL' if self.depth else 'Worker')
         self.transport.call('trace', component, event + '.start', parent=parent, depth=self.depth, **details)
         start = time.monotonic()
@@ -108,10 +113,27 @@ class CodexRLM(RLM):
             self.transport.call('trace', component, event + '.end', duration_s=time.monotonic() - start,
                                 depth=self.depth, **details)
 
+    def completion(self, prompt, root_prompt=None):
+        self.trace_iteration = 0
+        self.trace_answer_ready = False
+        with self._observe('RLM', 'completion') as details:
+            try:
+                result = super().completion(prompt, root_prompt=root_prompt)
+                details['termination'] = ('answer_ready' if self.trace_answer_ready else
+                    'direct_lm' if self.depth >= self.max_depth else 'iteration_limit')
+                return result
+            except BaseException:
+                details['termination'] = 'error'
+                raise
+            finally:
+                details['iterations'] = self.trace_iteration
+
     def _completion_turn(self, prompt, lm_handler, environment):
         self.trace_iteration += 1
         with self._observe('RLM iteration', 'iteration', iteration=self.trace_iteration):
-            return super()._completion_turn(prompt, lm_handler, environment)
+            result = super()._completion_turn(prompt, lm_handler, environment)
+            self.trace_answer_ready = any(block.result.final_answer is not None for block in result.code_blocks)
+            return result
 
     @contextmanager
     def _spawn_completion_context(self, prompt):
@@ -131,7 +153,8 @@ class CodexRLM(RLM):
                 def observed_code(code):
                     with self._observe('REPL', 'code', first_lines='\n'.join(code.splitlines()[:8])) as details:
                         result = execute(code)
-                        details.update(stdout=result.stdout[:1000], error=result.stderr or None)
+                        details.update(stdout=result.stdout[:1000], error=result.stderr or None,
+                                       answer_ready=result.final_answer is not None)
                         return result
                 env.execute_code = observed_code
             env.globals['__builtins__'] = vars(builtins).copy()
@@ -170,5 +193,6 @@ class CodexRLM(RLM):
             depth=next_depth, max_depth=self.max_depth, max_iterations=self.max_iterations,
             max_timeout=self.max_timeout, custom_system_prompt=self.system_prompt,
             custom_tools=self.custom_sub_tools, custom_sub_tools=self.custom_sub_tools,
-            logger=self.logger, max_concurrent_subcalls=self.max_concurrent_subcalls, trace_enabled=self.trace_enabled)
+            logger=self.logger, max_concurrent_subcalls=self.max_concurrent_subcalls, trace_enabled=self.trace_enabled,
+            parent_rlm_id=self.rlm_id)
         return child.completion(prompt)

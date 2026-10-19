@@ -94,10 +94,12 @@ def _task(task, benchmark, ctx, harness, learning, *, grade):
         session.refiner.close()
 
 
-def research(root, config, question, columns, keys, language, *, trace=False):
+def research(root, config, question, columns, keys, language, *, trace=False, base=None, no_learning=False):
     if not isinstance(question, str) or not question.strip():
         raise ValueError('A nonempty research question is required')
     validate_research_spec(columns, keys, language)
+    if no_learning and base is None:
+        raise ValueError('--no-learning requires --base from the learning run')
     root = Path(root).resolve()
     task = Task(task_id=digest({'question': question, 'columns': columns, 'keys': keys, 'language': language})[:24],
                 benchmark='research', question=question, spec={'columns': columns, 'keys': keys}, language=language)
@@ -115,15 +117,30 @@ def research(root, config, question, columns, keys, language, *, trace=False):
         with ctx.trace.span('Isolation', 'check') as details:
             details['result'] = verify_isolation()
         harness = Harness(root / 'harness')
-        with workspace(harness), ctx.trace.span('Research', 'run') as details:
-            if trace:
-                ctx.trace.emit('Harness', 'head_before', sha=harness.head)
+        with workspace(harness), ctx.trace.span('Research', 'run', parent='CLI'):
+            previous_branch = harness.branch
+            base = _base(harness, [task], base)
+            harness.fork(base)
+            manifest = {'run_id': run_id, 'created_at': stamp(), 'learning': not no_learning,
+                        'base_sha': base, 'lineage': harness.branch, 'return_branch': previous_branch,
+                        'task_id': task.task_id, 'config': config.model_dump(), 'status': 'running'}
+            write_json(ctx.run_dir / 'research.json', manifest)
+            ctx.trace.emit('Harness', 'lineage', **manifest)
+            ctx.trace.emit('Harness', 'head_before', sha=harness.head)
             try:
-                result = _task(task, ResearchData(), ctx, harness, True, grade=False)
+                result = _task(task, ResearchData(), ctx, harness, not no_learning, grade=False)
+                manifest.update(status='complete', harness_head=harness.head, error=result['error'])
+                write_json(ctx.run_dir / 'research.json', manifest)
+            except BaseException as exc:
+                manifest.update(status='interrupted', harness_head=harness.head, error=_error(exc))
+                write_json(ctx.run_dir / 'research.json', manifest)
+                raise
             finally:
-                if trace:
-                    ctx.trace.emit('Harness', 'head_after', sha=harness.head)
-        return {'run_id': run_id, **result}
+                ctx.trace.emit('Harness', 'head_after', sha=harness.head)
+                if no_learning:
+                    harness.git('checkout', '-q', previous_branch)
+                    ctx.trace.emit('Harness', 'restored', branch=previous_branch, sha=harness.head)
+        return {**manifest, **result}
     except BaseException as exc:
         error = f'{type(exc).__name__}: {exc}'
         raise

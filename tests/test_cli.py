@@ -241,3 +241,14 @@ def test_research_forwards_trace_option(tmp_path, config, output, stream_module)
         '--columns', 'entity', '--columns', 'value', '--keys', 'entity', '--language', 'en', '--trace'])
     assert result.exit_code == 0, result.exception
     assert 'Archive: traced-fixture' in result.stdout
+
+
+def test_research_forwards_lineage_options(tmp_path, config, output, stream_module):
+    save_config(tmp_path, config)
+    def research(*args, **kwargs):
+        assert kwargs == {'trace': True, 'base': 'a' * 40, 'no_learning': True}
+        return {'run_id': 'fixture', 'output': output}
+    stream_module.research = research
+    result = CliRunner().invoke(cli_module().app, ['--root', str(tmp_path), 'research', 'Fixture',
+        '--columns', 'entity', '--keys', 'entity', '--language', 'en', '--trace', '--base', 'a' * 40, '--no-learning'])
+    assert result.exit_code == 0, result.exception

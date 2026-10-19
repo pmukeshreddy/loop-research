@@ -7,7 +7,7 @@ from dataclasses import replace
 from uuid import uuid4
 
 from .archive import append_json, read_jsonl, count_codex_calls
-from .codex_backend import CodexBackend, CallBudget
+from .codex_backend import CodexBackend, CallBudget, BudgetExceeded
 from .refine import Refiner
 from .repl_tools import ResearchTools
 from .selfcheck import check
@@ -80,7 +80,8 @@ class Session:
         with self.ctx.trace.span('Output', 'self_check') as details:
             report = check(self.task, self.output, self.tools.snapshot(), self.status)
             details.update(ok=report['ok'], issues_by_type=dict(Counter(i['type'] for i in report['issues'])),
-                           issues=report['issues'])
+                           issues=report['issues'], signals=report['signals'],
+                           signals_by_type=dict(Counter(s['type'] for s in report['signals'])))
         self.ctx.save('self_check.json', report)
         return report
 
@@ -88,6 +89,13 @@ class Session:
         return {'trajectory': read_jsonl(self.ctx.path / 'trajectory.jsonl'), 'self_check': self.self_check()}
 
     def dispatch(self, method, args, kwargs):
+        try:
+            return self._dispatch(method, args, kwargs)
+        except BudgetExceeded:
+            self.status['call_limit' if self.budget.count >= self.budget.limit else 'timeout'] = True
+            raise
+
+    def _dispatch(self, method, args, kwargs):
         self.research_ctx.check_cancelled()
         if method == 'complete':
             purpose = kwargs.get('purpose')
@@ -163,7 +171,7 @@ class Session:
                 self.checkpoint()
             return {'scheduled': True}
         if method == 'trace':
-            if len(args) != 2 or args[0] not in {'RLM iteration', 'REPL'}:
+            if len(args) != 2 or args[0] not in {'RLM', 'RLM iteration', 'REPL'}:
                 raise ValueError('Invalid worker trace event')
             self.ctx.trace.emit(*args, **kwargs)
             return True
@@ -183,7 +191,7 @@ class Session:
         report = self.self_check()
         self.refiner.resume()
         if self.finish_phase == 'pending':
-            self.harness.record_outcome(self.run_id, {k: report[k] for k in ('ok', 'issues')})
+            self.harness.record_outcome(self.run_id, {k: report[k] for k in ('ok', 'issues', 'signals')})
             self.apply_refinement(wait=True)
             while self.refiner.pending is not None:
                 self.apply_refinement(wait=True)

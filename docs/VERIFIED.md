@@ -1273,3 +1273,13 @@ discoveries" in harness commit `2a423027212fe1c430dfd200bdd55f3a27b22d70`.
 The final table, all counts/timings/edges, issues and exact edit are saved in
 `runs/research-3265370f49e64ebbbc3c3bf0c24af6de/trace_summary.md`.
 This is a live debugging example, not a benchmark measurement.
+
+## Full-system proof setup (2026-10-18)
+
+The offline suite passed with **453 passed, 1 deselected in 49.43 seconds**
+using `.venv/bin/pytest -q`. New coverage verifies the issues/signals split,
+research base/no-learning lineage and restoration (including failed finalization),
+individual child RLM identities and termination, and hard call-limit reporting
+when the REPL catches a tool exception. Independent review found that last gap;
+the regression failed before the trusted dispatch boundary fix and passed after.
+The proof configuration uses `rlm.max_depth: 2`, committed separately for the run.

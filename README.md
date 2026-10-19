@@ -49,13 +49,21 @@ Add `--trace` to watch all component boundaries live. Before isolation or model 
 the command prints the exact `tail -f` command for `runs/<run_id>/trace.log`.
 The same events are flushed to `trace.jsonl`, including timing, RPC methods, cache
 outcomes, actual opened URLs, model usage, retrieval scores, REPL snippets, and
-refinement edits/commits. At completion (including failures), the command saves
+refinement edits/commits. Each recursive RLM has a trace identity, parent identity,
+its own iterations/REPL blocks, and an explicit completion reason. At completion (including failures), the command saves
 and prints `runs/<run_id>/trace_summary.md` with component call counts and inclusive
 times, the connection map, cited table, self-check issues, and refinement edits.
 Nested and concurrent durations overlap; they do not sum to wall time. Tracing
 adds no model/tool calls, changes no prompts or results, and stays out of the
 research trajectory and refinement observations. Trace-only RPCs carry worker
 iteration/REPL observations to the trusted host; the worker cannot write the logs.
+
+Research also accepts `--base SHA` and `--no-learning`. Learning runs start from
+the current safe harness state unless a base is supplied. `--no-learning`
+requires an explicit unexposed base, disables agent/refinement edits, and restores
+the active learning branch afterward, including after failure. Each run records
+its base, lineage, learning mode and final HEAD in `runs/<run_id>/research.json`.
+A base already exposed to that exact question/schema/language is rejected.
 
 Run the full configured benchmark stream in deterministic order:
 
@@ -84,7 +92,12 @@ The commands are `init`, `prepare-data`, `verify`, `research`, `stream`, `baseli
 
 ## Evidence, grading and limits
 
-The research tools include single and batched search/fetch, plus evidence recording for discovery and constraint checks. Search and fetch use Codex web search; `fetch()` returns the model's rendering of a page, not raw HTML. Self-checks test whether quoted text appears in fetched material, source URLs were fetched, and each recorded task constraint has an evidence check. They also surface missing citations, empty or stalled searches, tool failures and execution limits. Every fetch request records its outcome and whether it used the backend, cache, or an in-flight shared request; failed fetches are retryable and never retained as successful evidence. Malformed, invalid-URL, and excess search hits are retained with drop reasons. Refinement records discarded proposals, failures, and skipped deletes with reasons. **These checks establish recorded coverage and quotation consistency, not factual truth, exhaustive discovery, or correct interpretation of a constraint.**
+The research tools include single and batched search/fetch, plus evidence recording for discovery and constraint checks. Search and fetch use Codex web search; `fetch()` returns the model's rendering of a page, not raw HTML. Self-checks test whether quoted text appears in fetched material, source URLs were fetched, and each recorded task constraint has an evidence check. The report separates `issues` (missing/unbacked citations, bad quotes, missing or
+failed constraint checks, unrecorded discovery, and execution limits) from
+`signals` (empty/stalled searches, failed tool attempts, and dropped search hits).
+`ok` depends only on issues. Tool failures remain visible as signals even after
+recovery; unsupported final claims still produce citation/coverage issues.
+Both collections are preserved in trace summaries and refinement observations. Every fetch request records its outcome and whether it used the backend, cache, or an in-flight shared request; failed fetches are retryable and never retained as successful evidence. Malformed, invalid-URL, and excess search hits are retained with drop reasons. Refinement records discarded proposals, failures, and skipped deletes with reasons. **These checks establish recorded coverage and quotation consistency, not factual truth, exhaustive discovery, or correct interpretation of a constraint.**
 
 All model calls, including judges, use the Codex subscription login. The two official grading adapters retain their pinned scoring logic and label results `judge: codex/<models.judge>`. WideSearch reports the official row F1, item metrics and success metric. WANDR uses full-lineage soft F1 as the project primary metric and preserves the upstream soft-recall primary metric in provenance, alongside soft/hard metrics and excerpt-failure diagnostics.
 

@@ -271,6 +271,32 @@ def test_call_limit_is_shared_with_output_repair(ctx, task, benchmark, session_f
     assert not (ctx.path / "output.json").exists()
 
 
+def test_caught_tool_budget_exhaustion_is_still_an_issue(ctx, task, benchmark, output, session_factory):
+    ctx.config.agent.max_codex_calls = 2
+    code = '''fetch("https://example.org/")
+for c in ("question", "columns/0", "columns/1"):
+    check_constraint("/rows/0", c, True, "https://example.org/", "fixture-a")
+try:
+    search("optional additional evidence")
+except Exception:
+    pass
+''' + final_code(output)
+
+    def reply(prompt, options):
+        if options['purpose'] == 'root':
+            return code_reply(code)
+        assert options['purpose'] == 'fetch'
+        return 'fixture-a fixture-value', [{'type': 'open_page', 'url': 'https://example.org/'}]
+
+    session = session_factory(reply)
+    result = run_task(task, benchmark, session)
+    assert result.status['call_limit']
+    report = session.self_check()
+    assert not report['ok']
+    assert any(i['type'] == 'call_limit' for i in report['issues'])
+    assert any(s['type'] == 'failed_search' for s in report['signals'])
+
+
 def test_cancelled_task_terminates_worker_and_its_child(ctx, task, benchmark, session_factory):
     child_ready = threading.Event()
     child_pids = []

@@ -263,14 +263,16 @@ class Harness:
                 self._save(state, 'Record usage ' + run_id)
 
     def record_outcome(self, run_id, report):
-        if set(report) != {'ok', 'issues'} or type(report['ok']) is not bool or not isinstance(report['issues'], list):
-            raise ValueError('Outcomes accept only self-check ok and issues')
+        if (set(report) not in ({'ok', 'issues'}, {'ok', 'issues', 'signals'}) or
+                type(report['ok']) is not bool or not isinstance(report['issues'], list) or
+                not isinstance(report.get('signals', []), list)):
+            raise ValueError('Outcomes accept only self-check ok, issues and signals')
         outcome = {'run_id': run_id, **report, 'recorded_at': stamp()}
         with self.transaction():
             state = self.snapshot()
             uses = [use for use in state['usage'] if use['run_id'] == run_id]
             prior = next((row for row in state['outcomes'] if row['run_id'] == run_id), None)
-            if prior and {key: prior[key] for key in ('ok', 'issues')} != report:
+            if prior and {key: prior.get(key, []) for key in report} != report:
                 raise ValueError('Recorded self-check outcome changed during resume')
             if prior:
                 outcome = prior

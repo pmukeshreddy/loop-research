@@ -160,7 +160,9 @@ def research(ctx: typer.Context,
              columns: Annotated[list[str], typer.Option("--columns", help="Output column; repeat for multiple columns.")],
              keys: Annotated[list[str], typer.Option("--keys", help="Unique key column; repeat for composite keys.")],
              language: Annotated[str, typer.Option("--language", help="Language for the research answer.")],
-             trace: Annotated[bool, typer.Option("--trace", help="Write live component traces and a connection summary.")] = False):
+             trace: Annotated[bool, typer.Option("--trace", help="Write live component traces and a connection summary.")] = False,
+             base: Annotated[str | None, typer.Option("--base", help="Start from this harness commit SHA.")] = None,
+             no_learning: Annotated[bool, typer.Option("--no-learning", help="Disable learning and restore the active branch afterward.")] = False):
     """Research one question and print its cited table and archive ID."""
     if not question.strip():
         raise typer.BadParameter("Question must not be empty", param_hint="QUESTION")
@@ -172,6 +174,10 @@ def research(ctx: typer.Context,
     from .stream import research as research_question
     from .report import render_table
     options = {"trace": True} if trace else {}
+    if base is not None:
+        options["base"] = base
+    if no_learning:
+        options["no_learning"] = True
     result = research_question(*settings(ctx), question, columns, keys, language, **options)
     typer.echo(render_table(result["output"]))
     check = result.get("self_check")
@@ -179,6 +185,8 @@ def research(ctx: typer.Context,
         typer.echo("Self-check: " + ("passed" if check["ok"] else "issues found"))
         for issue in check["issues"]:
             typer.echo("- " + str(issue))
+        for signal in check.get("signals", []):
+            typer.echo("Signal: " + str(signal))
     typer.echo("Archive: " + result["run_id"])
     if result.get("error"):
         typer.echo("Research failed: " + result["error"], err=True)
