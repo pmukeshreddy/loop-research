@@ -60,6 +60,12 @@ references for repeated exact strings. Preserve all logical fields and string oc
 escape literal objects that collide with representation markers. Archive the original job,
 exact wire prompt/schema, and both logical and wire payload sizes/hashes. Validate proposal
 evidence references against the original logical payload, not the representation wrapper.
+Supply a visible evidence-anchor index and use the same finite vocabulary in the planner's
+native output schema. Include every trajectory record, harness entry, self-check field and
+candidate occurrence, plus the evidence section roots. Preserve every source record in full;
+an anchor may cite a whole record while the decision explains the supporting field. Host
+validation still resolves references against the immutable snapshot and enforces complete
+candidate accounting and edit linkage. Never repair a reference to a later snapshot.
 
 Persist the proposal, snapshot, request identity and per-edit operation identities before applying edits. Resume recognizes already committed edits and continues unfinished application without duplicate edits. Persist finalization and rollback progress; record discarded proposals and skipped deletes with explicit reasons.
 

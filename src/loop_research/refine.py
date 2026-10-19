@@ -101,6 +101,18 @@ def planning_input(job):
             'entries': list(job['snapshot']['entries'].values()), **job['observed']}
 
 
+def evidence_anchors(payload):
+    """Finite source paths for generation, without removing evidence or candidates."""
+    refs = ['/trajectory', '/self_check', '/entries']
+    for collection in ('trajectory', 'entries'):
+        refs.extend(f'/{collection}/{index}' for index in range(len(payload[collection])))
+    refs.extend('/self_check/' + key.replace('~', '~0').replace('/', '~1')
+                for key in payload['self_check'])
+    for candidate in payload['candidate_inventory']:
+        refs.extend(candidate['evidence_refs'])
+    return list(dict.fromkeys(refs))
+
+
 def validate_accounting(proposal, payload):
     """Check coverage and evidence identity; semantic soundness remains a model judgment."""
     candidates = {item['id']: item['evidence_refs'] for item in payload['candidate_inventory']}
@@ -158,6 +170,10 @@ dismiss process signals; recovered failures can still support a reusable lesson,
 Add any further candidates you identify in the trajectory or harness outcomes to additional_candidates.
 Give every presented and additional candidate exactly one accepted/declined decision, a nonempty
 evidence-based reason, and evidence_refs as JSON pointers into /trajectory, /self_check or /entries.
+Choose references from evidence_index, the visible list of existing source anchors in this snapshot.
+Array indexes are zero-based. A record anchor cites its complete contents; explain the relevant
+field in your reason. The output schema permits only these anchors. Additional candidates may
+cite any listed anchor, including successful observations and existing harness entries.
 Each decision must cite at least one of its candidate's evidence_refs (or a child of that reference).
 Explain the evidence for accepting or declining the whole group, including recovery, existing coverage,
 insufficient support, or edit-budget prioritization when relevant. Do not silently skip a candidate.
@@ -219,7 +235,7 @@ class Refiner:
                 if 'planner_prompt' in job:
                     # A new model attempt must not overwrite the prior input or rejected response.
                     job = {key: value for key, value in job.items()
-                           if key not in {'planner_prompt', 'planner_schema', 'planner_representation',
+                           if key not in {'planner_prompt', 'planner_schema', 'planner_representation', 'evidence_index',
                                           'response_text', 'error', 'operations'}}
                     job.update(job_id=uuid4().hex, status='planning')
                     self._save_job(job)
@@ -264,13 +280,17 @@ class Refiner:
         job.update(accounting_version=1, candidate_inventory=candidate_inventory(job['observed']))
         payload = planning_input(job)
         payload['max_edits'] = self.ctx.config.refine.max_edits
+        payload['evidence_index'] = evidence_anchors(payload)
         logical_text = json.dumps(payload, ensure_ascii=False)
         wire = encode_shared_text(payload)
         wire_text = json.dumps(wire, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
         prompt = INSTRUCTIONS + wire_text
         schema = Proposal.model_json_schema()
         schema['properties']['edits']['maxItems'] = self.ctx.config.refine.max_edits
-        job.update(planner_prompt=prompt, planner_schema=schema, planner_representation={
+        schema['$defs']['EvidenceRef'] = {'type': 'string', 'enum': payload['evidence_index']}
+        for definition in ('Candidate', 'Decision'):
+            schema['$defs'][definition]['properties']['evidence_refs']['items'] = {'$ref': '#/$defs/EvidenceRef'}
+        job.update(planner_prompt=prompt, planner_schema=schema, evidence_index=payload['evidence_index'], planner_representation={
             'format': wire['format'],
             'logical_payload_chars': len(logical_text),
             'logical_payload_sha256': hashlib.sha256(logical_text.encode()).hexdigest(),

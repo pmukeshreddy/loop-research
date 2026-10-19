@@ -39,6 +39,9 @@ def test_planner_wire_input_reconstructs_every_observed_field_and_archives_sizes
     from loop_research.shared_text import decode_shared_text
     state = ctx.load('refine_state.json')
     expected = planning_input(state) | {'max_edits': ctx.config.refine.max_edits}
+    expected['evidence_index'] = ['/trajectory', '/self_check', '/entries', '/trajectory/0',
+        '/trajectory/1', '/trajectory/2', '/self_check/ok', '/self_check/issues',
+        '/self_check/signals', '/self_check/unknown_field']
     decoded = decode_shared_text(wire)
     assert json.dumps(decoded, ensure_ascii=False) == json.dumps(expected, ensure_ascii=False)
     assert observation == original == state['observed']

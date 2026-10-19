@@ -1448,3 +1448,27 @@ wire payload and checks the timeout issue at its actual field, preserving the
 requirement. Fresh full suite: **644 passed, 1 live test deselected in 68.69 seconds**,
 recorded in `runs/round2/unit_suite_shared_text_final.log`. Existing assertions were
 not removed or relaxed. No root/REPL input or output is suppressed.
+
+## Snapshot-bound refinement evidence references
+
+A saved planner output cited a trajectory index beyond the end of its immutable
+planning snapshot. The prior output schema admitted arbitrary reference strings;
+host validation correctly rejected the nonexistent record. Each new planning
+input now includes a visible evidence-anchor index, and both generated reference
+fields share a native schema enum containing exactly that index. The vocabulary
+includes all trajectory records, harness entries, self-check fields, candidate
+occurrences and evidence roots. Entire records remain visible; decisions explain
+the supporting fields. No later record is substituted for an invalid reference.
+
+Original snapshot resolution, candidate coverage, edit linkage, the edit ceiling,
+and validation of persisted historical child references remain unchanged. The
+index/schema are archived and regenerated for each new attempt. No lesson is
+seeded and no scheduling decision moves from the researcher to the host.
+
+Both new schema regressions failed before implementation. Targeted refinement
+checks: **42 passed**. The integrated offline suite at this checkpoint: **662
+passed, 1 live test deselected in 69.56 seconds**, recorded in
+`runs/round2/unit_suite_planner_audit_final.log`. Independent review found no
+reference-fix defect. Separate auditor review then identified missing multi-task
+trace attribution coverage; that repair and the saved-input live checks remain
+required before research replay.

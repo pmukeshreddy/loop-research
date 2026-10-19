@@ -169,6 +169,10 @@ Planner inputs use a reversible shared-text representation: repeated exact strin
 a visible table, and each occurrence has a reference. No evidence field or string is shortened.
 Original observations, exact transmitted prompts/schemas, and logical/transmitted payload
 sizes and hashes remain archived. Evidence validation uses the original logical input.
+Each planning snapshot also supplies a visible list of existing evidence anchors, and the
+native output schema restricts references to that list. Anchors cover every trajectory record,
+harness entry, self-check field, and candidate occurrence; all record contents remain available.
+Strict snapshot reference resolution and candidate/edit accounting still apply on the host.
 
 `report` reads archived stream files without model or dataset access. Every completed task must have a finite official score; report generation rejects completed rows with missing or nonfinite scores. Rolling means include every completed task in the last `stream.rolling_window` positions, including official empty-submission scores for failures, with the contributing count in the CSV. Interrupted streams show their count, active task, phase, pending count, and error. CSV, summary and curve labels identify all four model roles; archived judge labels must match the configured judge. Curves for different streams are descriptive; the comparison table enforces the matching conditions above. No benchmark scores are claimed in this documentation.
 
