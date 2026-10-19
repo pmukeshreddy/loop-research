@@ -140,6 +140,55 @@ def verify_identity_review(label, comparison):
     return {'label': label, 'same_key_set': False, 'reviewed_pairs': len(pairs),
             'evidence_references_verified': True, 'scope': review['scope']}
 
+def verify_capacity_retry(item, trace, task):
+    """Verify authorized backend completion, without asserting fetch success."""
+    policy = read(Path(item['policy']))
+    assert 'Count any capacity errors and retries as usual.' in policy['user_instruction']
+    assert item['reason'] and len(item['recovery_trace_lines']) == 1
+    failed_line, retry_line, start_line = (item[key] for key in
+                                         ('failed_trace_line', 'retry_trace_line', 'recovery_start_line'))
+    end_line = item['recovery_trace_lines'][0]
+    assert all(type(line) is int and 1 <= line <= len(trace)
+               for line in (failed_line, retry_line, start_line, end_line))
+    assert failed_line < retry_line < start_line < end_line
+    assert item['event']['line'] in (failed_line, retry_line)
+    failed, retry, start, completed = [trace[line - 1] for line in (failed_line, retry_line, start_line, end_line)]
+    fd, rd, sd, cd = [event['details'] for event in (failed, retry, start, completed)]
+    component = f'Codex backend ({fd["purpose"]})'
+    assert all(event['component'] == component for event in (failed, retry, start, completed))
+    assert [event['event'] for event in (failed, retry, start, completed)] == ['exec.end', 'retry', 'exec.start', 'exec.end']
+    assert re.search(r'(^|\n)Selected model is at capacity\. Please try a different model\.(\n|$)', fd['error'])
+    assert rd['error'] == f'Codex failed (exit={fd["exit_code"]}): {fd["error"]}'
+    assert type(fd['attempt']) is int and type(cd['attempt']) is int
+    assert rd['attempt'] == fd['attempt'] and rd['next_attempt'] == fd['attempt'] + 1 <= cd['attempt']
+    # Retry records have no call ID. Require one unambiguous matching failure
+    # since the preceding matching retry rather than inventing that linkage.
+    boundary = max((index + 1 for index, event in enumerate(trace[:retry_line - 1])
+                    if event['component'] == component and event['event'] == 'retry'
+                    and event['details'].get('attempt') == rd['attempt']
+                    and event['details'].get('error') == rd['error']), default=0)
+    failures = [index + 1 for index, event in enumerate(trace[:retry_line - 1])
+                if index + 1 > boundary and event['component'] == component and event['event'] == 'exec.end'
+                and event['details'].get('attempt') == fd['attempt']
+                and event['details'].get('error') == fd['error']]
+    assert failures == [failed_line]
+    signature = ('purpose', 'model', 'prompt_sha256', 'prompt_chars') + tuple(
+        key for key in ('schema_sha256', 'schema_chars') if key in fd or key in cd)
+    assert all(fd[key] == cd[key] for key in signature)
+    assert all(sd[key] == cd[key] for key in (*signature, 'call_id', 'attempt'))
+    next_starts = [event for event in trace[retry_line:end_line]
+                   if event['component'] == component and event['event'] == 'exec.start'
+                   and event['details'].get('attempt') == rd['next_attempt']
+                   and all(event['details'].get(key) == fd[key] for key in signature)]
+    assert len(next_starts) == 1
+    assert fd['call_id'] != cd['call_id'] and cd['exit_code'] == 0 and cd['error'] is None
+    assert cd['response_chars'] > 0 and cd['retries'] == cd['attempt']
+    calls = [json.loads(line) for line in (task / 'codex_calls.jsonl').read_text().splitlines() if line.strip()]
+    fields = (*signature, 'call_id', 'attempt', 'exit_code', 'response_chars', 'error')
+    for details in (fd, cd):
+        matches = [call for call in calls if call['call_id'] == details['call_id']]
+        assert len(matches) == 1 and all(matches[0][key] == details[key] for key in fields)
+
 report = HERE / 'Round2.md'
 document = report.read_text()
 metadata = read(HERE / 'Round2.render.json')
@@ -178,15 +227,19 @@ for label, run_id in manifest['runs'].items():
     assert [r['event'] for r in reviewed] == metrics['errors'], (label, 'unreviewed or changed error events')
     trace = [json.loads(line) for line in (Path(audit['task_path']).parent / 'trace.jsonl').read_text().splitlines()]
     for item in reviewed:
-        assert item['run_id'] == run_id and item['classification'] == 'validation_recovered'
+        assert item['run_id'] == run_id
         error = item['event']
-        assert error['component'] == 'REPL' and error['event'] == 'code.end'
-        assert error['details']['error'] and item['reason'] and item['recovery_trace_lines']
         assert trace[error['line'] - 1] == {k: v for k, v in error.items() if k != 'line'}
-        for line in item['recovery_trace_lines']:
-            event = trace[line - 1]
-            assert line > error['line'] and event['component'] == 'REPL' and event['event'] == 'code.end'
-            assert not event['details']['error']
+        if item['classification'] == 'external_capacity_retried':
+            verify_capacity_retry(item, trace, Path(audit['task_path']))
+        else:
+            assert item['classification'] == 'validation_recovered'
+            assert error['component'] == 'REPL' and error['event'] == 'code.end'
+            assert error['details']['error'] and item['reason'] and item['recovery_trace_lines']
+            for line in item['recovery_trace_lines']:
+                event = trace[line - 1]
+                assert line > error['line'] and event['component'] == 'REPL' and event['event'] == 'code.end'
+                assert not event['details']['error']
         observed_errors.append(item)
     assert metrics['issues'] == [] and metrics['uncited_cells'] == 0, label
     assert sum(audit['largest_prompt']['parts'].values()) == audit['largest_prompt']['total']
@@ -230,6 +283,8 @@ result = {'report_sha256': sha(report.read_bytes()), 'original_sha256': sha(orig
           'verified_local_links': len(links), 'controls_equal': True,
           'source_commit': manifest['source_commit'], 'report_source_commit': manifest['report_source_commit'],
           'research_modules_unchanged': True, 'source_clean': True, 'runs': checked,
-          'identity_reviews': identity_reviews, 'recorded_recovered_errors': len(observed_errors)}
+          'identity_reviews': identity_reviews, 'recorded_recovered_errors': len(observed_errors),
+          'recorded_validation_errors': sum(item['classification'] == 'validation_recovered' for item in observed_errors),
+          'recorded_capacity_error_events': sum(item['classification'] == 'external_capacity_retried' for item in observed_errors)}
 (HERE / 'report_verification.json').write_text(json.dumps(result, indent=2) + '\n')
 print(json.dumps(result, indent=2))
