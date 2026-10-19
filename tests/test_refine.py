@@ -1,8 +1,9 @@
+import copy
 import json
 import threading
 
 from loop_research.harness import Harness
-from loop_research.refine import Refiner
+from loop_research.refine import INSTRUCTIONS, Refiner
 from test_harness import commits
 
 
@@ -13,7 +14,28 @@ class Planner:
 
     def complete(self, prompt, **kwargs):
         self.prompts.append(prompt)
-        return json.dumps(self.response)
+        return json.dumps(accounted_fixture(self.response, prompt))
+
+
+def accounted_fixture(response, prompt):
+    """Complete synthetic decisions for lifecycle tests; raw validation tests bypass this."""
+    response = copy.deepcopy(response)
+    payload = json.loads(prompt.removeprefix(INSTRUCTIONS))
+    response['additional_candidates'] = []
+    response['decisions'] = [
+        {'candidate_id': candidate['id'], 'decision': 'declined',
+         'reason': 'This fixture exercises harness lifecycle and proposes no change for this evidence group.',
+         'evidence_refs': candidate['evidence_refs'], 'edit_indexes': []}
+        for candidate in payload['candidate_inventory']
+    ]
+    if response['edits']:
+        reference = '/trajectory/0' if payload['trajectory'] else '/entries/0' if payload['entries'] else '/self_check'
+        response['additional_candidates'] = [{'id': 'fixture-procedure',
+            'description': 'Synthetic procedure supplied by this lifecycle fixture', 'evidence_refs': [reference]}]
+        response['decisions'].append({'candidate_id': 'fixture-procedure', 'decision': 'accepted',
+            'reason': 'Apply the synthetic procedure to test the harness lifecycle against the recorded fixture state.',
+            'evidence_refs': [reference], 'edit_indexes': list(range(len(response['edits'])))})
+    return response
 
 
 def proposal(action='create', kind='memory', id=None, title='Fetch failure', content='Retry unavailable official pages.'):

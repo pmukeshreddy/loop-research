@@ -4,10 +4,10 @@ from contextvars import copy_context
 import copy
 import json
 import threading
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 from .archive import append_json, stamp
 
@@ -32,15 +32,137 @@ class Edit(BaseModel):
         return self
 
 
-class Proposal(BaseModel):
+class HistoricalProposal(BaseModel):
+    """Only for resuming proposals persisted before candidate accounting existed."""
     model_config = ConfigDict(extra='forbid', strict=True)
     summary: str
     edits: list[Edit]
 
 
+Nonblank = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+
+
+class Candidate(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+    id: Nonblank
+    description: Nonblank
+    evidence_refs: list[Nonblank] = Field(min_length=1)
+
+
+class Decision(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+    candidate_id: Nonblank
+    decision: Literal['accepted', 'declined']
+    reason: Nonblank
+    evidence_refs: list[Nonblank] = Field(min_length=1)
+    edit_indexes: list[int]
+
+
+class Proposal(HistoricalProposal):
+    additional_candidates: list[Candidate]
+    decisions: list[Decision]
+
+
+def candidate_inventory(observed):
+    """Group current-run evidence without inventing lessons or dropping occurrences."""
+    candidates = []
+    for collection in ('issues', 'signals'):
+        groups = {}
+        for index, item in enumerate(observed['self_check'].get(collection, [])):
+            kind = item.get('type') if isinstance(item, dict) else None
+            kind = kind if isinstance(kind, str) and kind else 'untyped'
+            if kind not in groups:
+                groups[kind] = {'id': f'self_check:{collection}:{kind}', 'source': f'self_check.{collection}',
+                                'type': kind, 'count': 0, 'evidence_refs': []}
+                candidates.append(groups[kind])
+            groups[kind]['count'] += 1
+            groups[kind]['evidence_refs'].append(f'/self_check/{collection}/{index}')
+    errors = {}
+    for index, event in enumerate(observed['trajectory']):
+        if not isinstance(event, dict) or event.get('type') != 'worker_iteration':
+            continue
+        for block_index, block in enumerate(event['event'].get('code_blocks', [])):
+            stderr = block.get('result', {}).get('stderr')
+            if not isinstance(stderr, str) or not stderr.strip():
+                continue
+            if stderr not in errors:
+                errors[stderr] = {'id': f'trajectory:stderr:{index}:{block_index}', 'source': 'trajectory',
+                                  'type': 'execution_stderr', 'error': stderr, 'count': 0, 'evidence_refs': []}
+                candidates.append(errors[stderr])
+            errors[stderr]['count'] += 1
+            errors[stderr]['evidence_refs'].append(f'/trajectory/{index}/event/code_blocks/{block_index}/result/stderr')
+    return candidates
+
+
+def planning_input(job):
+    return {'focus': job['focus'], 'candidate_inventory': job['candidate_inventory'],
+            'entries': list(job['snapshot']['entries'].values()), **job['observed']}
+
+
+def validate_accounting(proposal, payload):
+    """Check coverage and evidence identity; semantic soundness remains a model judgment."""
+    candidates = {item['id']: item['evidence_refs'] for item in payload['candidate_inventory']}
+
+    def check_refs(refs):
+        for ref in refs:
+            parts = ref.split('/')
+            if len(parts) < 2 or parts[0] != '' or parts[1] not in {'trajectory', 'self_check', 'entries'}:
+                raise ValueError(f'Invalid evidence reference: {ref}')
+            value = payload
+            try:
+                for part in parts[1:]:
+                    key = part.replace('~1', '/').replace('~0', '~')
+                    if isinstance(value, list):
+                        if not key.isdecimal() or str(int(key)) != key:
+                            raise KeyError(key)
+                        value = value[int(key)]
+                    elif isinstance(value, dict):
+                        value = value[key]
+                    else:
+                        raise KeyError(key)
+            except (KeyError, IndexError):
+                raise ValueError(f'Invalid evidence reference: {ref}') from None
+
+    for candidate in proposal.additional_candidates:
+        if candidate.id in candidates:
+            raise ValueError('Candidate ids must be unique')
+        check_refs(candidate.evidence_refs)
+        candidates[candidate.id] = candidate.evidence_refs
+    ids = [decision.candidate_id for decision in proposal.decisions]
+    if len(ids) != len(set(ids)) or set(ids) != set(candidates):
+        raise ValueError('Every presented and additional candidate requires a decision exactly once')
+    linked_edits = set()
+    for decision in proposal.decisions:
+        check_refs(decision.evidence_refs)
+        if not any(ref == source or ref.startswith(source + '/')
+                   for ref in decision.evidence_refs for source in candidates[decision.candidate_id]):
+            raise ValueError('Decision must cite its candidate evidence')
+        if decision.decision == 'declined' and decision.edit_indexes:
+            raise ValueError('Declined candidates cannot link edits')
+        if decision.decision == 'accepted' and not decision.edit_indexes:
+            raise ValueError('Accepted candidates must link edits')
+        if any(index < 0 or index >= len(proposal.edits) for index in decision.edit_indexes):
+            raise ValueError('Decision references an invalid edit index')
+        linked_edits.update(decision.edit_indexes)
+    if linked_edits != set(range(len(proposal.edits))):
+        raise ValueError('Every edit must be linked to an accepted candidate')
+
+
 INSTRUCTIONS = '''Refine supplemental harness state from this run's trajectory and deterministic self-check.
 The base system prompt, tool code, grader code and self-check code are immutable.
-Use the smallest evidence-backed edit. Update, merge (update then delete), or delete existing entries
+Evaluate every candidate in candidate_inventory, including every occurrence in its evidence_refs.
+These are evidence groups to consider, not predetermined lessons. A passing self-check does not
+dismiss process signals; recovered failures can still support a reusable lesson, or justify no edit.
+Add any further candidates you identify in the trajectory or harness outcomes to additional_candidates.
+Give every presented and additional candidate exactly one accepted/declined decision, a nonempty
+evidence-based reason, and evidence_refs as JSON pointers into /trajectory, /self_check or /entries.
+Each decision must cite at least one of its candidate's evidence_refs (or a child of that reference).
+Explain the evidence for accepting or declining the whole group, including recovery, existing coverage,
+insufficient support, or edit-budget prioritization when relevant. Do not silently skip a candidate.
+Accepted decisions list their zero-based edit_indexes; declined decisions list no edit indexes.
+Every edit must be linked to an accepted candidate. Multiple candidates may share an edit.
+Use minimal evidence-backed edits. The configured max_edits is a ceiling, never a target or minimum.
+Update, merge (update then delete), or delete existing entries
 before creating anything new. Never rewrite the whole harness. An empty edits list is valid when
 there is no reusable lesson. Failures become memories; successful repeatable tactics become skills.
 Review usage and self-check outcomes: revise or delete entries whose outcomes are consistently bad.
@@ -101,6 +223,7 @@ class Refiner:
             self.focus = focus
             job = {'status': 'planning', 'focus': focus, 'snapshot': snapshot, 'observed': observed,
                    'branch': self.harness.branch, 'proposal': None, 'request_id': request_id or uuid4().hex}
+            job.update(accounting_version=1, candidate_inventory=candidate_inventory(observed))
             self.ctx.save('refine_state.json', job)
             self.ctx.trace.emit('Refine', 'scheduled', focus=focus, request_id=job['request_id'])
             self.pending = self.pool.submit(copy_context().run, self._plan, job)
@@ -111,8 +234,12 @@ class Refiner:
             return self._plan_job(job)
 
     def _plan_job(self, job):
-        prompt = INSTRUCTIONS + json.dumps({'focus': job['focus'], 'entries': list(job['snapshot']['entries'].values()),
-                                            **job['observed']}, ensure_ascii=False)
+        # Unplanned historical jobs upgrade here; already-planned jobs keep their recorded schema.
+        job.update(accounting_version=1, candidate_inventory=candidate_inventory(job['observed']))
+        self.ctx.save('refine_state.json', job)
+        payload = planning_input(job)
+        payload['max_edits'] = self.ctx.config.refine.max_edits
+        prompt = INSTRUCTIONS + json.dumps(payload, ensure_ascii=False)
         schema = Proposal.model_json_schema()
         schema['properties']['edits']['maxItems'] = self.ctx.config.refine.max_edits
         text = None
@@ -121,10 +248,11 @@ class Refiner:
             proposal = Proposal.model_validate_json(text)
             if len(proposal.edits) > self.ctx.config.refine.max_edits:
                 raise ValueError('Proposal exceeds refine.max_edits')
+            validate_accounting(proposal, payload)
             for edit in proposal.edits:
                 if edit.id is not None:
                     self.harness._key(edit.kind, edit.id)
-            self.ctx.trace.emit('Refine', 'proposal', summary=proposal.summary, edits=[edit.model_dump() for edit in proposal.edits])
+            self.ctx.trace.emit('Refine', 'proposal', **proposal.model_dump())
             job.update(status='planned', proposal=proposal.model_dump(),
                        operations=['refine_' + uuid4().hex for _ in proposal.edits])
             self.ctx.save('refine_state.json', job)
@@ -160,7 +288,13 @@ class Refiner:
         if job['branch'] != self.harness.branch:
             self._discard(job, 'lineage_changed')
             return []
-        proposal = Proposal.model_validate(job['proposal'])
+        if 'accounting_version' not in job:
+            proposal = HistoricalProposal.model_validate(job['proposal'])
+        elif job['accounting_version'] == 1:
+            proposal = Proposal.model_validate(job['proposal'])
+            validate_accounting(proposal, planning_input(job))
+        else:
+            raise ValueError('Unknown refinement accounting version')
         expected = copy.deepcopy(job['snapshot']['entries'])
         records = [self.harness.edit_record(op) for op in job['operations']]
         for record in records:
@@ -200,7 +334,7 @@ class Refiner:
             commits.append(self.harness.head)
             self.ctx.trace.emit('Refine', 'edit_applied', commit=self.harness.head,
                                 edit=edit.model_dump(), operation_id=operation)
-        self.audit('applied', summary=proposal.summary, commits=commits)
+        self.audit('applied', **proposal.model_dump(), commits=commits)
         job['status'] = 'applied'
         self.ctx.save('refine_state.json', job)
         return commits
