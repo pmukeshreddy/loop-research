@@ -68,15 +68,15 @@ def test_citations(output):
     assert citation_check(output, ["https://example.org"]) == ["/rows/0/cells/value"]
 
 
-def test_prompt_order(benchmark, task):
-    prompt, asof, source = make_prompt(task, benchmark.output_contract(task), [{"kind": "memory", "body": "fixture memory"}], as_of="today")
+def test_prompt_order(benchmark, task, config):
+    prompt, asof, source = make_prompt(task, benchmark.output_contract(task), [{"kind": "memory", "body": "fixture memory"}], as_of="today", config=config)
     headings = ["TASK\n", "SPEC\n", "AS-OF DATE\n", "RELEVANT HARNESS\n", "TOOLS\n", "METHOD\n", "OUTPUT CONTRACT\n"]
     assert [prompt.index(x) for x in headings] == sorted(prompt.index(x) for x in headings)
     assert source == "today" and asof in prompt
 
 
-def test_prompt_documents_batched_discovery_and_fetching(benchmark, task):
-    prompt, _, _ = make_prompt(task, benchmark.output_contract(task), [], as_of="today")
+def test_prompt_documents_batched_discovery_and_fetching(benchmark, task, config):
+    prompt, _, _ = make_prompt(task, benchmark.output_contract(task), [], as_of="today", config=config)
     tools, method = prompt.split("TOOLS\n")[1].split("METHOD\n")
     assert "search_many(queries, k=8)" in tools
     assert "fetch_many(urls, focus='')" in tools
@@ -90,15 +90,15 @@ def test_prompt_documents_batched_discovery_and_fetching(benchmark, task):
     ('today', date(2020, 1, 2), '2020-01-02', 'task'),
     ('2024-02-29', date(2020, 1, 2), '2020-01-02', 'task'),
 ])
-def test_prompt_uses_explicit_date_policy_and_ignores_raw_fallback(benchmark, task, policy, task_date, expected, source):
+def test_prompt_uses_explicit_date_policy_and_ignores_raw_fallback(benchmark, task, config, policy, task_date, expected, source):
     task.as_of_date = task_date
     task.raw['fallback_as_of_date'] = '1900-01-01'
-    prompt, actual, actual_source = make_prompt(task, benchmark.output_contract(task), [], as_of=policy)
+    prompt, actual, actual_source = make_prompt(task, benchmark.output_contract(task), [], as_of=policy, config=config)
     assert (actual, actual_source) == (expected, source)
     assert f'{expected} (source: {source})' in prompt
 
 
-def test_today_policy_is_archived_and_reused_after_calendar_changes(tmp_path, benchmark, task, monkeypatch):
+def test_today_policy_is_archived_and_reused_after_calendar_changes(tmp_path, benchmark, task, config, monkeypatch):
     from loop_research import agent
     class FirstDay(date):
         @classmethod
@@ -110,9 +110,9 @@ def test_today_policy_is_archived_and_reused_after_calendar_changes(tmp_path, be
             return cls(2024, 3, 1)
     path = tmp_path / 'as_of.json'
     monkeypatch.setattr(agent, 'date', FirstDay)
-    first = make_prompt(task, benchmark.output_contract(task), [], as_of='today', date_archive=path)
+    first = make_prompt(task, benchmark.output_contract(task), [], as_of='today', config=config, date_archive=path)
     monkeypatch.setattr(agent, 'date', SecondDay)
-    resumed = make_prompt(task, benchmark.output_contract(task), [], as_of='today', date_archive=path)
+    resumed = make_prompt(task, benchmark.output_contract(task), [], as_of='today', config=config, date_archive=path)
     assert first == resumed
     assert first[1:] == ('2024-02-29', 'today')
 

@@ -93,7 +93,22 @@ def learning_policy(enabled):
             'edits apply before later root calls and appear in CURRENT RELEVANT HARNESS ENTRIES.\n')
 
 
-def make_prompt(task, contract, entries, *, as_of, date_archive=None, learning=True):
+def resource_policy(config):
+    limits = {'max_codex_calls': config.agent.max_codex_calls, 'task_timeout_s': config.agent.task_timeout_s,
+              'max_iterations_per_rlm': config.rlm.max_iterations, 'max_depth': config.rlm.max_depth,
+              'max_concurrent_codex_calls': config.codex.max_concurrent}
+    return ('RESOURCE LIMITS\n' + json.dumps(limits) + '\n'
+            'budget() returns the current call limit, reserved and remaining counts without consuming a call. '
+            'Reserved counts all research backend attempts, including in-flight calls and retries: root, sub, '
+            'search, fetch and output repair. Refinement and grading use separate calls. '
+            'The snapshot is not a reservation; concurrent work can consume remaining calls. '
+            'Check budget() before costly batches. Plan capacity across discovery, fetching, extraction, '
+            'validation and final submission; leave room for remaining root turns and any output repair. '
+            'Inspect simple hit lists with Python and group related evidence extraction instead of spending '
+            'one subcall per simple hit list. Reuse collected evidence when recovering from code errors.\n')
+
+
+def make_prompt(task, contract, entries, *, as_of, config, date_archive=None, learning=True):
     identity = {"policy": as_of, "task_date": task.as_of_date.isoformat() if task.as_of_date else None}
     archived = read_json(date_archive) if date_archive is not None else None
     if archived is not None:
@@ -110,6 +125,7 @@ def make_prompt(task, contract, entries, *, as_of, date_archive=None, learning=T
         write_json(date_archive, {**identity, "as_of_date": asof.isoformat(), "date_source": source})
     prompt = (f"TASK\n{task.question}\nSPEC\n{json.dumps(task.spec, ensure_ascii=False)}\n\n"
         f"AS-OF DATE\n{asof.isoformat()} (source: {source}). Honor all dates/periods in the task text.\n\n"
+        f"{resource_policy(config)}\n"
         f"RELEVANT HARNESS\n{json.dumps(entries, ensure_ascii=False)}\n\nTOOLS\n"
         "search(query, k=8): live web hits with title, url, snippet. Never invent URLs.\n"
         "search_many(queries, k=8): concurrent searches; one hit list per query, in input order.\n"
@@ -145,9 +161,10 @@ def run_task(task, benchmark, session):
     contract = benchmark.output_contract(task)
     entries = session.retrieve()
     prompt, asof, source = make_prompt(task, contract, entries, as_of=ctx.config.agent.as_of,
-                                      date_archive=ctx.path / "as_of.json", learning=session.learning)
+                                      config=ctx.config, date_archive=ctx.path / "as_of.json", learning=session.learning)
     root_prompt = (f"TASK\n{task.question}\nSPEC\n{json.dumps(task.spec, ensure_ascii=False)}\n"
                    f"LANGUAGE\n{task.language}\nAS-OF DATE\n{asof} (source: {source})\n"
+                   f"{resource_policy(ctx.config)}\n"
                    f"{learning_policy(session.learning)}\n"
                    "Read the full instructions and output contract in the REPL context.")
     with ctx.trace.span("Prompt", "save", size_chars=len(prompt), size_bytes=len(prompt.encode()),
@@ -216,6 +233,7 @@ def worker(request_path):
     methods = ('search', 'fetch', 'search_many', 'fetch_many', 'check_constraint', 'record_discovery')
     remote = Remote(client, 'tools.', methods)
     tools = {name: getattr(remote, name) for name in methods}
+    tools['budget'] = lambda: client.call('budget')
     tools['harness'] = Remote(client, 'harness.', ('create', 'get', 'read', 'update', 'delete', 'list', 'search'))
     tools['refine'] = Remote(client, 'refine.', ('run', 'rollback'))
     rlm = CodexRLM(client, root_model=config.models.root, sub_model=config.models.sub,

@@ -157,6 +157,13 @@ class Session:
             return self._state_dispatch(method, args, kwargs)
 
     def _state_dispatch(self, method, args, kwargs):
+        if method == 'budget':
+            if args or kwargs:
+                raise ValueError('budget accepts no arguments')
+            result = self.budget.snapshot()
+            append_json(self.ctx.path / 'trajectory.jsonl', {'type': 'tool', 'tool': 'budget',
+                        'args': [], 'kwargs': {}, 'result': result})
+            return result
         if method.startswith('harness.'):
             name = method.removeprefix('harness.')
             if name not in {'create', 'read', 'get', 'update', 'delete', 'list', 'search'}:

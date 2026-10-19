@@ -52,6 +52,11 @@ class CallBudget:
                 raise BudgetExceeded("Task Codex call limit exceeded")
             self.count += 1
 
+    def snapshot(self):
+        """Read cumulative reservations, including in-flight attempts, without spending a call."""
+        with self.lock:
+            return {'limit': self.limit, 'reserved': self.count, 'remaining': max(0, self.limit - self.count)}
+
 
 class CodexBackend:
     def __init__(self, run_ctx: RunContext, *, budget=None, runner=None, sleep=time.sleep, jitter=random.random):
