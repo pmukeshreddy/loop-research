@@ -78,11 +78,7 @@ class Session:
             self.harness.record_usage(entries, self.run_id)
             if trace.enabled:
                 details['head_after'] = self.harness.head
-            # Outcomes remain in the store/refiner, not in every research turn.
-            # Preserve all procedural content and provenance without recursively
-            # importing previous tasks' self-check records into the root context.
-            return [{key: value for key, value in entry.items() if key not in {'usage', 'outcomes'}}
-                    for entry in entries]
+            return entries
 
     def self_check(self):
         with self.ctx.trace.span('Output', 'self_check') as details:

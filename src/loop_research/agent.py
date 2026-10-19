@@ -169,11 +169,7 @@ def run_task(task, benchmark, session):
     entries = session.retrieve()
     prompt, asof, source = make_prompt(task, contract, entries, as_of=ctx.config.agent.as_of,
                                       config=ctx.config, date_archive=ctx.path / "as_of.json", learning=session.learning)
-    root_prompt = (f"TASK\n{task.question}\nSPEC\n{json.dumps(task.spec, ensure_ascii=False)}\n"
-                   f"LANGUAGE\n{task.language}\nAS-OF DATE\n{asof} (source: {source})\n"
-                   f"{resource_policy(ctx.config)}\n"
-                   f"{learning_policy(session.learning)}\n"
-                   "Read the full instructions and output contract in the REPL context.")
+    root_prompt = prompt
     with ctx.trace.span("Prompt", "save", size_chars=len(prompt), size_bytes=len(prompt.encode()),
                         sha256=hashlib.sha256(prompt.encode()).hexdigest(), path=str(ctx.path / "prompt.txt")):
         (ctx.path / "prompt.txt").write_text(prompt)

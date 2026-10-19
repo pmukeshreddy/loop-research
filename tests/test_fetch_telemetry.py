@@ -15,8 +15,8 @@ from loop_research.trace import Trace
 
 
 def web_events(url='https://example.org/'):
-    # Complete observed shapes from baseline resolved_prediction_markets stdout,
-    # lines 117-118. A result's line-count snippet is not its raw page body.
+    # Complete observed web-event shapes from an archived run.
+    # A result's line-count snippet is not its raw page body.
     return [
         {'type': 'item.started', 'item': {'id': 'exec-fixture', 'type': 'web_search',
             'query': '', 'action': {'type': 'other'}}},

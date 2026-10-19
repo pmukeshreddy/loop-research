@@ -147,12 +147,12 @@ expose only result metadata; returned model text is not a raw-page size measurem
 `codex.log_full_text` controls full prompt/response logging. Grader artifacts remain under
 reports, separate from research observations.
 
-The project RLM subclass gives the root a short task brief; the full task contract stays in
+The project RLM subclass gives the root the full task contract, also available in
 the persistent REPL context. Its coordination prompt asks for page processing in variables
 and sub-calls, compact diagnostics, and direct submission of the validated Python value.
 Printed output still reaches later root prompts with the pinned RLM's existing per-block
-truncation; no output filter enforces this policy. Retrieved procedures omit usage/outcome
-history from researcher prompts while the harness and refiner retain that history.
+truncation; no output filter enforces this policy. Retrieved entries retain all fields,
+including usage and outcome history, in researcher prompts.
 The root and REPL receive configured resource limits. `budget()` reports cumulative reserved
 research calls and remaining allowance without consuming a call; retries and in-flight calls
 are included. `llm_query_json(prompt, schema)` and `llm_query_json_batched(prompts, schema)`

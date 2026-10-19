@@ -1346,7 +1346,9 @@ is mechanism evidence, not a statistical result. No source changes followed the
 The disk audit traced page leakage to printed REPL output retained by the pinned
 RLM, the stock orchestrator's printed-candidate requirement, duplicated full task
 context in the initial root prompt, and retrieved usage/outcome history. Project
-subclasses now use a coordination prompt and task brief; full evidence remains in
+subclasses use a coordination prompt. The later input-preservation audit restored
+the complete task contract in the initial root prompt and every field of retrieved
+entries, including usage and outcome history. Full evidence remains available in
 Python variables/sub-calls, and printed stdout is still observable under the
 unchanged upstream truncation. This is guidance, not a claim of live context
 advantage. A negative test confirms deliberately printed page text still reaches
@@ -1412,3 +1414,7 @@ Fresh final default suite: **571 passed, 1 deselected in 69.24 seconds** at
 `runs/round2/unit_suite.log`. The previous 568-test run is preserved in
 `runs/round2/unit_suite.before_structured_review.log`. No live four-arm result
 is claimed by these offline tests; the restarted proof remains to be executed.
+
+## Root input preservation audit
+
+The initial root prompt again contains the complete task contract and retrieved entries retain all fields. The coordination guidance does not filter printed output, and refinement timing remains agent-controlled. Regression tests retain the original prompt test with positive full-input/history requirements and add whole-entry equality; no coverage was removed. The new assertions failed twice before the fix and passed afterward. The full offline suite passed: **574 passed, 1 live test deselected in 66.89 seconds**. A fixture provenance comment was generalized without changing its data or assertions. The four proof arms require replay on this source.

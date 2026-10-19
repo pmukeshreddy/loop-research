@@ -7,8 +7,8 @@ from loop_research.rlm_codex_client import CodexRLM
 from test_worker import code_reply, final_code, session_factory
 
 
-def test_root_gets_task_brief_and_procedure_not_full_context_or_outcome_history(
-        task, benchmark, output, session_factory):
+def test_root_preserves_full_contract_procedure_and_outcome_history(
+        ctx, task, benchmark, output, session_factory):
     session = session_factory(lambda prompt, options: code_reply(final_code(output)))
     entry = session.harness.create('memory', 'Hand-written fixture procedure',
                                    'Inspect fixture evidence before choosing a value.')
@@ -18,11 +18,25 @@ def test_root_gets_task_brief_and_procedure_not_full_context_or_outcome_history(
     root_prompt = session.backend.calls[0][0]
     assert task.question in root_prompt
     assert 'Inspect fixture evidence before choosing a value.' in root_prompt
-    assert 'OUTCOME_ONLY_MARKER' not in root_prompt
-    assert 'OUTPUT CONTRACT\n' not in root_prompt
-    assert 'CONSTRAINT IDS\n' not in root_prompt
+    assert 'OUTCOME_ONLY_MARKER' in root_prompt
+    assert 'earlier-run' in root_prompt
+    assert 'OUTPUT CONTRACT\n' in root_prompt
+    assert 'CONSTRAINT IDS\n' in root_prompt
+    assert (ctx.path / 'prompt.txt').read_text() in root_prompt
+    assert (ctx.path / 'root_prompt.txt').read_text() == (ctx.path / 'prompt.txt').read_text()
     assert 'OUTCOME_ONLY_MARKER' in json.dumps(session.harness.snapshot())
     assert result.output == output
+
+
+def test_retrieval_preserves_every_field_for_the_researcher(session_factory):
+    session = session_factory(lambda *args: None)
+    entry = session.harness.create('memory', 'Hand-written fixture procedure',
+                                   'Inspect fixture evidence before choosing a value.')
+    session.harness.record_usage([entry], 'earlier-run')
+    session.harness.record_outcome('earlier-run', {'ok': False, 'issues': ['OUTCOME_ONLY_MARKER']})
+    query = session.task.question + ' ' + json.dumps(session.task.spec, ensure_ascii=False)
+    expected = session.harness.search(query, limit=session.ctx.config.harness.retrieval_limit)
+    assert session.retrieve() == expected
 
 
 def test_research_orchestrator_does_not_require_printing_candidate_answer():
