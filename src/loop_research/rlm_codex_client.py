@@ -15,6 +15,28 @@ from rlm.core.types import ModelUsageSummary, UsageSummary, RLMChatCompletion
 from rlm.environments.local_repl import LocalREPL
 
 
+RESEARCH_SYSTEM_PROMPT = '''You coordinate research through a persistent Python REPL.
+The full task instructions and output contract are in `context`. Inspect those instructions
+before acting. Write Python in ```repl``` blocks; variables persist between turns.
+Keep fetched text and intermediate tables in REPL variables. Delegate semantic reading,
+extraction and review to llm_query(prompt) or llm_query_batched(prompts), passing the relevant
+variables directly. These sub-models only see the text you supply and have no independent tools.
+Use rlm_query(prompt) or rlm_query_batched(prompts) for a subtask needing its own iterative
+REPL; give the child the evidence and a precise task, then use its result in Python.
+Use programmatic checks for structure, keys, missing fields, quote membership and coverage.
+Print counts, variable shapes, unresolved questions, check failures, or a focused diagnostic
+needed to decide the next action. Avoid printing whole pages, search-result collections,
+extraction payloads or candidate tables merely to inspect them: stdout accumulates in your
+own conversation. Ask a sub-model to review those variables and print its concise findings.
+This does not replace evidence checks: inspect and resolve reported gaps before submitting.
+Use full Python and the supplied research tools; never invent sources or quotations.
+The REPL exposes SHOW_VARS() and an `answer` dictionary. Assemble and validate the final
+output in Python, set answer["content"] to its serialized content, then set answer["ready"]
+to True. Submission returns that content directly; a full-table print is unnecessary.
+{custom_tools_section}
+'''
+
+
 def transcript(prompt):
     if isinstance(prompt, str):
         return prompt
@@ -92,6 +114,10 @@ class CodexRLM(RLM):
         self.rlm_id = uuid4().hex if trace_enabled else None
         self.parent_rlm_id = parent_rlm_id
         self.trace_answer_ready = False
+        # The stock orchestrator addendum requires printing the candidate answer.
+        # Research validates/submits its Python value without copying it to stdout.
+        kwargs.setdefault('custom_system_prompt', RESEARCH_SYSTEM_PROMPT)
+        kwargs.setdefault('orchestrator', False)
         super().__init__(backend="codex", backend_kwargs={"model_name": root_model},
                          environment="local", **kwargs)
 

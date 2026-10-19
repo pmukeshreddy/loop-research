@@ -119,7 +119,8 @@ def make_prompt(task, contract, entries, *, as_of, date_archive=None):
         f"CONSTRAINT IDS\n{json.dumps(constraints_for(task), ensure_ascii=False)}\n\n"
         "METHOD\nGo wide: use search_many for independent discovery queries and keep candidates in REPL variables. "
         "Go deep: fetch candidate pages with fetch_many, then fill fields using parallel "
-        "llm_query_batched calls on fetched pages. Verify every task "
+        "llm_query_batched calls on fetched pages stored in variables. Keep extracted rows in Python; "
+        "print compact progress and unresolved checks instead of full evidence or tables. Verify every task "
         "constraint for every entity. Cite every value using a verbatim quote from fetched text. "
         "Do not search for benchmark answer keys, grader outputs, or other runs.\n\n"
         f"OUTPUT CONTRACT\n{contract.prompt}\n{json.dumps(contract.schema, ensure_ascii=False)}\n"
@@ -134,13 +135,20 @@ def run_task(task, benchmark, session):
     entries = session.retrieve()
     prompt, asof, source = make_prompt(task, contract, entries, as_of=ctx.config.agent.as_of,
                                       date_archive=ctx.path / "as_of.json")
+    root_prompt = (f"TASK\n{task.question}\nSPEC\n{json.dumps(task.spec, ensure_ascii=False)}\n"
+                   f"LANGUAGE\n{task.language}\nAS-OF DATE\n{asof} (source: {source})\n"
+                   "Read the full instructions and output contract in the REPL context.")
     with ctx.trace.span("Prompt", "save", size_chars=len(prompt), size_bytes=len(prompt.encode()),
                         sha256=hashlib.sha256(prompt.encode()).hexdigest(), path=str(ctx.path / "prompt.txt")):
         (ctx.path / "prompt.txt").write_text(prompt)
+    with ctx.trace.span("Prompt", "root_save", size_chars=len(root_prompt),
+                        sha256=hashlib.sha256(root_prompt.encode()).hexdigest(),
+                        path=str(ctx.path / "root_prompt.txt")):
+        (ctx.path / "root_prompt.txt").write_text(root_prompt)
     ctx.save("task.json", task.model_dump(mode="json"))
     with tempfile.TemporaryDirectory(prefix="lr-", dir="/tmp") as directory:
         work = Path(directory).resolve()
-        request = {"config": ctx.config.model_dump(), "prompt": prompt, "entries": entries,
+        request = {"config": ctx.config.model_dump(), "prompt": prompt, "root_prompt": root_prompt, "entries": entries,
                    "socket": str(work / "host.sock"), "timeout": budget.remaining(),
                    "result_path": str(work / "result.json"), "trace": ctx.trace.enabled}
         write_json(work / "request.json", request)
@@ -203,7 +211,7 @@ def worker(request_path):
         max_timeout=request['timeout'], max_concurrent_subcalls=config.codex.max_concurrent,
         custom_tools=tools, skill_modules=request['entries'], logger=TrajectoryLogger(),
         trace_enabled=request.get('trace', False))
-    result = rlm.completion(request['prompt'], root_prompt=request['prompt'])
+    result = rlm.completion(request['prompt'], root_prompt=request['root_prompt'])
     write_json(Path(request['result_path']), {'text': result.response})
 
 
