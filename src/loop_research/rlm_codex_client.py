@@ -24,7 +24,10 @@ Keep fetched text and intermediate tables in REPL variables. For records consume
 use llm_query_json(prompt, schema) or llm_query_json_batched(prompts, schema), with an explicit
 JSON Schema for nested field types. They return validated Python values; JSON parsing alone
 does not validate types. Use llm_query(prompt) or llm_query_batched(prompts) for prose review.
-Pass the relevant variables directly. These sub-models only see the text you supply and have
+For model-query APIs, prompt must be a string and batched prompts must be a list of strings.
+Build that text from the relevant variables: serialize dictionaries or lists with
+json.dumps(evidence, ensure_ascii=False), then combine it with the task instruction.
+The schema is a separate dictionary argument, not a prompt. These sub-models only see the text you supply and have
 no independent tools. Group related evidence and rows into coherent extraction calls. Select
 simple URL fields directly from structured search results when no semantic judgment is needed.
 Inspect budget() before costly batches and plan capacity for the remaining research and checks.

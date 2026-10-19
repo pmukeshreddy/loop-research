@@ -42,6 +42,35 @@ def test_structured_session_rejects_unknown_operation_without_dispatch(ctx, task
         session.refiner.close()
 
 
+def test_model_prompt_contract_documents_string_inputs(ctx, task):
+    from loop_research.agent import make_prompt
+    from loop_research.research import ResearchData
+    from loop_research.rlm_codex_client import RESEARCH_SYSTEM_PROMPT
+
+    context, _, _ = make_prompt(task, ResearchData().output_contract(task), [],
+                               as_of=ctx.config.agent.as_of, config=ctx.config)
+    for instructions in (context, RESEARCH_SYSTEM_PROMPT):
+        assert 'prompt must be a string' in instructions
+        assert 'prompts must be a list of strings' in instructions
+        assert 'json.dumps' in instructions
+    assert 'Pass the relevant variables directly.' not in RESEARCH_SYSTEM_PROMPT
+
+
+def test_structured_batch_rejects_object_prompts_and_accepts_explicit_serialization(ctx, task):
+    backend = Replies('{"entities":["Example"]}')
+    session = Session(task, ctx, Harness(ctx.root / 'harness'), learning=False, backend=backend)
+    evidence = {'instruction': 'Extract explicit names', 'results': [{'name': 'Example'}]}
+    try:
+        with pytest.raises(TypeError, match='sequence of strings'):
+            session.dispatch('models.query_json_batched', [[evidence], SCHEMA], {})
+        assert backend.calls == []
+        prompt = json.dumps(evidence, ensure_ascii=False)
+        assert session.dispatch('models.query_json_batched', [[prompt], SCHEMA], {}) == [{'entities': ['Example']}]
+        assert backend.calls[0][0] == prompt
+    finally:
+        session.refiner.close()
+
+
 def test_real_worker_structured_calls_preserve_trace_parity_and_budget(ctx, task, output):
     from loop_research.agent import run_task
     from loop_research.research import ResearchData
