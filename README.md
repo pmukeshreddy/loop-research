@@ -147,6 +147,17 @@ expose only result metadata; returned model text is not a raw-page size measurem
 `codex.log_full_text` controls full prompt/response logging. Grader artifacts remain under
 reports, separate from research observations.
 
+Audit existing archives without making model or tool calls:
+
+```sh
+.venv/bin/python -m loop_research.archive_audit --all runs --output-dir /path/to/audit-output
+```
+
+The audit retains the largest dispatched root input, including an interrupted call.
+Missing bodies, iteration records, or task attribution are reported as unavailable;
+they are never replaced by a smaller completed input. Invalid or contradictory archives
+are reported individually. Outputs are derived files outside the task archives.
+
 The project RLM subclass gives the root the full task contract, also available in
 the persistent REPL context. Its coordination prompt asks for page processing in variables
 and sub-calls, compact diagnostics, and direct submission of the validated Python value.

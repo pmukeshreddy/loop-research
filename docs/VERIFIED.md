@@ -1472,3 +1472,28 @@ passed, 1 live test deselected in 69.56 seconds**, recorded in
 reference-fix defect. Separate auditor review then identified missing multi-task
 trace attribution coverage; that repair and the saved-input live checks remain
 required before research replay.
+
+## Partial and historical archive audit
+
+The report helper assumed every completed root call had a completed worker iteration.
+Cancellation between those two durable records caused a KeyError when the largest
+input had no iteration entry. The tracked read-only auditor now selects from all
+dispatched/completed inputs, retains exact verified bodies, sizes and hashes, and
+marks absent partitions or bodies unavailable. It never selects a smaller prompt
+to obtain a complete measurement. Missing files and legacy trace metadata remain
+explicit, while malformed JSON/UTF-8 and contradictory integrity data are errors.
+
+The same audit handles multiple task directories, attributes a shared trace only
+when ownership is established, and preserves the whole trace at run scope otherwise.
+Concurrent identical prompts are joined using available response/schema integrity;
+ambiguous call identities remain explicit without dropping known size/hash values.
+Completed-call and dispatched-attempt counts remain separate. The 50-character,
+case- and whitespace-sensitive overlap definition is unchanged.
+
+All 24 focused regressions passed after recorded red runs. The full offline suite
+passed **670 tests, 1 live test deselected in 69.07 seconds** at
+`runs/round2/unit_suite_all_fixes.log`. The disk audit completed for 27 run directories
+(32 tasks) and two report-side archive directories (five tasks), with zero archive
+errors. Existing completed-run measurements match the previous auditor. An interrupted
+archive's newly included pending input is identified explicitly, not substituted into
+the preserved earlier report. No original archives or report bytes were changed.
