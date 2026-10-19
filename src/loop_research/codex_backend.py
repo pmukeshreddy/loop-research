@@ -87,6 +87,10 @@ class CodexBackend:
     def last_web_actions(self):
         return getattr(self.local, 'web_actions', [])
 
+    @property
+    def last_web_events(self):
+        return getattr(self.local, 'web_events', [])
+
     def command(self, cwd, output, *, model, web=False, schema_file=None):
         cmd = [self.config.codex.bin, "exec", "--sandbox", "read-only", "--skip-git-repo-check",
                "--cd", str(cwd), "--output-last-message", str(output), "--json", "--color", "never",
@@ -147,7 +151,7 @@ class CodexBackend:
                     if on_attempt is not None:
                         on_attempt({**attempt_event, "status": "dispatched", "error": None})
                     response, stdout, stderr, code, usage, terminal = "", "", "", None, None, []
-                    web_actions = []
+                    web_actions, web_events = [], []
                     trace_component = 'Codex backend (' + purpose + ')'
                     self.ctx.trace.emit(trace_component, 'exec.start', parent=self.ctx.trace.current.get(), **record)
                     try:
@@ -170,15 +174,19 @@ class CodexBackend:
                             exit_code=code, usage=usage, web_action_count=0, retries=attempt,
                             error=f'{type(exc).__name__}: {exc}')
                         raise
-                    for line in stdout.splitlines():
+                    for line_number, line in enumerate(stdout.splitlines(), 1):
                         try:
                             event = json.loads(line)
                         except json.JSONDecodeError:
                             continue
                         if event.get("type") == "turn.completed":
                             usage = event.get("usage")
-                        if event.get('type') == 'item.completed' and event.get('item', {}).get('type') == 'web_search':
-                            web_actions.append(event['item'].get('action', {}))
+                        if event.get('item', {}).get('type') == 'web_search':
+                            # Preserve the complete event, including result metadata,
+                            # independently of model prompt/response text logging.
+                            web_events.append({'stdout_line': line_number, 'event': event})
+                            if event.get('type') == 'item.completed':
+                                web_actions.append(event['item'].get('action', {}))
                         if event.get("type") in ("error", "turn.failed"):
                             terminal.append(str(event.get("error", event.get("message", event))))
                     if output.exists():
@@ -188,6 +196,7 @@ class CodexBackend:
                         terminal.append("Missing or empty final message")
                     elapsed = time.monotonic() - started
                     record.update(duration_s=elapsed, exit_code=code, response_chars=len(response), web_actions=web_actions,
+                                  web_events=web_events,
                                   usage=usage, usage_status="reported" if usage is not None else "unavailable",
                                   error=(stderr + "\n" + "\n".join(terminal))[-4000:] if failed else None)
                     if self.config.codex.log_full_text or plain:
@@ -203,6 +212,7 @@ class CodexBackend:
                         web_action_count=len(web_actions), retries=attempt)
                     self.local.usage = usage
                     self.local.web_actions = web_actions
+                    self.local.web_events = web_events
                     if on_attempt is not None:
                         on_attempt({**attempt_event, "status": "failed" if failed else "succeeded",
                                     "error": record["error"]})

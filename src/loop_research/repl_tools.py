@@ -33,6 +33,9 @@ class ResearchTools:
             'fetched': {}, 'checks': [], 'searches': [], 'discoveries': [], 'failures': []})
         self.evidence.setdefault('fetches', [])
         self.evidence.setdefault('dropped_search_hits', [])
+        # Keep size observations outside evidence/self-check, which are model inputs.
+        self.fetch_telemetry = {item['id']: item for item in
+                                read_json(ctx.path / 'fetch_telemetry.json', [])}
         self.entities = {entity for d in self.evidence['discoveries'] for entity in d['entities']}
         if ctx.cancellation is not None:
             ctx.cancellation.add_done_callback(self._cancel_fetches)
@@ -41,6 +44,7 @@ class ResearchTools:
         write_json(self.ctx.path / "tool_cache.json", self.cache)
         write_json(self.ctx.path / "url_ledger.json", sorted(self.ledger))
         write_json(self.ctx.path / 'evidence.json', self.evidence)
+        write_json(self.ctx.path / 'fetch_telemetry.json', list(self.fetch_telemetry.values()))
 
     def snapshot(self):
         with self.lock:
@@ -51,11 +55,26 @@ class ResearchTools:
                    'source': source, 'status': 'pending'}
         self.evidence['fetches'].append(request)
         self.active_fetches[request['id']] = request
+        self.fetch_telemetry[request['id']] = {**request, 'returned_chars': None,
+            'evidence_eligible': False, 'raw_page_chars': None,
+            'raw_page_chars_reason': 'fetch_not_completed'}
         return request
 
-    def _finish_fetch(self, request, status, *, reason=None, error=None):
+    def _finish_fetch(self, request, status, *, reason=None, error=None, returned=None):
         request['status'] = status
         self.active_fetches.pop(request['id'], None)
+        measurement = self.fetch_telemetry[request['id']]
+        measurement.update(status=status, returned_chars=len(returned) if returned is not None else None,
+                           evidence_eligible=status == 'succeeded' and returned is not None)
+        if 'owner_id' in request:
+            measurement['owner_id'] = request['owner_id']
+            owner = self.fetch_telemetry.get(request['owner_id'])
+            if owner is not None:
+                measurement['raw_page_chars_reason'] = owner['raw_page_chars_reason']
+        if measurement['raw_page_chars_reason'] == 'fetch_not_completed':
+            measurement['raw_page_chars_reason'] = (
+                'cached_fetch_has_no_archived_web_events' if request['source'] == 'cache'
+                else 'no_completed_backend_attempt')
         if reason is not None:
             request['reason'] = reason
             failure = {'operation': 'fetch', 'url': request['url'], 'request_id': request['id'],
@@ -74,6 +93,24 @@ class ResearchTools:
                 attempt = {'request_id': request['id']}
                 attempts.append(attempt)
             attempt.update(event)
+            measurement = self.fetch_telemetry[request['id']]
+            measurements = measurement.setdefault('attempts', [])
+            measured = next((item for item in measurements if item['call_id'] == event['call_id']), None)
+            if measured is None:
+                measured = {'call_id': event['call_id'], 'attempt': event['attempt']}
+                measurements.append(measured)
+            measured['status'] = event['status']
+            if event['status'] != 'dispatched':
+                web_events = self.backend.last_web_events
+                measured.update(archive='codex_calls.jsonl', web_event_indexes=list(range(len(web_events))))
+                # The verified CLI events contain metadata and line-count snippets,
+                # not the opened page body or its character count. Do not use the
+                # rendered model response, snippet length, or line count as raw size.
+                opened = any(item['event'].get('type') == 'item.completed' and
+                    item['event']['item'].get('action', {}).get('type') == 'open_page'
+                    for item in web_events)
+                measurement['raw_page_chars_reason'] = ('not_exposed_by_codex_web_events' if opened
+                                                        else 'no_completed_open_page_event')
             if event['status'] == 'failed':
                 self.evidence['failures'].append({'operation': 'fetch', 'url': request['url'],
                     'request_id': request['id'], 'source': 'backend', 'reason': 'backend_attempt_failed',
@@ -110,7 +147,7 @@ class ResearchTools:
                         and item['url'] == target and item['focus'] == options[0]), None)
                     if owner is not None:
                         request['owner_id'] = owner['id']
-                    self._finish_fetch(request, 'succeeded')
+                    self._finish_fetch(request, 'succeeded', returned=self.cache[key])
                     self.persist()
                 return self.cache[key]
             if pending is None:
@@ -119,6 +156,7 @@ class ResearchTools:
                     self.pending_fetches[key] = request
             elif request is not None:
                 request['owner_id'] = self.pending_fetches[key]['id']
+                self.fetch_telemetry[request['id']]['owner_id'] = request['owner_id']
             if request is not None:
                 self.persist()
         try:
@@ -137,7 +175,7 @@ class ResearchTools:
                         self.evidence['fetched'].setdefault(target, []).append(result)
                 if request is not None:
                     self._finish_fetch(request, 'failed' if failed else 'succeeded',
-                                       reason='fetch_failed' if failed else None)
+                                       reason='fetch_failed' if failed else None, returned=result)
                 self.persist()
             if pending is None:
                 future.set_result(result)
