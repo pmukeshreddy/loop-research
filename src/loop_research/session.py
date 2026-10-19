@@ -86,7 +86,23 @@ class Session:
         return report
 
     def observation(self):
-        return {'trajectory': read_jsonl(self.ctx.path / 'trajectory.jsonl'), 'self_check': self.self_check()}
+        trajectory = read_jsonl(self.ctx.path / 'trajectory.jsonl')
+        root_seen = False
+        for record in trajectory:
+            if record['type'] == 'model' and record['purpose'] == 'root':
+                # Keep the initial task/instructions, then each new response.
+                # Later root prompts repeat the accumulated conversation.
+                if root_seen:
+                    record.pop('prompt')
+                root_seen = True
+            elif record['type'] == 'worker_iteration':
+                event = record['event']
+                event.pop('prompt', None)
+                event.pop('response', None)  # Already in the model record.
+                for block in event.get('code_blocks', []):
+                    block['result'].pop('locals', None)  # Full persistent heap, repeated each turn.
+                    block['result'].pop('rlm_calls', None)  # Already in model records.
+        return {'trajectory': trajectory, 'self_check': self.self_check()}
 
     def dispatch(self, method, args, kwargs):
         try:

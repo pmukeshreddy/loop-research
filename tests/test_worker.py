@@ -9,7 +9,7 @@ import time
 import pytest
 
 from loop_research.agent import run_task
-from loop_research.archive import read_jsonl, write_json
+from loop_research.archive import append_json, read_jsonl, write_json
 from loop_research.codex_backend import BudgetExceeded
 from loop_research.harness import Harness
 from loop_research.session import Session
@@ -66,6 +66,31 @@ def code_reply(code):
 
 def final_code(output):
     return 'answer["content"] = ' + repr(json.dumps(output)) + '\nanswer["ready"] = True'
+
+
+def test_refinement_observation_preserves_actions_without_repeated_history(ctx, session_factory):
+    session = session_factory(lambda *args: None)
+    events = [
+        {'type': 'model', 'purpose': 'root', 'prompt': 'initial task and instructions', 'response': 'first code'},
+        {'type': 'model', 'purpose': 'root', 'prompt': 'accumulated root history', 'response': 'second code'},
+        {'type': 'model', 'purpose': 'sub', 'prompt': 'page extraction input', 'response': 'extraction'},
+        {'type': 'tool', 'tool': 'fetch', 'result': 'page evidence'},
+        {'type': 'worker_iteration', 'event': {'iteration': 2, 'prompt': 'accumulated root history',
+            'response': 'second code', 'code_blocks': [{'code': 'second code', 'result': {
+                'stdout': 'diagnostic', 'stderr': 'execution error', 'locals': {'pages': 'accumulated pages'},
+                'rlm_calls': ['duplicate sub call'], 'final_answer': 'answer'}}]}}
+    ]
+    for event in events:
+        append_json(ctx.path / 'trajectory.jsonl', event)
+    observed = session.observation()['trajectory']
+    assert observed[0] == events[0]
+    assert observed[1] == {k: v for k, v in events[1].items() if k != 'prompt'}
+    assert observed[2:4] == events[2:4]
+    iteration = observed[4]['event']
+    assert 'prompt' not in iteration and 'response' not in iteration
+    assert iteration['code_blocks'] == [{'code': 'second code', 'result': {
+        'stdout': 'diagnostic', 'stderr': 'execution error', 'final_answer': 'answer'}}]
+    assert read_jsonl(ctx.path / 'trajectory.jsonl') == events
 
 
 def test_worker_full_python_tools_subcalls_and_trusted_trajectory(ctx, task, benchmark, output, session_factory):

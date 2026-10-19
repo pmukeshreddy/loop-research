@@ -1283,3 +1283,15 @@ individual child RLM identities and termination, and hard call-limit reporting
 when the REPL catches a tool exception. Independent review found that last gap;
 the regression failed before the trusted dispatch boundary fix and passed after.
 The proof configuration uses `rlm.max_depth: 2`, committed separately for the run.
+
+The first Chemistry proof attempt (`research-b758ea4a247a498485418f1266c7cacd`)
+returned 28 rows with zero self-check issues after 15 iterations, but automatic
+refinement exceeded Codex's input limit: 4,479,711 characters. Repeated root
+history and REPL locals snapshots dominated the input. Refinement observations
+now preserve initial instructions and incremental actions/results while omitting
+those duplicates; the raw trajectory remains intact. Reprojecting that archive
+produces 488,130 characters. The new regression failed before the fix and passed
+after; independent review found no blocker. Full suite: **454 passed, 1 deselected
+in 46.97 seconds**. The proof is rerun from the original BASE, not resumed from
+the persisted oversized planning job. This removes duplication, not a general
+bound on arbitrary future task/evidence sizes.

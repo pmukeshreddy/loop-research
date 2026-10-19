@@ -49,6 +49,12 @@ Every CRUD edit creates one Git commit containing the trigger, evidence and befo
 
 The planner receives only current-run trajectory, self-check and harness entries including past usage/outcomes. It prefers updating, merging (update then delete), or deleting an existing entry over adding one. Failure lessons become memories; successful reusable procedures become skills. Repeatedly poor self-check outcomes prompt revision/deletion. An empty edit list is legitimate when no reusable change is supported. No rewrite of the whole harness, acceptance gate, freeze or learning rounds exists.
 
+Planning uses the initial root instructions and incremental model/tool/REPL events.
+Repeated accumulated root prompts, duplicate worker responses/sub-call records, and
+full REPL locals snapshots are omitted from the planner input. Sub-model inputs,
+tool results, code, stdout, errors and final answers remain. The full trajectory
+archive is unchanged; this avoids quadratic repetition of history and page variables.
+
 Persist the proposal, snapshot, request identity and per-edit operation identities before applying edits. Resume recognizes already committed edits and continues unfinished application without duplicate edits. Persist finalization and rollback progress; record discarded proposals and skipped deletes with explicit reasons.
 
 `refine.rollback(id)` queues a compensating edit for the next boundary when invoked inside the REPL. Host rollback accepts a refinement id or its commit SHA.
