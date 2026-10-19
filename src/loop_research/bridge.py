@@ -6,6 +6,10 @@ import threading
 from .trace import Trace
 
 
+class _ThreadingUnixStreamServer(socketserver.ThreadingUnixStreamServer):
+    request_queue_size = socket.SOMAXCONN
+
+
 class Server:
     def __init__(self, path, dispatch, *, socket_timeout_s, trace=None):
         trace = trace or Trace()
@@ -32,7 +36,7 @@ class Server:
                 finally:
                     with lock:
                         active.discard(self.request)
-        self.server = socketserver.ThreadingUnixStreamServer(str(path), Handler)
+        self.server = _ThreadingUnixStreamServer(str(path), Handler)
         self.server.daemon_threads = True
         self.active, self.lock = active, lock
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
