@@ -1,0 +1,348 @@
+FFFF.....                                                                [100%]
+=================================== FAILURES ===================================
+_______ test_timeout_and_cancellation_share_one_group_stop[False-False] ________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-s_h5xxc6/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b56fcb0>
+caplog = <_pytest.logging.LogCaptureFixture object at 0x10b58a900>
+capture_output = False, already_gone = False
+
+    @pytest.mark.parametrize("capture_output", [False, True])
+    @pytest.mark.parametrize("already_gone", [False, True])
+    def test_timeout_and_cancellation_share_one_group_stop(ctx, monkeypatch, caplog,
+                                                         capture_output, already_gone):
+        """Hold timeout cleanup open while cancellation enters its same callback."""
+        ctx.cancellation = Future()
+        first_signal, release_signal, callback_entered, callback_finished = (
+            threading.Event() for _ in range(4)
+        )
+        calls = []
+        killpg = os.killpg
+        children = track_children(monkeypatch)
+        add_callback = ctx.cancellation.add_done_callback
+    
+        def observed_callback(callback):
+            def invoke(future):
+                callback_entered.set()
+                try:
+                    callback(future)
+                finally:
+                    callback_finished.set()
+            add_callback(invoke)
+    
+        def signal_group(pid, sig):
+            calls.append((pid, sig))
+            if len(calls) == 1:
+                killpg(pid, sig)
+                first_signal.set()
+                assert release_signal.wait(3), "test did not release first cleanup"
+                if already_gone:
+                    raise ProcessLookupError(errno.ESRCH, "fixture group exited")
+            else:
+                # Model the observed Darwin result only for a forbidden second call.
+                # The first call above really killed this test's owned process group.
+                raise PermissionError(errno.EPERM, "duplicate group signal")
+    
+        monkeypatch.setattr(ctx.cancellation, "add_done_callback", observed_callback)
+        monkeypatch.setattr(os, "killpg", signal_group)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            running = pool.submit(ctx.run_process, PAUSE, capture_output=capture_output,
+                                  text=True, timeout=.05, start_new_session=True)
+            cancelling = None
+            try:
+                assert first_signal.wait(3)
+                cancelling = pool.submit(ctx.cancellation.cancel)
+                assert callback_entered.wait(3)
+                # Let the competing callback run while the first signal is in flight.
+                # Correct cleanup may block here until the first caller releases it.
+                callback_finished.wait(.1)
+            finally:
+                release_signal.set()
+                if cancelling is not None:
+                    cancelling.result(timeout=3)
+                with pytest.raises(subprocess.TimeoutExpired):
+                    running.result(timeout=3)
+            assert children[0].returncode == -signal.SIGKILL
+>           assert calls == [(children[0].pid, signal.SIGKILL)]
+E           assert [(42556, <Sig....SIGKILL: 9>)] == [(42556, <Sig....SIGKILL: 9>)]
+E             
+E             Left contains one more item: (42556, <Signals.SIGKILL: 9>)
+E             Use -v to get more diff
+
+tests/test_process_cleanup.py:86: AssertionError
+------------------------------ Captured log call -------------------------------
+ERROR    concurrent.futures:_base.py:342 exception calling callback for <Future at 0x10b589d00 state=cancelled>
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/tests/test_process_cleanup.py", line 48, in invoke
+    callback(future)
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/src/loop_research/archive.py", line 121, in <lambda>
+    self.cancellation.add_done_callback(lambda _: stop())
+                                                  ^^^^^^
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/src/loop_research/archive.py", line 114, in stop
+    os.killpg(process.pid, signal.SIGKILL)
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/tests/test_process_cleanup.py", line 64, in signal_group
+    raise PermissionError(errno.EPERM, "duplicate group signal")
+PermissionError: [Errno 1] duplicate group signal
+________ test_timeout_and_cancellation_share_one_group_stop[False-True] ________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-s_h5xxc6/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b58aab0>
+caplog = <_pytest.logging.LogCaptureFixture object at 0x10b58af60>
+capture_output = True, already_gone = False
+
+    @pytest.mark.parametrize("capture_output", [False, True])
+    @pytest.mark.parametrize("already_gone", [False, True])
+    def test_timeout_and_cancellation_share_one_group_stop(ctx, monkeypatch, caplog,
+                                                         capture_output, already_gone):
+        """Hold timeout cleanup open while cancellation enters its same callback."""
+        ctx.cancellation = Future()
+        first_signal, release_signal, callback_entered, callback_finished = (
+            threading.Event() for _ in range(4)
+        )
+        calls = []
+        killpg = os.killpg
+        children = track_children(monkeypatch)
+        add_callback = ctx.cancellation.add_done_callback
+    
+        def observed_callback(callback):
+            def invoke(future):
+                callback_entered.set()
+                try:
+                    callback(future)
+                finally:
+                    callback_finished.set()
+            add_callback(invoke)
+    
+        def signal_group(pid, sig):
+            calls.append((pid, sig))
+            if len(calls) == 1:
+                killpg(pid, sig)
+                first_signal.set()
+                assert release_signal.wait(3), "test did not release first cleanup"
+                if already_gone:
+                    raise ProcessLookupError(errno.ESRCH, "fixture group exited")
+            else:
+                # Model the observed Darwin result only for a forbidden second call.
+                # The first call above really killed this test's owned process group.
+                raise PermissionError(errno.EPERM, "duplicate group signal")
+    
+        monkeypatch.setattr(ctx.cancellation, "add_done_callback", observed_callback)
+        monkeypatch.setattr(os, "killpg", signal_group)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            running = pool.submit(ctx.run_process, PAUSE, capture_output=capture_output,
+                                  text=True, timeout=.05, start_new_session=True)
+            cancelling = None
+            try:
+                assert first_signal.wait(3)
+                cancelling = pool.submit(ctx.cancellation.cancel)
+                assert callback_entered.wait(3)
+                # Let the competing callback run while the first signal is in flight.
+                # Correct cleanup may block here until the first caller releases it.
+                callback_finished.wait(.1)
+            finally:
+                release_signal.set()
+                if cancelling is not None:
+                    cancelling.result(timeout=3)
+                with pytest.raises(subprocess.TimeoutExpired):
+                    running.result(timeout=3)
+            assert children[0].returncode == -signal.SIGKILL
+>           assert calls == [(children[0].pid, signal.SIGKILL)]
+E           assert [(42557, <Sig....SIGKILL: 9>)] == [(42557, <Sig....SIGKILL: 9>)]
+E             
+E             Left contains one more item: (42557, <Signals.SIGKILL: 9>)
+E             Use -v to get more diff
+
+tests/test_process_cleanup.py:86: AssertionError
+------------------------------ Captured log call -------------------------------
+ERROR    concurrent.futures:_base.py:342 exception calling callback for <Future at 0x10b589400 state=cancelled>
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/tests/test_process_cleanup.py", line 48, in invoke
+    callback(future)
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/src/loop_research/archive.py", line 121, in <lambda>
+    self.cancellation.add_done_callback(lambda _: stop())
+                                                  ^^^^^^
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/src/loop_research/archive.py", line 114, in stop
+    os.killpg(process.pid, signal.SIGKILL)
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/tests/test_process_cleanup.py", line 64, in signal_group
+    raise PermissionError(errno.EPERM, "duplicate group signal")
+PermissionError: [Errno 1] duplicate group signal
+________ test_timeout_and_cancellation_share_one_group_stop[True-False] ________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-s_h5xxc6/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b5885f0>
+caplog = <_pytest.logging.LogCaptureFixture object at 0x10b58a5d0>
+capture_output = False, already_gone = True
+
+    @pytest.mark.parametrize("capture_output", [False, True])
+    @pytest.mark.parametrize("already_gone", [False, True])
+    def test_timeout_and_cancellation_share_one_group_stop(ctx, monkeypatch, caplog,
+                                                         capture_output, already_gone):
+        """Hold timeout cleanup open while cancellation enters its same callback."""
+        ctx.cancellation = Future()
+        first_signal, release_signal, callback_entered, callback_finished = (
+            threading.Event() for _ in range(4)
+        )
+        calls = []
+        killpg = os.killpg
+        children = track_children(monkeypatch)
+        add_callback = ctx.cancellation.add_done_callback
+    
+        def observed_callback(callback):
+            def invoke(future):
+                callback_entered.set()
+                try:
+                    callback(future)
+                finally:
+                    callback_finished.set()
+            add_callback(invoke)
+    
+        def signal_group(pid, sig):
+            calls.append((pid, sig))
+            if len(calls) == 1:
+                killpg(pid, sig)
+                first_signal.set()
+                assert release_signal.wait(3), "test did not release first cleanup"
+                if already_gone:
+                    raise ProcessLookupError(errno.ESRCH, "fixture group exited")
+            else:
+                # Model the observed Darwin result only for a forbidden second call.
+                # The first call above really killed this test's owned process group.
+                raise PermissionError(errno.EPERM, "duplicate group signal")
+    
+        monkeypatch.setattr(ctx.cancellation, "add_done_callback", observed_callback)
+        monkeypatch.setattr(os, "killpg", signal_group)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            running = pool.submit(ctx.run_process, PAUSE, capture_output=capture_output,
+                                  text=True, timeout=.05, start_new_session=True)
+            cancelling = None
+            try:
+                assert first_signal.wait(3)
+                cancelling = pool.submit(ctx.cancellation.cancel)
+                assert callback_entered.wait(3)
+                # Let the competing callback run while the first signal is in flight.
+                # Correct cleanup may block here until the first caller releases it.
+                callback_finished.wait(.1)
+            finally:
+                release_signal.set()
+                if cancelling is not None:
+                    cancelling.result(timeout=3)
+                with pytest.raises(subprocess.TimeoutExpired):
+                    running.result(timeout=3)
+            assert children[0].returncode == -signal.SIGKILL
+>           assert calls == [(children[0].pid, signal.SIGKILL)]
+E           assert [(42558, <Sig....SIGKILL: 9>)] == [(42558, <Sig....SIGKILL: 9>)]
+E             
+E             Left contains one more item: (42558, <Signals.SIGKILL: 9>)
+E             Use -v to get more diff
+
+tests/test_process_cleanup.py:86: AssertionError
+------------------------------ Captured log call -------------------------------
+ERROR    concurrent.futures:_base.py:342 exception calling callback for <Future at 0x10b58a8a0 state=cancelled>
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/tests/test_process_cleanup.py", line 48, in invoke
+    callback(future)
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/src/loop_research/archive.py", line 121, in <lambda>
+    self.cancellation.add_done_callback(lambda _: stop())
+                                                  ^^^^^^
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/src/loop_research/archive.py", line 114, in stop
+    os.killpg(process.pid, signal.SIGKILL)
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/tests/test_process_cleanup.py", line 64, in signal_group
+    raise PermissionError(errno.EPERM, "duplicate group signal")
+PermissionError: [Errno 1] duplicate group signal
+________ test_timeout_and_cancellation_share_one_group_stop[True-True] _________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-s_h5xxc6/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b589dc0>
+caplog = <_pytest.logging.LogCaptureFixture object at 0x10b58bd40>
+capture_output = True, already_gone = True
+
+    @pytest.mark.parametrize("capture_output", [False, True])
+    @pytest.mark.parametrize("already_gone", [False, True])
+    def test_timeout_and_cancellation_share_one_group_stop(ctx, monkeypatch, caplog,
+                                                         capture_output, already_gone):
+        """Hold timeout cleanup open while cancellation enters its same callback."""
+        ctx.cancellation = Future()
+        first_signal, release_signal, callback_entered, callback_finished = (
+            threading.Event() for _ in range(4)
+        )
+        calls = []
+        killpg = os.killpg
+        children = track_children(monkeypatch)
+        add_callback = ctx.cancellation.add_done_callback
+    
+        def observed_callback(callback):
+            def invoke(future):
+                callback_entered.set()
+                try:
+                    callback(future)
+                finally:
+                    callback_finished.set()
+            add_callback(invoke)
+    
+        def signal_group(pid, sig):
+            calls.append((pid, sig))
+            if len(calls) == 1:
+                killpg(pid, sig)
+                first_signal.set()
+                assert release_signal.wait(3), "test did not release first cleanup"
+                if already_gone:
+                    raise ProcessLookupError(errno.ESRCH, "fixture group exited")
+            else:
+                # Model the observed Darwin result only for a forbidden second call.
+                # The first call above really killed this test's owned process group.
+                raise PermissionError(errno.EPERM, "duplicate group signal")
+    
+        monkeypatch.setattr(ctx.cancellation, "add_done_callback", observed_callback)
+        monkeypatch.setattr(os, "killpg", signal_group)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            running = pool.submit(ctx.run_process, PAUSE, capture_output=capture_output,
+                                  text=True, timeout=.05, start_new_session=True)
+            cancelling = None
+            try:
+                assert first_signal.wait(3)
+                cancelling = pool.submit(ctx.cancellation.cancel)
+                assert callback_entered.wait(3)
+                # Let the competing callback run while the first signal is in flight.
+                # Correct cleanup may block here until the first caller releases it.
+                callback_finished.wait(.1)
+            finally:
+                release_signal.set()
+                if cancelling is not None:
+                    cancelling.result(timeout=3)
+                with pytest.raises(subprocess.TimeoutExpired):
+                    running.result(timeout=3)
+            assert children[0].returncode == -signal.SIGKILL
+>           assert calls == [(children[0].pid, signal.SIGKILL)]
+E           assert [(42559, <Sig....SIGKILL: 9>)] == [(42559, <Sig....SIGKILL: 9>)]
+E             
+E             Left contains one more item: (42559, <Signals.SIGKILL: 9>)
+E             Use -v to get more diff
+
+tests/test_process_cleanup.py:86: AssertionError
+------------------------------ Captured log call -------------------------------
+ERROR    concurrent.futures:_base.py:342 exception calling callback for <Future at 0x10b58b7d0 state=cancelled>
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/tests/test_process_cleanup.py", line 48, in invoke
+    callback(future)
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/src/loop_research/archive.py", line 121, in <lambda>
+    self.cancellation.add_done_callback(lambda _: stop())
+                                                  ^^^^^^
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/src/loop_research/archive.py", line 114, in stop
+    os.killpg(process.pid, signal.SIGKILL)
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/tests/test_process_cleanup.py", line 64, in signal_group
+    raise PermissionError(errno.EPERM, "duplicate group signal")
+PermissionError: [Errno 1] duplicate group signal
+=========================== short test summary info ============================
+FAILED tests/test_process_cleanup.py::test_timeout_and_cancellation_share_one_group_stop[False-False]
+FAILED tests/test_process_cleanup.py::test_timeout_and_cancellation_share_one_group_stop[False-True]
+FAILED tests/test_process_cleanup.py::test_timeout_and_cancellation_share_one_group_stop[True-False]
+FAILED tests/test_process_cleanup.py::test_timeout_and_cancellation_share_one_group_stop[True-True]
+4 failed, 5 passed in 0.44s

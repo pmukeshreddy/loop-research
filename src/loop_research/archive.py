@@ -10,6 +10,7 @@ import os
 import signal
 import subprocess
 import tempfile
+import threading
 from .config import Config
 from .trace import Trace
 
@@ -105,10 +106,16 @@ class RunContext:
         process = subprocess.Popen(command, start_new_session=session, **kwargs)
         if trace_component:
             self.trace.emit(trace_component, "spawned", pid=process.pid)
-        finished = False
+        finished = stopped = False
+        cleanup_lock = threading.Lock()
 
         def stop():
-            if not finished:
+            nonlocal stopped
+            # Timeout cleanup and Future cancellation can race before the
+            # communicate/wait drain completes. Signal an owned group once.
+            with cleanup_lock:
+                if finished or stopped:
+                    return
                 try:
                     if session:
                         os.killpg(process.pid, signal.SIGKILL)
@@ -116,6 +123,7 @@ class RunContext:
                         process.kill()
                 except ProcessLookupError:
                     pass  # The child may exit between cancellation and cleanup.
+                stopped = True
 
         if self.cancellation is not None:
             self.cancellation.add_done_callback(lambda _: stop())
@@ -134,7 +142,8 @@ class RunContext:
                 process.wait()
             raise
         finally:
-            finished = True
+            with cleanup_lock:
+                finished = True
         self.check_cancelled()
         return subprocess.CompletedProcess(command, code, stdout, stderr)
 
