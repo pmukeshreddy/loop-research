@@ -1,0 +1,264 @@
+{
+  "failed_source_commit": "42424491009371cc7063c2a88394e92c97e974a7",
+  "shared_backend_limit": 4,
+  "case_count": 5,
+  "outer_pool_before": "len(prepared[\"cases\"])",
+  "outer_pool_after": "min(len(prepared[\"cases\"]), shared configured max_concurrent)",
+  "overflow_first_model_wait_wall_s": 9477.532392,
+  "overflow_dispatch_after_first_direct_release_wall_s": 0.045478,
+  "timing_qualification": "UTC wall intervals include machine sleep; recorded execution durations are separate monotonic measurements. No exact monotonic queue duration is archived.",
+  "unresolved": "PermissionError origin remains unlocalized; this admission change does not claim to fix OS sleep, DNS or permission behavior.",
+  "cases": [
+    {
+      "label": "A_distinct_pages_midtask",
+      "status": "failed",
+      "started_at": "2026-10-20T05:15:03.196559+00:00",
+      "ended_at": "2026-10-20T07:53:06.399465+00:00",
+      "error": "TimeoutError: Refinement context deadline exceeded",
+      "live_calls": 1,
+      "worker_processes": 1,
+      "calls": [
+        {
+          "call_id": "9b26472acd0c40f0bb47c2729d31566a",
+          "attempt": 0,
+          "started_at": "2026-10-20T07:53:03.702466+00:00",
+          "ended_at": "2026-10-20T07:53:05.821420+00:00",
+          "recorded_duration_s": 2.1187885830004234,
+          "error": "[Errno 1] Operation not permitted\nMissing or empty final message"
+        }
+      ],
+      "actions": [
+        {
+          "timestamp": "2026-10-20T05:15:06.129422+00:00",
+          "event": "snapshot.read"
+        },
+        {
+          "timestamp": "2026-10-20T05:15:06.173879+00:00",
+          "event": "model.start",
+          "action_id": "0e53c762e9574021a31f846950542655",
+          "role": "planner"
+        },
+        {
+          "timestamp": "2026-10-20T07:53:03.706271+00:00",
+          "event": "model.attempt",
+          "action_id": "0e53c762e9574021a31f846950542655",
+          "call_id": "9b26472acd0c40f0bb47c2729d31566a",
+          "status": "dispatched",
+          "error": null,
+          "role": "planner"
+        },
+        {
+          "timestamp": "2026-10-20T07:53:05.821575+00:00",
+          "event": "model.attempt",
+          "action_id": "0e53c762e9574021a31f846950542655",
+          "call_id": "9b26472acd0c40f0bb47c2729d31566a",
+          "status": "failed",
+          "error": "[Errno 1] Operation not permitted\nMissing or empty final message",
+          "role": "planner"
+        },
+        {
+          "timestamp": "2026-10-20T07:53:05.821876+00:00",
+          "event": "model.error",
+          "action_id": "0e53c762e9574021a31f846950542655",
+          "error": "BudgetExceeded: Refinement context deadline exceeded",
+          "role": "planner"
+        }
+      ]
+    },
+    {
+      "label": "SI_midtask",
+      "status": "complete",
+      "started_at": "2026-10-20T05:15:03.134530+00:00",
+      "ended_at": "2026-10-20T07:53:39.231778+00:00",
+      "error": null,
+      "live_calls": 2,
+      "worker_processes": 0,
+      "calls": [
+        {
+          "call_id": "cdfa18fb58754646a95644b607c4b673",
+          "attempt": 0,
+          "started_at": "2026-10-20T05:15:03.509419+00:00",
+          "ended_at": "2026-10-20T07:53:03.660793+00:00",
+          "recorded_duration_s": 600.0945630829956,
+          "error": "Command '['codex', 'exec', '--sandbox', 'read-only', '--skip-git-repo-check', '--cd', '/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-codex-kv_dl5ep/empty', '--output-last-message', '/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-codex-kv_dl5ep/response.txt', '--json', '--color', 'never', '--ephemeral', '--ignore-user-config', '-c', 'forced_login_method=\"chatgpt\"', '-c', 'model_provider=\"openai\"', '-c', 'features.shell_tool=false', '-c', 'web_search=\"disabled\"', '--output-schema', '/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-codex-kv_dl5ep/schema.json', '--model', 'gpt-6-astra', '-']' timed out after 600.0 seconds\n2026-10-20T06:22:32.550977Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: failed to lookup address information: nodename nor servname provided, or not known, url: wss://chatgpt.com/backend-api/codex/responses\n\nReconnecting... 2/5 (stream disconnected before completion: failed to lookup address information: nodename nor servname provided, or not known)\nReconnecting... 3/5 (stream disconnected before completion: IO error: Connection reset by peer (os error 54))\nMissing or empty final message"
+        },
+        {
+          "call_id": "599042bd28b8454aae62bcd37fdb8162",
+          "attempt": 1,
+          "started_at": "2026-10-20T07:53:05.573061+00:00",
+          "ended_at": "2026-10-20T07:53:39.078755+00:00",
+          "recorded_duration_s": 33.505653625004925,
+          "error": null
+        }
+      ]
+    },
+    {
+      "label": "A_full_pages_finalizer",
+      "status": "complete",
+      "started_at": "2026-10-20T05:15:03.164361+00:00",
+      "ended_at": "2026-10-20T08:31:51.247648+00:00",
+      "error": null,
+      "live_calls": 2,
+      "worker_processes": 0,
+      "calls": [
+        {
+          "call_id": "9581ffcb22454cf49f970626983b53dd",
+          "attempt": 0,
+          "started_at": "2026-10-20T05:15:05.505076+00:00",
+          "ended_at": "2026-10-20T07:53:05.638607+00:00",
+          "recorded_duration_s": 600.0795877919882,
+          "error": "Command '['codex', 'exec', '--sandbox', 'read-only', '--skip-git-repo-check', '--cd', '/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-codex-tmxbzsaf/empty', '--output-last-message', '/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-codex-tmxbzsaf/response.txt', '--json', '--color', 'never', '--ephemeral', '--ignore-user-config', '-c', 'forced_login_method=\"chatgpt\"', '-c', 'model_provider=\"openai\"', '-c', 'features.shell_tool=false', '-c', 'web_search=\"disabled\"', '--output-schema', '/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-codex-tmxbzsaf/schema.json', '--model', 'gpt-6-astra', '-']' timed out after 600.0 seconds\n2026-10-20T06:22:32.332037Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: failed to lookup address information: nodename nor servname provided, or not known, url: wss://chatgpt.com/backend-api/codex/responses\n\nReconnecting... 2/5 (stream disconnected before completion: failed to lookup address information: nodename nor servname provided, or not known)\nReconnecting... 3/5 (stream disconnected before completion: IO error: Connection reset by peer (os error 54))\nMissing or empty final message"
+        },
+        {
+          "call_id": "be6c002362774b248613143f099b51dc",
+          "attempt": 1,
+          "started_at": "2026-10-20T07:53:07.234062+00:00",
+          "ended_at": "2026-10-20T08:31:50.774464+00:00",
+          "recorded_duration_s": 389.1199699160061,
+          "error": null
+        }
+      ]
+    },
+    {
+      "label": "B1_fragments_finalizer",
+      "status": "complete",
+      "started_at": "2026-10-20T05:15:03.163076+00:00",
+      "ended_at": "2026-10-20T08:31:56.823121+00:00",
+      "error": null,
+      "live_calls": 2,
+      "worker_processes": 0,
+      "calls": [
+        {
+          "call_id": "8a5d14dbcf6944fc814ccc1d7bd19627",
+          "attempt": 0,
+          "started_at": "2026-10-20T05:15:04.880327+00:00",
+          "ended_at": "2026-10-20T07:53:05.567345+00:00",
+          "recorded_duration_s": 600.6329641249904,
+          "error": "Command '['codex', 'exec', '--sandbox', 'read-only', '--skip-git-repo-check', '--cd', '/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-codex-q1y4c7_4/empty', '--output-last-message', '/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-codex-q1y4c7_4/response.txt', '--json', '--color', 'never', '--ephemeral', '--ignore-user-config', '-c', 'forced_login_method=\"chatgpt\"', '-c', 'model_provider=\"openai\"', '-c', 'features.shell_tool=false', '-c', 'web_search=\"disabled\"', '--output-schema', '/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-codex-q1y4c7_4/schema.json', '--model', 'gpt-6-astra', '-']' timed out after 600.0 seconds\n2026-10-20T06:22:32.543418Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: failed to lookup address information: nodename nor servname provided, or not known, url: wss://chatgpt.com/backend-api/codex/responses\n\nReconnecting... 2/5 (stream disconnected before completion: failed to lookup address information: nodename nor servname provided, or not known)\nReconnecting... 3/5 (stream disconnected before completion: IO error: Connection reset by peer (os error 54))\nReconnecting... 4/5 (stream disconnected before completion: IO error: Connection reset by peer (os error 54))\nReconnecting... 5/5 (stream disconnected before completion: IO error: Connection reset by peer (os error 54))\nMissing or empty final message"
+        },
+        {
+          "call_id": "7ee0a172ff04400e80ab27d516b1fd1a",
+          "attempt": 1,
+          "started_at": "2026-10-20T07:53:07.214027+00:00",
+          "ended_at": "2026-10-20T08:31:56.356740+00:00",
+          "recorded_duration_s": 394.7234405830095,
+          "error": null
+        }
+      ]
+    },
+    {
+      "label": "B1_finalizer",
+      "status": "complete",
+      "started_at": "2026-10-20T05:15:03.195657+00:00",
+      "ended_at": "2026-10-20T08:31:57.977991+00:00",
+      "error": null,
+      "live_calls": 2,
+      "worker_processes": 0,
+      "calls": [
+        {
+          "call_id": "f96675fa02264ef18bdea665e97ea7b2",
+          "attempt": 0,
+          "started_at": "2026-10-20T05:15:04.862532+00:00",
+          "ended_at": "2026-10-20T07:53:05.560096+00:00",
+          "recorded_duration_s": 600.6438804590143,
+          "error": "Command '['codex', 'exec', '--sandbox', 'read-only', '--skip-git-repo-check', '--cd', '/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-codex-9sm9fukw/empty', '--output-last-message', '/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-codex-9sm9fukw/response.txt', '--json', '--color', 'never', '--ephemeral', '--ignore-user-config', '-c', 'forced_login_method=\"chatgpt\"', '-c', 'model_provider=\"openai\"', '-c', 'features.shell_tool=false', '-c', 'web_search=\"disabled\"', '--output-schema', '/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-codex-9sm9fukw/schema.json', '--model', 'gpt-6-astra', '-']' timed out after 600.0 seconds\n2026-10-20T06:22:32.465165Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: failed to lookup address information: nodename nor servname provided, or not known, url: wss://chatgpt.com/backend-api/codex/responses\n\nReconnecting... 2/5 (stream disconnected before completion: failed to lookup address information: nodename nor servname provided, or not known)\nReconnecting... 3/5 (stream disconnected before completion: IO error: Connection reset by peer (os error 54))\nMissing or empty final message"
+        },
+        {
+          "call_id": "4c7b6e854efc4564b0007a17fb679e3e",
+          "attempt": 1,
+          "started_at": "2026-10-20T07:53:06.611743+00:00",
+          "ended_at": "2026-10-20T08:31:57.560589+00:00",
+          "recorded_duration_s": 396.52949141699355,
+          "error": null
+        }
+      ]
+    }
+  ],
+  "source_files": [
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_refiner_v1/saved_refine/execution.json",
+      "sha256": "a4fa91f6d12b0f025448a4c52d10d8960cf92ccac37bfe8e6c57bbd7af04a5d6",
+      "bytes": 61497
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_refiner_v1/saved_refine/A_distinct_pages_midtask/replay_result.json",
+      "sha256": "ec0b709807b45f2d386887f6dccd15fa93b12d4c9ec4890eb2c4ee0cd3643cf4",
+      "bytes": 6225
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_refiner_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-1f83d9cd6d2b43748b896563782a343d/trace.jsonl",
+      "sha256": "b8f55eaef7da5e4e55168180cb235e24cc89a3c916beeb589efa36a6b1bd6933",
+      "bytes": 4349
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_refiner_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-1f83d9cd6d2b43748b896563782a343d/289901ce021c28d56fdac993/codex_calls.jsonl",
+      "sha256": "98661699ca5ce2d1361924ee9afa210b83e4ac01570b25482cba46b97f1cdf75",
+      "bytes": 5523
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_refiner_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-1f83d9cd6d2b43748b896563782a343d/289901ce021c28d56fdac993/refine_planners/a6376e930e67448f99610646946a4330/actions.jsonl",
+      "sha256": "a32c17a738915861a52e5eb5fa9a313b3381151bb3578a814ffb99b4dc63b7ba",
+      "bytes": 10972
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_refiner_v1/saved_refine/SI_midtask/replay_result.json",
+      "sha256": "c1ee85bc29ecc692a0d7948e0fa94c32a1416e4b4ec50c17a30ac0a6941227c1",
+      "bytes": 7006
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_refiner_v1/saved_refine/SI_midtask/workspace/runs/refine-replay-e35195d3400241b690cad3bd5f88032e/trace.jsonl",
+      "sha256": "45fc0df25edb5ed45f8515a433dec351474fce7ccceea2a2e28167098f88b88c",
+      "bytes": 18852
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_refiner_v1/saved_refine/SI_midtask/workspace/runs/refine-replay-e35195d3400241b690cad3bd5f88032e/1109eb057f25ad2429b6e77e/codex_calls.jsonl",
+      "sha256": "8cdfc3f6961f7f2962100ec3dad000ac0e1b7030e4b6dc5501469aa441ef97a4",
+      "bytes": 2405
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_refiner_v1/saved_refine/A_full_pages_finalizer/replay_result.json",
+      "sha256": "d58f32434a37242620cfa6a8cf00828416b3faaa212d20eb338d388885278f12",
+      "bytes": 11356
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_refiner_v1/saved_refine/A_full_pages_finalizer/workspace/runs/refine-replay-f92ab1336a724dde8da5e2e1ab20ea11/trace.jsonl",
+      "sha256": "e2e060dfd6663d9fb3274f9b0b48922a736f68a70b5f99fb5eef7a4dac75ed99",
+      "bytes": 26116
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_refiner_v1/saved_refine/A_full_pages_finalizer/workspace/runs/refine-replay-f92ab1336a724dde8da5e2e1ab20ea11/289901ce021c28d56fdac993/codex_calls.jsonl",
+      "sha256": "3137ee241db3ad21724e8830fdbcf501b9b17681ce34f636a3bc83ad3c6e53af",
+      "bytes": 2411
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_refiner_v1/saved_refine/B1_fragments_finalizer/replay_result.json",
+      "sha256": "e5da5ef45017f7da417b08912486c237c1f0573113bac3e8e3ddc936b2e9143e",
+      "bytes": 11898
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_refiner_v1/saved_refine/B1_fragments_finalizer/workspace/runs/refine-replay-3713156b19c248d5b3b9020d8007ea79/trace.jsonl",
+      "sha256": "4ce3eec30e43a4584f654d2a804b9a6cba7d80f69dc1f807a778ec79110828c5",
+      "bytes": 27860
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_refiner_v1/saved_refine/B1_fragments_finalizer/workspace/runs/refine-replay-3713156b19c248d5b3b9020d8007ea79/5f579a96530b9d0b8eaa08f9/codex_calls.jsonl",
+      "sha256": "1f73717c4cb0c97cf6729a5637bb0336d0cbb0ee1479f05361bba5f13c8b7d00",
+      "bytes": 2635
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_refiner_v1/saved_refine/B1_finalizer/replay_result.json",
+      "sha256": "58a10678eed430efaa64830fd9a70431987b38e37f02f65d9a6cfbe88dfea8d4",
+      "bytes": 11527
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_refiner_v1/saved_refine/B1_finalizer/workspace/runs/refine-replay-2d2fee20eccf4fb3bbd7976481bd96ac/trace.jsonl",
+      "sha256": "4a5b55f00536b96e96f4bac387ec6937ef4e6d97ab83edfc1c9ec285073e080a",
+      "bytes": 27345
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_refiner_v1/saved_refine/B1_finalizer/workspace/runs/refine-replay-2d2fee20eccf4fb3bbd7976481bd96ac/5f579a96530b9d0b8eaa08f9/codex_calls.jsonl",
+      "sha256": "08edc5a8e3bac6faa41d2ef08e70a1f6fb83375a0a6cbbf5f0c3bb19116b62f0",
+      "bytes": 2412
+    }
+  ]
+}

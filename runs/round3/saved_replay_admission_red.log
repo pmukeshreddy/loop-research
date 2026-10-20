@@ -1,0 +1,73 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_fifth_case_does_not_start_its_budget_until_one_of_four_active_cases_finishes _
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-5telsa8f/pytest-of-mukeshreddypochamreddy/pytest-0/test_fifth_case_does_not_start0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10bb014c0>
+
+    def test_fifth_case_does_not_start_its_budget_until_one_of_four_active_cases_finishes(tmp_path, monkeypatch):
+        module = helper()
+        cases = prepared_replay(module, tmp_path, monkeypatch, count=5, limit=4)
+        before = copy.deepcopy(cases)
+        entered = [threading.Event() for _ in cases]
+        release = [threading.Event() for _ in cases]
+        first_four = threading.Event()
+        lock = threading.Lock()
+        events = []
+        active = peak = 0
+    
+        def offline_case(case, cancellation):
+            nonlocal active, peak
+            index = int(case["label"])
+            with lock:
+                active += 1
+                peak = max(peak, active)
+                events.append(("start", index))
+                entered[index].set()
+                if all(event.is_set() for event in entered[:4]):
+                    first_four.set()
+            assert release[index].wait(10), "Test did not release its offline case"
+            with lock:
+                events.append(("end", index))
+                active -= 1
+            return {"label": case["label"], "status": "complete", "case_input": case}
+    
+        monkeypatch.setattr(module, "replay_case", offline_case)
+        with ThreadPoolExecutor(max_workers=1) as driver:
+            execution = driver.submit(module.execute, tmp_path, "offline-source")
+            try:
+                assert first_four.wait(5), "Four independent cases should run concurrently"
+>               assert not entered[4].wait(0.2), "Fifth case started while all four case slots were occupied"
+E               AssertionError: Fifth case started while all four case slots were occupied
+E               assert not True
+E                +  where True = wait(0.2)
+E                +    where wait = <threading.Event at 0x10bb4c8c0: set>.wait
+
+tests/test_saved_refine_scheduler.py:62: AssertionError
+____ test_fewer_cases_keep_available_parallelism_and_failures_are_retained _____
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-5telsa8f/pytest-of-mukeshreddypochamreddy/pytest-0/test_fewer_cases_keep_availabl0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10bb4eff0>
+
+    def test_fewer_cases_keep_available_parallelism_and_failures_are_retained(tmp_path, monkeypatch):
+        module = helper()
+        prepared_replay(module, tmp_path, monkeypatch, count=2, limit=4)
+        both_entered = threading.Barrier(2)
+    
+        def offline_case(case, cancellation):
+            both_entered.wait(timeout=5)
+            if case["label"] == "0":
+                raise RuntimeError("Deliberate offline case failure")
+            return {"label": case["label"], "status": "complete"}
+    
+        monkeypatch.setattr(module, "replay_case", offline_case)
+        result = module.execute(tmp_path, "offline-source")
+>       assert result["max_concurrent_cases"] == 2
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'max_concurrent_cases'
+
+tests/test_saved_refine_scheduler.py:91: KeyError
+=========================== short test summary info ============================
+FAILED tests/test_saved_refine_scheduler.py::test_fifth_case_does_not_start_its_budget_until_one_of_four_active_cases_finishes
+FAILED tests/test_saved_refine_scheduler.py::test_fewer_cases_keep_available_parallelism_and_failures_are_retained
+2 failed in 0.03s

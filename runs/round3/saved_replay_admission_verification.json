@@ -1,0 +1,58 @@
+{
+  "parent_compatibility_commit": "8e42a2e6f5bfb9a8541643f64617e91f82a2058f",
+  "test_commands": [
+    "python -m pytest tests/test_saved_refine_scheduler.py -q",
+    "python -m pytest tests/test_saved_refine_scheduler.py tests/test_saved_refine_transport.py tests/test_saved_refine_input.py -q",
+    "python -m pytest -q"
+  ],
+  "red": {
+    "failed": 2,
+    "cause": "fifth case entered while four occupied; missing admission metadata"
+  },
+  "focused_green": {
+    "passed": 35,
+    "seconds": 1.8
+  },
+  "full_green": {
+    "passed": 1004,
+    "deselected": 1,
+    "seconds": 108.97
+  },
+  "files": [
+    {
+      "path": "runs/round2/replay_saved_refine.py",
+      "sha256": "d67ff47906f5573722b4f5f55ff1a5877b93989ee1ff7e571d2e099bf8324b32",
+      "bytes": 35794
+    },
+    {
+      "path": "tests/test_saved_refine_scheduler.py",
+      "sha256": "595d13d547138e61cbd1f59d48ec51cb2f9a8573ed53b5d63d7b4064c234983d",
+      "bytes": 4225
+    },
+    {
+      "path": "runs/round3/saved_replay_admission_red.log",
+      "sha256": "51f66d1942480947fef84915238454ca98b75d3fe3c6ba4947ede040b698e095",
+      "bytes": 3872
+    },
+    {
+      "path": "runs/round3/saved_replay_admission_green.log",
+      "sha256": "58d672b760067a192382ebbad75283ce7d24a610d62b3d2cd46ac766c37bbed4",
+      "bytes": 99
+    },
+    {
+      "path": "runs/round3/saved_replay_admission_full.log",
+      "sha256": "258b14226ca235d0c7d414bae590ca793200995542966a3e9e61653e72d478bd",
+      "bytes": 1167
+    },
+    {
+      "path": "runs/round3/saved_replay_admission.md",
+      "sha256": "fd4fd3a8f65178e47cb0913fb8e40634aa54a96bd9c2ec7a923a4e522874330f",
+      "bytes": 2772
+    },
+    {
+      "path": "runs/round3/saved_replay_admission_diagnosis.json",
+      "sha256": "cc0a1e7bc6a1cfeed7416c40a710ca9b2e321b4a31d888715a3c56a5582716eb",
+      "bytes": 16780
+    }
+  ]
+}

@@ -564,12 +564,15 @@ def execute(output_root, expected_commit):
         raise ValueError("Parallel cases must share the same configured Codex slot limit")
     for case in prepared["cases"]:
         verify_originals(case)
+    max_cases = min(len(prepared["cases"]), next(iter(limits)))
     execution = {"status": "running", "started_at": stamp(), "command": [sys.executable, *sys.argv],
                  "source_verification": source, "shared_codex_max_concurrent": next(iter(limits)),
-                 "results": []}
+                 "max_concurrent_cases": max_cases, "results": []}
     save(output_root / "execution.json", execution)
     cancellation = concurrent.futures.Future()
-    pool = concurrent.futures.ThreadPoolExecutor(max_workers=len(prepared["cases"]))
+    # Admit cases before they start planner deadlines; queued cases do not spend
+    # their aggregate planning budget waiting behind a full set of other cases.
+    pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_cases)
     futures = {pool.submit(replay_case, case, cancellation): case for case in prepared["cases"]}
     try:
         for future in concurrent.futures.as_completed(futures):
