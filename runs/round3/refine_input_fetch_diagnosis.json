@@ -1,0 +1,162 @@
+{
+  "reviewer": "fetch_review",
+  "recorded_at": "2026-10-20T04:10:20.645650+00:00",
+  "source_commit": "dab5cf89963805d20d3d305ba14d8c8611cd8cf4",
+  "run_id": "research-0fd1b020f55e4155989dcd8c40c418f1",
+  "job_id": "b07049d849e54bad8ece2a1237c8606d",
+  "request_id": "e526f2d58c344551b9af464ae640f659",
+  "scope": "Independent disk-only diagnosis and in-memory lossless representation experiments. No product/source/harness edits, tests, models, web, installation, or commits.",
+  "conclusion": "The observed failure does not require a larger model or new transport: a generic readable quoted-string reference representation fits this exact complete logical payload below the same input character limit. This is a diagnostic proof, not a production implementation or live success claim.",
+  "boundary": {
+    "provider_limit_chars": 1048576,
+    "planner_prompt_chars": 1591896,
+    "planner_instructions_chars": 3365,
+    "wire_payload_chars": 1588531,
+    "backend_instruction_chars": 182,
+    "actual_backend_prompt_chars": 1592078,
+    "backend_prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
+    "schema_chars": 8959,
+    "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542",
+    "schema_note": "Separate output-schema file. The provider actual_chars equals prompt alone exactly; no evidence that schema size caused this rejection.",
+    "logical_payload_chars_default_json": 1984123,
+    "logical_payload_sha256": "2cd53600de561fdfad4d7ce8832de41e756cbadec841ccc2ca522c5a3e37bcd2",
+    "wire_payload_sha256": "a62e20e36b22b86d793182e24d63508106de4912a19d1d45a926642f15b3896a",
+    "candidate_groups": 2,
+    "trajectory_records": 292,
+    "harness_entries": 3,
+    "evidence_anchors": 344
+  },
+  "attempts": [
+    {
+      "attempt": 0,
+      "exec_start_trace_line": 1865,
+      "exec_end_trace_line": 1866
+    },
+    {
+      "attempt": 1,
+      "exec_start_trace_line": 1868,
+      "exec_end_trace_line": 1869
+    },
+    {
+      "attempt": 2,
+      "exec_start_trace_line": 1871,
+      "exec_end_trace_line": 1872
+    },
+    {
+      "attempt": 3,
+      "exec_start_trace_line": 1874,
+      "exec_end_trace_line": 1875
+    },
+    {
+      "attempt": 4,
+      "exec_start_trace_line": 1877,
+      "exec_end_trace_line": 1878
+    }
+  ],
+  "attempt_note": "Five attempts (0–4), four retries, same oversized prompt/schema; final discard/planning failure at trace 1879/1880, propagated refinement failure 1881. These failed attempts remain preserved.",
+  "root_causes": [
+    {
+      "finding": "Single-apostrophe prose can hide canonical JSON quoted spans from the current combined quote regex.",
+      "evidence": "In logical /trajectory/99/prompt (85,585 characters), the apostrophe in person's at offset 180 starts a 17,907-character single-quote match crossing into JSON source evidence. The old lexer finds only 1 double-quoted span; a double-only JSON lexer finds 84. No data is lost, but repeated evidence cannot be shared efficiently."
+    },
+    {
+      "finding": "The same source exists as a raw fetched string and as JSON-escaped text embedded in different prompts; current exact-string sharing stores both forms.",
+      "evidence": "Canonical JSON-quote references to the raw string preserve every original character while avoiding this representational duplication."
+    },
+    {
+      "finding": "Recursive factoring confined to the existing shared_texts literal table is insufficient on its own.",
+      "evidence": "Existing encoded payload contributes 1,330,910 compact JSON characters, while the table contributes 257,567. Even eliminating table storage entirely leaves at least 1,334,457 characters after existing planner/backend instructions, already above the provider limit. A broader DAG can help only if it also factors payload literals/substructures or equivalent escaped forms."
+    }
+  ],
+  "experiments": [
+    {
+      "tool_output_chunk_id": "576a02",
+      "method": "Canonical JSON-quote references with original combined quoted-span lexer",
+      "wire_chars": 1159006,
+      "same_instruction_backend_chars": 1162553,
+      "roundtrip_equal": true,
+      "fits_observed_limit": false
+    },
+    {
+      "tool_output_chunk_id": "4e8aee",
+      "method": "Apply current shared-text-v2 as an outer lossless factorization of the previous diagnostic representation",
+      "wire_chars": 1116598,
+      "same_instruction_backend_chars": 1120145,
+      "roundtrip_equal": true,
+      "fits_observed_limit": false
+    },
+    {
+      "tool_output_chunk_id": "09f2d8",
+      "method": "Canonical JSON / ASCII JSON / Python-repr references using original combined lexer",
+      "wire_chars": 1165207,
+      "outer_v2_wire_chars": 1117650,
+      "roundtrip_equal": true,
+      "fits_observed_limit": false
+    },
+    {
+      "tool_output_chunk_id": "613494",
+      "method": "Double-only canonical JSON quoted-span segmentation plus references that render raw shared strings with exact json.dumps(ensure_ascii=False) quoting",
+      "wire_chars": 846191,
+      "literal_string_table_chars": 483596,
+      "encoded_payload_chars": 362521,
+      "table_entries": 230,
+      "same_instruction_backend_chars": 849738,
+      "margin_before_new_representation_instructions_chars": 198838,
+      "roundtrip_equal": true,
+      "decoded_logical_payload_sha256": "2cd53600de561fdfad4d7ce8832de41e756cbadec841ccc2ca522c5a3e37bcd2",
+      "fits_observed_limit": true
+    },
+    {
+      "tool_output_chunk_id": "613494",
+      "method": "Apply current shared-text-v2 to the successful diagnostic representation, including its table strings",
+      "wire_chars": 796049,
+      "same_instruction_backend_chars": 799596,
+      "roundtrip_equal": true,
+      "fits_observed_limit": true
+    }
+  ],
+  "proposed_general_representation": {
+    "description": "Version the readable shared-text format. Preserve literal strings, exact concatenation, and escaped original objects; add an exact JSON-quote reference operation to a raw string (with explicit quote nesting if needed). Detect canonical JSON double-quoted spans independently of prose apostrophes. Every logical object key, scalar, list position, source text, prompt, code block, and evidence anchor remains recoverable.",
+    "operation": "Given raw shared string s and depth n, repeat json.dumps(s, ensure_ascii=False) n times, returning that exact resulting string; concatenate literal/reference pieces without separators. Accept a canonical quote span only when decoding and re-encoding reproduces the original span exactly.",
+    "prototype_selection": "The diagnostic used first-occurrence candidate ordering and a conservative 40-character reference-cost estimate to select potentially profitable raw strings, then measured the complete result. This is not a production cost model. Production selection should use exact serialized reference/table/wrapper costs and retain the smaller full representation, independent of provider limits.",
+    "required_implementation_validation": [
+      "Exact full logical roundtrip, including reserved-marker collisions, nesting, Unicode, control characters, lone/escaped quotes, backslashes, empty strings, and noncanonical JSON spellings.",
+      "Strict malformed reference/type/depth validation; if a recursive table is used, backward references or explicit cycle rejection.",
+      "Measure actual final planner instructions + backend prefix + wire representation, and retain full schema/candidate accounting.",
+      "Replay every preserved failed/successful planner payload offline without dropping fields; use normal tests for source changes.",
+      "No source/site/task-specific rules, model or budget changes, root-prompt truncation, field projection, content normalization, binary compression, or cap-tuned selection."
+    ],
+    "limitations": [
+      "Reported successful sizes retain old instructions as a common comparison; a production format needs revised instructions and their exact length must be included. There is approximately 199k characters of headroom for the simple successful prototype.",
+      "This proves only that the observed failed payload has enough lossless redundancy. Arbitrarily large unique inputs can still exceed finite transport limits; such a case would require an explicit transport design or a visible failure, not silent truncation.",
+      "No final new-cohort success or production readiness is asserted."
+    ]
+  },
+  "evidence": [
+    {
+      "path": "runs/round3/cohorts/fair_slots_v1/workspaces/A/runs/research-0fd1b020f55e4155989dcd8c40c418f1/289901ce021c28d56fdac993/refine_state.json",
+      "sha256": "5ecca81175881e538d8f63d24e24480b4e0c6c929d0697fc4633bb5eace302d0",
+      "bytes": 3865136,
+      "note": "Exact failed final planner prompt/schema and observed snapshot."
+    },
+    {
+      "path": "runs/round3/cohorts/fair_slots_v1/workspaces/A/runs/research-0fd1b020f55e4155989dcd8c40c418f1/trace.jsonl",
+      "sha256": "9639ab348e39ca69d358372b99c9f0c0c616518a6c8e9cd19095f02470640528",
+      "bytes": 1230099,
+      "note": "Failure/retry/propagation trace."
+    },
+    {
+      "path": "src/loop_research/shared_text.py",
+      "sha256": "df3e834422ba1b4728ac4c5029ff88f517afa93d97f0bfa69f751e3bab8b3d14",
+      "bytes": 8590,
+      "note": "Reviewed v2 encoder/decoder."
+    },
+    {
+      "path": "src/loop_research/refine.py",
+      "sha256": "7fa3a2be7a19c905033edaa8f21e2cd19670b545bf3afd135594459ba8ee8cdb",
+      "bytes": 25120,
+      "note": "Reviewed planning_input, evidence anchors, prompt/schema persistence and submission boundary."
+    }
+  ],
+  "provenance": "Experiment results are recorded from the identified tool responses. No contemporaneous redirected raw logs are claimed. The exact failed source payload remains archived and unchanged."
+}

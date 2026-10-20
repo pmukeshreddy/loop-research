@@ -1,0 +1,596 @@
+{
+  "label": "SI",
+  "run_id": "research-69f806e6ba0d47debbfd11c62fa35e31",
+  "reviewed_at": "2026-10-20T03:51:09.849357+00:00",
+  "source_commit": "dab5cf89963805d20d3d305ba14d8c8611cd8cf4",
+  "analysis_contract": "answer-ready-v2",
+  "fetch_path": "direct-readable-v1",
+  "method": "Independent completed-archive disk review; no models, web, tests, source/harness changes, or commits. Reviewed all cells, actual readable/raw source artifacts, complete executed REPL code/outputs, subcall input/response, final manifest, hash inventory, and existing audit.",
+  "verdict": "All five exact requested identities and all fifteen values match Round 2. Every full cell value is supported by the actual retained official NIST Table 1 row, confirmed against its raw HTML columns; every quote is exact. No unsupported or unresolved final semantic cell was found. S1 is separately 0 because the executed guard omits a nonempty-value test; this does not change final output correctness.",
+  "counts": {
+    "rows": 5,
+    "required_cells": 15,
+    "identity_symmetric_difference_vs_round2": 0,
+    "value_differences_vs_round2": 0,
+    "uncited_cells": 0,
+    "self_check_issues": 0,
+    "semantically_supported_cells": 15,
+    "unresolved_semantic_cells": 0,
+    "citation_membership_violations": 0,
+    "component_error_events": 0,
+    "repl_error_blocks": 0,
+    "stalled_search_signals": 3,
+    "fetch_requests": 4,
+    "successful_unique_downloads": 3,
+    "cache_hits": 1,
+    "failed_fetch_requests": 0,
+    "root_blocks": 5,
+    "constraint_checks": 20,
+    "model_attempts": 11,
+    "root_calls": 5,
+    "search_calls": 3,
+    "sub_calls": 1,
+    "refine_calls": 2,
+    "retries": 0
+  },
+  "reference": {
+    "path": "runs/research-0bd4c80fa24c4fd99cfc8d2f6876762d/1109eb057f25ad2429b6e77e/output.json",
+    "sha256": "812bd0c7d47208e1b59a21f8765e1cd2be3ccc7713ee339525a620dffcd00f44",
+    "note": "Round 2 reference; exact identities and values retained, citation whitespace differs with direct retrieval."
+  },
+  "identities": [
+    {
+      "entity": "length",
+      "same_as_round2": true,
+      "alias_needed": false,
+      "values": {
+        "quantity": "length",
+        "unit": "meter",
+        "symbol": "m"
+      }
+    },
+    {
+      "entity": "mass",
+      "same_as_round2": true,
+      "alias_needed": false,
+      "values": {
+        "quantity": "mass",
+        "unit": "kilogram",
+        "symbol": "kg"
+      }
+    },
+    {
+      "entity": "time",
+      "same_as_round2": true,
+      "alias_needed": false,
+      "values": {
+        "quantity": "time",
+        "unit": "second",
+        "symbol": "s"
+      }
+    },
+    {
+      "entity": "electric current",
+      "same_as_round2": true,
+      "alias_needed": false,
+      "values": {
+        "quantity": "electric current",
+        "unit": "ampere",
+        "symbol": "A"
+      }
+    },
+    {
+      "entity": "thermodynamic temperature",
+      "same_as_round2": true,
+      "alias_needed": false,
+      "values": {
+        "quantity": "thermodynamic temperature",
+        "unit": "kelvin",
+        "symbol": "K"
+      }
+    }
+  ],
+  "cell_checks": [
+    {
+      "row": 0,
+      "entity": "length",
+      "column": "quantity",
+      "value": "length",
+      "quote": "length\nmeter\nm",
+      "citations": [
+        {
+          "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-4-two-classes-si-units-and-si-prefixes",
+          "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+          "text_sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+          "quote_offset": 4952,
+          "quote_start_line": 149,
+          "exact_membership": true
+        }
+      ],
+      "semantic_support": "Exact three-field row under Table 1 SI base units, headers Base quantity / Name / Symbol; raw HTML td cells confirm association."
+    },
+    {
+      "row": 0,
+      "entity": "length",
+      "column": "unit",
+      "value": "meter",
+      "quote": "length\nmeter\nm",
+      "citations": [
+        {
+          "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-4-two-classes-si-units-and-si-prefixes",
+          "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+          "text_sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+          "quote_offset": 4952,
+          "quote_start_line": 149,
+          "exact_membership": true
+        }
+      ],
+      "semantic_support": "Exact three-field row under Table 1 SI base units, headers Base quantity / Name / Symbol; raw HTML td cells confirm association."
+    },
+    {
+      "row": 0,
+      "entity": "length",
+      "column": "symbol",
+      "value": "m",
+      "quote": "length\nmeter\nm",
+      "citations": [
+        {
+          "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-4-two-classes-si-units-and-si-prefixes",
+          "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+          "text_sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+          "quote_offset": 4952,
+          "quote_start_line": 149,
+          "exact_membership": true
+        }
+      ],
+      "semantic_support": "Exact three-field row under Table 1 SI base units, headers Base quantity / Name / Symbol; raw HTML td cells confirm association."
+    },
+    {
+      "row": 1,
+      "entity": "mass",
+      "column": "quantity",
+      "value": "mass",
+      "quote": "mass\nkilogram\nkg",
+      "citations": [
+        {
+          "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-4-two-classes-si-units-and-si-prefixes",
+          "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+          "text_sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+          "quote_offset": 4967,
+          "quote_start_line": 152,
+          "exact_membership": true
+        }
+      ],
+      "semantic_support": "Exact three-field row under Table 1 SI base units, headers Base quantity / Name / Symbol; raw HTML td cells confirm association."
+    },
+    {
+      "row": 1,
+      "entity": "mass",
+      "column": "unit",
+      "value": "kilogram",
+      "quote": "mass\nkilogram\nkg",
+      "citations": [
+        {
+          "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-4-two-classes-si-units-and-si-prefixes",
+          "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+          "text_sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+          "quote_offset": 4967,
+          "quote_start_line": 152,
+          "exact_membership": true
+        }
+      ],
+      "semantic_support": "Exact three-field row under Table 1 SI base units, headers Base quantity / Name / Symbol; raw HTML td cells confirm association."
+    },
+    {
+      "row": 1,
+      "entity": "mass",
+      "column": "symbol",
+      "value": "kg",
+      "quote": "mass\nkilogram\nkg",
+      "citations": [
+        {
+          "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-4-two-classes-si-units-and-si-prefixes",
+          "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+          "text_sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+          "quote_offset": 4967,
+          "quote_start_line": 152,
+          "exact_membership": true
+        }
+      ],
+      "semantic_support": "Exact three-field row under Table 1 SI base units, headers Base quantity / Name / Symbol; raw HTML td cells confirm association."
+    },
+    {
+      "row": 2,
+      "entity": "time",
+      "column": "quantity",
+      "value": "time",
+      "quote": "time\nsecond\ns",
+      "citations": [
+        {
+          "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-4-two-classes-si-units-and-si-prefixes",
+          "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+          "text_sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+          "quote_offset": 4984,
+          "quote_start_line": 155,
+          "exact_membership": true
+        }
+      ],
+      "semantic_support": "Exact three-field row under Table 1 SI base units, headers Base quantity / Name / Symbol; raw HTML td cells confirm association."
+    },
+    {
+      "row": 2,
+      "entity": "time",
+      "column": "unit",
+      "value": "second",
+      "quote": "time\nsecond\ns",
+      "citations": [
+        {
+          "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-4-two-classes-si-units-and-si-prefixes",
+          "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+          "text_sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+          "quote_offset": 4984,
+          "quote_start_line": 155,
+          "exact_membership": true
+        }
+      ],
+      "semantic_support": "Exact three-field row under Table 1 SI base units, headers Base quantity / Name / Symbol; raw HTML td cells confirm association."
+    },
+    {
+      "row": 2,
+      "entity": "time",
+      "column": "symbol",
+      "value": "s",
+      "quote": "time\nsecond\ns",
+      "citations": [
+        {
+          "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-4-two-classes-si-units-and-si-prefixes",
+          "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+          "text_sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+          "quote_offset": 4984,
+          "quote_start_line": 155,
+          "exact_membership": true
+        }
+      ],
+      "semantic_support": "Exact three-field row under Table 1 SI base units, headers Base quantity / Name / Symbol; raw HTML td cells confirm association."
+    },
+    {
+      "row": 3,
+      "entity": "electric current",
+      "column": "quantity",
+      "value": "electric current",
+      "quote": "electric current\nampere\nA",
+      "citations": [
+        {
+          "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-4-two-classes-si-units-and-si-prefixes",
+          "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+          "text_sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+          "quote_offset": 4998,
+          "quote_start_line": 158,
+          "exact_membership": true
+        }
+      ],
+      "semantic_support": "Exact three-field row under Table 1 SI base units, headers Base quantity / Name / Symbol; raw HTML td cells confirm association."
+    },
+    {
+      "row": 3,
+      "entity": "electric current",
+      "column": "unit",
+      "value": "ampere",
+      "quote": "electric current\nampere\nA",
+      "citations": [
+        {
+          "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-4-two-classes-si-units-and-si-prefixes",
+          "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+          "text_sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+          "quote_offset": 4998,
+          "quote_start_line": 158,
+          "exact_membership": true
+        }
+      ],
+      "semantic_support": "Exact three-field row under Table 1 SI base units, headers Base quantity / Name / Symbol; raw HTML td cells confirm association."
+    },
+    {
+      "row": 3,
+      "entity": "electric current",
+      "column": "symbol",
+      "value": "A",
+      "quote": "electric current\nampere\nA",
+      "citations": [
+        {
+          "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-4-two-classes-si-units-and-si-prefixes",
+          "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+          "text_sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+          "quote_offset": 4998,
+          "quote_start_line": 158,
+          "exact_membership": true
+        }
+      ],
+      "semantic_support": "Exact three-field row under Table 1 SI base units, headers Base quantity / Name / Symbol; raw HTML td cells confirm association."
+    },
+    {
+      "row": 4,
+      "entity": "thermodynamic temperature",
+      "column": "quantity",
+      "value": "thermodynamic temperature",
+      "quote": "thermodynamic temperature\nkelvin\nK",
+      "citations": [
+        {
+          "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-4-two-classes-si-units-and-si-prefixes",
+          "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+          "text_sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+          "quote_offset": 5024,
+          "quote_start_line": 161,
+          "exact_membership": true
+        }
+      ],
+      "semantic_support": "Exact three-field row under Table 1 SI base units, headers Base quantity / Name / Symbol; raw HTML td cells confirm association."
+    },
+    {
+      "row": 4,
+      "entity": "thermodynamic temperature",
+      "column": "unit",
+      "value": "kelvin",
+      "quote": "thermodynamic temperature\nkelvin\nK",
+      "citations": [
+        {
+          "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-4-two-classes-si-units-and-si-prefixes",
+          "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+          "text_sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+          "quote_offset": 5024,
+          "quote_start_line": 161,
+          "exact_membership": true
+        }
+      ],
+      "semantic_support": "Exact three-field row under Table 1 SI base units, headers Base quantity / Name / Symbol; raw HTML td cells confirm association."
+    },
+    {
+      "row": 4,
+      "entity": "thermodynamic temperature",
+      "column": "symbol",
+      "value": "K",
+      "quote": "thermodynamic temperature\nkelvin\nK",
+      "citations": [
+        {
+          "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-4-two-classes-si-units-and-si-prefixes",
+          "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+          "text_sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+          "quote_offset": 5024,
+          "quote_start_line": 161,
+          "exact_membership": true
+        }
+      ],
+      "semantic_support": "Exact three-field row under Table 1 SI base units, headers Base quantity / Name / Symbol; raw HTML td cells confirm association."
+    }
+  ],
+  "verified_download_receipts": [
+    {
+      "request_id": 1,
+      "url": "https://www.nist.gov/si-redefinition/definitions-si-base-units",
+      "receipt_id": "1f235827c9c34769a62a77807e54612e",
+      "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/1f235827c9c34769a62a77807e54612e.txt",
+      "text_sha256": "5fce86cdacb944129049d38c9607b538806afec3d10aca96c2570430ddcf8acc",
+      "readable_chars": 6619,
+      "raw_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/1f235827c9c34769a62a77807e54612e-0.raw",
+      "raw_sha256": "5f93aaf4b299b0173196be9bbbf38e9251e7cca076341cafba02824886f708fd",
+      "raw_bytes": 91293
+    },
+    {
+      "request_id": 2,
+      "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-4-two-classes-si-units-and-si-prefixes",
+      "receipt_id": "2a572260582f4cccaa8f67b2283a5893",
+      "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+      "text_sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+      "readable_chars": 16534,
+      "raw_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893-0.raw",
+      "raw_sha256": "e3f9239710e06a607b200324f20b011240bd646b394e762b2b1d1ffbaf3ba558",
+      "raw_bytes": 115696
+    },
+    {
+      "request_id": 3,
+      "url": "https://www.nist.gov/pml/special-publication-330/sp-330-section-2",
+      "receipt_id": "5136405ae90e40c3acbaebc1c3852a2c",
+      "text_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/5136405ae90e40c3acbaebc1c3852a2c.txt",
+      "text_sha256": "1847b8ed4e4d656a934b31112d4584a98aa100e6ae5bc6c7e7834110408edaaa",
+      "readable_chars": 44922,
+      "raw_path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/5136405ae90e40c3acbaebc1c3852a2c-0.raw",
+      "raw_sha256": "7b4c059d64adefba344d4a384a082ec270e0a6a9d9193105ab040879aafaddaf",
+      "raw_bytes": 149896
+    }
+  ],
+  "provenance": {
+    "run_manifest": {
+      "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/research.json",
+      "sha256": "f5e072526cf8a64cbadb7e62e40cdbe0296d2ef395c0da82170b2aef9cafcff4",
+      "note": "Final completed manifest, no error; harness head 34b0abacf17f813e1f9f64e4f336bdad6d908860."
+    },
+    "archive_inventory": {
+      "path": "runs/round3/cohorts/fair_slots_v1/SI.archive_hashes.json",
+      "sha256": "c1bc224418a3437fd0e98a88ea2a4ca1a9509f395210d62af3391f41c1f76c0a",
+      "note": "All 49 listed files independently rehashed with matching lengths and hashes."
+    },
+    "archive_files_verified": 49,
+    "audit": {
+      "path": "runs/round3/cohorts/fair_slots_v1/audits/SI.audit.json",
+      "sha256": "b9af3648565d3d716f0b7fd75d70bad32e68bb1ec62e9550ac4244ddd1ac51d0",
+      "note": "All 9 audit source-file hashes/lengths independently match."
+    },
+    "audit_source_files_verified": 9,
+    "trajectory": {
+      "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+      "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+      "note": "Complete execution, including single/batched APIs, cache equality, extraction, validation, submission."
+    },
+    "trace": {
+      "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/trace.jsonl",
+      "sha256": "c9e70d4829a78fb04157dea31b828e6bda16e3ce7471f58f59f46b4882ea54fa",
+      "note": "Complete 324-event trace; zero error-bearing events."
+    },
+    "output": {
+      "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/output.json",
+      "sha256": "3e70189e055b3c98e8147c9da51676fe83d15c4a330bcd6cb631c584dd22ccba",
+      "note": "Complete final output."
+    }
+  },
+  "validation_guard": {
+    "score": 0,
+    "reason": "Score 0: schema enforces source minItems=1 and the executed loops check nonempty quotes and exact membership for every cited URL, but value is only type string (no minLength). The final assert cell['value'] in cell['quote'] does not reject an empty value. In particular an empty symbol would leave a quantity/unit prefix still occurring in its source row. Actual values are correct and nonempty, but the contract requires the executed full-cell guard, not a correct output alone.",
+    "first_submission_trace_line": 285,
+    "schema_and_initial_check_trajectory_line": 17,
+    "final_validation_and_assignment_trajectory_line": 20,
+    "final_execution_trajectory_line": 41
+  },
+  "subcall_review": {
+    "trajectory_line": 18,
+    "prompt_chars": 70478,
+    "full_fetched_texts_serialized_as_json": 3,
+    "response_exactly_equals_final_output": true,
+    "note": "All three original fetched strings are included completely as JSON strings; final result is the same extracted object."
+  },
+  "tool_exercise": {
+    "single_search_trace_start": 61,
+    "batch_search_trace_start": 73,
+    "single_fetch_trace_start": 119,
+    "batch_fetch_trace_start": 126,
+    "cached_fetch_trace_event": 141,
+    "cache_owner_request": 1,
+    "cache_request": 4,
+    "cache_different_focus": true,
+    "retained_search_hit_reuse": "Trajectory line 11 selects single_url and batch_urls from prior single_hits/batch_hits variables, then downloads them; no extra search is used for this selection.",
+    "note": "The task explicitly requests single/batched search/fetch and one cached fetch. The three initial downloads are not S2 supplementation."
+  },
+  "error_review": {
+    "error_events": [],
+    "recovery_required": false,
+    "signals_preserved": [
+      {
+        "type": "stalled_search",
+        "query": "site.physics.nist.gov SI base units length mass time electric current thermodynamic temperature"
+      },
+      {
+        "type": "stalled_search",
+        "query": "site.nist.gov SI base units meter kilogram second ampere kelvin"
+      },
+      {
+        "type": "stalled_search",
+        "query": "site.physics.nist.gov SI units Table 1 base units"
+      }
+    ],
+    "note": "Zero final issues does not erase three stalled_search signals from empty discovery records; all three queries returned nonempty hit lists."
+  },
+  "fetch_ratio_review": {
+    "readable_characters": 68075,
+    "successful_unique_texts": 3,
+    "largest_backend_root_chars": 28808,
+    "largest_backend_root_sha256": "082e0f67698538aa8fe451cde066776082b26bbe43352ec0548d95838bcbd133",
+    "fetched_to_largest_root_ratio": 2.3630588725354067,
+    "exact_ngram_characters": 50,
+    "covered_readable_characters": 313,
+    "overlap_fraction": 0.0045978699963275796,
+    "overlap_percent": 0.459786999632758,
+    "full_source_texts_in_any_root": 0,
+    "independent_method": "Reconstructed all five backend root strings using the 182-character prefix recovered from the saved largest input; each length/hash matches codex_calls. Independently unioned exact case/whitespace-sensitive 50-character root grams and marked source character coverage; values match existing audit. Counted each of the three direct text artifacts once, excluding the cache request.",
+    "limits": "Descriptive small demonstration only; no control-effect or strong live-experiment criterion is established. Historical Round 2 used a different fetch path."
+  },
+  "manual_metrics": {
+    "S1_pre_answer_ready_validation": {
+      "value": 0,
+      "reason": "Score 0: schema enforces source minItems=1 and the executed loops check nonempty quotes and exact membership for every cited URL, but value is only type string (no minLength). The final assert cell['value'] in cell['quote'] does not reject an empty value. In particular an empty symbol would leave a quantity/unit prefix still occurring in its source row. Actual values are correct and nonempty, but the contract requires the executed full-cell guard, not a correct output alone.",
+      "evidence": [
+        {
+          "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+          "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+          "note": "Schema and first full-row loop: value has no minLength; source list has minItems=1; quotes are checked.",
+          "line": 17
+        },
+        {
+          "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+          "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+          "note": "Final validation and submission: value membership accepts an empty string; same extracted object is submitted.",
+          "line": 20
+        },
+        {
+          "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/trace.jsonl",
+          "sha256": "c9e70d4829a78fb04157dea31b828e6bda16e3ce7471f58f59f46b4882ea54fa",
+          "note": "First and only depth-0 answer_ready=true code.end, with no exception.",
+          "line": 285
+        }
+      ]
+    },
+    "S2_gap_exposed": {
+      "value": 0,
+      "reason": "No required-field evidence gap was exposed. Initial extraction returned all five complete rows and printed Validation failures: []; final checks completed without repair.",
+      "evidence": [
+        {
+          "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+          "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+          "note": "Complete extraction output: five rows and empty failure list.",
+          "line": 19
+        },
+        {
+          "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+          "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+          "note": "Final validation uses the same extracted rows and submits them.",
+          "line": 41
+        }
+      ]
+    },
+    "S2_supplementary_unique_urls": {
+      "value": 0,
+      "reason": "No gap was exposed and no directed supplementary fetch followed one. All three distinct downloads and the requested cache reuse occurred before extraction as part of the explicit SI demonstration. Conditional prediction not exercised.",
+      "evidence": [
+        {
+          "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+          "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+          "note": "Single, batched, and cached fetch code runs before extraction.",
+          "line": 11
+        },
+        {
+          "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+          "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+          "note": "Three successful initial pages and cached equality; no fetch failures.",
+          "line": 16
+        },
+        {
+          "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+          "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+          "note": "Only extraction result has no missing-field failure.",
+          "line": 19
+        }
+      ]
+    },
+    "S3_quote_exception_blocks": {
+      "value": 0,
+      "reason": "All five executed root REPL blocks completed with empty stderr and no trace error; none ended in a quotation-validation exception.",
+      "evidence": [
+        {
+          "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+          "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+          "note": "Complete five-iteration execution records, including stdout/stderr and final answer."
+        },
+        {
+          "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/trace.jsonl",
+          "sha256": "c9e70d4829a78fb04157dea31b828e6bda16e3ce7471f58f59f46b4882ea54fa",
+          "note": "Complete 324-event run trace; all five REPL code.end errors are null."
+        }
+      ]
+    },
+    "S3_caught_printed_quote_failures": {
+      "value": 0,
+      "reason": "Executed validation printed an empty failure list; no individual quotation-failure record was printed or caught in any block.",
+      "evidence": [
+        {
+          "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+          "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+          "note": "Validation failures: [] and five supported row excerpts.",
+          "line": 19
+        },
+        {
+          "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+          "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+          "note": "Final block stdout confirms validation, stderr empty.",
+          "line": 41
+        }
+      ]
+    }
+  }
+}

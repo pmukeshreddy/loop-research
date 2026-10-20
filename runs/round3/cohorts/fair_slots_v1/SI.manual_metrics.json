@@ -1,0 +1,171 @@
+{
+  "source_commit": "dab5cf89963805d20d3d305ba14d8c8611cd8cf4",
+  "analysis_contract": "answer-ready-v2",
+  "runs": {
+    "SI": {
+      "run_id": "research-69f806e6ba0d47debbfd11c62fa35e31",
+      "metrics": {
+        "S1_pre_answer_ready_validation": {
+          "value": 0,
+          "reason": "Score 0: schema enforces source minItems=1 and the executed loops check nonempty quotes and exact membership for every cited URL, but value is only type string (no minLength). The final assert cell['value'] in cell['quote'] does not reject an empty value. In particular an empty symbol would leave a quantity/unit prefix still occurring in its source row. Actual values are correct and nonempty, but the contract requires the executed full-cell guard, not a correct output alone.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+              "note": "Schema and first full-row loop: value has no minLength; source list has minItems=1; quotes are checked.",
+              "line": 17
+            },
+            {
+              "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+              "note": "Final validation and submission: value membership accepts an empty string; same extracted object is submitted.",
+              "line": 20
+            },
+            {
+              "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/trace.jsonl",
+              "sha256": "c9e70d4829a78fb04157dea31b828e6bda16e3ce7471f58f59f46b4882ea54fa",
+              "note": "First and only depth-0 answer_ready=true code.end, with no exception.",
+              "line": 285
+            }
+          ]
+        },
+        "S2_gap_exposed": {
+          "value": 0,
+          "reason": "No required-field evidence gap was exposed. Initial extraction returned all five complete rows and printed Validation failures: []; final checks completed without repair.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+              "note": "Complete extraction output: five rows and empty failure list.",
+              "line": 19
+            },
+            {
+              "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+              "note": "Final validation uses the same extracted rows and submits them.",
+              "line": 41
+            }
+          ]
+        },
+        "S2_supplementary_unique_urls": {
+          "value": 0,
+          "reason": "No gap was exposed and no directed supplementary fetch followed one. All three distinct downloads and the requested cache reuse occurred before extraction as part of the explicit SI demonstration. Conditional prediction not exercised.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+              "note": "Single, batched, and cached fetch code runs before extraction.",
+              "line": 11
+            },
+            {
+              "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+              "note": "Three successful initial pages and cached equality; no fetch failures.",
+              "line": 16
+            },
+            {
+              "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+              "note": "Only extraction result has no missing-field failure.",
+              "line": 19
+            }
+          ]
+        },
+        "S3_quote_exception_blocks": {
+          "value": 0,
+          "reason": "All five executed root REPL blocks completed with empty stderr and no trace error; none ended in a quotation-validation exception.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+              "note": "Complete five-iteration execution records, including stdout/stderr and final answer."
+            },
+            {
+              "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/trace.jsonl",
+              "sha256": "c9e70d4829a78fb04157dea31b828e6bda16e3ce7471f58f59f46b4882ea54fa",
+              "note": "Complete 324-event run trace; all five REPL code.end errors are null."
+            }
+          ]
+        },
+        "S3_caught_printed_quote_failures": {
+          "value": 0,
+          "reason": "Executed validation printed an empty failure list; no individual quotation-failure record was printed or caught in any block.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+              "note": "Validation failures: [] and five supported row excerpts.",
+              "line": 19
+            },
+            {
+              "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "417b307fc51c693b567929d50fad6f7f058e3f92103b1646d663ca761eb5ebd8",
+              "note": "Final block stdout confirms validation, stderr empty.",
+              "line": 41
+            }
+          ]
+        }
+      },
+      "semantic_review": {
+        "summary": "All five exact requested identities and all fifteen values match Round 2. Every full cell value is supported by the actual retained official NIST Table 1 row, confirmed against its raw HTML columns; every quote is exact. No unsupported or unresolved final semantic cell was found. S1 is separately 0 because the executed guard omits a nonempty-value test; this does not change final output correctness.",
+        "counts": {
+          "semantically_supported_required_cells": {
+            "value": 15,
+            "reason": "Independently reviewed all requested fields against actual retained table headers and raw row cells.",
+            "evidence": [
+              {
+                "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/output.json",
+                "sha256": "3e70189e055b3c98e8147c9da51676fe83d15c4a330bcd6cb631c584dd22ccba",
+                "note": "Five rows, three required cells each."
+              },
+              {
+                "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+                "sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+                "note": "Table 1 headers and all five quantity/name/symbol triples.",
+                "line": 149
+              }
+            ]
+          },
+          "unresolved_semantic_cells": {
+            "value": 0,
+            "reason": "No ambiguity or unsupported final value found in these five explicit reference-table rows.",
+            "evidence": [
+              {
+                "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/output.json",
+                "sha256": "3e70189e055b3c98e8147c9da51676fe83d15c4a330bcd6cb631c584dd22ccba",
+                "note": "Complete final values."
+              },
+              {
+                "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893-0.raw",
+                "sha256": "e3f9239710e06a607b200324f20b011240bd646b394e762b2b1d1ffbaf3ba558",
+                "note": "Raw official HTML Table 1 preserves all five three-column row associations."
+              }
+            ]
+          }
+        },
+        "evidence": [
+          {
+            "path": "runs/research-0bd4c80fa24c4fd99cfc8d2f6876762d/1109eb057f25ad2429b6e77e/output.json",
+            "sha256": "812bd0c7d47208e1b59a21f8765e1cd2be3ccc7713ee339525a620dffcd00f44",
+            "note": "Saved Round 2 SI output: same five identities and fifteen values."
+          },
+          {
+            "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/output.json",
+            "sha256": "3e70189e055b3c98e8147c9da51676fe83d15c4a330bcd6cb631c584dd22ccba",
+            "note": "Final SI output."
+          },
+          {
+            "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893.txt",
+            "sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+            "note": "Actual retained NIST base-unit table."
+          },
+          {
+            "path": "runs/round3/cohorts/fair_slots_v1/workspaces/SI/runs/research-69f806e6ba0d47debbfd11c62fa35e31/1109eb057f25ad2429b6e77e/downloads/2a572260582f4cccaa8f67b2283a5893-0.raw",
+            "sha256": "e3f9239710e06a607b200324f20b011240bd646b394e762b2b1d1ffbaf3ba558",
+            "note": "Original downloaded HTML table columns verify semantic association."
+          }
+        ]
+      }
+    }
+  }
+}
