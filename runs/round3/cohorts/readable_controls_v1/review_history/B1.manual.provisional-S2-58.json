@@ -1,0 +1,1136 @@
+{
+  "source_commit": "902abe33d06f64c426a65d55d5e600dd6d6a052a",
+  "analysis_contract": "answer-ready-v2",
+  "prediction_commit": "2ecab945810592a7b9e084c3d3c5dc8b00a4f20a",
+  "runs": {
+    "B1": {
+      "run_id": "research-7d636104eba34b599801437be23ddb4f",
+      "metrics": {
+        "S1_pre_answer_ready_validation": {
+          "value": 1,
+          "reason": "Iteration16 validates assembled submitted version and every cell against every cited URL before first actual answer[\"ready\"]=True; all checks complete, then submission. Iteration4defines cell_issues with nonempty value/sources/quote and each-source exact membership.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 34,
+              "note": "Executed cell_issues definition"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 361,
+              "note": "Final executed full-table guard and actual readiness assignment"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/trace.jsonl",
+              "line": 2712,
+              "note": "First ready code.end"
+            }
+          ]
+        },
+        "S2_gap_exposed": {
+          "value": 1,
+          "reason": "Iteration4printed26empty required nationality fields; later executed reviews exposed omitted supported components.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 34,
+              "note": "26missingnationalities"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 84,
+              "note": "Nationality/affiliationgap review"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 104,
+              "note": "Complementary nationality evidence review"
+            }
+          ]
+        },
+        "S2_supplementary_unique_urls": {
+          "value": 58,
+          "reason": "58successful distinct URLs explicitly directed at observed field gaps:48initial+5focused+4dual-nationality+1individualThoulesspage. Barish attribution-only repair,17broadFactschecks andall6failed URLs excluded; fullrequestledger retained.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 67,
+              "note": "48initialsuccessfulgapURLs"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 104,
+              "note": "5focusedgapURLs;Barishexcluded"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 116,
+              "note": "4successdualqueries"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 182,
+              "note": "1Thoulessdisambiguation"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/B1.review.json",
+              "note": "S2_fetch_ledger includes every92request with reason and outcome."
+            }
+          ]
+        },
+        "S3_quote_exception_blocks": {
+          "value": 0,
+          "reason": "All16executed root blocks have empty stderr and no terminated quote guard.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 3,
+              "note": "Iteration1stderr empty"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 7,
+              "note": "Iteration2stderr empty"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 21,
+              "note": "Iteration3stderr empty"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 34,
+              "note": "Iteration4stderr empty"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 67,
+              "note": "Iteration5stderr empty"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 77,
+              "note": "Iteration6stderr empty"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 84,
+              "note": "Iteration7stderr empty"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 87,
+              "note": "Iteration8stderr empty"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 104,
+              "note": "Iteration9stderr empty"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 108,
+              "note": "Iteration10stderr empty"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 116,
+              "note": "Iteration11stderr empty"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 155,
+              "note": "Iteration12stderr empty"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 167,
+              "note": "Iteration13stderr empty"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 182,
+              "note": "Iteration14stderr empty"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 190,
+              "note": "Iteration15stderr empty"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 361,
+              "note": "Iteration16stderr empty"
+            }
+          ]
+        },
+        "S3_caught_printed_quote_failures": {
+          "value": 0,
+          "reason": "No printed quote-specific failure record. Iteration14prints one rejected wrong-person/no-source candidate; do not reclassify missing evidence as an exact-quote mismatch.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 182,
+              "note": "Wrong-person candidate rejection, not quote-specific"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 190,
+              "note": "Exactquoteissues[]"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 361,
+              "note": "Finalguardpassed"
+            }
+          ]
+        },
+        "V1_bare_quote_exception_blocks": {
+          "value": 0,
+          "reason": "No terminated quote-exception exposure.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 361,
+              "note": "Allguardblocksreviewed;S3=0"
+            }
+          ]
+        },
+        "V1_bare_quote_exception_blocks_conditional": {
+          "value": null,
+          "reason": "N/A: S3_quote_exception_blocks=0; diagnostic benefit unexercised.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 361,
+              "note": "Noquoteexception"
+            }
+          ]
+        },
+        "D0_duplicate_candidate_groups": {
+          "value": 0,
+          "reason": "Actualassembled extraction/update sets have unique(entity,field) keys; multiple source texts do not create duplicate returned candidates. Ordinarysequentialverification excluded exactlyasregistered.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 34,
+              "note": "extracted_batches unique candidate keys"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 77,
+              "note": "nationality_updates unique candidate keys"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 108,
+              "note": "repairs unique candidate keys"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 167,
+              "note": "affiliation_batches unique candidate keys"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 182,
+              "note": "final_affiliation_repairs unique candidate keys"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 190,
+              "note": "donna_repair unique candidate keys"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 361,
+              "note": "mcdonald_repair unique candidate keys"
+            }
+          ]
+        },
+        "D1_reconciled_before_mutation_groups": {
+          "value": 0,
+          "reason": "NoD0duplicate-group exposure. RecoveredMcDonaldsequentialoverwrite retainedqualitativelyoutsideD0definition.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 167,
+              "note": "Factsreplacement"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 190,
+              "note": "Lostcollaborationidentified"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 361,
+              "note": "McDonaldrepaired"
+            }
+          ]
+        },
+        "D1_reconciled_before_mutation_groups_conditional": {
+          "value": null,
+          "reason": "N/A: D0_duplicate_candidate_groups=0; registeredduplicate mechanismunexercised.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 361,
+              "note": "Candidateledgerreview"
+            }
+          ]
+        },
+        "D2_destructive_overwrite_groups": {
+          "value": 0,
+          "reason": "NoD0duplicate-group exposure. RecoveredMcDonaldsequentialoverwrite retainedqualitativelyoutsideD0definition.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 167,
+              "note": "Factsreplacement"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 190,
+              "note": "Lostcollaborationidentified"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 361,
+              "note": "McDonaldrepaired"
+            }
+          ]
+        },
+        "D2_destructive_overwrite_groups_conditional": {
+          "value": null,
+          "reason": "N/A: D0_duplicate_candidate_groups=0; registeredduplicate mechanismunexercised.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 361,
+              "note": "Candidateledgerreview"
+            }
+          ]
+        },
+        "D3_unresolved_overwrite_groups": {
+          "value": 0,
+          "reason": "NoD0duplicate-group exposure. RecoveredMcDonaldsequentialoverwrite retainedqualitativelyoutsideD0definition.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 167,
+              "note": "Factsreplacement"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 190,
+              "note": "Lostcollaborationidentified"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 361,
+              "note": "McDonaldrepaired"
+            }
+          ]
+        },
+        "D3_unresolved_overwrite_groups_conditional": {
+          "value": null,
+          "reason": "N/A: D0_duplicate_candidate_groups=0; registeredduplicate mechanismunexercised.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 361,
+              "note": "Candidateledgerreview"
+            }
+          ]
+        },
+        "F1_failed_response_extraction_calls": {
+          "value": 2,
+          "reason": "Actualresearchsubcalls113and166includeexactfailed-fetchreturns as sourceevidence (twofailuresin113,onein166); bothareextraction/verification,notfailurediagnosis.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 113,
+              "note": "Prabook403+Delo redirect_loop returns in dual_evidence"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 166,
+              "note": "WashingtonPost broken-pipe return passedfornationalityextraction"
+            }
+          ]
+        },
+        "F1_failed_response_extraction_calls_conditional": {
+          "value": 2,
+          "reason": "Sixfailedfetches exposecondition; rawF1=2.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 113,
+              "note": "Failedsourceevidence"
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 166,
+              "note": "Failedsourceevidence"
+            }
+          ]
+        },
+        "R2_retained_download_reuse_blocks": {
+          "value": 13,
+          "reason": "Everyblock4–16substantivelyreads earlier successful text/derivedevidence without refetchingitswitnessURL; blocks1–3excluded. Eachblockcountedonce.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 34,
+              "note": "Pass prior release sources into extraction_prompts; consume extracted batches."
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 67,
+              "note": "Read prior staged release rows/empty nationality cells to construct gap-specific queries and known roster."
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 77,
+              "note": "Read sources retained by iteration5 into nationality_evidence and validate proposed cells."
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 84,
+              "note": "Revalidate and semantically review staged rows against prior sources."
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 87,
+              "note": "Print actual prior flagged cells with value/source/quote for focused repair planning, not saved lengths."
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 104,
+              "note": "Re-review nationality_groups constructed from iteration5/6sources, including alternatives not selected as citations."
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 108,
+              "note": "Pass prior followup_urls and nationality_evidence into corrective extraction."
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 116,
+              "note": "Pass earlier nationality_evidence alongside new texts for conflict verification."
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 155,
+              "note": "Read existing roster and repair Haldane from iteration11retained source; source reuse is not only search-hit lookup."
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 167,
+              "note": "Read complete existing source strings to recover exact official links, and prior Facts texts into verification subcalls."
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 182,
+              "note": "Use prior official announcements as fallback and inspect existing cells while fetching only one new disambiguation page."
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 190,
+              "note": "Repair Strickland from earlier2018release and review all rows against retained sources."
+            },
+            {
+              "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 361,
+              "note": "Repair McDonald from earlier2015release, then validate every submitted cell against retained text."
+            }
+          ]
+        }
+      },
+      "semantic_review": {
+        "counts": {
+          "semantically_supported_required_cells": 140,
+          "unresolved_semantic_cells": 0,
+          "concurrent_affiliation_scope_concerns": 8
+        },
+        "cell_inventory": "B1.review.json#/cells",
+        "definition": "Support for each listed submitted value, with descriptive-nationality/provenance qualifications. Does not mean no possible omitted components, complete affiliation coverage, or independently settled legal citizenship.",
+        "source_local_dated_concurrent_affiliation_concerns": 7,
+        "source_local_undated_temporal_leads": 1,
+        "source_local_concerns": [
+          {
+            "candidate": "Kajita/ICRR",
+            "row": 0,
+            "entity": "Takaaki Kajita",
+            "status": "dated",
+            "final_value": "Super-Kamiokande Collaboration; University of Tokyo, Kashiwa, Japan",
+            "note": "Official2015awardrelease explicitly names ICRR directorship. Tokyo umbrella is present; missing subinstitution is a coverage concern, not false Tokyo affiliation.",
+            "evidence": {
+              "url": "https://www.nobelprize.org/prizes/physics/2015/press-release/?from=article_link",
+              "request_id": 1,
+              "quote": "Takaaki Kajita, Japanese citizen. Born 1959 in Higashimatsuyama, Japan. Ph.D. 1986 from University of Tokyo, Japan. Director of Institute for Cosmic Ray Research and Professor at University of Tokyo, Kashiwa, Japan.",
+              "offset": 4363,
+              "line": 74,
+              "text": {
+                "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/downloads/58c79671300a417991441e35f18fea79.txt",
+                "bytes": 7367,
+                "sha256": "432d65e1958b9223dad9573b75e03bcda5af8d85e7f66b2502ad22f4388777d2"
+              },
+              "receipt_id": "58c79671300a417991441e35f18fea79",
+              "raw_sha256": "045390da34805d704bbc292def108eff6dd848dab850786821e38633e4b6c24d",
+              "complete_receipt": {
+                "id": "58c79671300a417991441e35f18fea79",
+                "fetch_path": "direct-readable-v1",
+                "text_policy": "unicode-layout-controls-v1",
+                "requested_url": "https://www.nobelprize.org/prizes/physics/2015/press-release/?from=article_link",
+                "started_at": "2026-10-20T18:24:33.139042+00:00",
+                "status": "succeeded",
+                "hops": [
+                  {
+                    "url": "https://www.nobelprize.org/prizes/physics/2015/press-release/?from=article_link",
+                    "status": 200,
+                    "headers": {
+                      "date": "Tue, 20 Oct 2026 18:24:33 GMT",
+                      "content-type": "text/html; charset=UTF-8",
+                      "transfer-encoding": "chunked",
+                      "connection": "keep-alive",
+                      "vary": "Accept-Encoding",
+                      "x-frame-options": "SAMEORIGIN",
+                      "x-loc": "old",
+                      "x-ncache-status": "0",
+                      "x-ncache-bypass": "0",
+                      "x-ncache": "MISS",
+                      "last-modified": "Tue, 20 Oct 2026 18:24:26 GMT",
+                      "cache-control": "no-store",
+                      "strict-transport-security": "max-age=31536000",
+                      "x-content-type-options": "nosniff",
+                      "referrer-policy": "strict-origin",
+                      "x-xss-protection": "1; mode=block",
+                      "age": "6",
+                      "cf-cache-status": "HIT",
+                      "server": "cloudflare",
+                      "cf-ray": "a4da0f5fd87e3448-EWR",
+                      "alt-svc": "h3=\":443\"; ma=86400"
+                    },
+                    "peer_ip": "104.18.10.203",
+                    "raw_path": "downloads/58c79671300a417991441e35f18fea79-0.raw",
+                    "raw_page_bytes": 170501,
+                    "raw_sha256": "045390da34805d704bbc292def108eff6dd848dab850786821e38633e4b6c24d"
+                  }
+                ],
+                "final_url": "https://www.nobelprize.org/prizes/physics/2015/press-release/?from=article_link",
+                "raw_path": "downloads/58c79671300a417991441e35f18fea79-0.raw",
+                "raw_page_bytes": 170501,
+                "raw_sha256": "045390da34805d704bbc292def108eff6dd848dab850786821e38633e4b6c24d",
+                "parser": "stdlib-html-readable-v1",
+                "raw_page_chars": 170493,
+                "extraction_path": "downloads/58c79671300a417991441e35f18fea79.txt",
+                "extraction_bytes": 7367,
+                "extraction_sha256": "432d65e1958b9223dad9573b75e03bcda5af8d85e7f66b2502ad22f4388777d2",
+                "extraction_chars": 7343,
+                "extraction_validation": {
+                  "reason": null,
+                  "forbidden_control_count": 0,
+                  "forbidden_controls": {}
+                },
+                "finished_at": "2026-10-20T18:24:33.325232+00:00",
+                "readable_chars": 7343,
+                "text_path": "downloads/58c79671300a417991441e35f18fea79.txt",
+                "text_sha256": "432d65e1958b9223dad9573b75e03bcda5af8d85e7f66b2502ad22f4388777d2"
+              }
+            }
+          },
+          {
+            "candidate": "Kosterlitz/KIAS",
+            "row": 4,
+            "entity": "J. Michael Kosterlitz",
+            "status": "dated",
+            "final_value": "Brown University, Providence, RI, USA",
+            "note": "Award-year autobiography describes current KIAS professorship; two-month annual role is still a concurrent affiliation.",
+            "evidence": {
+              "url": "https://www.nobelprize.org/prizes/physics/2016/kosterlitz/biographical/",
+              "request_id": 16,
+              "quote": "I also have had a longstanding collaboration for the last twenty-five years with my colleague Tapio Ala-Nissila in Finland working on phase field models of growth. This is a surprisingly successful method for the numerical study of growth in fluids and in solids which we recently applied to the hydrodynamics of crystals [8]. This collaboration has also included my colleague, Martin Grant, at McGill in Montreal, Canada and Ken Elder at Oakland University in Michigan, USA as well as my Brown colleague See-Chen Jing. I also started a collaboration at the Korea Institute of Advanced Study in Seoul, Korea where I am now a Distinguished Professor visiting for two months every summer. Even at my advanced age of 73, physics still fascinates me because there are so many problems waiting for a solution that, despite my increasing incompetence, I would like to see understood before I retire. Perhaps in this respect, I am like my father who refused to give up working until he was over 90! On reflection having produced nearly sixty papers in my time at Brown is not bad, but nothing will ever compare to the exhilaration of our 1977 paper [5] when theory agreed quantitatively with experiment [9]. Each summer, Berit and I travel a lot, spending time in Brazil, Finland and Korea but always keep four or more weeks sacrosanct for our Swedish summer house where we can relax completely by watching the grass grow. The only disadvantage is that it always does grow and then needs cutting, which gives me about the only exercise I have during the year.",
+              "offset": 28347,
+              "line": 99,
+              "text": {
+                "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/downloads/ca2a3abd40bd457ab2f4730f504fa56e.txt",
+                "bytes": 34235,
+                "sha256": "ded959b90d0bc6d60bf9b0897b8af3d73b32cf68b7f86ca555218b29a68c427e"
+              },
+              "receipt_id": "ca2a3abd40bd457ab2f4730f504fa56e",
+              "raw_sha256": "71157a66fe9964f1e637e08b28e4e57e97f0a73f9632dd2c1a97e34a14c1c164",
+              "complete_receipt": {
+                "id": "ca2a3abd40bd457ab2f4730f504fa56e",
+                "fetch_path": "direct-readable-v1",
+                "text_policy": "unicode-layout-controls-v1",
+                "requested_url": "https://www.nobelprize.org/prizes/physics/2016/kosterlitz/biographical/",
+                "started_at": "2026-10-20T18:33:05.692884+00:00",
+                "status": "succeeded",
+                "hops": [
+                  {
+                    "url": "https://www.nobelprize.org/prizes/physics/2016/kosterlitz/biographical/",
+                    "status": 200,
+                    "headers": {
+                      "date": "Tue, 20 Oct 2026 18:33:06 GMT",
+                      "content-type": "text/html; charset=UTF-8",
+                      "transfer-encoding": "chunked",
+                      "connection": "keep-alive",
+                      "vary": "Accept-Encoding",
+                      "x-frame-options": "SAMEORIGIN",
+                      "x-loc": "old",
+                      "x-ncache-status": "0",
+                      "x-ncache-bypass": "0",
+                      "x-ncache": "HIT",
+                      "last-modified": "Tue, 20 Oct 2026 18:33:06 GMT",
+                      "cache-control": "no-store",
+                      "strict-transport-security": "max-age=31536000",
+                      "x-content-type-options": "nosniff",
+                      "referrer-policy": "strict-origin",
+                      "x-xss-protection": "1; mode=block",
+                      "cf-cache-status": "EXPIRED",
+                      "server": "cloudflare",
+                      "cf-ray": "a4da1be47bab562b-EWR",
+                      "alt-svc": "h3=\":443\"; ma=86400"
+                    },
+                    "peer_ip": "104.18.11.203",
+                    "raw_path": "downloads/ca2a3abd40bd457ab2f4730f504fa56e-0.raw",
+                    "raw_page_bytes": 213008,
+                    "raw_sha256": "71157a66fe9964f1e637e08b28e4e57e97f0a73f9632dd2c1a97e34a14c1c164"
+                  }
+                ],
+                "final_url": "https://www.nobelprize.org/prizes/physics/2016/kosterlitz/biographical/",
+                "raw_path": "downloads/ca2a3abd40bd457ab2f4730f504fa56e-0.raw",
+                "raw_page_bytes": 213008,
+                "raw_sha256": "71157a66fe9964f1e637e08b28e4e57e97f0a73f9632dd2c1a97e34a14c1c164",
+                "parser": "stdlib-html-readable-v1",
+                "raw_page_chars": 212983,
+                "extraction_path": "downloads/ca2a3abd40bd457ab2f4730f504fa56e.txt",
+                "extraction_bytes": 34235,
+                "extraction_sha256": "ded959b90d0bc6d60bf9b0897b8af3d73b32cf68b7f86ca555218b29a68c427e",
+                "extraction_chars": 34149,
+                "extraction_validation": {
+                  "reason": null,
+                  "forbidden_control_count": 0,
+                  "forbidden_controls": {}
+                },
+                "finished_at": "2026-10-20T18:33:06.194959+00:00",
+                "readable_chars": 34149,
+                "text_path": "downloads/ca2a3abd40bd457ab2f4730f504fa56e.txt",
+                "text_sha256": "ded959b90d0bc6d60bf9b0897b8af3d73b32cf68b7f86ca555218b29a68c427e"
+              }
+            }
+          },
+          {
+            "candidate": "Haldane/Perimeter",
+            "row": 3,
+            "entity": "F. Duncan M. Haldane",
+            "status": "dated",
+            "final_value": "Princeton University, NJ, USA",
+            "note": "Secondary dated interval includes 2016.",
+            "evidence": {
+              "url": "https://en.wikipedia.org/wiki/Duncan_Haldane",
+              "request_id": 71,
+              "quote": "Haldane worked as a physicist at Institut Laue–Langevin in France between 1977 and 1981. In August 1981, Haldane became an assistant professor of physics at the University of Southern California,[8][9] where he remained until 1987. Haldane was then appointed as an associate professor of physics in 1981 and later a professor of physics in 1986. In July 1986, Haldane joined the department of physics at the University of California, San Diego as a professor of physics, where he remained until February 1992. In 1990, Haldane was appointed as a professor of physics in the department of physics at Princeton University, where he remains to this day. In 1999, Haldane was named as the Eugene Higgins Professor of Physics. In 2017, he was named the Sherman Fairchild University Professor of Physics. From 2013 to 2018, Haldane also held a Distinguished Visiting Research Chair[10] at the Perimeter Institute for Theoretical Physics.",
+              "offset": 2954,
+              "line": 190,
+              "text": {
+                "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/downloads/1e55992fd947436db395e3822c1947c8.txt",
+                "bytes": 17557,
+                "sha256": "3e3a762b99c94d13ce40e8e2e6f7f13645abd1cafba8cfc941a00749d3dc9bdf"
+              },
+              "receipt_id": "1e55992fd947436db395e3822c1947c8",
+              "raw_sha256": "93cd83505ac17de1501a72f1e3d0af469ecca403297077026d714be46b80f8c3",
+              "complete_receipt": {
+                "id": "1e55992fd947436db395e3822c1947c8",
+                "fetch_path": "direct-readable-v1",
+                "text_policy": "unicode-layout-controls-v1",
+                "requested_url": "https://en.wikipedia.org/wiki/Duncan_Haldane",
+                "started_at": "2026-10-20T18:38:15.527424+00:00",
+                "status": "succeeded",
+                "hops": [
+                  {
+                    "url": "https://en.wikipedia.org/wiki/Duncan_Haldane",
+                    "status": 200,
+                    "headers": {
+                      "date": "Tue, 20 Oct 2026 15:19:51 GMT",
+                      "server": "mw-web.codfw.main-b8fdf46bd-l6xqf",
+                      "x-content-type-options": "nosniff",
+                      "content-language": "en",
+                      "accept-ch": "",
+                      "reporting-endpoints": "csp-report-to-endpoint='/w/api.php?action=cspreport&format=json';",
+                      "content-security-policy": "script-src 'unsafe-eval' blob: 'self' meta.wikimedia.org *.wikimedia.org *.wikipedia.org *.wikinews.org *.wiktionary.org *.wikibooks.org *.wikiversity.org *.wikisource.org wikisource.org *.wikiquote.org *.wikidata.org *.wikifunctions.org *.wikivoyage.org *.mediawiki.org mediawiki.org wikimedia.org *.wmflabs.org *.wmcloud.org *.toolforge.org wss://*.toolforge.org *.jsdelivr.net unpkg.com cdnjs.cloudflare.com raw.githubusercontent.com *.github.com code.jquery.com cdn.mathjax.org use.typekit.net fonts.cdnfonts.com use.fontawesome.com i.ytimg.com rsms.me doi.org localhost https://localhost:* http://localhost:* wss://localhost:* ws://localhost:* *.google.com *.gstatic.com *.googleapis.com *.translate.yandex.net yastatic.net ya.ru radically.github.io cdn.sammdot.ca cdn.fontshare.com viaf.org publicai-proxy.alaexis.workers.dev iiif.archive.org api.flickr.com live.staticflickr.com api.anthropic.com api.openai.com api.publicai.co catalogo.pusc.it parsifal.urbe.it opac.sbn.it overpass-api.de api.openrouteservice.org archive.org *.openstreetmap.org *.waymarkedtrails.org *.thunderforest.com registry.ipe.wiki analytics.ipe.wiki qlever.dev app.goacoustic.com wikipedia-archive.ourworldindata.org api.inaturalist.org inaturalist-open-data.s3.amazonaws.com validator.w3.org db.onlinewebfonts.com fontlibrary.org 'unsafe-inline' auth.wikimedia.org; default-src 'self' data: blob: upload.wikimedia.org thumb.wikimedia.org https://commons.wikimedia.org meta.wikimedia.org *.wikimedia.org *.wikipedia.org *.wikinews.org *.wiktionary.org *.wikibooks.org *.wikiversity.org *.wikisource.org wikisource.org *.wikiquote.org *.wikidata.org *.wikifunctions.org *.wikivoyage.org *.mediawiki.org mediawiki.org wikimedia.org *.wmflabs.org *.wmcloud.org *.toolforge.org wss://*.toolforge.org *.jsdelivr.net unpkg.com cdnjs.cloudflare.com raw.githubusercontent.com *.github.com code.jquery.com cdn.mathjax.org use.typekit.net fonts.cdnfonts.com use.fontawesome.com i.ytimg.com rsms.me doi.org localhost https://localhost:* http://localhost:* wss://localhost:* ws://localhost:* *.google.com *.gstatic.com *.googleapis.com *.translate.yandex.net yastatic.net ya.ru radically.github.io cdn.sammdot.ca cdn.fontshare.com viaf.org publicai-proxy.alaexis.workers.dev iiif.archive.org api.flickr.com live.staticflickr.com api.anthropic.com api.openai.com api.publicai.co catalogo.pusc.it parsifal.urbe.it opac.sbn.it overpass-api.de api.openrouteservice.org archive.org *.openstreetmap.org *.waymarkedtrails.org *.thunderforest.com registry.ipe.wiki analytics.ipe.wiki qlever.dev app.goacoustic.com wikipedia-archive.ourworldindata.org api.inaturalist.org inaturalist-open-data.s3.amazonaws.com validator.w3.org db.onlinewebfonts.com fontlibrary.org en.wikibooks.org en.wikinews.org en.wikiquote.org en.wikisource.org en.wikiversity.org en.wikivoyage.org en.wiktionary.org www.mediawiki.org commons.wikimedia.org foundation.wikimedia.org incubator.wikimedia.org species.wikimedia.org wikimania.wikimedia.org www.wikidata.org www.wikifunctions.org auth.wikimedia.org; style-src 'self' data: blob: upload.wikimedia.org thumb.wikimedia.org https://commons.wikimedia.org meta.wikimedia.org *.wikimedia.org *.wikipedia.org *.wikinews.org *.wiktionary.org *.wikibooks.org *.wikiversity.org *.wikisource.org wikisource.org *.wikiquote.org *.wikidata.org *.wikifunctions.org *.wikivoyage.org *.mediawiki.org mediawiki.org wikimedia.org *.wmflabs.org *.wmcloud.org *.toolforge.org wss://*.toolforge.org *.jsdelivr.net unpkg.com cdnjs.cloudflare.com raw.githubusercontent.com *.github.com code.jquery.com cdn.mathjax.org use.typekit.net fonts.cdnfonts.com use.fontawesome.com i.ytimg.com rsms.me doi.org localhost https://localhost:* http://localhost:* wss://localhost:* ws://localhost:* *.google.com *.gstatic.com *.googleapis.com *.translate.yandex.net yastatic.net ya.ru radically.github.io cdn.sammdot.ca cdn.fontshare.com viaf.org publicai-proxy.alaexis.workers.dev iiif.archive.org api.flickr.com live.staticflickr.com api.anthropic.com api.openai.com api.publicai.co catalogo.pusc.it parsifal.urbe.it opac.sbn.it overpass-api.de api.openrouteservice.org archive.org *.openstreetmap.org *.waymarkedtrails.org *.thunderforest.com registry.ipe.wiki analytics.ipe.wiki qlever.dev app.goacoustic.com wikipedia-archive.ourworldindata.org api.inaturalist.org inaturalist-open-data.s3.amazonaws.com validator.w3.org db.onlinewebfonts.com fontlibrary.org 'unsafe-inline'; object-src 'none'; report-uri /w/api.php?action=cspreport&format=json; report-to csp-report-to-endpoint",
+                      "last-modified": "Thu, 15 Oct 2026 22:02:27 GMT",
+                      "content-type": "text/html; charset=UTF-8",
+                      "age": "11905",
+                      "accept-ranges": "bytes",
+                      "x-cache": "cp1106 miss, cp1106 hit/9",
+                      "x-cache-status": "hit-front",
+                      "strict-transport-security": "max-age=106384710; includeSubDomains; preload",
+                      "report-to": "{ \"group\": \"wm_nel\", \"max_age\": 604800, \"endpoints\": [{ \"url\": \"https://intake-logging.wikimedia.org/v1/events?stream=w3c.reportingapi.network_error&schema_uri=/w3c/reportingapi/network_error/1.0.0\" }] }",
+                      "nel": "{ \"report_to\": \"wm_nel\", \"max_age\": 604800, \"failure_fraction\": 0.05, \"success_fraction\": 0.0}",
+                      "set-cookie": "WMF-Uniq=MvQSnbszn0C9bBvMIPXEugP_AAAAAFvdUREIZUwGL3fHreLm8YxxYzBDyWZVfqPD;Domain=.wikipedia.org;Path=/;HttpOnly;secure;SameSite=None;Expires=Wed, 20 Oct 2027 00:00:00 GMT",
+                      "x-client-ip": "67.20.197.3",
+                      "cache-control": "private, s-maxage=0, max-age=0, must-revalidate, no-transform",
+                      "vary": "Accept-Encoding,X-Subdomain,Cookie,Authorization,User-Agent",
+                      "content-length": "256183",
+                      "x-request-id": "b0c14cb2-c2a1-43db-abb1-3796eacc5b5b",
+                      "x-analytics": "",
+                      "server-timing": "cache;desc=\"hit-front\", host;desc=\"cp1106\",co_id;desc=\"723676977\""
+                    },
+                    "peer_ip": "208.80.154.224",
+                    "raw_path": "downloads/1e55992fd947436db395e3822c1947c8-0.raw",
+                    "raw_page_bytes": 256183,
+                    "raw_sha256": "93cd83505ac17de1501a72f1e3d0af469ecca403297077026d714be46b80f8c3"
+                  }
+                ],
+                "final_url": "https://en.wikipedia.org/wiki/Duncan_Haldane",
+                "raw_path": "downloads/1e55992fd947436db395e3822c1947c8-0.raw",
+                "raw_page_bytes": 256183,
+                "raw_sha256": "93cd83505ac17de1501a72f1e3d0af469ecca403297077026d714be46b80f8c3",
+                "parser": "stdlib-html-readable-v1",
+                "raw_page_chars": 254496,
+                "extraction_path": "downloads/1e55992fd947436db395e3822c1947c8.txt",
+                "extraction_bytes": 17557,
+                "extraction_sha256": "3e3a762b99c94d13ce40e8e2e6f7f13645abd1cafba8cfc941a00749d3dc9bdf",
+                "extraction_chars": 17220,
+                "extraction_validation": {
+                  "reason": null,
+                  "forbidden_control_count": 0,
+                  "forbidden_controls": {}
+                },
+                "finished_at": "2026-10-20T18:38:15.847181+00:00",
+                "readable_chars": 17220,
+                "text_path": "downloads/1e55992fd947436db395e3822c1947c8.txt",
+                "text_sha256": "3e3a762b99c94d13ce40e8e2e6f7f13645abd1cafba8cfc941a00749d3dc9bdf"
+              }
+            }
+          },
+          {
+            "candidate": "Genzel/LMU",
+            "row": 15,
+            "entity": "Reinhard Genzel",
+            "status": "dated",
+            "final_value": "Max Planck Institute for Extraterrestrial Physics, Garching, Germany; University of California, Berkeley, CA, USA",
+            "note": "Own retained secondary source states continuing honorary LMU professorship; covers 2020.",
+            "evidence": {
+              "url": "https://en.wikipedia.org/wiki/Reinhard_Genzel",
+              "request_id": 38,
+              "quote": "Genzel was born in Bad Homburg vor der Höhe, Germany, the son of Eva-Maria Genzel and Ludwig Genzel, a professor of solid state physics (1922–2003). He studied physics at the University of Freiburg and the University of Bonn, graduating in 1978 with a PhD in radioastronomy which he prepared at the Max Planck Institute for Radio Astronomy.[6] Subsequently he worked at the Center for Astrophysics | Harvard & Smithsonian in Cambridge, Massachusetts. He was a Miller Fellow from 1980 until 1982, and also Associate and finally Full Professor in the Department of Physics at the University of California, Berkeley from 1981. In 1986, he left Berkeley to become a director at the Max Planck Institute for Extraterrestrial Physics in Garching and Scientific Member of the Max-Planck-Gesellschaft.[7] During that time he also lectured at LMU Munich, where he has been Honorary Professor since 1988.[6] From 1999 to 2016, he also had a part-time joint appointment as Full Professor at the University of California, Berkeley.[6][7] Additional activities include sitting on the selection committee for the Shaw Prize in astronomy.[8]",
+              "offset": 2806,
+              "line": 169,
+              "text": {
+                "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/downloads/51446303969643db8bca1d145eee3b10.txt",
+                "bytes": 21666,
+                "sha256": "1cfad649a6203d7b3f80b7e5b8429585487b5b64ef9995bbeeaa520b72fd1e1a"
+              },
+              "receipt_id": "51446303969643db8bca1d145eee3b10",
+              "raw_sha256": "d6c83eb43ca42b2dc0a5bc5b3099d71704a32b53bce70b58c3ddf622b0c6b590",
+              "complete_receipt": {
+                "id": "51446303969643db8bca1d145eee3b10",
+                "fetch_path": "direct-readable-v1",
+                "text_policy": "unicode-layout-controls-v1",
+                "requested_url": "https://en.wikipedia.org/wiki/Reinhard_Genzel",
+                "started_at": "2026-10-20T18:33:10.376316+00:00",
+                "status": "succeeded",
+                "hops": [
+                  {
+                    "url": "https://en.wikipedia.org/wiki/Reinhard_Genzel",
+                    "status": 200,
+                    "headers": {
+                      "date": "Tue, 20 Oct 2026 05:13:15 GMT",
+                      "server": "mw-web.eqiad.main-977dcd544-m2vhd",
+                      "x-content-type-options": "nosniff",
+                      "content-language": "en",
+                      "accept-ch": "",
+                      "reporting-endpoints": "csp-report-to-endpoint='/w/api.php?action=cspreport&format=json';",
+                      "content-security-policy": "script-src 'unsafe-eval' blob: 'self' meta.wikimedia.org *.wikimedia.org *.wikipedia.org *.wikinews.org *.wiktionary.org *.wikibooks.org *.wikiversity.org *.wikisource.org wikisource.org *.wikiquote.org *.wikidata.org *.wikifunctions.org *.wikivoyage.org *.mediawiki.org mediawiki.org wikimedia.org *.wmflabs.org *.wmcloud.org *.toolforge.org wss://*.toolforge.org *.jsdelivr.net unpkg.com cdnjs.cloudflare.com raw.githubusercontent.com *.github.com code.jquery.com cdn.mathjax.org use.typekit.net fonts.cdnfonts.com use.fontawesome.com i.ytimg.com rsms.me doi.org localhost https://localhost:* http://localhost:* wss://localhost:* ws://localhost:* *.google.com *.gstatic.com *.googleapis.com *.translate.yandex.net yastatic.net ya.ru radically.github.io cdn.sammdot.ca cdn.fontshare.com viaf.org publicai-proxy.alaexis.workers.dev iiif.archive.org api.flickr.com live.staticflickr.com api.anthropic.com api.openai.com api.publicai.co catalogo.pusc.it parsifal.urbe.it opac.sbn.it overpass-api.de api.openrouteservice.org archive.org *.openstreetmap.org *.waymarkedtrails.org *.thunderforest.com registry.ipe.wiki analytics.ipe.wiki qlever.dev app.goacoustic.com wikipedia-archive.ourworldindata.org api.inaturalist.org inaturalist-open-data.s3.amazonaws.com validator.w3.org db.onlinewebfonts.com fontlibrary.org 'unsafe-inline' auth.wikimedia.org; default-src 'self' data: blob: upload.wikimedia.org thumb.wikimedia.org https://commons.wikimedia.org meta.wikimedia.org *.wikimedia.org *.wikipedia.org *.wikinews.org *.wiktionary.org *.wikibooks.org *.wikiversity.org *.wikisource.org wikisource.org *.wikiquote.org *.wikidata.org *.wikifunctions.org *.wikivoyage.org *.mediawiki.org mediawiki.org wikimedia.org *.wmflabs.org *.wmcloud.org *.toolforge.org wss://*.toolforge.org *.jsdelivr.net unpkg.com cdnjs.cloudflare.com raw.githubusercontent.com *.github.com code.jquery.com cdn.mathjax.org use.typekit.net fonts.cdnfonts.com use.fontawesome.com i.ytimg.com rsms.me doi.org localhost https://localhost:* http://localhost:* wss://localhost:* ws://localhost:* *.google.com *.gstatic.com *.googleapis.com *.translate.yandex.net yastatic.net ya.ru radically.github.io cdn.sammdot.ca cdn.fontshare.com viaf.org publicai-proxy.alaexis.workers.dev iiif.archive.org api.flickr.com live.staticflickr.com api.anthropic.com api.openai.com api.publicai.co catalogo.pusc.it parsifal.urbe.it opac.sbn.it overpass-api.de api.openrouteservice.org archive.org *.openstreetmap.org *.waymarkedtrails.org *.thunderforest.com registry.ipe.wiki analytics.ipe.wiki qlever.dev app.goacoustic.com wikipedia-archive.ourworldindata.org api.inaturalist.org inaturalist-open-data.s3.amazonaws.com validator.w3.org db.onlinewebfonts.com fontlibrary.org en.wikibooks.org en.wikinews.org en.wikiquote.org en.wikisource.org en.wikiversity.org en.wikivoyage.org en.wiktionary.org www.mediawiki.org commons.wikimedia.org foundation.wikimedia.org incubator.wikimedia.org species.wikimedia.org wikimania.wikimedia.org www.wikidata.org www.wikifunctions.org auth.wikimedia.org; style-src 'self' data: blob: upload.wikimedia.org thumb.wikimedia.org https://commons.wikimedia.org meta.wikimedia.org *.wikimedia.org *.wikipedia.org *.wikinews.org *.wiktionary.org *.wikibooks.org *.wikiversity.org *.wikisource.org wikisource.org *.wikiquote.org *.wikidata.org *.wikifunctions.org *.wikivoyage.org *.mediawiki.org mediawiki.org wikimedia.org *.wmflabs.org *.wmcloud.org *.toolforge.org wss://*.toolforge.org *.jsdelivr.net unpkg.com cdnjs.cloudflare.com raw.githubusercontent.com *.github.com code.jquery.com cdn.mathjax.org use.typekit.net fonts.cdnfonts.com use.fontawesome.com i.ytimg.com rsms.me doi.org localhost https://localhost:* http://localhost:* wss://localhost:* ws://localhost:* *.google.com *.gstatic.com *.googleapis.com *.translate.yandex.net yastatic.net ya.ru radically.github.io cdn.sammdot.ca cdn.fontshare.com viaf.org publicai-proxy.alaexis.workers.dev iiif.archive.org api.flickr.com live.staticflickr.com api.anthropic.com api.openai.com api.publicai.co catalogo.pusc.it parsifal.urbe.it opac.sbn.it overpass-api.de api.openrouteservice.org archive.org *.openstreetmap.org *.waymarkedtrails.org *.thunderforest.com registry.ipe.wiki analytics.ipe.wiki qlever.dev app.goacoustic.com wikipedia-archive.ourworldindata.org api.inaturalist.org inaturalist-open-data.s3.amazonaws.com validator.w3.org db.onlinewebfonts.com fontlibrary.org 'unsafe-inline'; object-src 'none'; report-uri /w/api.php?action=cspreport&format=json; report-to csp-report-to-endpoint",
+                      "last-modified": "Sat, 17 Oct 2026 20:45:22 GMT",
+                      "content-type": "text/html; charset=UTF-8",
+                      "age": "47995",
+                      "accept-ranges": "bytes",
+                      "x-cache": "cp1106 hit, cp1106 hit/1",
+                      "x-cache-status": "hit-front",
+                      "strict-transport-security": "max-age=106384710; includeSubDomains; preload",
+                      "report-to": "{ \"group\": \"wm_nel\", \"max_age\": 604800, \"endpoints\": [{ \"url\": \"https://intake-logging.wikimedia.org/v1/events?stream=w3c.reportingapi.network_error&schema_uri=/w3c/reportingapi/network_error/1.0.0\" }] }",
+                      "nel": "{ \"report_to\": \"wm_nel\", \"max_age\": 604800, \"failure_fraction\": 0.05, \"success_fraction\": 0.0}",
+                      "set-cookie": "WMF-Uniq=zy2ukKhOtpc_jIPYclyU9AP_AAAAAFvdSACUHn6MrW9QsaH6ICxx9I5l7--yWFax;Domain=.wikipedia.org;Path=/;HttpOnly;secure;SameSite=None;Expires=Wed, 20 Oct 2027 00:00:00 GMT",
+                      "x-client-ip": "67.20.197.3",
+                      "cache-control": "private, s-maxage=0, max-age=0, must-revalidate, no-transform",
+                      "vary": "Accept-Encoding,X-Subdomain,Cookie,Authorization,User-Agent",
+                      "content-length": "311101",
+                      "x-request-id": "1971263b-69fd-41ba-8bbb-a6338e642c98",
+                      "x-analytics": "",
+                      "server-timing": "cache;desc=\"hit-front\", host;desc=\"cp1106\",co_id;desc=\"3508682564\""
+                    },
+                    "peer_ip": "208.80.154.224",
+                    "raw_path": "downloads/51446303969643db8bca1d145eee3b10-0.raw",
+                    "raw_page_bytes": 311101,
+                    "raw_sha256": "d6c83eb43ca42b2dc0a5bc5b3099d71704a32b53bce70b58c3ddf622b0c6b590"
+                  }
+                ],
+                "final_url": "https://en.wikipedia.org/wiki/Reinhard_Genzel",
+                "raw_path": "downloads/51446303969643db8bca1d145eee3b10-0.raw",
+                "raw_page_bytes": 311101,
+                "raw_sha256": "d6c83eb43ca42b2dc0a5bc5b3099d71704a32b53bce70b58c3ddf622b0c6b590",
+                "parser": "stdlib-html-readable-v1",
+                "raw_page_chars": 309555,
+                "extraction_path": "downloads/51446303969643db8bca1d145eee3b10.txt",
+                "extraction_bytes": 21666,
+                "extraction_sha256": "1cfad649a6203d7b3f80b7e5b8429585487b5b64ef9995bbeeaa520b72fd1e1a",
+                "extraction_chars": 21331,
+                "extraction_validation": {
+                  "reason": null,
+                  "forbidden_control_count": 0,
+                  "forbidden_controls": {}
+                },
+                "finished_at": "2026-10-20T18:33:10.611706+00:00",
+                "readable_chars": 21331,
+                "text_path": "downloads/51446303969643db8bca1d145eee3b10.txt",
+                "text_sha256": "1cfad649a6203d7b3f80b7e5b8429585487b5b64ef9995bbeeaa520b72fd1e1a"
+              }
+            }
+          },
+          {
+            "candidate": "Hasselmann/Hamburg",
+            "row": 18,
+            "entity": "Klaus Hasselmann",
+            "status": "dated",
+            "final_value": "Max Planck Institute for Meteorology, Hamburg, Germany",
+            "note": "Award-period October6,2021 report; emeritus role is a coverage concern, not a contradiction of the credited Max Planck value.",
+            "evidence": {
+              "url": "https://www.nippon.com/en/japan-data/h00304/japan%E2%80%99s-nobel-laureates.html",
+              "request_id": 42,
+              "quote": "The 2021 Nobel Prize in Physics went to three researchers: the US scientist Syukuro Manabe (Manabe Shukurō, born in 1931 in Ehime Prefecture), a senior meteorologist at Princeton University’s Program in Atmospheric and Oceanic Sciences; the German oceanographer Klaus Hasselmann, professor emeritus at the University of Hamburg and former director of the Max Planck Institute for Meteorology; and the Italian theoretical physicist Giorgio Parisi, professor at the Sapienza University of Rome. The three won the prize for their work describing climate change and other complex natural systems.",
+              "offset": 503,
+              "line": 20,
+              "text": {
+                "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/downloads/7577d1c61bbf4c4ea8e1a4a038b367b4.txt",
+                "bytes": 7569,
+                "sha256": "5784e8964c3c2375b4f3d16978d65366646429fec5c41a2189cfa5300d1d7d04"
+              },
+              "receipt_id": "7577d1c61bbf4c4ea8e1a4a038b367b4",
+              "raw_sha256": "3fb478b108a761f449bdfc609a78920d9033ef14fbabb7cc196c9f70a08dd70c",
+              "complete_receipt": {
+                "id": "7577d1c61bbf4c4ea8e1a4a038b367b4",
+                "fetch_path": "direct-readable-v1",
+                "text_policy": "unicode-layout-controls-v1",
+                "requested_url": "https://www.nippon.com/en/japan-data/h00304/japan%E2%80%99s-nobel-laureates.html",
+                "started_at": "2026-10-20T18:33:11.108338+00:00",
+                "status": "succeeded",
+                "hops": [
+                  {
+                    "url": "https://www.nippon.com/en/japan-data/h00304/japan%E2%80%99s-nobel-laureates.html",
+                    "status": 200,
+                    "headers": {
+                      "content-type": "text/html; charset=UTF-8",
+                      "content-length": "21252",
+                      "connection": "keep-alive",
+                      "date": "Tue, 20 Oct 2026 18:33:11 GMT",
+                      "access-control-allow-origin": "*",
+                      "server": "Apache/2.4.56 ()",
+                      "accept-ranges": "bytes",
+                      "access-control-allow-credentials": "true",
+                      "x-cache": "Miss from cloudfront",
+                      "via": "1.1 81943ecf479423de3131481cdfd8dff8.cloudfront.net (CloudFront)",
+                      "x-amz-cf-pop": "JFK50-P14",
+                      "x-amz-cf-id": "6Wg3FLwL5uQxBKG05uLqhh_KmgxfPqU1ZCb5Q72kS10f2gdjXANCPg==",
+                      "x-xss-protection": "1; mode=block",
+                      "x-frame-options": "SAMEORIGIN",
+                      "content-security-policy": "connect-src 'self' *.cookielaw.org *.cxense.com *.sharethis.com *.google-analytics.com *.facebook.net *.google.com stats.g.doubleclick.net *.nippon.com *.googleadservices.com *.datasign.co *.cmp.datasign.co *.googlesyndication.com; script-src 'self' *.cookielaw.org *.twitter.com *.cxense.com *.googletagmanager.com *.sharethis.com 'unsafe-inline' *.kiji.is *.google-analytics.com *.facebook.net *.google.com stats.g.doubleclick.net *.nippon.com *.googleadservices.com *.datasign.co *.cmp.datasign.co *.googlesyndication.com;",
+                      "x-content-type-options": "nosniff",
+                      "strict-transport-security": "max-age=31536000; includeSubDomains"
+                    },
+                    "peer_ip": "13.33.67.66",
+                    "raw_path": "downloads/7577d1c61bbf4c4ea8e1a4a038b367b4-0.raw",
+                    "raw_page_bytes": 21252,
+                    "raw_sha256": "3fb478b108a761f449bdfc609a78920d9033ef14fbabb7cc196c9f70a08dd70c"
+                  }
+                ],
+                "final_url": "https://www.nippon.com/en/japan-data/h00304/japan%E2%80%99s-nobel-laureates.html",
+                "raw_path": "downloads/7577d1c61bbf4c4ea8e1a4a038b367b4-0.raw",
+                "raw_page_bytes": 21252,
+                "raw_sha256": "3fb478b108a761f449bdfc609a78920d9033ef14fbabb7cc196c9f70a08dd70c",
+                "parser": "stdlib-html-readable-v1",
+                "raw_page_chars": 21075,
+                "extraction_path": "downloads/7577d1c61bbf4c4ea8e1a4a038b367b4.txt",
+                "extraction_bytes": 7569,
+                "extraction_sha256": "5784e8964c3c2375b4f3d16978d65366646429fec5c41a2189cfa5300d1d7d04",
+                "extraction_chars": 7382,
+                "extraction_validation": {
+                  "reason": null,
+                  "forbidden_control_count": 0,
+                  "forbidden_controls": {}
+                },
+                "finished_at": "2026-10-20T18:33:11.536143+00:00",
+                "readable_chars": 7382,
+                "text_path": "downloads/7577d1c61bbf4c4ea8e1a4a038b367b4.txt",
+                "text_sha256": "5784e8964c3c2375b4f3d16978d65366646429fec5c41a2189cfa5300d1d7d04"
+              }
+            }
+          },
+          {
+            "candidate": "Aspect/CNRS",
+            "row": 20,
+            "entity": "Alain Aspect",
+            "status": "dated",
+            "final_value": "Institut d’Optique Graduate School – Université Paris-Saclay and École Polytechnique, Palaiseau, France",
+            "note": "Award-day primary report states CNRS research-director emeritus role at Institut d’Optique. Organizational overlap is retained; listed Institut d’Optique is not false.",
+            "evidence": {
+              "url": "https://www.polytechnique.edu/en/news/2022-nobel-prize-physics-awarded-alain-aspect-professor-ecole-polytechnique",
+              "request_id": 48,
+              "quote": "Alain Aspect, CNRS Research Director Emeritus at the Institut d'Optique Graduate School (Université Paris-Saclay - CNRS) and Professor at École Polytechnique, is co-recipient of the Nobel Prize in Physics 2022. This Nobel Prize rewards his discoveries and underlines the excellence of education in Physics at l'X.",
+              "offset": 1752,
+              "line": 75,
+              "text": {
+                "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/downloads/910f6ac2ccbc4ed596f961df1bbe8d8c.txt",
+                "bytes": 5850,
+                "sha256": "85315926c448e9302fab1bfd1db778e69f22ce75cd6be4bb5c53c6bb0c53bdaa"
+              },
+              "receipt_id": "910f6ac2ccbc4ed596f961df1bbe8d8c",
+              "raw_sha256": "82239768822b59b886e42e8f7f350c6a6ce0bde3ddad8133a7bbe97bf60e54d0",
+              "complete_receipt": {
+                "id": "910f6ac2ccbc4ed596f961df1bbe8d8c",
+                "fetch_path": "direct-readable-v1",
+                "text_policy": "unicode-layout-controls-v1",
+                "requested_url": "https://www.polytechnique.edu/en/news/2022-nobel-prize-physics-awarded-alain-aspect-professor-ecole-polytechnique",
+                "started_at": "2026-10-20T18:33:12.657019+00:00",
+                "status": "succeeded",
+                "hops": [
+                  {
+                    "url": "https://www.polytechnique.edu/en/news/2022-nobel-prize-physics-awarded-alain-aspect-professor-ecole-polytechnique",
+                    "status": 200,
+                    "headers": {
+                      "server": "sysdsi/6.6.6",
+                      "date": "Tue, 20 Oct 2026 18:33:13 GMT",
+                      "content-type": "text/html; charset=UTF-8",
+                      "content-length": "216213",
+                      "connection": "keep-alive",
+                      "cache-control": "max-age=86400, public",
+                      "x-drupal-dynamic-cache": "HIT",
+                      "content-language": "en",
+                      "x-content-type-options": "nosniff",
+                      "x-frame-options": "sameorigin",
+                      "expires": "Sun, 19 Nov 1978 05:00:00 GMT",
+                      "last-modified": "Tue, 20 Oct 2026 18:33:13 GMT",
+                      "etag": "\"1792521193\"",
+                      "vary": "Cookie",
+                      "x-generator": "Drupal 10 (https://www.drupal.org)",
+                      "strict-transport-security": "max-age=31536000; includeSubDomains",
+                      "referrer-policy": "no-referrer-when-downgrade",
+                      "x-xss-protection": "1; mode=block"
+                    },
+                    "peer_ip": "129.104.30.29",
+                    "raw_path": "downloads/910f6ac2ccbc4ed596f961df1bbe8d8c-0.raw",
+                    "raw_page_bytes": 216213,
+                    "raw_sha256": "82239768822b59b886e42e8f7f350c6a6ce0bde3ddad8133a7bbe97bf60e54d0"
+                  }
+                ],
+                "final_url": "https://www.polytechnique.edu/en/news/2022-nobel-prize-physics-awarded-alain-aspect-professor-ecole-polytechnique",
+                "raw_path": "downloads/910f6ac2ccbc4ed596f961df1bbe8d8c-0.raw",
+                "raw_page_bytes": 216213,
+                "raw_sha256": "82239768822b59b886e42e8f7f350c6a6ce0bde3ddad8133a7bbe97bf60e54d0",
+                "parser": "stdlib-html-readable-v1",
+                "raw_page_chars": 216099,
+                "extraction_path": "downloads/910f6ac2ccbc4ed596f961df1bbe8d8c.txt",
+                "extraction_bytes": 5850,
+                "extraction_sha256": "85315926c448e9302fab1bfd1db778e69f22ce75cd6be4bb5c53c6bb0c53bdaa",
+                "extraction_chars": 5791,
+                "extraction_validation": {
+                  "reason": null,
+                  "forbidden_control_count": 0,
+                  "forbidden_controls": {}
+                },
+                "finished_at": "2026-10-20T18:33:13.665662+00:00",
+                "readable_chars": 5791,
+                "text_path": "downloads/910f6ac2ccbc4ed596f961df1bbe8d8c.txt",
+                "text_sha256": "85315926c448e9302fab1bfd1db778e69f22ce75cd6be4bb5c53c6bb0c53bdaa"
+              }
+            }
+          },
+          {
+            "candidate": "Krausz/CMF",
+            "row": 24,
+            "entity": "Ferenc Krausz",
+            "status": "dated",
+            "final_value": "Max Planck Institute of Quantum Optics, Garching, Germany; Ludwig-Maximilians-Universität München, Munich, Germany",
+            "note": "Primary ongoing directorship includes2023. CALA/LEX overlap the already listed LMU and are not counted as extra institutions; older ended roles excluded.",
+            "evidence": {
+              "url": "https://www.leopoldina.org/en/members/member-list/detail/ferenc-krausz",
+              "request_id": 56,
+              "quote": "since 2019 Director, Center for Molecular Fingerprinting Research (CMF), Budapest, Hungary",
+              "offset": 7098,
+              "line": 221,
+              "text": {
+                "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/downloads/292f9473bba24d7aab4f2ba9f8472d6c.txt",
+                "bytes": 16217,
+                "sha256": "a84813335468772a79ac499e278e7bea4bfa012b01a72975e884f022fd85e6b1"
+              },
+              "receipt_id": "292f9473bba24d7aab4f2ba9f8472d6c",
+              "raw_sha256": "bcc43d9d15d6549825f5e4dbbed19f2e153bd3f8a30cef67c76740404310ff7c",
+              "complete_receipt": {
+                "id": "292f9473bba24d7aab4f2ba9f8472d6c",
+                "fetch_path": "direct-readable-v1",
+                "text_policy": "unicode-layout-controls-v1",
+                "requested_url": "https://www.leopoldina.org/en/members/member-list/detail/ferenc-krausz",
+                "started_at": "2026-10-20T18:33:14.004000+00:00",
+                "status": "succeeded",
+                "hops": [
+                  {
+                    "url": "https://www.leopoldina.org/en/members/member-list/detail/ferenc-krausz",
+                    "status": 200,
+                    "headers": {
+                      "date": "Tue, 20 Oct 2026 18:33:14 GMT",
+                      "content-type": "text/html; charset=utf-8",
+                      "transfer-encoding": "chunked",
+                      "connection": "keep-alive",
+                      "server-timing": "cfEdge;dur=11,cfOrigin;dur=417",
+                      "cache-control": "max-age=74947",
+                      "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=WBJXM67fJNiAl%2BTghza%2Fw4dp6S25sn0iCD4AwQdz1Ft6mjOaf9yQ2Asan8SdARNm%2BejLUjzS3IWSr5Nn7zG95vhgOqFesXGj0vKAS%2Fd8j1UMBBdb7Q%2BSbrY37n%2FadVw9L9%2FWog%3D%3D\"}]}",
+                      "content-language": "en-US",
+                      "content-security-policy": "default-src 'self'; script-src 'self' https://*.etracker.com https://*.etracker.de https://*.b-ite.com https://static.cloudflareinsights.com 'unsafe-inline'; style-src-attr 'unsafe-inline'; img-src 'self' data: *.ytimg.com *.vimeocdn.com https://*.etracker.com https://*.etracker.de https://www.youtube.com; base-uri 'self'; frame-src 'self' *.youtube-nocookie.com *.youtube.com *.vimeo.com; frame-ancestors 'self'; style-src-elem 'self' https://*.b-ite.com 'unsafe-inline'; connect-src 'self' *.leopoldina.org https://*.b-ite.com https://*.etracker.de; style-src 'self' https://*.etracker.com 'unsafe-inline'",
+                      "expires": "Wed, 21 Oct 2026 15:22:22 GMT",
+                      "last-modified": "Tue, 20 Oct 2026 15:22:22 GMT",
+                      "referrer-policy": "strict-origin-when-cross-origin",
+                      "server": "cloudflare",
+                      "strict-transport-security": "max-age=63072000",
+                      "vary": "X-Forwarded-Proto,X-Forwarded-Port,Accept-Encoding",
+                      "x-content-type-options": "nosniff",
+                      "x-sfc-tags": "pageId_62, pageId_323",
+                      "x-ua-compatible": "IE=edge",
+                      "cf-cache-status": "DYNAMIC",
+                      "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+                      "cf-ray": "a4da1c183f8dd15b-EWR"
+                    },
+                    "peer_ip": "104.26.7.99",
+                    "raw_path": "downloads/292f9473bba24d7aab4f2ba9f8472d6c-0.raw",
+                    "raw_page_bytes": 187253,
+                    "raw_sha256": "bcc43d9d15d6549825f5e4dbbed19f2e153bd3f8a30cef67c76740404310ff7c"
+                  }
+                ],
+                "final_url": "https://www.leopoldina.org/en/members/member-list/detail/ferenc-krausz",
+                "raw_path": "downloads/292f9473bba24d7aab4f2ba9f8472d6c-0.raw",
+                "raw_page_bytes": 187253,
+                "raw_sha256": "bcc43d9d15d6549825f5e4dbbed19f2e153bd3f8a30cef67c76740404310ff7c",
+                "parser": "stdlib-html-readable-v1",
+                "raw_page_chars": 187054,
+                "extraction_path": "downloads/292f9473bba24d7aab4f2ba9f8472d6c.txt",
+                "extraction_bytes": 16217,
+                "extraction_sha256": "a84813335468772a79ac499e278e7bea4bfa012b01a72975e884f022fd85e6b1",
+                "extraction_chars": 16153,
+                "extraction_validation": {
+                  "reason": null,
+                  "forbidden_control_count": 0,
+                  "forbidden_controls": {}
+                },
+                "finished_at": "2026-10-20T18:33:14.952656+00:00",
+                "readable_chars": 16153,
+                "text_path": "downloads/292f9473bba24d7aab4f2ba9f8472d6c.txt",
+                "text_sha256": "a84813335468772a79ac499e278e7bea4bfa012b01a72975e884f022fd85e6b1"
+              }
+            }
+          },
+          {
+            "candidate": "Weiss/LSU",
+            "row": 5,
+            "entity": "Rainer Weiss",
+            "status": "undated_temporal_lead",
+            "final_value": "LIGO/VIRGO Collaboration; Massachusetts Institute of Technology (MIT), Cambridge, MA, USA",
+            "note": "Own retained page states role without an appointment interval; not established as a2017 omission.",
+            "evidence": {
+              "url": "https://en.wikipedia.org/wiki/Rainer_Weiss",
+              "request_id": 18,
+              "quote": "Rainer Weiss (/waɪs/ WYSSE, German: [vaɪs]; September 29, 1932 – August 25, 2025) was a German-American physicist, known for his contributions in gravitational physics and astrophysics. He was a professor of physics at the Massachusetts Institute of Technology and an adjunct professor at Louisiana State University. He is best known for inventing the laser interferometric technique which is the basic operation of LIGO. He was Chair of the COBE Science Working Group.[1][2][3]",
+              "offset": 2649,
+              "line": 205,
+              "text": {
+                "path": "runs/round3/cohorts/readable_controls_v1/workspaces/B1/runs/research-7d636104eba34b599801437be23ddb4f/5f579a96530b9d0b8eaa08f9/downloads/eafce04555684fb1a6942e0bc7248bc1.txt",
+                "bytes": 44492,
+                "sha256": "39f633ba217639855f765177db32005fb741fcd8b18e76cc12d3a840151cd3cd"
+              },
+              "receipt_id": "eafce04555684fb1a6942e0bc7248bc1",
+              "raw_sha256": "51b8765301770b422c850a51d36f091238c696298bc00aa3f7c5a58dea16a96e",
+              "complete_receipt": {
+                "id": "eafce04555684fb1a6942e0bc7248bc1",
+                "fetch_path": "direct-readable-v1",
+                "text_policy": "unicode-layout-controls-v1",
+                "requested_url": "https://en.wikipedia.org/wiki/Rainer_Weiss",
+                "started_at": "2026-10-20T18:33:05.809351+00:00",
+                "status": "succeeded",
+                "hops": [
+                  {
+                    "url": "https://en.wikipedia.org/wiki/Rainer_Weiss",
+                    "status": 200,
+                    "headers": {
+                      "date": "Tue, 20 Oct 2026 03:01:40 GMT",
+                      "server": "mw-web.eqiad.main-977dcd544-tj4xx",
+                      "x-content-type-options": "nosniff",
+                      "content-language": "en",
+                      "accept-ch": "",
+                      "reporting-endpoints": "csp-report-to-endpoint='/w/api.php?action=cspreport&format=json';",
+                      "content-security-policy": "script-src 'unsafe-eval' blob: 'self' meta.wikimedia.org *.wikimedia.org *.wikipedia.org *.wikinews.org *.wiktionary.org *.wikibooks.org *.wikiversity.org *.wikisource.org wikisource.org *.wikiquote.org *.wikidata.org *.wikifunctions.org *.wikivoyage.org *.mediawiki.org mediawiki.org wikimedia.org *.wmflabs.org *.wmcloud.org *.toolforge.org wss://*.toolforge.org *.jsdelivr.net unpkg.com cdnjs.cloudflare.com raw.githubusercontent.com *.github.com code.jquery.com cdn.mathjax.org use.typekit.net fonts.cdnfonts.com use.fontawesome.com i.ytimg.com rsms.me doi.org localhost https://localhost:* http://localhost:* wss://localhost:* ws://localhost:* *.google.com *.gstatic.com *.googleapis.com *.translate.yandex.net yastatic.net ya.ru radically.github.io cdn.sammdot.ca cdn.fontshare.com viaf.org publicai-proxy.alaexis.workers.dev iiif.archive.org api.flickr.com live.staticflickr.com api.anthropic.com api.openai.com api.publicai.co catalogo.pusc.it parsifal.urbe.it opac.sbn.it overpass-api.de api.openrouteservice.org archive.org *.openstreetmap.org *.waymarkedtrails.org *.thunderforest.com registry.ipe.wiki analytics.ipe.wiki qlever.dev app.goacoustic.com wikipedia-archive.ourworldindata.org api.inaturalist.org inaturalist-open-data.s3.amazonaws.com validator.w3.org db.onlinewebfonts.com fontlibrary.org 'unsafe-inline' auth.wikimedia.org; default-src 'self' data: blob: upload.wikimedia.org thumb.wikimedia.org https://commons.wikimedia.org meta.wikimedia.org *.wikimedia.org *.wikipedia.org *.wikinews.org *.wiktionary.org *.wikibooks.org *.wikiversity.org *.wikisource.org wikisource.org *.wikiquote.org *.wikidata.org *.wikifunctions.org *.wikivoyage.org *.mediawiki.org mediawiki.org wikimedia.org *.wmflabs.org *.wmcloud.org *.toolforge.org wss://*.toolforge.org *.jsdelivr.net unpkg.com cdnjs.cloudflare.com raw.githubusercontent.com *.github.com code.jquery.com cdn.mathjax.org use.typekit.net fonts.cdnfonts.com use.fontawesome.com i.ytimg.com rsms.me doi.org localhost https://localhost:* http://localhost:* wss://localhost:* ws://localhost:* *.google.com *.gstatic.com *.googleapis.com *.translate.yandex.net yastatic.net ya.ru radically.github.io cdn.sammdot.ca cdn.fontshare.com viaf.org publicai-proxy.alaexis.workers.dev iiif.archive.org api.flickr.com live.staticflickr.com api.anthropic.com api.openai.com api.publicai.co catalogo.pusc.it parsifal.urbe.it opac.sbn.it overpass-api.de api.openrouteservice.org archive.org *.openstreetmap.org *.waymarkedtrails.org *.thunderforest.com registry.ipe.wiki analytics.ipe.wiki qlever.dev app.goacoustic.com wikipedia-archive.ourworldindata.org api.inaturalist.org inaturalist-open-data.s3.amazonaws.com validator.w3.org db.onlinewebfonts.com fontlibrary.org en.wikibooks.org en.wikinews.org en.wikiquote.org en.wikisource.org en.wikiversity.org en.wikivoyage.org en.wiktionary.org www.mediawiki.org commons.wikimedia.org foundation.wikimedia.org incubator.wikimedia.org species.wikimedia.org wikimania.wikimedia.org www.wikidata.org www.wikifunctions.org auth.wikimedia.org; style-src 'self' data: blob: upload.wikimedia.org thumb.wikimedia.org https://commons.wikimedia.org meta.wikimedia.org *.wikimedia.org *.wikipedia.org *.wikinews.org *.wiktionary.org *.wikibooks.org *.wikiversity.org *.wikisource.org wikisource.org *.wikiquote.org *.wikidata.org *.wikifunctions.org *.wikivoyage.org *.mediawiki.org mediawiki.org wikimedia.org *.wmflabs.org *.wmcloud.org *.toolforge.org wss://*.toolforge.org *.jsdelivr.net unpkg.com cdnjs.cloudflare.com raw.githubusercontent.com *.github.com code.jquery.com cdn.mathjax.org use.typekit.net fonts.cdnfonts.com use.fontawesome.com i.ytimg.com rsms.me doi.org localhost https://localhost:* http://localhost:* wss://localhost:* ws://localhost:* *.google.com *.gstatic.com *.googleapis.com *.translate.yandex.net yastatic.net ya.ru radically.github.io cdn.sammdot.ca cdn.fontshare.com viaf.org publicai-proxy.alaexis.workers.dev iiif.archive.org api.flickr.com live.staticflickr.com api.anthropic.com api.openai.com api.publicai.co catalogo.pusc.it parsifal.urbe.it opac.sbn.it overpass-api.de api.openrouteservice.org archive.org *.openstreetmap.org *.waymarkedtrails.org *.thunderforest.com registry.ipe.wiki analytics.ipe.wiki qlever.dev app.goacoustic.com wikipedia-archive.ourworldindata.org api.inaturalist.org inaturalist-open-data.s3.amazonaws.com validator.w3.org db.onlinewebfonts.com fontlibrary.org 'unsafe-inline'; object-src 'none'; report-uri /w/api.php?action=cspreport&format=json; report-to csp-report-to-endpoint",
+                      "last-modified": "Sun, 18 Oct 2026 02:51:37 GMT",
+                      "content-type": "text/html; charset=UTF-8",
+                      "age": "55885",
+                      "accept-ranges": "bytes",
+                      "x-cache": "cp1106 hit, cp1106 hit/6",
+                      "x-cache-status": "hit-front",
+                      "strict-transport-security": "max-age=106384710; includeSubDomains; preload",
+                      "report-to": "{ \"group\": \"wm_nel\", \"max_age\": 604800, \"endpoints\": [{ \"url\": \"https://intake-logging.wikimedia.org/v1/events?stream=w3c.reportingapi.network_error&schema_uri=/w3c/reportingapi/network_error/1.0.0\" }] }",
+                      "nel": "{ \"report_to\": \"wm_nel\", \"max_age\": 604800, \"failure_fraction\": 0.05, \"success_fraction\": 0.0}",
+                      "set-cookie": "WMF-Uniq=1iJlPAmLEv9hdjBrPYtkWAP_AAAAAFvdvPNzYASgNIP-E3r1t8EhO0nF0D2Y6Nee;Domain=.wikipedia.org;Path=/;HttpOnly;secure;SameSite=None;Expires=Wed, 20 Oct 2027 00:00:00 GMT",
+                      "x-client-ip": "67.20.197.3",
+                      "cache-control": "private, s-maxage=0, max-age=0, must-revalidate, no-transform",
+                      "vary": "Accept-Encoding,X-Subdomain,Cookie,Authorization,User-Agent",
+                      "content-length": "499437",
+                      "x-request-id": "9a521108-8b18-40fb-a55a-b5f68ece053d",
+                      "x-analytics": "",
+                      "server-timing": "cache;desc=\"hit-front\", host;desc=\"cp1106\",co_id;desc=\"1796397811\""
+                    },
+                    "peer_ip": "208.80.154.224",
+                    "raw_path": "downloads/eafce04555684fb1a6942e0bc7248bc1-0.raw",
+                    "raw_page_bytes": 499437,
+                    "raw_sha256": "51b8765301770b422c850a51d36f091238c696298bc00aa3f7c5a58dea16a96e"
+                  }
+                ],
+                "final_url": "https://en.wikipedia.org/wiki/Rainer_Weiss",
+                "raw_path": "downloads/eafce04555684fb1a6942e0bc7248bc1-0.raw",
+                "raw_page_bytes": 499437,
+                "raw_sha256": "51b8765301770b422c850a51d36f091238c696298bc00aa3f7c5a58dea16a96e",
+                "parser": "stdlib-html-readable-v1",
+                "raw_page_chars": 497542,
+                "extraction_path": "downloads/eafce04555684fb1a6942e0bc7248bc1.txt",
+                "extraction_bytes": 44492,
+                "extraction_sha256": "39f633ba217639855f765177db32005fb741fcd8b18e76cc12d3a840151cd3cd",
+                "extraction_chars": 44003,
+                "extraction_validation": {
+                  "reason": null,
+                  "forbidden_control_count": 0,
+                  "forbidden_controls": {}
+                },
+                "finished_at": "2026-10-20T18:33:06.159082+00:00",
+                "readable_chars": 44003,
+                "text_path": "downloads/eafce04555684fb1a6942e0bc7248bc1.txt",
+                "text_sha256": "39f633ba217639855f765177db32005fb741fcd8b18e76cc12d3a840151cd3cd"
+              }
+            }
+          }
+        ],
+        "qualifiers": {
+          "Haldane_conflict": "Retained PNAS collective claim of US citizenship conflicts with individual British/Slovenian citizenship and US-permanent-resident wording; listed two values supported, possible additional component unresolved. Other arms must receive the same evidence-based qualification. No independent current legal-status determination.",
+          "Thouless_provenance": "Descriptive British-American value cites individual secondary disambiguation text, not legal naturalization proof. His autobiography’s citizenship-test sentence alone is insufficient; final audit was led by a stronger corroboration claim than its selected evidence warranted. Finalizer explicitly corrected this procedure.",
+          "official_scope": "Final iteration15 instructs reviewers not to add career affiliations beyond official award listings. The task says affiliation_at_award; this narrowing leaves dated concurrent-role omissions and an undated lead. Mechanical success is not complete-coverage evidence.",
+          "temporal_exclusions": [
+            "Queloz ETH starts2021, after2019award in own Wikipedia; not a2019omission.",
+            "Barish UC Riverside starts2018, after2017award; not a2017omission.",
+            "Krausz CALA/LEX overlap listedLMU; earlier MAP andPOSTECH endedbefore2023; no invented extra independent institution.",
+            "Mourou historical CNRS/ENSTA lab leadership is not automatically an award-year appointment."
+          ]
+        },
+        "common_evidence_addendum": "B1.common_coverage_addendum.json",
+        "established_false_submitted_values": []
+      }
+    }
+  }
+}
