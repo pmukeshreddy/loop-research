@@ -1,0 +1,91 @@
+{
+  "reviewer": "fetch_review",
+  "created_at": "2026-10-20T05:11:39.569901+00:00",
+  "worktree": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/refiner-audit",
+  "head": "4aa6b37e726f1a2dde26e2226a56f7f93d378706",
+  "verdict": "no_important_unresolved_findings",
+  "owned_file_sha256": {
+    "src/loop_research/archive_audit.py": "a58b66d1f5d5e91407e5a5199f40f802d15ca4d55a073cb69dbe328a73253de1",
+    "runs/round2/replay_saved_refine.py": "c754c8c8ee45dc26cfe696624013ef0ba73b2b9e240c1eee39693ebc9955958b",
+    "tests/test_refinement_transport_audit.py": "cca57fa622a352c3cc0bab0ed64a87123211b719ed2cdf7ae14fd8211ae5635c",
+    "tests/test_saved_refine_transport.py": "3216f03069761b2530ae71f0df122f9bd2fb150f2f4e838cf25f42d9afa26917"
+  },
+  "transport_dependencies_equal_commit": "44bd200",
+  "transport_dependencies": [
+    "src/loop_research/refine_context.py",
+    "src/loop_research/refine.py",
+    "src/loop_research/bridge.py",
+    "src/loop_research/codex_backend.py"
+  ],
+  "independent_checks": [
+    {
+      "name": "final_targeted",
+      "passed": 83,
+      "failed": 0,
+      "seconds": 1.8,
+      "tool_receipt": "66993b",
+      "files": [
+        "tests/test_refinement_transport_audit.py",
+        "tests/test_saved_refine_transport.py",
+        "tests/test_saved_refine_input.py",
+        "tests/test_archive_audit.py"
+      ]
+    },
+    {
+      "name": "initial_targeted",
+      "passed": 78,
+      "failed": 0,
+      "seconds": 1.84,
+      "tool_receipt": "7d425d"
+    },
+    {
+      "name": "actual_saved_schema_contracts",
+      "tool_receipt": "99b2f6",
+      "cases": [
+        {
+          "label": "B1_finalizer",
+          "mode": "legacy_anchor_restriction",
+          "changes": 3,
+          "original_schema_sha256": "feb9724ff30afeefc4c7907c05cf143d9a903fedcb394786b4f052982dec5b09",
+          "current_schema_sha256": "8e2c58b673ca47c38059f2baa333920f8950e1895ed888e4999e3e97830ecdb0",
+          "source_job_sha256": "104374a89f328703bebad363128a4f29975687e996bf2421f101c2fcbb00d7d8"
+        },
+        {
+          "label": "SI_midtask",
+          "mode": "legacy_anchor_restriction",
+          "changes": 3,
+          "original_schema_sha256": "feb9724ff30afeefc4c7907c05cf143d9a903fedcb394786b4f052982dec5b09",
+          "current_schema_sha256": "2605795ef936dd60a86acbfeca954ffe98091f2e0be2d8ef4d4280c317c03902",
+          "source_job_sha256": "8c94cd486635a57e8f63f8933ceb76dc58ffa59e8d0e4c0f507db401d0b63691"
+        },
+        {
+          "label": "B1_fragments_finalizer",
+          "mode": "exact",
+          "changes": 0,
+          "original_schema_sha256": "d99ac3e7107d274fd5b32f4a5cdfc9a7c7beb452454c7714c47a5a0a939c2dec",
+          "current_schema_sha256": "d99ac3e7107d274fd5b32f4a5cdfc9a7c7beb452454c7714c47a5a0a939c2dec",
+          "source_job_sha256": "bc4126e6a64059fd30ed8e7268947c082bca18d847c5451d7b4d3f0b43d123a4"
+        }
+      ],
+      "original_jobs_unchanged": true,
+      "live_execution": false
+    }
+  ],
+  "closed_findings": [
+    {
+      "id": "direct_attempt_total_underreported",
+      "status": "closed",
+      "resolution": "all-route durable refine total and separate context-only count"
+    }
+  ],
+  "restrictions": {
+    "source_edits": false,
+    "commits": false,
+    "installation": false,
+    "live_model_web_calls": false,
+    "research_run_changes": false
+  },
+  "raw_pytest_log_retained": false,
+  "report_path": "runs/round3/refiner_compatibility_fetch_review.md",
+  "report_sha256": "9ea4dcf86d335ec176e358d4785396f68c1e604c7a69fc0019600c55c4bbc578"
+}
