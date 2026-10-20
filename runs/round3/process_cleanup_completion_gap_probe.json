@@ -1,0 +1,23 @@
+{
+  "captured_at": "2026-10-20T08:46:52.973385+00:00",
+  "reviewer": "fetch_review",
+  "imported_archive": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/src/loop_research/archive.py",
+  "archive_py_sha256": "b66c43f0348ad0868774dcd9548473002c9e23ff50de592ef4384aca86018b0c",
+  "scope": "One local child pass; cancellation deterministically invoked after real communicate returned but before its wrapper returned to RunContext. No source edits/models/network.",
+  "events": [
+    {
+      "event": "real_communicate_returned",
+      "pid": 42904,
+      "returncode": 0
+    },
+    {
+      "event": "killpg",
+      "pid": 42904,
+      "getpgid_error": "ProcessLookupError(3, 'No such process')",
+      "error": "ProcessLookupError(3, 'No such process')"
+    }
+  ],
+  "callback_logs": "",
+  "exception": "CancelledError",
+  "traceback": "Traceback (most recent call last):\n  File \"<stdin>\", line 30, in <module>\n  File \"/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/src/loop_research/archive.py\", line 147, in run_process\n    self.check_cancelled()\n  File \"/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/process-cleanup/src/loop_research/archive.py\", line 96, in check_cancelled\n    raise CancelledError(\"Run cancelled\")\nconcurrent.futures._base.CancelledError: Run cancelled\n"
+}
