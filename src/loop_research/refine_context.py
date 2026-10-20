@@ -19,6 +19,7 @@ from .archive import append_json, read_json, stamp, write_json
 from .bridge import Client, Server
 from .codex_backend import BudgetExceeded, INSTRUCTION
 from .isolation import isolated_command, worker_env
+from .refine_feedback import FeedbackHistory, OUTPUT_TRANSPORT, initial_messages, output_identity
 from .structured_models import StructuredModels
 
 
@@ -33,8 +34,15 @@ The full strict output schema is the Python dictionary `proposal_schema`.
 Inspect these variables with code before deciding. `snapshot()` returns a fresh complete copy of
 the authoritative input; local mutations cannot change that source. No fields or occurrences have
 been removed to fit a prompt. Evidence references address this original logical snapshot.
-Write Python in ```repl``` blocks. Variables persist; all stdout and stderr enter later planner
-prompts unchanged. Print focused diagnostics rather than whole snapshots or pages.
+Write Python in ```repl``` blocks. Variables persist. Complete stdout and stderr remain inline
+while the complete planner prompt fits. On overflow, whole iteration outputs can be replaced by
+explicit receipts with exact lengths/hashes and stderr flags. No stream contents are discarded:
+repl_output(iteration) returns a fresh complete host-authoritative record with feedback and all
+blocks, including code, stdout, stderr, execution time, derived stream failure and final status.
+Only sealed completed iterations are available. Local changes cannot modify these originals.
+Previously referenced outputs remain referenced; small new inspections stay inline when they fit.
+Read full stderr through repl_output when a receipt flags it. Print focused diagnostics rather
+than whole snapshots or pages. Model responses and control instructions are never shortened.
 Use code to inspect structure and exact evidence; use llm_query(prompt) or llm_query_batched(prompts)
 for semantic review of evidence selected from variables. For structured results use
 llm_query_json(prompt, schema) or llm_query_json_batched(prompts, schema). Prompts must be strings;
@@ -80,8 +88,11 @@ def plan_context(ctx, backend, job_id, logical_text, schema, instructions):
     metadata = {'transport': 'repl-context-v1', 'job_id': job_id, 'status': 'running',
                 'logical_payload_chars': len(logical_text),
                 'logical_payload_sha256': hashlib.sha256(logical_text.encode()).hexdigest(), 'limits': limits,
-                'attempt_log_full_text': True}
+                'attempt_log_full_text': True, 'output_transport': OUTPUT_TRANSPORT}
     write_json(directory / 'manifest.json', metadata)
+    messages = initial_messages(instructions + REPL_INSTRUCTIONS, limits)
+    history = FeedbackHistory(messages, MAX_PROMPT_CHARS)
+    block_starts, block_ends = {}, {}
 
     def record(event, **details):
         append_json(directory / 'actions.jsonl', {'timestamp': stamp(), 'event': event, **details})
@@ -117,7 +128,20 @@ def plan_context(ctx, backend, job_id, logical_text, schema, instructions):
                     if method == 'snapshot' and not args and not kwargs:
                         record('snapshot.read', logical_payload_sha256=metadata['logical_payload_sha256'])
                         return json.loads(logical_text)
+                    if method == 'planner' and not args and not kwargs:
+                        prompt, events = history.prepare()
+                        for event in events:
+                            record(**event)
+                        response = model(prompt, role='planner')
+                        history.append_response(response)
+                        return response
+                    if method == 'repl_output' and len(args) == 1 and not kwargs:
+                        result = history.read_output(args[0])
+                        record('output.read', **output_identity(result))
+                        return result
                     if method == 'model':
+                        if 'role' in kwargs:
+                            raise ValueError('Refinement subcalls cannot select a planner role')
                         return model(*args, **kwargs)
                     if method == 'query_json':
                         return structured.llm_query_json(*args, **kwargs)
@@ -127,6 +151,26 @@ def plan_context(ctx, backend, job_id, logical_text, schema, instructions):
                         details = args[0]
                         if details.get('event') not in {'code.start', 'code.end', 'iteration.end'}:
                             raise ValueError('Invalid refinement action')
+                        iteration = details['iteration']
+                        if details['event'] == 'code.start':
+                            key = (iteration, details['block'])
+                            if key in block_starts:
+                                raise ValueError('Duplicate refinement code start')
+                            block_starts[key] = dict(details)
+                        elif details['event'] == 'code.end':
+                            key = (iteration, details['block'])
+                            if key not in block_starts or key in block_ends:
+                                raise ValueError('Refinement code end lacks a unique start')
+                            block_ends[key] = {
+                                'block': details['block'], 'code': block_starts[key]['code'],
+                                **{name: details[name] for name in
+                                   ('stdout', 'stderr', 'execution_time', 'answer_ready', 'final_answer')},
+                                'derived_stream_failure': bool(details['stderr'])}
+                        else:
+                            keys = [key for key in block_starts if key[0] == iteration]
+                            if any(key not in block_ends for key in keys):
+                                raise ValueError('Cannot seal an incomplete refinement iteration')
+                            history.append_output(iteration, [block_ends[key] for key in sorted(keys)])
                         record(**details)
                         ctx.trace.emit('Refiner context', details['event'], job_id=job_id,
                             iteration=details.get('iteration'), answer_ready=details.get('answer_ready'),
@@ -136,7 +180,8 @@ def plan_context(ctx, backend, job_id, logical_text, schema, instructions):
 
                 request = {'socket': str(work / 'host.sock'), 'result_path': str(work / 'result.json'),
                            'instructions': instructions + REPL_INSTRUCTIONS, 'schema': schema,
-                           'limits': limits, 'attempt_log_full_text': True}
+                           'limits': limits, 'attempt_log_full_text': True,
+                           'output_transport': OUTPUT_TRANSPORT, 'initial_messages': messages}
                 write_json(work / 'request.json', request)
                 # Stable complete worker contract, without transient socket/result paths.
                 write_json(directory / 'request.json', {k: v for k, v in request.items()
@@ -172,7 +217,7 @@ def plan_context(ctx, backend, job_id, logical_text, schema, instructions):
 
 def worker(request_path):
     from rlm.utils.parsing import find_code_blocks
-    from .rlm_codex_client import CodexREPL, transcript
+    from .rlm_codex_client import CodexREPL
     request = read_json(Path(request_path))
     client = Client(request['socket'])
     limits = request['limits']
@@ -190,11 +235,9 @@ def worker(request_path):
                 return list(pool.map(lambda prompt: self._llm_query(prompt, model), prompts))
 
     tools = {'snapshot': lambda: client.call('snapshot'),
+             'repl_output': lambda iteration: client.call('repl_output', iteration),
              'llm_query_json': lambda prompt, schema: client.call('query_json', prompt, schema),
              'llm_query_json_batched': lambda prompts, schema: client.call('query_json_batched', prompts, schema)}
-    messages = [{'role': 'system', 'content': request['instructions']}, {'role': 'user',
-        'content': 'Inspect the complete context and proposal_schema variables, evaluate every supplied candidate '
-                   'and occurrence, and produce the evidence-backed proposal.\nLimits: ' + json.dumps(limits)}]
     repl = None
     try:
         repl = PlannerREPL(context_payload=client.call('snapshot'), lm_timeout=limits['timeout_s'],
@@ -202,10 +245,8 @@ def worker(request_path):
         repl.globals['__builtins__'] = vars(builtins).copy()
         repl.locals['proposal_schema'] = request['schema']
         for iteration in range(1, limits['max_iterations'] + 1):
-            response = client.call('model', transcript(messages), role='planner')
-            messages.append({'role': 'assistant', 'content': response})
+            response = client.call('planner')
             blocks = find_code_blocks(response)
-            outputs = []
             for index, code in enumerate(blocks):
                 client.call('action', {'event': 'code.start', 'iteration': iteration, 'block': index, 'code': code})
                 result = repl.execute_code(code)
@@ -217,11 +258,6 @@ def worker(request_path):
                         raise RuntimeError('Refinement proposal submitted by a failed code block: ' + result.stderr)
                     write_json(Path(request['result_path']), {'text': result.final_answer, 'iterations': iteration})
                     return
-                # Full streams, with no upstream format_iteration/output cap.
-                outputs.append({'block': index, 'stdout': result.stdout, 'stderr': result.stderr})
-            messages.append({'role': 'user', 'content': '\n\n'.join(
-                f"Block {item['block']} stdout:\n{item['stdout']}\nstderr:\n{item['stderr']}" for item in outputs) if blocks else
-                'No REPL code was executed. Inspect the complete context and submit a validated proposal with answer.'})
             client.call('action', {'event': 'iteration.end', 'iteration': iteration})
         raise RuntimeError('Refinement context iteration limit exceeded without a proposal')
     except BaseException as error:

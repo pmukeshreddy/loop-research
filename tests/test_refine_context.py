@@ -179,6 +179,113 @@ def test_overflow_stderr_and_completed_bindings_reach_next_planner(ctx, large_ob
     assert any(row.get('stderr', '').endswith('ValueError: ' + error_text) for row in actions)
 
 
+def test_large_print_is_retrievable_in_full_and_selected_subcall_can_complete(ctx, large_observation):
+    expected = large_observation['trajectory'][0]['result'] + '\n'
+    expected_hash = hashlib.sha256(expected.encode()).hexdigest()
+    planner_calls = 0
+    def respond(prompt, schema):
+        nonlocal planner_calls
+        if prompt.endswith('EXACT_SELECTED ' + expected[:80]):
+            return 'Selected evidence reviewed.'
+        planner_calls += 1
+        if planner_calls == 1:
+            return ('```repl\nprint(context["trajectory"][0]["result"])\n```\n'
+                    '```repl\nprint("second block retained")\n```')
+        assert planner_calls == 2
+        assert 'REPL OUTPUT REFERENCE' in prompt and expected not in prompt
+        return '```repl\n' + f'''
+import hashlib, json
+saved = repl_output(1)
+assert len(saved["blocks"]) == 2
+assert hashlib.sha256(saved["blocks"][0]["stdout"].encode()).hexdigest() == {expected_hash!r}
+assert saved["blocks"][0]["stderr"] == ""
+assert saved["blocks"][0]["code"] == 'print(context["trajectory"][0]["result"])'
+assert saved["blocks"][1]["stdout"] == "second block retained\\n"
+saved["blocks"][0]["stdout"] = "local mutation"
+restored = repl_output(1)
+assert hashlib.sha256(restored["blocks"][0]["stdout"].encode()).hexdigest() == {expected_hash!r}
+assert llm_query("EXACT_SELECTED " + restored["blocks"][0]["stdout"][:80]) == "Selected evidence reviewed."
+answer["content"] = json.dumps({declined_proposal()!r})
+answer["ready"] = True
+''' + '\n```'
+    state, seen, _ = execute(ctx, large_observation, respond)
+    directory = ctx.path / 'refine_planners' / state['job_id']
+    actions = read_jsonl(directory / 'actions.jsonl')
+    assert state['status'] == 'applied' and len(seen) == 3
+    assert next(row for row in actions if row['event'] == 'code.end')['stdout'] == expected
+    references = [row for row in actions if row['event'] == 'output.externalized']
+    assert len(references) == 1 and references[0]['iteration'] == 1
+    assert len([row for row in actions if row['event'] == 'output.read']) == 2
+    assert json.loads((directory/'request.json').read_text())['output_transport'] == 'whole-iteration-reference-v1'
+    assert json.loads((directory/'manifest.json').read_text())['output_transport'] == 'whole-iteration-reference-v1'
+
+
+def test_cumulative_prints_externalize_one_whole_iteration_and_keep_smaller_new_output_inline(ctx, large_observation):
+    calls = 0
+    def respond(prompt, schema):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return '```repl\nprint("A" * 600000)\n```'
+        if calls == 2:
+            assert 'A' * 600000 in prompt
+            return '```repl\nprint("B" * 600000)\n```'
+        assert calls == 3
+        assert 'A' * 600000 not in prompt and 'B' * 600000 in prompt
+        return '```repl\nimport json\nanswer["content"] = json.dumps(' + repr(declined_proposal()) + ')\nanswer["ready"] = True\n```'
+    state, _, _ = execute(ctx, large_observation, respond)
+    events = read_jsonl(ctx.path/'refine_planners'/state['job_id']/'actions.jsonl')
+    assert [row['iteration'] for row in events if row['event'] == 'output.externalized'] == [1]
+
+
+def test_large_stderr_receipt_is_visible_and_full_iteration_restores_after_local_mutation(ctx, large_observation):
+    calls = 0
+    def respond(prompt, schema):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return '```repl\ncompleted = 42\nprint("small stdout")\nraise ValueError("Z" * 1060000)\n```'
+        assert calls == 2 and '"stderr_present":true' in prompt
+        return '```repl\n' + f'''
+import json
+assert completed == 42
+saved = repl_output(1)
+assert saved["blocks"][0]["stderr"].endswith("ValueError: " + "Z" * 1060000)
+assert saved["blocks"][0]["stdout"] == "small stdout\\n"
+assert saved["blocks"][0]["derived_stream_failure"] is True
+saved["blocks"][0]["stderr"] = ""
+assert repl_output(1)["blocks"][0]["stderr"].endswith("ValueError: " + "Z" * 1060000)
+try:
+    repl_output(2)
+except RuntimeError as error:
+    assert "not a sealed completed iteration" in str(error)
+else:
+    raise AssertionError("unsealed current iteration was exposed")
+answer["content"] = json.dumps({declined_proposal()!r})
+answer["ready"] = True
+''' + '\n```'
+    state, _, _ = execute(ctx, large_observation, respond)
+    assert state['status'] == 'applied'
+
+
+def test_oversized_control_response_fails_locally_without_another_model_dispatch(ctx, large_observation):
+    control = 'Exact assistant control ' * 50_000
+    calls = 0
+    def respond(prompt, schema):
+        nonlocal calls
+        calls += 1
+        assert calls == 1
+        return control
+    with pytest.raises(RuntimeError, match='control messages and whole-output references'):
+        execute(ctx, large_observation, respond)
+    state = ctx.load('refine_state.json')
+    assert state['status'] == 'failed' and calls == 1
+    actions = read_jsonl(ctx.path/'refine_planners'/state['job_id']/'actions.jsonl')
+    assert next(row for row in actions if row['event'] == 'model.end')['response'] == control
+    assert len([row for row in actions if row['event'] == 'model.start']) == 1
+    assert not any(row['event'] == 'output.externalized' for row in actions)
+
+
 def test_overflow_python_deadline_is_visible_and_does_not_edit(ctx, large_observation):
     ctx.config.codex.timeout_s = 2
     with pytest.raises((RuntimeError, TimeoutError)):

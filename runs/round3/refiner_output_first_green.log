@@ -1,0 +1,199 @@
+.................F..                                                     [100%]
+=================================== FAILURES ===================================
+_ test_large_stderr_receipt_is_visible_and_full_iteration_restores_after_local_mutation _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-1d56eagy/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+large_observation = {'trajectory': [{'type': 'tool', 'result': 'nJJSjlhlMgBlpwRFaohTQPQMXPnSzNDwswqgQPZJCMhJxjkBnxFugzmmktdHXuLWchPRHivTUP...[{'type': 'fixture_signal', 'detail': 'first occurrence'}, {'type': 'fixture_signal', 'detail': 'second occurrence'}]}}
+
+    def test_large_stderr_receipt_is_visible_and_full_iteration_restores_after_local_mutation(ctx, large_observation):
+        calls = 0
+        def respond(prompt, schema):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                return '```repl\ncompleted = 42\nprint("small stdout")\nraise ValueError("Z" * 1060000)\n```'
+            assert calls == 2 and '"stderr_present":true' in prompt
+            return '```repl\n' + f'''
+    import json
+    assert completed == 42
+    saved = repl_output(1)
+    assert saved["blocks"][0]["stderr"].endswith("ValueError: " + "Z" * 1060000)
+    assert saved["blocks"][0]["stdout"] == "small stdout\\n"
+    assert saved["blocks"][0]["derived_stream_failure"] is True
+    saved["blocks"][0]["stderr"] = ""
+    assert repl_output(1)["blocks"][0]["stderr"].endswith("ValueError: " + "Z" * 1060000)
+    try:
+        repl_output(2)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("unsealed current iteration was exposed")
+    answer["content"] = json.dumps({declined_proposal()!r})
+    answer["ready"] = True
+    ''' + '\n```'
+>       state, _, _ = execute(ctx, large_observation, respond)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_refine_context.py:264: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_refine_context.py:59: in execute
+    refiner.boundary(wait=True)
+src/loop_research/refine.py:392: in boundary
+    job = future.result()
+          ^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:323: in _plan
+    return self._plan_job(job)
+           ^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:356: in _plan_job
+    text = plan_context(self.ctx, self.backend, job['job_id'], logical_text, schema,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-1d56eagy/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+backend = <loop_research.codex_backend.CodexBackend object at 0x10bc07050>
+job_id = 'e25c0ef3cf7743e08e1fa680b1cd9f88'
+logical_text = '{"focus": null, "candidate_inventory": [{"id": "self_check:signals:fixture_signal", "source": "self_check.signals", ".../0", "/self_check/ok", "/self_check/issues", "/self_check/signals", "/self_check/signals/0", "/self_check/signals/1"]}'
+schema = {'$defs': {'Candidate': {'additionalProperties': False, 'properties': {'id': {'minLength': 1, 'title': 'Id', 'type': '..., 'title': 'Decisions', 'type': 'array'}}, 'required': ['summary', 'edits', 'additional_candidates', 'decisions'], ...}
+instructions = "Refine supplemental harness state from this run's trajectory and deterministic self-check.\nThe base system prompt, t... create/update.\nFor delete use null title/content/module. For create use null id. Return the requested JSON schema.\n"
+
+    def plan_context(ctx, backend, job_id, logical_text, schema, instructions):
+        """Return proposal text; validation and harness application stay in Refiner."""
+        if Path(job_id).name != job_id or job_id in {'', '.', '..'}:
+            raise ValueError('Invalid planner job identity')
+        directory = ctx.path / 'refine_planners' / job_id
+        directory.mkdir(parents=True, exist_ok=False)
+        (directory / 'context.json').write_text(logical_text, encoding='utf-8')
+        write_json(directory / 'schema.json', schema)
+        deadline = _Deadline(ctx.config.codex.timeout_s)
+        limits = {'timeout_s': ctx.config.codex.timeout_s, 'max_iterations': ctx.config.rlm.max_iterations,
+                  'max_concurrent': ctx.config.codex.max_concurrent, 'backend_prompt_chars': MAX_PROMPT_CHARS}
+        metadata = {'transport': 'repl-context-v1', 'job_id': job_id, 'status': 'running',
+                    'logical_payload_chars': len(logical_text),
+                    'logical_payload_sha256': hashlib.sha256(logical_text.encode()).hexdigest(), 'limits': limits,
+                    'attempt_log_full_text': True, 'output_transport': OUTPUT_TRANSPORT}
+        write_json(directory / 'manifest.json', metadata)
+        messages = initial_messages(instructions + REPL_INSTRUCTIONS, limits)
+        history = FeedbackHistory(messages, MAX_PROMPT_CHARS)
+        block_starts, block_ends = {}, {}
+    
+        def record(event, **details):
+            append_json(directory / 'actions.jsonl', {'timestamp': stamp(), 'event': event, **details})
+    
+        try:
+            with tempfile.TemporaryDirectory(prefix='lr-refine-', dir='/tmp') as temporary:
+                work = Path(temporary).resolve()
+                with backend.scope(budget=deadline, log_full_text=True) as child:
+                    def model(prompt, *, schema=None, role='sub'):
+                        if not isinstance(prompt, str) or role not in {'planner', 'sub'}:
+                            raise ValueError('Invalid refinement model request')
+                        deadline.remaining()
+                        action_id = uuid4().hex
+                        record('model.start', action_id=action_id, role=role, prompt=prompt,
+                               backend_prompt=INSTRUCTION + prompt, schema=schema)
+                        try:
+                            result = child.complete(prompt, purpose='refine', model=ctx.config.models.refine,
+                                schema=schema, on_attempt=lambda event: record('model.attempt',
+                                    action_id=action_id, role=role, **event))
+                        except BaseException as error:
+                            record('model.error', action_id=action_id, role=role,
+                                   error=f'{type(error).__name__}: {error}')
+                            raise
+                        record('model.end', action_id=action_id, role=role, response=result)
+                        return result
+    
+                    structured = StructuredModels(lambda prompt, schema: model(prompt, schema=schema),
+                                                  max_concurrent=ctx.config.codex.max_concurrent)
+    
+                    def dispatch(method, args, kwargs):
+                        child.ctx.check_cancelled()
+                        deadline.remaining()
+                        if method == 'snapshot' and not args and not kwargs:
+                            record('snapshot.read', logical_payload_sha256=metadata['logical_payload_sha256'])
+                            return json.loads(logical_text)
+                        if method == 'planner' and not args and not kwargs:
+                            prompt, events = history.prepare()
+                            for event in events:
+                                record(**event)
+                            response = model(prompt, role='planner')
+                            history.append_response(response)
+                            return response
+                        if method == 'repl_output' and len(args) == 1 and not kwargs:
+                            result = history.read_output(args[0])
+                            record('output.read', **output_identity(result))
+                            return result
+                        if method == 'model':
+                            if 'role' in kwargs:
+                                raise ValueError('Refinement subcalls cannot select a planner role')
+                            return model(*args, **kwargs)
+                        if method == 'query_json':
+                            return structured.llm_query_json(*args, **kwargs)
+                        if method == 'query_json_batched':
+                            return structured.llm_query_json_batched(*args, **kwargs)
+                        if method == 'action' and len(args) == 1 and not kwargs and isinstance(args[0], dict):
+                            details = args[0]
+                            if details.get('event') not in {'code.start', 'code.end', 'iteration.end'}:
+                                raise ValueError('Invalid refinement action')
+                            iteration = details['iteration']
+                            if details['event'] == 'code.start':
+                                key = (iteration, details['block'])
+                                if key in block_starts:
+                                    raise ValueError('Duplicate refinement code start')
+                                block_starts[key] = dict(details)
+                            elif details['event'] == 'code.end':
+                                key = (iteration, details['block'])
+                                if key not in block_starts or key in block_ends:
+                                    raise ValueError('Refinement code end lacks a unique start')
+                                block_ends[key] = {
+                                    'block': details['block'], 'code': block_starts[key]['code'],
+                                    **{name: details[name] for name in
+                                       ('stdout', 'stderr', 'execution_time', 'answer_ready', 'final_answer')},
+                                    'derived_stream_failure': bool(details['stderr'])}
+                            else:
+                                keys = [key for key in block_starts if key[0] == iteration]
+                                if any(key not in block_ends for key in keys):
+                                    raise ValueError('Cannot seal an incomplete refinement iteration')
+                                history.append_output(iteration, [block_ends[key] for key in sorted(keys)])
+                            record(**details)
+                            ctx.trace.emit('Refiner context', details['event'], job_id=job_id,
+                                iteration=details.get('iteration'), answer_ready=details.get('answer_ready'),
+                                error=details.get('stderr') or None)
+                            return None
+                        raise ValueError('Unavailable refinement capability: ' + str(method))
+    
+                    request = {'socket': str(work / 'host.sock'), 'result_path': str(work / 'result.json'),
+                               'instructions': instructions + REPL_INSTRUCTIONS, 'schema': schema,
+                               'limits': limits, 'attempt_log_full_text': True,
+                               'output_transport': OUTPUT_TRANSPORT, 'initial_messages': messages}
+                    write_json(work / 'request.json', request)
+                    # Stable complete worker contract, without transient socket/result paths.
+                    write_json(directory / 'request.json', {k: v for k, v in request.items()
+                                                            if k not in {'socket', 'result_path'}})
+                    with Server(work / 'host.sock', dispatch, socket_timeout_s=ctx.config.bridge.socket_timeout_s,
+                                drain_handlers=True), \
+                            (directory / 'worker.log').open('a') as log:
+                        try:
+                            process = child.ctx.run_process(isolated_command(work, [sys.executable, '-m',
+                                'loop_research.refine_context', str(work / 'request.json')]),
+                                cwd=work, env=worker_env(work), stdout=log, stderr=log,
+                                timeout=deadline.remaining(), start_new_session=True,
+                                trace_component='Refiner context worker')
+                        except subprocess.TimeoutExpired as error:
+                            raise TimeoutError('Refinement context deadline exceeded') from error
+                        finally:
+                            child.ctx.cancellation.cancel()
+                    result = read_json(work / 'result.json', {})
+                    if process.returncode or 'text' not in result:
+>                       raise RuntimeError(result.get('error', f'Refinement context worker failed ({process.returncode})'))
+E                       RuntimeError: RuntimeError: AssertionError: assert (3 == 2)
+
+src/loop_research/refine_context.py:204: RuntimeError
+=========================== short test summary info ============================
+FAILED tests/test_refine_context.py::test_large_stderr_receipt_is_visible_and_full_iteration_restores_after_local_mutation
+1 failed, 19 passed in 11.98s
