@@ -1,0 +1,17 @@
+.{"event": "started", "label": "bad_archive", "pid": 34211, "command": ["/opt/homebrew/opt/python@3.13/bin/python3.13", "/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/round3-launch-offline-2qczqgvi/archive.py", "/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/round3-launch-offline-2qczqgvi/workspace"], "console": "/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/round3-launch-offline-2qczqgvi/archive.log"}
+....{"event": "started", "label": "bad", "pid": 34233, "command": ["/opt/homebrew/opt/python@3.13/bin/python3.13", "/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/round3-launch-offline-6qbn5upz/process.py", "/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/round3-launch-offline-6qbn5upz/bad", ".05", "2"], "console": "/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/round3-launch-offline-6qbn5upz/bad.log"}
+{"event": "started", "label": "sibling", "pid": 34234, "command": ["/opt/homebrew/opt/python@3.13/bin/python3.13", "/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/round3-launch-offline-6qbn5upz/process.py", "/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/round3-launch-offline-6qbn5upz/sibling", ".2", "0"], "console": "/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/round3-launch-offline-6qbn5upz/sibling.log"}
+.E
+======================================================================
+ERROR: test_selected_baseline_must_precede_that_exact_task (__main__.LauncherTests.test_selected_baseline_must_precede_that_exact_task)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/test_launch.py", line 82, in test_selected_baseline_must_precede_that_exact_task
+    self.assertEqual(self.launch.eligible_base(source, task, clean), clean)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'round3_launcher_test' has no attribute 'eligible_base'
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.901s
+
+FAILED (errors=1)

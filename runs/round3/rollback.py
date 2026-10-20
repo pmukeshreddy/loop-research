@@ -14,9 +14,11 @@ def main():
     parser.add_argument('--source', required=True)
     parser.add_argument('--expected-head', required=True)
     parser.add_argument('--base', required=True)
+    parser.add_argument('--directory', type=Path, default=Path(__file__).resolve().parent)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
-    out = Path(__file__).resolve().parent
+    out = args.directory.resolve()
+    out.mkdir(parents=True, exist_ok=True)
     receipt = out / 'rollback.json'
     if receipt.exists():
         raise ValueError('Rollback already attempted; preserve its receipt')

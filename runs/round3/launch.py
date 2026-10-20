@@ -92,6 +92,15 @@ def clone_harness(source, workspace, base):
             'cache_note': 'Each task also owns tool_cache.json beneath this workspace/runs.'}
 
 
+def eligible_base(harness, task, base):
+    """Check the public CLI's replay boundary before creating or launching an arm."""
+    commit = git(harness, 'rev-parse', '--verify', base + '^{commit}').strip()
+    state = json.loads(git(harness, 'show', commit + ':harness_state.json'))
+    if task['benchmark'] + ':' + task['task_id'] in state['seen']:
+        raise ValueError('Selected baseline already contains research for task ' + task['task_id'])
+    return commit
+
+
 def command_for(plan, label, workspace, base):
     task = load(plan['tasks']['B' if label.startswith('B') else label])
     command = [plan['public_cli'], '--root', str(workspace), '--config', plan['config_file'],
@@ -132,6 +141,7 @@ def prepare(directory, source):
     if config['codex']['max_concurrent'] != 4:
         raise ValueError('Expected the existing four shared backend slots')
     tasks = {name: str(directory / f'inputs/{name}.task.json') for name in ('A', 'SI', 'B')}
+    initial_bases = {}
     for name, path in tasks.items():
         task = load(path)
         if task['benchmark'] != 'research' or task.get('as_of_date') is not None:
@@ -140,6 +150,10 @@ def prepare(directory, source):
         record = load(run / 'research.json')
         if task != load(run / record['task_id'] / 'task.json'):
             raise ValueError('Task differs from its authoritative Round 2 request: ' + name)
+        if name in ('A', 'SI'):
+            initial_bases[name] = eligible_base(ROOT / 'harness', task, record['base_sha'])
+    if initial_bases['A'] != BASE:
+        raise ValueError('The recorded A baseline differs from requested BASE')
     frozen = [preflight_path, rollback_path, config_path, *map(Path, tasks.values()),
               Path(__file__).resolve(), HERE.parent / 'round2/replay_saved_refine.py',
               HERE.parent / 'round2/launch_replay.py', ROOT / 'pyproject.toml', ROOT / 'config.yaml',
@@ -151,7 +165,7 @@ def prepare(directory, source):
             raise ValueError('Uncommitted runtime configuration or dependencies: ' + path.name)
     plan = {'created_at': stamp(), 'source_commit': source, 'source_verification': verification,
             'main_root': str(ROOT), 'directory': str(directory), 'base_sha': BASE,
-            'config_file': str(config_path), 'tasks': tasks,
+            'config_file': str(config_path), 'tasks': tasks, 'initial_bases': initial_bases,
             'public_cli': str(ROOT / '.venv/bin/loop-research'),
             'frozen_files': [file_record(path) for path in frozen],
             'arms': ['A', 'SI', 'B1', 'B1-frozen-1', 'B0-1', 'B1-frozen-2', 'B0-2', 'B1-frozen-3', 'B0-3'],
@@ -161,7 +175,7 @@ def prepare(directory, source):
     save(directory / 'execution.json', state)
     try:
         for label in ('A', 'SI'):
-            state['arms'][label] = prepare_arm(plan, label, ROOT / 'harness', BASE)
+            state['arms'][label] = prepare_arm(plan, label, ROOT / 'harness', initial_bases[label])
             save(directory / 'execution.json', state)
     except BaseException as exc:
         state['preparation_error'] = f'{type(exc).__name__}: {exc}'
@@ -174,8 +188,9 @@ def prepare_arm(plan, label, source_harness, base):
     unchanged(plan)
     directory = Path(plan['directory'])
     workspace = directory / 'workspaces' / label
-    proof = clone_harness(source_harness, workspace, base)
     task_path = plan['tasks']['B' if label.startswith('B') else label]
+    eligible_base(source_harness, load(task_path), base)
+    proof = clone_harness(source_harness, workspace, base)
     return {'status': 'prepared', 'workspace': str(workspace), 'isolation': proof,
             'task_id': load(task_path)['task_id'], 'task_file': task_path, 'base_sha': base,
             'learning': not (label.startswith('B0-') or label.startswith('B1-frozen-')),

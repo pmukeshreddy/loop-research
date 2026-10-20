@@ -52,7 +52,7 @@ Run with the main virtual environment so installed-package verification covers t
 .venv/bin/python runs/round3/launch.py run --phase a_si
 ```
 
-Preparation verifies receipts and inputs, confirms the installed noneditable package matches committed source bytes, freezes source/config/helper/evidence hashes, and makes independent A and SI workspaces. It starts no research. Both A and SI start from BASE, use the same exact Round 2 configuration (including `as_of=2026-10-18`, all four roles `gpt-6-astra`), and use `--trace` with learning enabled. A/SI run together with at most two owned processes.
+Preparation verifies receipts and inputs, confirms the installed noneditable package matches committed source bytes, freezes source/config/helper/evidence hashes, and makes independent A and SI workspaces. It starts no research. A starts from BASE and SI retains its exact recorded Round 2 baseline (validated against task history); both use the same exact Round 2 configuration (including `as_of=2026-10-18`, all four roles `gpt-6-astra`), and use `--trace` with learning enabled. A/SI run together with at most two owned processes.
 
 After successful A/SI completion, `execution.json` records `POST_A`. Parent writes predictions and commits them before B. The committed predictions file must contain these two exact standalone lines (the surrounding prose is owned by the parent):
 

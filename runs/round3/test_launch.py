@@ -7,6 +7,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 HERE = Path(__file__).resolve().parent
 
@@ -74,6 +75,41 @@ class LauncherTests(unittest.TestCase):
         source_inodes = {(p.stat().st_dev, p.stat().st_ino) for p in (source / '.git/objects').rglob('*') if p.is_file()}
         clone_inodes = {(p.stat().st_dev, p.stat().st_ino) for p in (clone / '.git/objects').rglob('*') if p.is_file()}
         self.assertFalse(source_inodes & clone_inodes)
+
+    def test_selected_baseline_must_precede_that_exact_task(self):
+        source = self.root / 'original'
+        clean = repository(source)
+        task = {'benchmark': 'research', 'task_id': 'fixture'}
+        self.assertEqual(self.launch.eligible_base(source, task, clean), clean)
+        state = json.loads((source / 'harness_state.json').read_text())
+        state['seen']['research:fixture'] = {'before': clean}
+        (source / 'harness_state.json').write_text(json.dumps(state))
+        git(source, 'commit', '-qam', 'task already researched')
+        seen = git(source, 'rev-parse', 'HEAD')
+        with self.assertRaisesRegex(ValueError, 'already contains'):
+            self.launch.eligible_base(source, task, seen)
+        # The same state is eligible for a different task, while this task must
+        # retain its explicitly recorded earlier baseline; never rewrite seen.
+        self.assertEqual(self.launch.eligible_base(source, {'benchmark': 'research', 'task_id': 'other'}, seen), seen)
+        self.assertEqual(self.launch.eligible_base(source, task, clean), clean)
+        self.assertIn('research:fixture', json.loads((source / 'harness_state.json').read_text())['seen'])
+
+    def test_arm_rejects_seen_task_before_workspace_mutation(self):
+        source = self.root / 'original'
+        repository(source)
+        task = {'benchmark': 'research', 'task_id': 'fixture'}
+        state = json.loads((source / 'harness_state.json').read_text())
+        state['seen']['research:fixture'] = {'run_id': 'previous'}
+        (source / 'harness_state.json').write_text(json.dumps(state))
+        git(source, 'commit', '-qam', 'seen task')
+        task_path = self.root / 'task.json'
+        task_path.write_text(json.dumps(task))
+        plan = {'directory': str(self.root), 'tasks': {'A': str(task_path)}}
+        with patch.object(self.launch, 'unchanged'), patch.object(self.launch, 'clone_harness') as clone:
+            with self.assertRaisesRegex(ValueError, 'already contains'):
+                self.launch.prepare_arm(plan, 'A', source, git(source, 'rev-parse', 'HEAD'))
+            clone.assert_not_called()
+        self.assertFalse((self.root / 'workspaces').exists())
 
     def test_b_requires_successful_a_and_committed_exact_prediction_binding(self):
         repo = self.root / 'repo'
