@@ -1,0 +1,105 @@
+{
+  "reviewed_at": "2026-10-20T16:11:01.200183+00:00",
+  "reviewer": "same_run_fix",
+  "verdict": "No blocking issue found in the requested cache/telemetry/archive integrity scope",
+  "scope": "Independent offline review; no source edits, install, live requests, models or original archive mutation",
+  "worktree": "runs/round3/worktrees/readable-controls",
+  "files": [
+    {
+      "path": "runs/round3/worktrees/readable-controls/src/loop_research/page_fetch.py",
+      "bytes": 23811,
+      "sha256": "7cfb41684c44017ca707ce269c321b56f0a71505b750074ac88eef4478a5ce13"
+    },
+    {
+      "path": "runs/round3/worktrees/readable-controls/src/loop_research/repl_tools.py",
+      "bytes": 18419,
+      "sha256": "2df545b3d7b16a7abc684f9e22bb472e06c128f73934038d467941dae41113f2"
+    },
+    {
+      "path": "runs/round3/worktrees/readable-controls/src/loop_research/archive_audit.py",
+      "bytes": 78166,
+      "sha256": "f06fecdf12357c4f853f320f9639121d2c38d70d74eb8b4f4b334bd343b0532b"
+    },
+    {
+      "path": "runs/round3/worktrees/readable-controls/tests/test_direct_fetch.py",
+      "bytes": 19088,
+      "sha256": "55b6c6644e6cd441dfdea7fb58b84038350034f2243129d6c6b0e0d3f900ab6f"
+    },
+    {
+      "path": "runs/round3/worktrees/readable-controls/tests/test_fetch_telemetry.py",
+      "bytes": 9605,
+      "sha256": "9f725eaaccb0e8dd99f7e68d7c3dd8aa9994e0522b58046b4a00da85fdfe5ca1"
+    },
+    {
+      "path": "runs/round3/worktrees/readable-controls/tests/test_archive_audit.py",
+      "bytes": 28086,
+      "sha256": "aa871f6ed37388b3e7b1250cd783063aba2f2eb0e8ee9c77d08e40f36a11fcea"
+    },
+    {
+      "path": "runs/round3/worktrees/readable-controls/tests/test_readable_controls.py",
+      "bytes": 17456,
+      "sha256": "03e18c987b67b6e9d6478ff4b7659786b13ae5dd3744da45f3946e2ed4501d01"
+    }
+  ],
+  "tests": {
+    "command": "PYTHONPATH=src /Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/python -B -m pytest -q tests/test_direct_fetch.py tests/test_fetch_telemetry.py tests/test_archive_audit.py tests/test_readable_controls.py",
+    "result": "114 passed in 2.56s",
+    "log": {
+      "path": "runs/round3/readable_controls_policy_review_tests.log",
+      "bytes": 180,
+      "sha256": "8d41ab711c2f94279ade19df3b892f3961aebaa32abc3a2eaa0830698bc6fdc0"
+    },
+    "tool_receipt": "bb7387"
+  },
+  "independent_probe": {
+    "path": "runs/round3/readable_controls_policy_review_probe.json",
+    "bytes": 1111,
+    "sha256": "da35c563404785d9db2d166990e4ee7d3a9752afd64ea6abb84e5ee7fcad499a"
+  },
+  "probe_checks": [
+    {
+      "case": "complete invalid UTF-8 extraction receipt",
+      "result": "accepted as failed receipt",
+      "reason": "extraction_decode_error"
+    },
+    {
+      "case": "remove all extraction and parser metadata",
+      "result": "rejected",
+      "reason": "receipt_integrity",
+      "error": "Download extraction validation is missing"
+    },
+    {
+      "case": "invalid UTF-8 HTML before extraction",
+      "result": "accepted as legitimate failed receipt without extraction artifact",
+      "reason": "decode_error"
+    }
+  ],
+  "findings": [
+    {
+      "status": "fixed and verified",
+      "description": "Returned invalid UTF-8 extraction formerly shared decode_error with pre-extraction entity decoding. Removing every extraction_* field and parser from that rejected receipt could bypass retention verification. Distinct extraction_decode_error now requires extraction metadata; original deletion probe is rejected while real invalid HTML entity decoding remains a legitimate failed receipt.",
+      "source": "src/loop_research/page_fetch.py",
+      "line": 107,
+      "regression": "tests/test_readable_controls.py:268"
+    },
+    {
+      "status": "verified",
+      "description": "Current runtime cache key and owner include policy; required policy is checked for fresh and cached receipts. Old cache/history remains but cannot become a current-policy cache hit. Legacy audit explicitly reports not_recorded_by_legacy_policy.",
+      "source": "src/loop_research/repl_tools.py",
+      "line": 287
+    },
+    {
+      "status": "verified",
+      "description": "Rejected bytes, length, SHA, decoded character count, complete forbidden-control distribution and failure reason are checked. Failed downloads with durable receipt IDs cannot lose telemetry, and receipt identity is bound to request/owner.",
+      "source": "src/loop_research/archive_audit.py",
+      "line": 207
+    }
+  ],
+  "limits": [
+    "Policy detects forbidden Unicode Cc controls and invalid UTF-8; it does not certify semantic correctness, visual glyph fidelity, or general document readability.",
+    "New full-rejected-extraction retention covers bytes returned by extraction before validation. Existing nonzero Poppler exit remains pdf_extraction_error with raw PDF and stderr reason; it does not promise stdout retention.",
+    "Receipt integrity checks artifact/metadata agreement and current consumer policy. A fully coordinated rewrite of all archive evidence requires an external archive hash authority to detect.",
+    "Legacy archives retain transport integrity checks but do not retroactively earn the new readability validation.",
+    "No change to network retry/fallback, model, budget or process-cleanup policy was introduced by the reviewed diff."
+  ]
+}

@@ -1,0 +1,11 @@
+# Independent extraction-policy integrity review
+
+No blocking issue found in the requested cache, telemetry and archive-integrity scope. This is an offline source and regression review of the isolated `readable-controls` worktree; no source edits, installation, network/model requests or original archive changes were made.
+
+The independent focused run passed **114 tests in 2.56 seconds**: [log](readable_controls_policy_review_tests.log). Exact source/test hashes and command are in the [JSON receipt](readable_controls_policy_review.json). The final source hashes match the implementer’s frozen review set.
+
+The earlier concrete gap is fixed: invalid UTF-8 returned by an extractor now uses `extraction_decode_error`, so deleting all extraction and parser metadata fails receipt validation. A separate actual PageFetcher fixture confirmed that invalid UTF-8 HTML before extraction still yields a valid failed receipt with `decode_error`. The [independent probe](readable_controls_policy_review_probe.json) records all three outcomes.
+
+Current cache keys and owners bind `unicode-layout-controls-v1`, and both fresh and cached consumers require that policy. Legacy cache/history is preserved without reuse as current-policy evidence. The archive labels historical receipts `not_recorded_by_legacy_policy`. Rejected bytes, hash, length, decoded count, full control distribution and reason are checked. New regressions also pass for missing failed-receipt telemetry and receipts swapped across requests. Failed extraction contributes no successful readable text or evidence-cache entry. Explicit later fetch attempts remain possible; no fallback or automatic repair is added.
+
+The policy detects forbidden Unicode Cc controls and invalid UTF-8; passing it does not certify visual glyph fidelity or semantic correctness. Full rejected-byte retention covers extraction bytes returned before validation. A nonzero Poppler exit retains the existing `pdf_extraction_error` behavior (raw PDF and stderr reason), without a new promise to preserve its stdout. Integrity checks bind artifacts to declared receipt/request metadata; detecting a fully coordinated archive rewrite requires external hashes. Legacy transport verification does not retroactively establish new-policy readability.

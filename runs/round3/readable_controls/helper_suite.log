@@ -1,0 +1,76 @@
+...........................................................      [100%]
+=================================== FAILURES ===================================
+_ MetricTests.test_completed_archive_sizes_equal_frozen_audit_method (label='A') _
+
+self = <test_metrics.MetricTests testMethod=test_completed_archive_sizes_equal_frozen_audit_method>
+
+    def test_completed_archive_sizes_equal_frozen_audit_method(self):
+        # Disk-only independent calculation over the already completed A/SI archives.
+        directory=HERE/'cohorts/final'
+        for label in ('A','SI'):
+            with self.subTest(label=label):
+>               audited=json.loads((directory/'audits'/f'{label}.audit.json').read_text())
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+runs/round3/test_metrics.py:150: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/pathlib.py:1027: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/readable-controls/runs/round3/cohorts/final/audits/A.audit.json')
+mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/readable-controls/runs/round3/cohorts/final/audits/A.audit.json'
+
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/pathlib.py:1013: FileNotFoundError
+_ MetricTests.test_completed_archive_sizes_equal_frozen_audit_method (label='SI') _
+
+self = <test_metrics.MetricTests testMethod=test_completed_archive_sizes_equal_frozen_audit_method>
+
+    def test_completed_archive_sizes_equal_frozen_audit_method(self):
+        # Disk-only independent calculation over the already completed A/SI archives.
+        directory=HERE/'cohorts/final'
+        for label in ('A','SI'):
+            with self.subTest(label=label):
+>               audited=json.loads((directory/'audits'/f'{label}.audit.json').read_text())
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+runs/round3/test_metrics.py:150: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/pathlib.py:1027: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/readable-controls/runs/round3/cohorts/final/audits/SI.audit.json')
+mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/readable-controls/runs/round3/cohorts/final/audits/SI.audit.json'
+
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/pathlib.py:1013: FileNotFoundError
+=========================== short test summary info ============================
+SUBFAILED(label='A') runs/round3/test_metrics.py::MetricTests::test_completed_archive_sizes_equal_frozen_audit_method
+SUBFAILED(label='SI') runs/round3/test_metrics.py::MetricTests::test_completed_archive_sizes_equal_frozen_audit_method
+2 failed, 59 passed, 6 subtests passed in 16.48s

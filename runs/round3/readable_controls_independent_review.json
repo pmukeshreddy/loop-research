@@ -1,0 +1,1099 @@
+{
+  "reviewer": "fetch_review",
+  "reviewed_at": "2026-10-20T16:08:41.111759+00:00",
+  "status": "review_complete_no_remaining_blocker_found",
+  "base_commit_at_review": "4644b7b55eaefce7485026fa36f5e367e2adedb3",
+  "reviewed_worktree": "runs/round3/worktrees/readable-controls",
+  "source_hashes": {
+    "src/loop_research/page_fetch.py": "7cfb41684c44017ca707ce269c321b56f0a71505b750074ac88eef4478a5ce13",
+    "src/loop_research/repl_tools.py": "2df545b3d7b16a7abc684f9e22bb472e06c128f73934038d467941dae41113f2",
+    "src/loop_research/archive_audit.py": "f06fecdf12357c4f853f320f9639121d2c38d70d74eb8b4f4b334bd343b0532b",
+    "tests/test_readable_controls.py": "03e18c987b67b6e9d6478ff4b7659786b13ae5dd3744da45f3946e2ed4501d01",
+    "tests/test_direct_fetch.py": "55b6c6644e6cd441dfdea7fb58b84038350034f2243129d6c6b0e0d3f900ab6f",
+    "tests/test_fetch_telemetry.py": "9f725eaaccb0e8dd99f7e68d7c3dd8aa9994e0522b58046b4a00da85fdfe5ca1"
+  },
+  "scope": "Independent read-only code review, injected-transport offline tests, actual retained-artifact replays. No live model, network, install, source edits, main mutations or commits.",
+  "findings": [
+    {
+      "id": "rejected-receipt-loss",
+      "severity": "important_audit_integrity",
+      "status": "reproduced_then_closed",
+      "reproduction": "Current-policy forbidden-control failure; remove telemetry receipt and delete extraction file. Prior audit returned normally without direct_receipt_verified/readability_validation.",
+      "original_tool_receipt": "8f2f57",
+      "fix": "Require telemetry receipt for all successful direct requests, durable receipt_id requests, and policy-specific extraction rejections. Preserve legitimate pre-download unavailability.",
+      "regression": "test_failed_download_with_durable_receipt_cannot_lose_audit_evidence: six combinations plus pre-download negative case."
+    },
+    {
+      "id": "failed-receipt-cross-url-substitution",
+      "severity": "important_audit_integrity",
+      "status": "reproduced_then_closed",
+      "reproduction": "Two rejected URLs; replace first telemetry receipt with second valid durable receipt. Prior audit marked first direct_receipt_verified=True despite different URL/id.",
+      "original_tool_receipt": "8485a7",
+      "fix": "Bind present receipt requested_url and identity to request/owner. Do not equate a failed cache request status to its prior successful owner receipt status.",
+      "regression": "test_failed_receipt_cannot_be_swapped_from_another_request"
+    },
+    {
+      "id": "invalid-utf8-extraction-downgrade",
+      "reported_by": "same_run_fix; independently inspected final regression and branch",
+      "status": "closed",
+      "fix": "Distinct extraction_decode_error requires exact extractor bytes, unlike pre-extraction entity decode_error."
+    }
+  ],
+  "tests": {
+    "command": "PYTHONPATH=src /Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/python -m pytest -q tests/test_readable_controls.py tests/test_direct_fetch.py tests/test_fetch_telemetry.py tests/test_archive_audit.py",
+    "cwd": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/readable-controls",
+    "result": "114 passed in 2.40s",
+    "exit_code": 0,
+    "tool_output_receipts": [
+      "070127",
+      "ae6b75"
+    ],
+    "raw_log_note": "Result retained in tool output; no claim of a separate original pytest raw-log file.",
+    "independent_corpus": {
+      "modules": {
+        "page_fetch": "7cfb41684c44017ca707ce269c321b56f0a71505b750074ac88eef4478a5ce13",
+        "repl_tools": "2df545b3d7b16a7abc684f9e22bb472e06c128f73934038d467941dae41113f2",
+        "archive_audit": "f06fecdf12357c4f853f320f9639121d2c38d70d74eb8b4f4b334bd343b0532b"
+      },
+      "results": [
+        {
+          "label": "B0-1",
+          "request_id": 1,
+          "url": "https://www.nobelprize.org/uploads/2018/06/press-35.pdf",
+          "parser": "poppler-pdftotext-layout",
+          "old_text_sha256": "5c95f64f77047f31f658779c6aec6e9877cc75c46b97ad2eeb9c7c979d435435",
+          "new_extraction_sha256": "5c95f64f77047f31f658779c6aec6e9877cc75c46b97ad2eeb9c7c979d435435",
+          "bytes": 8929,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/2d840f00f0b042f7a86af86a29499583.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 2,
+          "url": "https://www.nobelprize.org/uploads/2018/06/press-30.pdf",
+          "parser": "poppler-pdftotext-layout",
+          "old_text_sha256": "dd255d2a0db2dfbf5eae00815b02aed50dc751837c96c732c0fe698c22750199",
+          "new_extraction_sha256": "dd255d2a0db2dfbf5eae00815b02aed50dc751837c96c732c0fe698c22750199",
+          "bytes": 9234,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/dcf00a9fc7b84a03b21f0445a8b47c37.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 3,
+          "url": "https://www.nobelprize.org/uploads/2018/06/press-116.pdf",
+          "parser": "poppler-pdftotext-layout",
+          "old_text_sha256": "9cf59444f6f47ee8cc46456d85c624607d9984bfa7300318f9742f06271c90d5",
+          "new_extraction_sha256": "9cf59444f6f47ee8cc46456d85c624607d9984bfa7300318f9742f06271c90d5",
+          "bytes": 10377,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/23b4fc959f99454c953854925e8c20c6.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 4,
+          "url": "https://www.nobelprize.org/uploads/2018/10/press-physics2018.pdf",
+          "parser": "poppler-pdftotext-layout",
+          "old_text_sha256": "cb9793fa1e1a8c06fb53ee1360767a02e97304d6901261526d1e8e24887b1592",
+          "new_extraction_sha256": "cb9793fa1e1a8c06fb53ee1360767a02e97304d6901261526d1e8e24887b1592",
+          "bytes": 8830,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/22b4de97ec594c82a59e9fc6dbc7e79b.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 5,
+          "url": "https://www.nobelprize.org/uploads/2019/10/press-physics2019.pdf",
+          "parser": "poppler-pdftotext-layout",
+          "old_text_sha256": "048b94501068e4356a5c3921f8a2b85895e29f7661fdf78ddaa7661aad556ac0",
+          "new_extraction_sha256": "048b94501068e4356a5c3921f8a2b85895e29f7661fdf78ddaa7661aad556ac0",
+          "bytes": 10176,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/f2989c1958594417b1fd29074d25be0b.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 6,
+          "url": "https://www.nobelprize.org/uploads/2020/10/press-physicsprize2020.pdf",
+          "parser": "poppler-pdftotext-layout",
+          "old_text_sha256": "2180fd646339f49d74396556ecccb8d36330bfec9225dbd09e80e837621a2981",
+          "new_extraction_sha256": "2180fd646339f49d74396556ecccb8d36330bfec9225dbd09e80e837621a2981",
+          "bytes": 9986,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/65a614176bd04d748e7c0ecf856dc8b3.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 7,
+          "url": "https://www.nobelprize.org/uploads/2021/10/press-physicsprize2021.pdf",
+          "parser": "poppler-pdftotext-layout",
+          "old_text_sha256": "2937eb4876fdb5954b720591a9e39ca62135b75b541c4c653e9c7c81695948b5",
+          "new_extraction_sha256": "2937eb4876fdb5954b720591a9e39ca62135b75b541c4c653e9c7c81695948b5",
+          "bytes": 9334,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/8d9d2e7b22c142338a4b70043bd97adb.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 8,
+          "url": "https://www.nobelprize.org/uploads/2022/10/press-physicsprize2022-2.pdf",
+          "parser": "poppler-pdftotext-layout",
+          "old_text_sha256": "aa72c54619c1bc942cc10f6f41e30a17cdb43b977781493d85cbfefe0a422d9e",
+          "new_extraction_sha256": "aa72c54619c1bc942cc10f6f41e30a17cdb43b977781493d85cbfefe0a422d9e",
+          "bytes": 9305,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/736917b3e09446ef9d6b27abaa8997ea.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 9,
+          "url": "https://www.nobelprize.org/uploads/2023/10/press-physicsprize2023.pdf",
+          "parser": "poppler-pdftotext-layout",
+          "old_text_sha256": "7719341c427d3d1021c64564a6a3374f6f2c4a76a1272e4b022964b70f2e56cc",
+          "new_extraction_sha256": "7719341c427d3d1021c64564a6a3374f6f2c4a76a1272e4b022964b70f2e56cc",
+          "bytes": 9519,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/38bdddb167044283922811fdd2aba856.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 10,
+          "url": "https://www.nobelprize.org/uploads/2024/11/press-physicsprize2024-2.pdf",
+          "parser": "poppler-pdftotext-layout",
+          "old_text_sha256": "8b9529f957768484cec2317ced7dd11840e19728afc944c0790b69bfaf17e82f",
+          "new_extraction_sha256": "8b9529f957768484cec2317ced7dd11840e19728afc944c0790b69bfaf17e82f",
+          "bytes": 8725,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/cecc0b1072ad47b891177f1db43cd76f.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 12,
+          "url": "https://www.nobelprize.org/prizes/physics/2016/thouless/biographical/",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "24a49ea6bb9af300d598daa44a1762c6f8f787a0a89c87062dfd77d1a01dce90",
+          "new_extraction_sha256": "24a49ea6bb9af300d598daa44a1762c6f8f787a0a89c87062dfd77d1a01dce90",
+          "bytes": 40506,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/2ae7f94b113049728501425c32086805.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 13,
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5278444/",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "549a92df9db3f00cb5ab2e00963e43dfbbf4b9a56a423c713ac198ff42b1fff2",
+          "new_extraction_sha256": "549a92df9db3f00cb5ab2e00963e43dfbbf4b9a56a423c713ac198ff42b1fff2",
+          "bytes": 13686,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/f6ad4f41c0e54d96adf70d6e2f8a11c0.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 14,
+          "url": "https://en.wikipedia.org/wiki/Duncan_Haldane",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "3e3a762b99c94d13ce40e8e2e6f7f13645abd1cafba8cfc941a00749d3dc9bdf",
+          "new_extraction_sha256": "3e3a762b99c94d13ce40e8e2e6f7f13645abd1cafba8cfc941a00749d3dc9bdf",
+          "bytes": 17557,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/bd9b28e7def1475fb4b0088e2b65fc12.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 15,
+          "url": "https://www.ias.si/en/duncan-haldane",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "c455cd28a9cad420ff164f28642a8f255c042baf7fb44d7d1a0f047e162825a5",
+          "new_extraction_sha256": "c455cd28a9cad420ff164f28642a8f255c042baf7fb44d7d1a0f047e162825a5",
+          "bytes": 4097,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/0b9e11e566f143758492b2f10a56ad73.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 16,
+          "url": "https://mediatheque.lindau-nobel.org/laureates/haldane",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "17d8758b1e42d393c8339cb594070f99469f001e6e96a06caab0a98ed8e17d5a",
+          "new_extraction_sha256": "17d8758b1e42d393c8339cb594070f99469f001e6e96a06caab0a98ed8e17d5a",
+          "bytes": 2202,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/aae03aa0dfba4aaa8ccb161a3a112828.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 17,
+          "url": "https://www.nobelprize.org/prizes/physics/2016/kosterlitz/biographical/",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "ded959b90d0bc6d60bf9b0897b8af3d73b32cf68b7f86ca555218b29a68c427e",
+          "new_extraction_sha256": "ded959b90d0bc6d60bf9b0897b8af3d73b32cf68b7f86ca555218b29a68c427e",
+          "bytes": 34235,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/16413dda0efb4164a7b66f1687901c8e.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 18,
+          "url": "https://www.mediatheque.lindau-nobel.org/laureates/kosterlitz",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "e455981e90764e68a77b633d8669c34ed46e1b76e2c0f13ccb8f4f9813d628dc",
+          "new_extraction_sha256": "e455981e90764e68a77b633d8669c34ed46e1b76e2c0f13ccb8f4f9813d628dc",
+          "bytes": 2215,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/23d35c6e73e548c5b1935bb16d1f6182.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 19,
+          "url": "https://en.wikipedia.org/wiki/Rainer_Weiss",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "39f633ba217639855f765177db32005fb741fcd8b18e76cc12d3a840151cd3cd",
+          "new_extraction_sha256": "39f633ba217639855f765177db32005fb741fcd8b18e76cc12d3a840151cd3cd",
+          "bytes": 44492,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/f8fc1f64a9ec49558977ad990777758d.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 20,
+          "url": "https://www.wikidata.org/wiki/Q2128461",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "386cbcd448002a25e60802b3308cb69275a32a74dd16b46978ac68220e0c7192",
+          "new_extraction_sha256": "386cbcd448002a25e60802b3308cb69275a32a74dd16b46978ac68220e0c7192",
+          "bytes": 17386,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/04963b02c3b146c5848f7091ec15b5bd.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 21,
+          "url": "https://en.wikipedia.org/wiki/Barry_Barish",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "9e96275ae249f60124aadaba809bf2b2551aa274185f4fd4152316140c1230ac",
+          "new_extraction_sha256": "9e96275ae249f60124aadaba809bf2b2551aa274185f4fd4152316140c1230ac",
+          "bytes": 30939,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/811f87786a22405da6390b96b7745722.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 22,
+          "url": "https://en.wikipedia.org/wiki/Kip_Thorne",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "3946bffcb2c2faaaa3cba21a1dd99c3af8c48e8b563e52791c5a8da091461e2a",
+          "new_extraction_sha256": "3946bffcb2c2faaaa3cba21a1dd99c3af8c48e8b563e52791c5a8da091461e2a",
+          "bytes": 51272,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/53c11b377bfa418982bbaf7ccb84e327.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 23,
+          "url": "https://en.wikipedia.org/wiki/Arthur_Ashkin",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "ff8ccdbe268b7da988698d16ef4fa386dedce1cb1c3bb577547b9c5916c091f8",
+          "new_extraction_sha256": "ff8ccdbe268b7da988698d16ef4fa386dedce1cb1c3bb577547b9c5916c091f8",
+          "bytes": 21156,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/da569c026a8c4a9cad535abf5a9889fd.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 25,
+          "url": "https://en.wikipedia.org/wiki/Donna_Strickland",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "dbf4a38acba8e0ee232fb50973dfb1279f8896fcedd383e114ac1ae52ad2ceaa",
+          "new_extraction_sha256": "dbf4a38acba8e0ee232fb50973dfb1279f8896fcedd383e114ac1ae52ad2ceaa",
+          "bytes": 27034,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/678c6f844c88491283630197061067a7.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 26,
+          "url": "https://en.wikipedia.org/wiki/Jim_Peebles",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "3c80ddcabadc32167dbc2f6e26455aa689494208474a809e8a17b4828eb63250",
+          "new_extraction_sha256": "3c80ddcabadc32167dbc2f6e26455aa689494208474a809e8a17b4828eb63250",
+          "bytes": 28096,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/26cf525bce454cc39db392dd34175146.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 28,
+          "url": "https://www.mediatheque.lindau-nobel.org/laureates/mayor",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "4f0aee12e8a52b4b2800b122119e761a78c0f92a02c216764d407339ee94fa14",
+          "new_extraction_sha256": "4f0aee12e8a52b4b2800b122119e761a78c0f92a02c216764d407339ee94fa14",
+          "bytes": 2052,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/20da01b40b88434aa0117018a84c70c4.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 30,
+          "url": "https://www.mediatheque.lindau-nobel.org/laureates/queloz",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "6ed1400a788b462fdf92da308d1461ce89ac5597d5bf4fff8348604387452396",
+          "new_extraction_sha256": "6ed1400a788b462fdf92da308d1461ce89ac5597d5bf4fff8348604387452396",
+          "bytes": 2020,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/4f4f3d9b69424fa093731f22229e4035.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 31,
+          "url": "https://mathshistory.st-andrews.ac.uk/Biographies//Penrose/",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "0cbe4f60a0dbba8526b3f3c8a6dedffea56a697e9bda8a77c4690db613d629aa",
+          "new_extraction_sha256": "0cbe4f60a0dbba8526b3f3c8a6dedffea56a697e9bda8a77c4690db613d629aa",
+          "bytes": 19814,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/33fbdae21fb047eb8d92eb87c001e140.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 32,
+          "url": "https://www.academie-sciences.fr/sites/default/files/2025-07/Genzel_CV_03-2025.pdf",
+          "parser": "poppler-pdftotext-layout",
+          "old_text_sha256": "6175433c7d7513beb1fb43ea33fe0d6117b5a918ea5dc0b6eecf3188bb72bfc8",
+          "new_extraction_sha256": "6175433c7d7513beb1fb43ea33fe0d6117b5a918ea5dc0b6eecf3188bb72bfc8",
+          "bytes": 9973,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/fe6d12b4bbb342219bdf3f456d5c7e96.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 33,
+          "url": "https://en.wikipedia.org/wiki/Andrea_M._Ghez",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "113abb715e056acf00f5564b2e7c3db64d8b6687cd72438265f2075adda8fd8d",
+          "new_extraction_sha256": "113abb715e056acf00f5564b2e7c3db64d8b6687cd72438265f2075adda8fd8d",
+          "bytes": 24249,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/54521a8f29cd4fe8903948831bf20f8a.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 35,
+          "url": "https://www.uni-hamburg.de/en/newsroom/im-fokus/2021/1025-lenzen-hasselmann.html",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "2a04e039bce6c002cb6f59d6cc441cfe1f4806de6d79eef073bde1d814cf1284",
+          "new_extraction_sha256": "2a04e039bce6c002cb6f59d6cc441cfe1f4806de6d79eef073bde1d814cf1284",
+          "bytes": 15732,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/fb9ef696bc6541b096a1c68132a14cde.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 36,
+          "url": "https://en.wikipedia.org/wiki/Klaus_Hasselmann",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "189ae5d27ffbaf0cc38735d7e6232bcb3ba6bd52b0cc2f1b9c1c0252d51c22c7",
+          "new_extraction_sha256": "189ae5d27ffbaf0cc38735d7e6232bcb3ba6bd52b0cc2f1b9c1c0252d51c22c7",
+          "bytes": 22594,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/324e8c82302144a9b9172fd3c93e3e70.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 37,
+          "url": "https://twas.org/directory/parisi-giorgio",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "a35acd191e7a36422d8dcd497aa6f3f5bb16c26162cec4531dbf34a652155fe6",
+          "new_extraction_sha256": "a35acd191e7a36422d8dcd497aa6f3f5bb16c26162cec4531dbf34a652155fe6",
+          "bytes": 4552,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/8d96bbe98adc4086b84337a9b7527364.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 39,
+          "url": "https://www.johnclauser.com/",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "6b82f1dc13e43456873e7936bf16c9f90fe426ac23b4b4886706dd47873d1b83",
+          "new_extraction_sha256": "6b82f1dc13e43456873e7936bf16c9f90fe426ac23b4b4886706dd47873d1b83",
+          "bytes": 1059,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/c00bb0950f3344df8f0fd3d5371a4d70.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 40,
+          "url": "https://www.blogs.uni-mainz.de/studgen-stiftung-jgsp-eng/endowed-professor-2006-anton-zeilinger/",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "dc3659b11018521eabdc8f9e42684dc26d5b6445ae392b310aba2b4069a52183",
+          "new_extraction_sha256": "dc3659b11018521eabdc8f9e42684dc26d5b6445ae392b310aba2b4069a52183",
+          "bytes": 6657,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/dfd150666fa24887a78a499e3108bc35.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 41,
+          "url": "https://mediatheque.lindau-nobel.org/laureates/agostini",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "633d5ea2614fea7724683e40e5fea14f7063fdbc372b7ef972864828417e134c",
+          "new_extraction_sha256": "633d5ea2614fea7724683e40e5fea14f7063fdbc372b7ef972864828417e134c",
+          "bytes": 2008,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/4b4b458bc94748d29c2466f360b531d1.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 42,
+          "url": "https://www.universite-paris-saclay.fr/publications/pierre-agostini",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "4df69d4cd19140bd5be2840629e1d193bfce6db4de8cda4137ebb6cbdcfce5f3",
+          "new_extraction_sha256": "4df69d4cd19140bd5be2840629e1d193bfce6db4de8cda4137ebb6cbdcfce5f3",
+          "bytes": 5291,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/3cecb646c4a1455f8cb59abfdc8801c4.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 43,
+          "url": "https://www.ae-info.org/ae/Member/Krausz_Ferenc/CV",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "2da9cf0c472726fd22bcdb4427a82b8168415fad6e716ddcf95ab8f1f9db19de",
+          "new_extraction_sha256": "2da9cf0c472726fd22bcdb4427a82b8168415fad6e716ddcf95ab8f1f9db19de",
+          "bytes": 5456,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/952f37b697674991a12f2aa51eb7aaca.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 44,
+          "url": "https://attoworld.de/fileadmin/user_upload/tx_attoworld/persons/CurriculaVitae/CV_Contributions_FerencKrausz_FEB2023.pdf",
+          "parser": "poppler-pdftotext-layout",
+          "old_text_sha256": "b457b65fa53755a4bb0ba928eb94020f042aa16b01630695621e9b2b01fabc11",
+          "new_extraction_sha256": "b457b65fa53755a4bb0ba928eb94020f042aa16b01630695621e9b2b01fabc11",
+          "bytes": 25080,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/d03d01783cc54f8abdef18d42666cd2a.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 45,
+          "url": "https://www.u-bordeaux.fr/en/about-us/honoris-causa/anne-lhuillier-lund-university",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "6030053c7cf1ff5e91ed748ada210f9ceda2bcb53000088f4db9b76cdf46c765",
+          "new_extraction_sha256": "6030053c7cf1ff5e91ed748ada210f9ceda2bcb53000088f4db9b76cdf46c765",
+          "bytes": 13811,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/f60edf86ac7846a9bd3d3716d46afda5.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 47,
+          "url": "https://en.wikipedia.org/wiki/John_Hopfield",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "5d479b8486764db449811cfe6f18a4c4db4c75f8aff1ce9763307a8b6ea5a891",
+          "new_extraction_sha256": "5d479b8486764db449811cfe6f18a4c4db4c75f8aff1ce9763307a8b6ea5a891",
+          "bytes": 38408,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/5e2d70ad782141cebeb6e2b4b3bedd9b.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 49,
+          "url": "https://www.cs.toronto.edu/~hinton/shortcv.pdf",
+          "parser": "poppler-pdftotext-layout",
+          "old_text_sha256": "f40d997c3c9c4a5b1ab09a153dde8f0e832e11218e337c6408b10da4dbc8fec2",
+          "new_extraction_sha256": "f40d997c3c9c4a5b1ab09a153dde8f0e832e11218e337c6408b10da4dbc8fec2",
+          "bytes": 82707,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/c2b0e27c3d7348b78adaafea978a621e.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 50,
+          "url": "https://en.wikipedia.org/wiki/Syukuro_Manabe",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "80e3061dc93c7ef8e424b3f940828823b596b32899a75d13a833ed59c9d38dcd",
+          "new_extraction_sha256": "80e3061dc93c7ef8e424b3f940828823b596b32899a75d13a833ed59c9d38dcd",
+          "bytes": 23602,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/e34ede47ad4e456fbd3b954b19efff1a.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 51,
+          "url": "https://mediatheque.lindau-nobel.org/laureates/morou",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "9a4d26e55e10bb60541bb8b849b53a61b2d58a75c9ae5fbb866fbf9eab747ad3",
+          "new_extraction_sha256": "9a4d26e55e10bb60541bb8b849b53a61b2d58a75c9ae5fbb866fbf9eab747ad3",
+          "bytes": 1943,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/9d7b77a668a748c1b01f62cab39c60c5.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 52,
+          "url": "https://en.wikipedia.org/wiki/Alain_Aspect",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "fba2781830ec23e55665303d04b0e1f0ffafcce79038ac0394c6d097e0cf2a84",
+          "new_extraction_sha256": "fba2781830ec23e55665303d04b0e1f0ffafcce79038ac0394c6d097e0cf2a84",
+          "bytes": 24304,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/2bf7b689dad145949bdaccc9d9e9173a.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 54,
+          "url": "https://m.dongascience.com/en/news/49695",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "3868294173caa7d778ddf2475022a971cbf8bb0e7084ea690ce16d82da18d97e",
+          "new_extraction_sha256": "3868294173caa7d778ddf2475022a971cbf8bb0e7084ea690ce16d82da18d97e",
+          "bytes": 9728,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/5bce254c3622407f94c64887e483bcb6.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 56,
+          "url": "https://doctorat.unibuc.ro/wp-content/uploads/2023/11/CV-prof.dr_.Gerard-Albert-MOUROU.pdf",
+          "parser": "poppler-pdftotext-layout",
+          "old_text_sha256": "1202805a955ce2242fe10ec66badbfb484317c0e63cc3c517df2316a8cf8d840",
+          "new_extraction_sha256": "1202805a955ce2242fe10ec66badbfb484317c0e63cc3c517df2316a8cf8d840",
+          "bytes": 86373,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/4b0591a679a34362b09b36035c5d94cd.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 57,
+          "url": "https://www.aa.com.tr/en/culture-and-art/nobel-prize-for-physics-goes-to-us-canadian-scientists/1270807",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "d4cc0d43d502f62eba057aef0f715bc18eab39939981067c700738831308e1d1",
+          "new_extraction_sha256": "d4cc0d43d502f62eba057aef0f715bc18eab39939981067c700738831308e1d1",
+          "bytes": 55,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/3377468537da49e596fb3fdd5923b21a.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 58,
+          "url": "https://commons.wikimedia.org/wiki/Category%3ADavid_Thouless",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "963d3a7d19813fab04fc9490729e4a8ae493e6d3b97ae3b26c0b0b6f895e8499",
+          "new_extraction_sha256": "963d3a7d19813fab04fc9490729e4a8ae493e6d3b97ae3b26c0b0b6f895e8499",
+          "bytes": 5449,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/a3653615f8df4a37bc525436e176c140.txt"
+        },
+        {
+          "label": "B0-1",
+          "request_id": 59,
+          "url": "https://en.wikipedia.org/wiki/David_Thouless",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "b34b22b07e8f6b2b739ed52f80405de4a84967eb0aeb0bcac8cfd8777fba3727",
+          "new_extraction_sha256": "b34b22b07e8f6b2b739ed52f80405de4a84967eb0aeb0bcac8cfd8777fba3727",
+          "bytes": 18475,
+          "status": "succeeded",
+          "validation": {
+            "reason": null,
+            "forbidden_control_count": 0,
+            "forbidden_controls": {}
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/downloads/1cba5e595592426ebad6409029663ec0.txt"
+        },
+        {
+          "label": "B1-frozen-1",
+          "request_id": 49,
+          "url": "https://www.christs.cam.ac.uk/sites/default/files/2025-02/2017%20Magazine.pdf",
+          "parser": "poppler-pdftotext-layout",
+          "old_text_sha256": "806fe4058370ca5d3b5863265fb62a331f04816fba259a8eab89d22affccd6f9",
+          "new_extraction_sha256": "806fe4058370ca5d3b5863265fb62a331f04816fba259a8eab89d22affccd6f9",
+          "bytes": 398830,
+          "status": "failed",
+          "validation": {
+            "reason": "forbidden_control_characters",
+            "forbidden_control_count": 120,
+            "forbidden_controls": {
+              "U+0007": 26,
+              "U+0008": 94
+            }
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-1/runs/research-efdcba96a9cb4e27811952848ecc93d7/5f579a96530b9d0b8eaa08f9/downloads/1143c697090a470f8b8330e3655e7456.txt"
+        },
+        {
+          "label": "B1-frozen-1",
+          "request_id": 56,
+          "url": "https://www.unn.ru/site/images/brand/book_eng_2018.pdf",
+          "parser": "poppler-pdftotext-layout",
+          "old_text_sha256": "992cb02bd087b2fa4a9082087246151ff54b5a4bdbb654853b6d5c34ba57cfd2",
+          "new_extraction_sha256": "992cb02bd087b2fa4a9082087246151ff54b5a4bdbb654853b6d5c34ba57cfd2",
+          "bytes": 172774,
+          "status": "failed",
+          "validation": {
+            "reason": "forbidden_control_characters",
+            "forbidden_control_count": 119,
+            "forbidden_controls": {
+              "U+0002": 1,
+              "U+0003": 114,
+              "U+0006": 3,
+              "U+0008": 1
+            }
+          },
+          "network_calls": 0,
+          "replayed_hops": 2,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-1/runs/research-efdcba96a9cb4e27811952848ecc93d7/5f579a96530b9d0b8eaa08f9/downloads/e006a0a9c23d4d198f4daf4190fcbe2b.txt"
+        },
+        {
+          "label": "B1-frozen-1",
+          "request_id": 88,
+          "url": "https://wien.orf.at/stories/3227262/",
+          "parser": "stdlib-html-readable-v1",
+          "old_text_sha256": "b7bc63a9c3fa98b8b113ab1313878c07ced6bd8d016408e6d1481f6da021e6d8",
+          "new_extraction_sha256": "b7bc63a9c3fa98b8b113ab1313878c07ced6bd8d016408e6d1481f6da021e6d8",
+          "bytes": 9089,
+          "status": "failed",
+          "validation": {
+            "reason": "forbidden_control_characters",
+            "forbidden_control_count": 4,
+            "forbidden_controls": {
+              "U+0080": 4
+            }
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-1/runs/research-efdcba96a9cb4e27811952848ecc93d7/5f579a96530b9d0b8eaa08f9/downloads/3fc8df80c32c4592b0e88f5b03bf3239.txt"
+        },
+        {
+          "label": "B1-frozen-1",
+          "request_id": 158,
+          "url": "https://www.gfdl.noaa.gov/wp-content/uploads/2021/11/GFDL_Fall_2021_Bulletin.pdf",
+          "parser": "poppler-pdftotext-layout",
+          "old_text_sha256": "109a4ffb118bf9814ef9b7c24f0837008f5c5a63bc90e1ab8129f8c9fa093866",
+          "new_extraction_sha256": "109a4ffb118bf9814ef9b7c24f0837008f5c5a63bc90e1ab8129f8c9fa093866",
+          "bytes": 20032,
+          "status": "failed",
+          "validation": {
+            "reason": "forbidden_control_characters",
+            "forbidden_control_count": 265,
+            "forbidden_controls": {
+              "U+0001": 4,
+              "U+0002": 7,
+              "U+0003": 7,
+              "U+0004": 3,
+              "U+0005": 9,
+              "U+0006": 5,
+              "U+0007": 4,
+              "U+0008": 6,
+              "U+000E": 4,
+              "U+000F": 5,
+              "U+0010": 2,
+              "U+0011": 10,
+              "U+0012": 2,
+              "U+0013": 6,
+              "U+0014": 2,
+              "U+0015": 4,
+              "U+0016": 2,
+              "U+0017": 10,
+              "U+0018": 3,
+              "U+0019": 12,
+              "U+001A": 9,
+              "U+001B": 30,
+              "U+001C": 11,
+              "U+001D": 25,
+              "U+001E": 26,
+              "U+001F": 39,
+              "U+007F": 10,
+              "U+0080": 1,
+              "U+0081": 2,
+              "U+0082": 1,
+              "U+008D": 1,
+              "U+008F": 1,
+              "U+0090": 1,
+              "U+009D": 1
+            }
+          },
+          "network_calls": 0,
+          "replayed_hops": 1,
+          "old_artifact": "runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-1/runs/research-efdcba96a9cb4e27811952848ecc93d7/5f579a96530b9d0b8eaa08f9/downloads/6a7f047d06ff4f97aae265c6b9eb90bf.txt"
+        }
+      ],
+      "valid_unchanged": 49,
+      "corrupt_rejected_exact": 4,
+      "network_calls": 0,
+      "model_calls": 0
+    },
+    "corpus_replay_script": "from pathlib import Path\nimport json,hashlib,tempfile,collections,sys\nfrom loop_research.archive import RunContext\nfrom loop_research.config import Config\nfrom loop_research.page_fetch import PageFetcher,FetchError,verify_receipt,TEXT_POLICY\nfrom loop_research.repl_tools import ResearchTools\nfrom loop_research.archive_audit import fetch_audit\nroot=Path('/Users/mukeshreddypochamreddy/Desktop/loop-research');cohort=root/'runs/round3/cohorts/context_outputs_v1';configs=Config.load(Path('config.yaml'))\nsha=lambda b:hashlib.sha256(b).hexdigest()\nclass NoModel:\n def complete(self,*a,**k):raise AssertionError('No model permitted')\nresults=[]\nfor label,rid,selection in [('B0-1','research-29fbc2ecc3954ba6b5a653b0f41e6b84',None),('B1-frozen-1','research-efdcba96a9cb4e27811952848ecc93d7',{49,56,88,158})]:\n task=cohort/'workspaces'/label/'runs'/rid/'5f579a96530b9d0b8eaa08f9'\n requests=[x for x in json.loads((task/'fetch_telemetry.json').read_text()) if x['source']=='backend' and x['status']=='succeeded' and (selection is None or x['id'] in selection)]\n for old in requests:\n  rec=old['receipt'];hops=iter(rec['hops']);hits=[]\n  def request(url,timeout):\n   h=next(hops);assert url==h['url'];raw=(task/h['raw_path']).read_bytes();assert sha(raw)==h['raw_sha256'];hits.append(url)\n   return {'status':h['status'],'headers':h['headers'],'body':raw,'peer_ip':h.get('peer_ip')}\n  with tempfile.TemporaryDirectory(prefix='review-controls-') as tmp:\n   ctx=RunContext(Path(tmp),'unit',configs,'fixture');tools=ResearchTools(NoModel(),ctx,fetcher=PageFetcher(ctx,request=request));result=tools.fetch(old['url']);fresh=ctx.load('fetch_telemetry.json')[0]['receipt'];rows=fetch_audit(ctx.path,[],[],[],tools.snapshot());saved=(task/rec['text_path']).read_bytes();actual=(ctx.path/fresh['extraction_path']).read_bytes()\n   assert len(hits)==len(rec['hops']);assert actual==saved\n   if selection is None:\n    assert result.encode()==saved;assert rows[0]['readability_validation']=='passed';assert tools.fetch(old['url'],'different focus')==result;assert len(hits)==len(rec['hops'])\n   else:\n    assert result=='FETCH_FAILED' and tools.cache=={} and tools.snapshot()['fetched']=={};assert rows[0]['readability_validation']=='rejected'\n   results.append({'label':label,'request_id':old['id'],'url':old['url'],'parser':rec['parser'],'old_text_sha256':sha(saved),'new_extraction_sha256':sha(actual),'bytes':len(actual),'status':fresh['status'],'validation':fresh['extraction_validation'],'network_calls':0,'replayed_hops':len(hits),'old_artifact':str((task/rec['text_path']).relative_to(root))})\nprint(json.dumps({'modules':{name:sha(Path(__import__('loop_research.'+name,fromlist=['x']).__file__).read_bytes()) for name in ['page_fetch','repl_tools','archive_audit']},'results':results,'valid_unchanged':sum(x['status']=='succeeded' for x in results),'corrupt_rejected_exact':sum(x['status']=='failed' for x in results),'network_calls':0,'model_calls':0},indent=2))\n",
+    "corpus_final_tool_receipts": [
+      "a52aa8",
+      "3c9c36"
+    ]
+  },
+  "review_conclusions": [
+    {
+      "topic": "Complete rejected artifact retention",
+      "finding": "Full extraction bytes are written before validation and bound by byte count/hash, decoded count, exact forbidden codepoint counts and parser identity. The HTTP raw body/redirect chain remains archived. Invalid UTF-8 PDF stdout is retained as bytes and rejected explicitly. Rejected text never enters successful evidence or cache."
+    },
+    {
+      "topic": "All-media control detection",
+      "finding": "One Unicode-category Cc check covers PDF, decoded text and visible HTML; TAB LF CR FF VT NEL are allowed layout controls. U+001C–001F survive HTML whitespace normalization, preventing silent disappearance before detection. Hidden/script controls do not contaminate visible extraction. No stripping or repair occurs."
+    },
+    {
+      "topic": "Fresh cache integrity and history",
+      "finding": "Cache keys include validation policy but remain independent of focus. Fresh consumers explicitly require that policy and reject receipt downgrade. Legacy receipts remain verifiable as historical transport, with not_recorded_by_legacy_policy; they do not establish current readability, and old cache keys cannot masquerade as current validated entries."
+    },
+    {
+      "topic": "User constraints and generality",
+      "finding": "No task/site/domain lists, density threshold, count padding, source truncation, model/browser fallback, automatic retry or extra fetch loop. Explicit agent retries retain their existing behavior. Only page_fetch/repl_tools/archive_audit product sources changed; research root and its pinned formatter, refiner prompts/transports, models, deadlines, call budgets, scheduling, strict evaluators and pinned RLM sources are unchanged."
+    },
+    {
+      "topic": "Expected availability effect",
+      "finding": "A single forbidden non-layout control rejects the entire extraction even when much surrounding text is readable. This is an explicit general acceptance policy change; it must not be described as unchanged research outcomes. All affected arms require the common-code replay already planned."
+    }
+  ],
+  "limitations": [
+    "Category-Cc rejection is not a proof that every remaining printable glyph is correct, or that every visually rendered PDF/HTML source has complete semantically accurate extraction. Missing ToUnicode may also yield plausible but wrong printable symbols or empty output.",
+    "The rejected artifact retains exact extracted bytes. For HTML, ordinary pre-existing visible-text extraction/whitespace normalization remains; raw HTTP bytes preserve original markup and hidden material.",
+    "No OCR/browser/model repair fallback is added. No unqualified historical readable-size claim is authorized by receipt compatibility.",
+    "Independent actual corpus covered four affected Frozen1 artifacts and all49 clean B0-1 artifacts. Author separately tested KIAS as a fifth affected artifact; that result is not represented as an additional independent reviewer replay.",
+    "No broad full suite or new live experiment was run by this reviewer. Focused tests are bounded to changed behavior and prior direct-fetch/audit contracts."
+  ]
+}

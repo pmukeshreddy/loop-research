@@ -1,0 +1,1180 @@
+{
+  "updated_at": "2026-10-20T17:28:59.233172+00:00",
+  "arms": {
+    "B1": {
+      "status": "complete",
+      "workspace": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1",
+      "isolation": {
+        "commands": [
+          [
+            "git",
+            "clone",
+            "--no-hardlinks",
+            "--no-local",
+            "--no-checkout",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/harness",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1/harness"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1/harness",
+            "checkout",
+            "-q",
+            "-b",
+            "round3-start",
+            "e37fab78867ade934708523fdec324332c893015"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1/harness",
+            "config",
+            "user.name",
+            "Round 3 research"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1/harness",
+            "config",
+            "user.email",
+            "round3@localhost"
+          ]
+        ],
+        "source_harness": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/harness",
+        "workspace": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1",
+        "base_sha": "e37fab78867ade934708523fdec324332c893015",
+        "state": {
+          "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1/harness/harness_state.json",
+          "bytes": 24359,
+          "sha256": "ca10f577b32de7c33ba7418ec5d125316c3ad42deb4a35337a35961a90a71dcb"
+        },
+        "full_clone": true,
+        "alternates": false,
+        "hardlinks": false,
+        "cache_note": "Each task also owns tool_cache.json beneath this workspace/runs."
+      },
+      "task_id": "5f579a96530b9d0b8eaa08f9",
+      "task_file": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/inputs/B.task.json",
+      "base_sha": "e37fab78867ade934708523fdec324332c893015",
+      "learning": true,
+      "command": [
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/loop-research",
+        "--root",
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1",
+        "--config",
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/inputs/config.json",
+        "research",
+        "Nobel Prize in Physics laureates 2015-2024",
+        "--columns",
+        "laureate",
+        "--columns",
+        "year",
+        "--columns",
+        "nationality",
+        "--columns",
+        "affiliation_at_award",
+        "--columns",
+        "prize_motivation",
+        "--keys",
+        "laureate",
+        "--keys",
+        "year",
+        "--language",
+        "en",
+        "--trace",
+        "--base",
+        "e37fab78867ade934708523fdec324332c893015"
+      ],
+      "console": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/B1.console.log",
+      "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d",
+      "started_at": "2026-10-20T15:09:59.701310+00:00",
+      "pid": 68388,
+      "exit_code": 0,
+      "ended_at": "2026-10-20T15:54:27.329818+00:00",
+      "run_id": "research-3555ac7ab0d64bd9915e154cccacf13a",
+      "run_path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1/runs/research-3555ac7ab0d64bd9915e154cccacf13a",
+      "archive_announcement": "Watch live: tail -f /Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1/runs/research-3555ac7ab0d64bd9915e154cccacf13a/trace.log",
+      "record": {
+        "run_id": "research-3555ac7ab0d64bd9915e154cccacf13a",
+        "created_at": "2026-10-20T15:10:00.018020+00:00",
+        "learning": true,
+        "base_sha": "e37fab78867ade934708523fdec324332c893015",
+        "lineage": "lineage-25a5bf4957b7417093e911b8ad134171",
+        "return_branch": "round3-start",
+        "task_id": "5f579a96530b9d0b8eaa08f9",
+        "config": {
+          "models": {
+            "root": "gpt-6-astra",
+            "sub": "gpt-6-astra",
+            "refine": "gpt-6-astra",
+            "judge": "gpt-6-astra",
+            "reasoning_effort": null
+          },
+          "codex": {
+            "bin": "codex",
+            "max_concurrent": 4,
+            "timeout_s": 600.0,
+            "max_retries": 4,
+            "retry_delay_cap_s": 60.0,
+            "log_full_text": false
+          },
+          "rlm": {
+            "max_iterations": 30,
+            "max_depth": 2
+          },
+          "agent": {
+            "task_timeout_s": 3600.0,
+            "max_codex_calls": 300,
+            "as_of": "2026-10-18"
+          },
+          "data": {
+            "seed": 42,
+            "languages": [
+              "en",
+              "zh"
+            ]
+          },
+          "wandr": {
+            "final_n_tasks": 50,
+            "seed": 42
+          },
+          "harness": {
+            "retrieval_limit": 10
+          },
+          "stream": {
+            "rolling_window": 10
+          },
+          "refine": {
+            "max_edits": 2
+          },
+          "bridge": {
+            "socket_timeout_s": 5.0
+          },
+          "verify": {
+            "codex_timeout_s": 30.0,
+            "browser_timeout_s": 120.0
+          }
+        },
+        "status": "complete",
+        "harness_head": "c9545bbcb541540ee6d2143a3f67108e481ec012",
+        "error": null
+      },
+      "archive_hashes": {
+        "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/B1.archive_hashes.json",
+        "bytes": 171394,
+        "sha256": "31e0f7dd870350a4019ff73f1cd651dc486bd8f8e921c1d9eab521275f9ede21"
+      },
+      "source_unchanged": true
+    },
+    "B1-frozen-1": {
+      "status": "complete",
+      "workspace": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-1",
+      "isolation": {
+        "commands": [
+          [
+            "git",
+            "clone",
+            "--no-hardlinks",
+            "--no-local",
+            "--no-checkout",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/harness",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-1/harness"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-1/harness",
+            "checkout",
+            "-q",
+            "-b",
+            "round3-start",
+            "e37fab78867ade934708523fdec324332c893015"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-1/harness",
+            "config",
+            "user.name",
+            "Round 3 research"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-1/harness",
+            "config",
+            "user.email",
+            "round3@localhost"
+          ]
+        ],
+        "source_harness": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/harness",
+        "workspace": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-1",
+        "base_sha": "e37fab78867ade934708523fdec324332c893015",
+        "state": {
+          "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-1/harness/harness_state.json",
+          "bytes": 24359,
+          "sha256": "ca10f577b32de7c33ba7418ec5d125316c3ad42deb4a35337a35961a90a71dcb"
+        },
+        "full_clone": true,
+        "alternates": false,
+        "hardlinks": false,
+        "cache_note": "Each task also owns tool_cache.json beneath this workspace/runs."
+      },
+      "task_id": "5f579a96530b9d0b8eaa08f9",
+      "task_file": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/inputs/B.task.json",
+      "base_sha": "e37fab78867ade934708523fdec324332c893015",
+      "learning": false,
+      "command": [
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/loop-research",
+        "--root",
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-1",
+        "--config",
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/inputs/config.json",
+        "research",
+        "Nobel Prize in Physics laureates 2015-2024",
+        "--columns",
+        "laureate",
+        "--columns",
+        "year",
+        "--columns",
+        "nationality",
+        "--columns",
+        "affiliation_at_award",
+        "--columns",
+        "prize_motivation",
+        "--keys",
+        "laureate",
+        "--keys",
+        "year",
+        "--language",
+        "en",
+        "--trace",
+        "--base",
+        "e37fab78867ade934708523fdec324332c893015",
+        "--no-learning"
+      ],
+      "console": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/B1-frozen-1.console.log",
+      "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d",
+      "started_at": "2026-10-20T15:09:59.712515+00:00",
+      "pid": 68391,
+      "exit_code": 0,
+      "ended_at": "2026-10-20T15:59:58.715364+00:00",
+      "run_id": "research-efdcba96a9cb4e27811952848ecc93d7",
+      "run_path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-1/runs/research-efdcba96a9cb4e27811952848ecc93d7",
+      "archive_announcement": "Watch live: tail -f /Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-1/runs/research-efdcba96a9cb4e27811952848ecc93d7/trace.log",
+      "record": {
+        "run_id": "research-efdcba96a9cb4e27811952848ecc93d7",
+        "created_at": "2026-10-20T15:10:00.051617+00:00",
+        "learning": false,
+        "base_sha": "e37fab78867ade934708523fdec324332c893015",
+        "lineage": "lineage-573f7359f83d4dc0b47a806565631209",
+        "return_branch": "round3-start",
+        "task_id": "5f579a96530b9d0b8eaa08f9",
+        "config": {
+          "models": {
+            "root": "gpt-6-astra",
+            "sub": "gpt-6-astra",
+            "refine": "gpt-6-astra",
+            "judge": "gpt-6-astra",
+            "reasoning_effort": null
+          },
+          "codex": {
+            "bin": "codex",
+            "max_concurrent": 4,
+            "timeout_s": 600.0,
+            "max_retries": 4,
+            "retry_delay_cap_s": 60.0,
+            "log_full_text": false
+          },
+          "rlm": {
+            "max_iterations": 30,
+            "max_depth": 2
+          },
+          "agent": {
+            "task_timeout_s": 3600.0,
+            "max_codex_calls": 300,
+            "as_of": "2026-10-18"
+          },
+          "data": {
+            "seed": 42,
+            "languages": [
+              "en",
+              "zh"
+            ]
+          },
+          "wandr": {
+            "final_n_tasks": 50,
+            "seed": 42
+          },
+          "harness": {
+            "retrieval_limit": 10
+          },
+          "stream": {
+            "rolling_window": 10
+          },
+          "refine": {
+            "max_edits": 2
+          },
+          "bridge": {
+            "socket_timeout_s": 5.0
+          },
+          "verify": {
+            "codex_timeout_s": 30.0,
+            "browser_timeout_s": 120.0
+          }
+        },
+        "status": "complete",
+        "harness_head": "214a6eb458bfd746f964997f4e9556d2d8e20a7a",
+        "error": null
+      },
+      "archive_hashes": {
+        "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/B1-frozen-1.archive_hashes.json",
+        "bytes": 270917,
+        "sha256": "60f078685862b15c4f817aeb8599ad9c2c6dc927885adc251089d626a96e248c"
+      },
+      "source_unchanged": true
+    },
+    "B0-1": {
+      "status": "complete",
+      "workspace": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-1",
+      "isolation": {
+        "commands": [
+          [
+            "git",
+            "clone",
+            "--no-hardlinks",
+            "--no-local",
+            "--no-checkout",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/harness",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/harness"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/harness",
+            "checkout",
+            "-q",
+            "-b",
+            "round3-start",
+            "2a423027212fe1c430dfd200bdd55f3a27b22d70"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/harness",
+            "config",
+            "user.name",
+            "Round 3 research"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/harness",
+            "config",
+            "user.email",
+            "round3@localhost"
+          ]
+        ],
+        "source_harness": "/Users/mukeshreddypochamreddy/Desktop/loop-research/harness",
+        "workspace": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-1",
+        "base_sha": "2a423027212fe1c430dfd200bdd55f3a27b22d70",
+        "state": {
+          "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/harness/harness_state.json",
+          "bytes": 1722,
+          "sha256": "5031ab862ddcc418480fe8c645d190f43f7cd80f5548ab1e48d16add719baf29"
+        },
+        "full_clone": true,
+        "alternates": false,
+        "hardlinks": false,
+        "cache_note": "Each task also owns tool_cache.json beneath this workspace/runs."
+      },
+      "task_id": "5f579a96530b9d0b8eaa08f9",
+      "task_file": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/inputs/B.task.json",
+      "base_sha": "2a423027212fe1c430dfd200bdd55f3a27b22d70",
+      "learning": false,
+      "command": [
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/loop-research",
+        "--root",
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-1",
+        "--config",
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/inputs/config.json",
+        "research",
+        "Nobel Prize in Physics laureates 2015-2024",
+        "--columns",
+        "laureate",
+        "--columns",
+        "year",
+        "--columns",
+        "nationality",
+        "--columns",
+        "affiliation_at_award",
+        "--columns",
+        "prize_motivation",
+        "--keys",
+        "laureate",
+        "--keys",
+        "year",
+        "--language",
+        "en",
+        "--trace",
+        "--base",
+        "2a423027212fe1c430dfd200bdd55f3a27b22d70",
+        "--no-learning"
+      ],
+      "console": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/B0-1.console.log",
+      "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d",
+      "started_at": "2026-10-20T15:09:59.725214+00:00",
+      "pid": 68393,
+      "exit_code": 0,
+      "ended_at": "2026-10-20T15:36:57.958358+00:00",
+      "run_id": "research-29fbc2ecc3954ba6b5a653b0f41e6b84",
+      "run_path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84",
+      "archive_announcement": "Watch live: tail -f /Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/trace.log",
+      "record": {
+        "run_id": "research-29fbc2ecc3954ba6b5a653b0f41e6b84",
+        "created_at": "2026-10-20T15:10:00.018027+00:00",
+        "learning": false,
+        "base_sha": "2a423027212fe1c430dfd200bdd55f3a27b22d70",
+        "lineage": "lineage-2d387c8fdf594825924de87c5f36fbce",
+        "return_branch": "round3-start",
+        "task_id": "5f579a96530b9d0b8eaa08f9",
+        "config": {
+          "models": {
+            "root": "gpt-6-astra",
+            "sub": "gpt-6-astra",
+            "refine": "gpt-6-astra",
+            "judge": "gpt-6-astra",
+            "reasoning_effort": null
+          },
+          "codex": {
+            "bin": "codex",
+            "max_concurrent": 4,
+            "timeout_s": 600.0,
+            "max_retries": 4,
+            "retry_delay_cap_s": 60.0,
+            "log_full_text": false
+          },
+          "rlm": {
+            "max_iterations": 30,
+            "max_depth": 2
+          },
+          "agent": {
+            "task_timeout_s": 3600.0,
+            "max_codex_calls": 300,
+            "as_of": "2026-10-18"
+          },
+          "data": {
+            "seed": 42,
+            "languages": [
+              "en",
+              "zh"
+            ]
+          },
+          "wandr": {
+            "final_n_tasks": 50,
+            "seed": 42
+          },
+          "harness": {
+            "retrieval_limit": 10
+          },
+          "stream": {
+            "rolling_window": 10
+          },
+          "refine": {
+            "max_edits": 2
+          },
+          "bridge": {
+            "socket_timeout_s": 5.0
+          },
+          "verify": {
+            "codex_timeout_s": 30.0,
+            "browser_timeout_s": 120.0
+          }
+        },
+        "status": "complete",
+        "harness_head": "8d11b5ffa8415fdcc2f6fb49ae2113fd11b9ce3e",
+        "error": null
+      },
+      "archive_hashes": {
+        "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/B0-1.archive_hashes.json",
+        "bytes": 97101,
+        "sha256": "abeb4309aadc8437e84daa3dc46d2127553b160ab53dd1b0402160b8cbc79e70"
+      },
+      "source_unchanged": true
+    },
+    "B1-frozen-2": {
+      "status": "failed",
+      "workspace": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-2",
+      "isolation": {
+        "commands": [
+          [
+            "git",
+            "clone",
+            "--no-hardlinks",
+            "--no-local",
+            "--no-checkout",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/harness",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-2/harness"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-2/harness",
+            "checkout",
+            "-q",
+            "-b",
+            "round3-start",
+            "e37fab78867ade934708523fdec324332c893015"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-2/harness",
+            "config",
+            "user.name",
+            "Round 3 research"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-2/harness",
+            "config",
+            "user.email",
+            "round3@localhost"
+          ]
+        ],
+        "source_harness": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/harness",
+        "workspace": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-2",
+        "base_sha": "e37fab78867ade934708523fdec324332c893015",
+        "state": {
+          "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-2/harness/harness_state.json",
+          "bytes": 24359,
+          "sha256": "ca10f577b32de7c33ba7418ec5d125316c3ad42deb4a35337a35961a90a71dcb"
+        },
+        "full_clone": true,
+        "alternates": false,
+        "hardlinks": false,
+        "cache_note": "Each task also owns tool_cache.json beneath this workspace/runs."
+      },
+      "task_id": "5f579a96530b9d0b8eaa08f9",
+      "task_file": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/inputs/B.task.json",
+      "base_sha": "e37fab78867ade934708523fdec324332c893015",
+      "learning": false,
+      "command": [
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/loop-research",
+        "--root",
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-2",
+        "--config",
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/inputs/config.json",
+        "research",
+        "Nobel Prize in Physics laureates 2015-2024",
+        "--columns",
+        "laureate",
+        "--columns",
+        "year",
+        "--columns",
+        "nationality",
+        "--columns",
+        "affiliation_at_award",
+        "--columns",
+        "prize_motivation",
+        "--keys",
+        "laureate",
+        "--keys",
+        "year",
+        "--language",
+        "en",
+        "--trace",
+        "--base",
+        "e37fab78867ade934708523fdec324332c893015",
+        "--no-learning"
+      ],
+      "console": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/B1-frozen-2.console.log",
+      "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d",
+      "started_at": "2026-10-20T15:36:58.085557+00:00",
+      "pid": 78691,
+      "exit_code": 1,
+      "ended_at": "2026-10-20T16:36:59.272322+00:00",
+      "run_id": "research-d34b080d45ab4d4da1a026a2ecc21e39",
+      "run_path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-2/runs/research-d34b080d45ab4d4da1a026a2ecc21e39",
+      "archive_announcement": "Watch live: tail -f /Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-2/runs/research-d34b080d45ab4d4da1a026a2ecc21e39/trace.log",
+      "record": {
+        "run_id": "research-d34b080d45ab4d4da1a026a2ecc21e39",
+        "created_at": "2026-10-20T15:36:58.394266+00:00",
+        "learning": false,
+        "base_sha": "e37fab78867ade934708523fdec324332c893015",
+        "lineage": "lineage-961ba90735ec4408b941df8b56916ff5",
+        "return_branch": "round3-start",
+        "task_id": "5f579a96530b9d0b8eaa08f9",
+        "config": {
+          "models": {
+            "root": "gpt-6-astra",
+            "sub": "gpt-6-astra",
+            "refine": "gpt-6-astra",
+            "judge": "gpt-6-astra",
+            "reasoning_effort": null
+          },
+          "codex": {
+            "bin": "codex",
+            "max_concurrent": 4,
+            "timeout_s": 600.0,
+            "max_retries": 4,
+            "retry_delay_cap_s": 60.0,
+            "log_full_text": false
+          },
+          "rlm": {
+            "max_iterations": 30,
+            "max_depth": 2
+          },
+          "agent": {
+            "task_timeout_s": 3600.0,
+            "max_codex_calls": 300,
+            "as_of": "2026-10-18"
+          },
+          "data": {
+            "seed": 42,
+            "languages": [
+              "en",
+              "zh"
+            ]
+          },
+          "wandr": {
+            "final_n_tasks": 50,
+            "seed": 42
+          },
+          "harness": {
+            "retrieval_limit": 10
+          },
+          "stream": {
+            "rolling_window": 10
+          },
+          "refine": {
+            "max_edits": 2
+          },
+          "bridge": {
+            "socket_timeout_s": 5.0
+          },
+          "verify": {
+            "codex_timeout_s": 30.0,
+            "browser_timeout_s": 120.0
+          }
+        },
+        "status": "complete",
+        "harness_head": "d8a0774f9f0c0a5b939caadaa72f4b3ada3d37fd",
+        "error": "TimeoutError: Task hard deadline exceeded"
+      },
+      "archive_hashes": {
+        "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/B1-frozen-2.archive_hashes.json",
+        "bytes": 293280,
+        "sha256": "0dfcb4160ab741059d8c1b94fcb43a03a847d4a28578897debfa8cdf1efa87ba"
+      },
+      "error": "ValueError: CLI exit or durable research identity/status/config is invalid"
+    },
+    "B0-2": {
+      "status": "complete",
+      "workspace": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-2",
+      "isolation": {
+        "commands": [
+          [
+            "git",
+            "clone",
+            "--no-hardlinks",
+            "--no-local",
+            "--no-checkout",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/harness",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-2/harness"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-2/harness",
+            "checkout",
+            "-q",
+            "-b",
+            "round3-start",
+            "2a423027212fe1c430dfd200bdd55f3a27b22d70"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-2/harness",
+            "config",
+            "user.name",
+            "Round 3 research"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-2/harness",
+            "config",
+            "user.email",
+            "round3@localhost"
+          ]
+        ],
+        "source_harness": "/Users/mukeshreddypochamreddy/Desktop/loop-research/harness",
+        "workspace": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-2",
+        "base_sha": "2a423027212fe1c430dfd200bdd55f3a27b22d70",
+        "state": {
+          "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-2/harness/harness_state.json",
+          "bytes": 1722,
+          "sha256": "5031ab862ddcc418480fe8c645d190f43f7cd80f5548ab1e48d16add719baf29"
+        },
+        "full_clone": true,
+        "alternates": false,
+        "hardlinks": false,
+        "cache_note": "Each task also owns tool_cache.json beneath this workspace/runs."
+      },
+      "task_id": "5f579a96530b9d0b8eaa08f9",
+      "task_file": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/inputs/B.task.json",
+      "base_sha": "2a423027212fe1c430dfd200bdd55f3a27b22d70",
+      "learning": false,
+      "command": [
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/loop-research",
+        "--root",
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-2",
+        "--config",
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/inputs/config.json",
+        "research",
+        "Nobel Prize in Physics laureates 2015-2024",
+        "--columns",
+        "laureate",
+        "--columns",
+        "year",
+        "--columns",
+        "nationality",
+        "--columns",
+        "affiliation_at_award",
+        "--columns",
+        "prize_motivation",
+        "--keys",
+        "laureate",
+        "--keys",
+        "year",
+        "--language",
+        "en",
+        "--trace",
+        "--base",
+        "2a423027212fe1c430dfd200bdd55f3a27b22d70",
+        "--no-learning"
+      ],
+      "console": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/B0-2.console.log",
+      "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d",
+      "started_at": "2026-10-20T15:54:27.795258+00:00",
+      "pid": 85707,
+      "exit_code": 0,
+      "ended_at": "2026-10-20T16:05:13.555230+00:00",
+      "run_id": "research-58a7660dcd664de0b54760c64fa26cd1",
+      "run_path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-2/runs/research-58a7660dcd664de0b54760c64fa26cd1",
+      "archive_announcement": "Watch live: tail -f /Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-2/runs/research-58a7660dcd664de0b54760c64fa26cd1/trace.log",
+      "record": {
+        "run_id": "research-58a7660dcd664de0b54760c64fa26cd1",
+        "created_at": "2026-10-20T15:54:28.142335+00:00",
+        "learning": false,
+        "base_sha": "2a423027212fe1c430dfd200bdd55f3a27b22d70",
+        "lineage": "lineage-60240aa8c37546a3ba07e848389375af",
+        "return_branch": "round3-start",
+        "task_id": "5f579a96530b9d0b8eaa08f9",
+        "config": {
+          "models": {
+            "root": "gpt-6-astra",
+            "sub": "gpt-6-astra",
+            "refine": "gpt-6-astra",
+            "judge": "gpt-6-astra",
+            "reasoning_effort": null
+          },
+          "codex": {
+            "bin": "codex",
+            "max_concurrent": 4,
+            "timeout_s": 600.0,
+            "max_retries": 4,
+            "retry_delay_cap_s": 60.0,
+            "log_full_text": false
+          },
+          "rlm": {
+            "max_iterations": 30,
+            "max_depth": 2
+          },
+          "agent": {
+            "task_timeout_s": 3600.0,
+            "max_codex_calls": 300,
+            "as_of": "2026-10-18"
+          },
+          "data": {
+            "seed": 42,
+            "languages": [
+              "en",
+              "zh"
+            ]
+          },
+          "wandr": {
+            "final_n_tasks": 50,
+            "seed": 42
+          },
+          "harness": {
+            "retrieval_limit": 10
+          },
+          "stream": {
+            "rolling_window": 10
+          },
+          "refine": {
+            "max_edits": 2
+          },
+          "bridge": {
+            "socket_timeout_s": 5.0
+          },
+          "verify": {
+            "codex_timeout_s": 30.0,
+            "browser_timeout_s": 120.0
+          }
+        },
+        "status": "complete",
+        "harness_head": "71cb0b9b362192c258f46acfd2e01587179a5e6c",
+        "error": null
+      },
+      "archive_hashes": {
+        "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/B0-2.archive_hashes.json",
+        "bytes": 101651,
+        "sha256": "7d9a25c33b251ac4ee393a7e93f270b9278027ad0da664c662861944087123ac"
+      },
+      "source_unchanged": true
+    },
+    "B1-frozen-3": {
+      "status": "complete",
+      "workspace": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-3",
+      "isolation": {
+        "commands": [
+          [
+            "git",
+            "clone",
+            "--no-hardlinks",
+            "--no-local",
+            "--no-checkout",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/harness",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-3/harness"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-3/harness",
+            "checkout",
+            "-q",
+            "-b",
+            "round3-start",
+            "e37fab78867ade934708523fdec324332c893015"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-3/harness",
+            "config",
+            "user.name",
+            "Round 3 research"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-3/harness",
+            "config",
+            "user.email",
+            "round3@localhost"
+          ]
+        ],
+        "source_harness": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/harness",
+        "workspace": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-3",
+        "base_sha": "e37fab78867ade934708523fdec324332c893015",
+        "state": {
+          "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-3/harness/harness_state.json",
+          "bytes": 24359,
+          "sha256": "ca10f577b32de7c33ba7418ec5d125316c3ad42deb4a35337a35961a90a71dcb"
+        },
+        "full_clone": true,
+        "alternates": false,
+        "hardlinks": false,
+        "cache_note": "Each task also owns tool_cache.json beneath this workspace/runs."
+      },
+      "task_id": "5f579a96530b9d0b8eaa08f9",
+      "task_file": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/inputs/B.task.json",
+      "base_sha": "e37fab78867ade934708523fdec324332c893015",
+      "learning": false,
+      "command": [
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/loop-research",
+        "--root",
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-3",
+        "--config",
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/inputs/config.json",
+        "research",
+        "Nobel Prize in Physics laureates 2015-2024",
+        "--columns",
+        "laureate",
+        "--columns",
+        "year",
+        "--columns",
+        "nationality",
+        "--columns",
+        "affiliation_at_award",
+        "--columns",
+        "prize_motivation",
+        "--keys",
+        "laureate",
+        "--keys",
+        "year",
+        "--language",
+        "en",
+        "--trace",
+        "--base",
+        "e37fab78867ade934708523fdec324332c893015",
+        "--no-learning"
+      ],
+      "console": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/B1-frozen-3.console.log",
+      "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d",
+      "started_at": "2026-10-20T15:59:59.274345+00:00",
+      "pid": 88251,
+      "exit_code": 0,
+      "ended_at": "2026-10-20T17:28:58.597939+00:00",
+      "run_id": "research-4b47e8f016ee4c879180c9a0eaec503d",
+      "run_path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-3/runs/research-4b47e8f016ee4c879180c9a0eaec503d",
+      "archive_announcement": "Watch live: tail -f /Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-3/runs/research-4b47e8f016ee4c879180c9a0eaec503d/trace.log",
+      "record": {
+        "run_id": "research-4b47e8f016ee4c879180c9a0eaec503d",
+        "created_at": "2026-10-20T15:59:59.540731+00:00",
+        "learning": false,
+        "base_sha": "e37fab78867ade934708523fdec324332c893015",
+        "lineage": "lineage-ac886fa0919a48aa8a9032a31a47bd02",
+        "return_branch": "round3-start",
+        "task_id": "5f579a96530b9d0b8eaa08f9",
+        "config": {
+          "models": {
+            "root": "gpt-6-astra",
+            "sub": "gpt-6-astra",
+            "refine": "gpt-6-astra",
+            "judge": "gpt-6-astra",
+            "reasoning_effort": null
+          },
+          "codex": {
+            "bin": "codex",
+            "max_concurrent": 4,
+            "timeout_s": 600.0,
+            "max_retries": 4,
+            "retry_delay_cap_s": 60.0,
+            "log_full_text": false
+          },
+          "rlm": {
+            "max_iterations": 30,
+            "max_depth": 2
+          },
+          "agent": {
+            "task_timeout_s": 3600.0,
+            "max_codex_calls": 300,
+            "as_of": "2026-10-18"
+          },
+          "data": {
+            "seed": 42,
+            "languages": [
+              "en",
+              "zh"
+            ]
+          },
+          "wandr": {
+            "final_n_tasks": 50,
+            "seed": 42
+          },
+          "harness": {
+            "retrieval_limit": 10
+          },
+          "stream": {
+            "rolling_window": 10
+          },
+          "refine": {
+            "max_edits": 2
+          },
+          "bridge": {
+            "socket_timeout_s": 5.0
+          },
+          "verify": {
+            "codex_timeout_s": 30.0,
+            "browser_timeout_s": 120.0
+          }
+        },
+        "status": "complete",
+        "harness_head": "dd0526b77059e48524366171cbde26ae5dadfd2f",
+        "error": null
+      },
+      "archive_hashes": {
+        "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/B1-frozen-3.archive_hashes.json",
+        "bytes": 314837,
+        "sha256": "d57d71f81a0ccf1bcc1fd87d2980ea7d5b799b4ff0ddfe591006363107ad2d2e"
+      },
+      "source_unchanged": true
+    },
+    "B0-3": {
+      "status": "complete",
+      "workspace": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-3",
+      "isolation": {
+        "commands": [
+          [
+            "git",
+            "clone",
+            "--no-hardlinks",
+            "--no-local",
+            "--no-checkout",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/harness",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-3/harness"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-3/harness",
+            "checkout",
+            "-q",
+            "-b",
+            "round3-start",
+            "2a423027212fe1c430dfd200bdd55f3a27b22d70"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-3/harness",
+            "config",
+            "user.name",
+            "Round 3 research"
+          ],
+          [
+            "git",
+            "-C",
+            "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-3/harness",
+            "config",
+            "user.email",
+            "round3@localhost"
+          ]
+        ],
+        "source_harness": "/Users/mukeshreddypochamreddy/Desktop/loop-research/harness",
+        "workspace": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-3",
+        "base_sha": "2a423027212fe1c430dfd200bdd55f3a27b22d70",
+        "state": {
+          "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-3/harness/harness_state.json",
+          "bytes": 1722,
+          "sha256": "5031ab862ddcc418480fe8c645d190f43f7cd80f5548ab1e48d16add719baf29"
+        },
+        "full_clone": true,
+        "alternates": false,
+        "hardlinks": false,
+        "cache_note": "Each task also owns tool_cache.json beneath this workspace/runs."
+      },
+      "task_id": "5f579a96530b9d0b8eaa08f9",
+      "task_file": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/inputs/B.task.json",
+      "base_sha": "2a423027212fe1c430dfd200bdd55f3a27b22d70",
+      "learning": false,
+      "command": [
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/loop-research",
+        "--root",
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-3",
+        "--config",
+        "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/inputs/config.json",
+        "research",
+        "Nobel Prize in Physics laureates 2015-2024",
+        "--columns",
+        "laureate",
+        "--columns",
+        "year",
+        "--columns",
+        "nationality",
+        "--columns",
+        "affiliation_at_award",
+        "--columns",
+        "prize_motivation",
+        "--keys",
+        "laureate",
+        "--keys",
+        "year",
+        "--language",
+        "en",
+        "--trace",
+        "--base",
+        "2a423027212fe1c430dfd200bdd55f3a27b22d70",
+        "--no-learning"
+      ],
+      "console": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/B0-3.console.log",
+      "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d",
+      "started_at": "2026-10-20T16:05:13.721704+00:00",
+      "pid": 90784,
+      "exit_code": 0,
+      "ended_at": "2026-10-20T16:17:59.610307+00:00",
+      "run_id": "research-8e62d99eb287495aac445decfea874b7",
+      "run_path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-3/runs/research-8e62d99eb287495aac445decfea874b7",
+      "archive_announcement": "Watch live: tail -f /Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/B0-3/runs/research-8e62d99eb287495aac445decfea874b7/trace.log",
+      "record": {
+        "run_id": "research-8e62d99eb287495aac445decfea874b7",
+        "created_at": "2026-10-20T16:05:14.074489+00:00",
+        "learning": false,
+        "base_sha": "2a423027212fe1c430dfd200bdd55f3a27b22d70",
+        "lineage": "lineage-aaaa3dad81074db8a6b1f4a46b6c824f",
+        "return_branch": "round3-start",
+        "task_id": "5f579a96530b9d0b8eaa08f9",
+        "config": {
+          "models": {
+            "root": "gpt-6-astra",
+            "sub": "gpt-6-astra",
+            "refine": "gpt-6-astra",
+            "judge": "gpt-6-astra",
+            "reasoning_effort": null
+          },
+          "codex": {
+            "bin": "codex",
+            "max_concurrent": 4,
+            "timeout_s": 600.0,
+            "max_retries": 4,
+            "retry_delay_cap_s": 60.0,
+            "log_full_text": false
+          },
+          "rlm": {
+            "max_iterations": 30,
+            "max_depth": 2
+          },
+          "agent": {
+            "task_timeout_s": 3600.0,
+            "max_codex_calls": 300,
+            "as_of": "2026-10-18"
+          },
+          "data": {
+            "seed": 42,
+            "languages": [
+              "en",
+              "zh"
+            ]
+          },
+          "wandr": {
+            "final_n_tasks": 50,
+            "seed": 42
+          },
+          "harness": {
+            "retrieval_limit": 10
+          },
+          "stream": {
+            "rolling_window": 10
+          },
+          "refine": {
+            "max_edits": 2
+          },
+          "bridge": {
+            "socket_timeout_s": 5.0
+          },
+          "verify": {
+            "codex_timeout_s": 30.0,
+            "browser_timeout_s": 120.0
+          }
+        },
+        "status": "complete",
+        "harness_head": "e9591e926dd2906fd8958ae0697ec36449d32da8",
+        "error": null
+      },
+      "archive_hashes": {
+        "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/B0-3.archive_hashes.json",
+        "bytes": 100641,
+        "sha256": "243aec14d7fe7e3f559890f310b7ed694cdd98c618a309606581cf6d4b44d1ce"
+      },
+      "source_unchanged": true
+    }
+  }
+}

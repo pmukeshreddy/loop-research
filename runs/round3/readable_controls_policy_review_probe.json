@@ -1,0 +1,27 @@
+{
+  "scope": "Independent offline receipt-policy probe; no network/models or original archive writes",
+  "sources": {
+    "src/loop_research/page_fetch.py": "7cfb41684c44017ca707ce269c321b56f0a71505b750074ac88eef4478a5ce13",
+    "src/loop_research/repl_tools.py": "2df545b3d7b16a7abc684f9e22bb472e06c128f73934038d467941dae41113f2",
+    "src/loop_research/archive_audit.py": "f06fecdf12357c4f853f320f9639121d2c38d70d74eb8b4f4b334bd343b0532b",
+    "tests/test_readable_controls.py": "03e18c987b67b6e9d6478ff4b7659786b13ae5dd3744da45f3946e2ed4501d01"
+  },
+  "checks": [
+    {
+      "case": "complete invalid UTF-8 extraction receipt",
+      "result": "accepted as failed receipt",
+      "reason": "extraction_decode_error"
+    },
+    {
+      "case": "remove all extraction and parser metadata",
+      "result": "rejected",
+      "reason": "receipt_integrity",
+      "error": "Download extraction validation is missing"
+    },
+    {
+      "case": "invalid UTF-8 HTML before extraction",
+      "result": "accepted as legitimate failed receipt without extraction artifact",
+      "reason": "decode_error"
+    }
+  ]
+}

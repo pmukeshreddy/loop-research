@@ -1,0 +1,166 @@
+{
+  "reviewer": "fetch_review",
+  "reviewed_at": "2026-10-20T17:33:11.085131+00:00",
+  "status": "complete_no_blocking_findings",
+  "base_commit": "6dad1de3938ca4775fd8fb084cb1e73107fd89c6",
+  "worktree": "runs/round3/worktrees/readable-controls",
+  "source_hashes": {
+    "src/loop_research/codex_backend.py": "19aeb063f8a097881b224b5798cb364220d2d8bf6d8907ed2fbce671c4cb26df",
+    "src/loop_research/agent.py": "285d70518ef9cf1e4320722ba71c220b2e8248e365338d9f13e68fd08b69d7c5",
+    "tests/test_budget_visibility.py": "d3ec6e3f7aeffe2f4eb3510e981b6b12b0102071216e496adda2ccd9465fe35e",
+    "tests/test_comparison_inputs.py": "04c549411c8533797622264066cd2613ea3dba212fb20f4578f2a0948c58bb8e"
+  },
+  "root_cause_scope": {
+    "observed_gap": "The existing hard task deadline was enforced but requested budget() snapshots exposed only call reservations and allowance. The last snapshot still had78 calls while little task time remained.",
+    "observed_run": "research-d34b080d45ab4d4da1a026a2ecc21e39",
+    "snapshot_count": 17,
+    "last_snapshot": {
+      "line": 279,
+      "record": {
+        "type": "tool",
+        "tool": "budget",
+        "args": [],
+        "kwargs": {},
+        "result": {
+          "limit": 300,
+          "reserved": 222,
+          "remaining": 78
+        }
+      }
+    },
+    "last_budget_rpc_end": {
+      "timestamp": "2026-10-20T16:36:46.285951+00:00",
+      "component": "Bridge",
+      "event": "rpc.end",
+      "details": {
+        "span_id": "4966feea43ff44739cadfdb97cc260ed",
+        "method": "budget"
+      },
+      "duration_s": 0.00010300002759322524
+    },
+    "worker_timeout": {
+      "line": 3055,
+      "timestamp": "2026-10-20T16:36:58.447899+00:00",
+      "duration_s": 3599.985249582969
+    },
+    "civil_seconds_between_observed_events": 12.161948,
+    "timing_note": "Difference between archived budget RPC completion and Worker timeout event, not an exact measurement of the hidden monotonic remainder at snapshot time.",
+    "independent_other_failure_evidence": [
+      {
+        "line": 3028,
+        "call_id": "649743a09806478397998c3a31d07d3e",
+        "actual_chars": 2127326,
+        "error": "Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":2127326}\n\nMissing or empty final message"
+      },
+      {
+        "line": 3031,
+        "call_id": "7916960b6e614dc3acc73a7e91bd9911",
+        "actual_chars": 1456368,
+        "error": "Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1456368}\n\nMissing or empty final message"
+      }
+    ],
+    "causal_limit": "The archive does not prove absence of time visibility caused the timeout or that exposing it would prevent recurrence. Oversized agent-written research subprompts are separate failures; this patch does not split or truncate them.",
+    "evidence": [
+      {
+        "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-2/runs/research-d34b080d45ab4d4da1a026a2ecc21e39/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+        "line": 279,
+        "sha256": "afc90a03742519535d412be425b500411f4a9c88b229d23d16f4d9ada6bad95b",
+        "note": "Last explicit call-only budget result"
+      },
+      {
+        "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-2/runs/research-d34b080d45ab4d4da1a026a2ecc21e39/trace.jsonl",
+        "line": 3018,
+        "sha256": "b806ae42a7c140e9e0369c1bbddb0f16ce42395aea0f05a78df77d4d1a04c6ab",
+        "note": "Last budget RPC completion"
+      },
+      {
+        "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-2/runs/research-d34b080d45ab4d4da1a026a2ecc21e39/trace.jsonl",
+        "line": 3055,
+        "sha256": "b806ae42a7c140e9e0369c1bbddb0f16ce42395aea0f05a78df77d4d1a04c6ab",
+        "note": "Worker timeout at existing hard limit"
+      }
+    ]
+  },
+  "review_findings": [],
+  "implementation_assessment": {
+    "snapshot": "Under the existing reservation lock, adds seconds_remaining=max(0.0,self.deadline-time.monotonic()) to a fresh result dictionary. limit/reserved/remaining preserve their meanings. No count, limit or deadline mutation; no backend call or implicit reservation.",
+    "expiry": "Reports0.0 at/after deadline without snapshot failure; existing reserve()/remaining() enforcement still rejects expired work. Positive call allowance may remain at0seconds.",
+    "cancellation": "Unchanged Session dispatch cancellation checks reject budget access after worker closure and prevent new snapshot journaling. No new cancellation context or state is introduced.",
+    "forwarding_archival": "Existing worker budget() RPC forwards the complete dictionary. Actual worker test requests before/after a subcall and archives exactly those snapshots; only the subcall changes reservations.",
+    "root_parity": "Only static common resource-policy wording changes. No automatic dynamic time field is added to root model prompts or history. Actual first-root comparisons deliberately offset deadlines and forbid implicit snapshot() calls; equal task/harness inputs remain byte-identical across arms. This is parity within the new version, not equality with the old static guidance.",
+    "monotonic_semantics": "Contract explicitly says task deadline on its monotonic clock. It does not promise civil wall-time remaining across host suspension. Actual clock/enforcement unchanged.",
+    "generality": "No task/site-specific policy, timing threshold, limit increase, automatic fetch/model call, source selection, truncation, padding or finalization trigger. The researcher decides whether and when to inspect and act."
+  },
+  "static_resource_contract": {
+    "configured_limits_unchanged": true,
+    "before_chars": 902,
+    "after_chars": 1070,
+    "delta_chars": 168,
+    "before_sha256": "5214fa684d37a2e02e82661f63db9e9c70a1e1eb839f0295ce1045cf31e3e840",
+    "after_sha256": "7742b4962629a205e4b246954c81aa2dcea098dfb61822f2fa5cd665b9f8966c",
+    "tool_receipt": "e03f3b",
+    "note": "Measured with current default config, shared static text only. Initial first-root bytes intentionally differ from prior version by this common guidance change."
+  },
+  "verification": {
+    "independent_suite": {
+      "command": "PYTHONPATH=src /Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/python -m pytest -q tests/test_budget_visibility.py tests/test_comparison_inputs.py tests/test_worker.py tests/test_codex_backend.py",
+      "cwd": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/readable-controls",
+      "result": "62 passed in30.38s",
+      "exit_code": 0,
+      "tool_receipts": [
+        "104ff8",
+        "d635d1"
+      ],
+      "log_note": "Actual result retained in tool output; no separate original raw-log file claimed."
+    },
+    "independent_boundary_probe": {
+      "tool_receipt": "63b45a",
+      "source_sha256": "19aeb063f8a097881b224b5798cb364220d2d8bf6d8907ed2fbce671c4cb26df",
+      "clock_setup": "Monotonic starts100.25; task timeout30s; deadline130.25; reserve1 of4. Civil time.time patched to raise if read.",
+      "positive_probe": {
+        "monotonic": 112.5,
+        "seconds_remaining": 17.75
+      },
+      "at_deadline": {
+        "monotonic": 130.25,
+        "reserved": 1,
+        "remaining": 3,
+        "seconds_remaining": 0.0
+      },
+      "after_deadline": {
+        "monotonic": 140.0,
+        "reserved": 1,
+        "remaining": 3,
+        "seconds_remaining": 0.0
+      },
+      "returned_dictionary_mutation_did_not_change_deadline": true,
+      "expired_reservation_rejected": true,
+      "final_reserved": 1,
+      "final_deadline": 130.25,
+      "civil_clock_accesses": 0
+    },
+    "coverage": [
+      "Concurrent reservations preserve count consistency",
+      "In-flight and retried attempts counted unchanged",
+      "Resumed call count excludes refine/grade as before",
+      "Invalid budget arguments rejected without mutation",
+      "Cancelled session neither returns nor archives new budget value",
+      "Actual isolated worker forwarding and exact host trajectory snapshots",
+      "First-root parity despite distinct deadlines and prohibition on implicit snapshots"
+    ]
+  },
+  "preserved_scope": [
+    "No scheduler/FIFO/slot changes",
+    "No model/role/call-budget/task-timeout/iteration/depth changes",
+    "No deadline/cancellation/resume enforcement changes",
+    "No direct-fetch/readability-policy changes after6dad",
+    "No pinned RLM/formatter, evaluator, refiner transport or strict accounting changes",
+    "No automatic root metadata, history truncation, evidence suppression or new fetches"
+  ],
+  "limitations": [
+    "seconds_remaining is an observation at host RPC handling, not a reservation or completion guarantee; work may consume time before the model acts.",
+    "The pre-existing monotonic clock may exclude suspended-host time on this platform; adding visibility does not alter clock behavior.",
+    "Static common tool guidance changes root prompt bytes by168 chars for default config. Within-version controlled-arm first-root parity remains verified.",
+    "No live replay/model/network/install/process control/source edits/commits were performed by this reviewer. No full suite claimed beyond62 focused tests."
+  ]
+}
