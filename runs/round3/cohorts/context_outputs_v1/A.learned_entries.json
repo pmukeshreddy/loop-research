@@ -1,0 +1,409 @@
+{
+  "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d",
+  "POST_A": "e37fab78867ade934708523fdec324332c893015",
+  "A_run_id": "research-14a1aac50cd9414fb7d4d42011e4e016",
+  "A_ended_at": "2026-10-20T15:06:04.107699+00:00",
+  "created_at": "2026-10-20T15:07:08.983595+00:00",
+  "base": "2a423027212fe1c430dfd200bdd55f3a27b22d70",
+  "changes": [
+    {
+      "key": "memory:bf8ebe4929de4c4493017583193abedc",
+      "action": "update",
+      "before": {
+        "id": "bf8ebe4929de4c4493017583193abedc",
+        "kind": "memory",
+        "created_at": "2026-10-19T00:28:28.058432+00:00",
+        "usage": [],
+        "outcomes": [],
+        "version": 1,
+        "module": null,
+        "title": "Inspect search results before recording discoveries",
+        "body": "Empty discovery placeholders caused stalled_search issues even when later calls recorded entities for the same queries. After each search, inspect its results and record the actual newly discovered entity names once; for search_many, do this separately for each query in input order. Do not emit [] before inspecting results or assume a later record erases an earlier empty event. Use [] honestly when no new entities were found, including redundant verification searches; do not invent discoveries to suppress a stall warning.",
+        "trigger": "after task",
+        "evidence": [
+          "research-3265370f49e64ebbbc3c3bf0c24af6de/1109eb057f25ad2429b6e77e"
+        ],
+        "updated_at": "2026-10-19T00:28:28.058436+00:00",
+        "refinement_id": "refine_bf8ebe4929de4c4493017583193abedc"
+      },
+      "after": {
+        "id": "bf8ebe4929de4c4493017583193abedc",
+        "kind": "memory",
+        "created_at": "2026-10-19T00:28:28.058432+00:00",
+        "usage": [
+          {
+            "run_id": "research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993",
+            "version": 1,
+            "refinement_id": "refine_bf8ebe4929de4c4493017583193abedc"
+          }
+        ],
+        "outcomes": [
+          {
+            "run_id": "research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993",
+            "ok": true,
+            "issues": [],
+            "signals": [
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org chemistry 2016 press release"
+              },
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org chemistry 2017 press release"
+              },
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org chemistry 2018 press release"
+              },
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org chemistry 2019 press release"
+              },
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org chemistry 2020 press release"
+              },
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org chemistry 2022 press release"
+              },
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org chemistry 2023 press release"
+              },
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org chemistry 2024 press release"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel chemistry 2015 press release Swedish British citizen Tomas Lindahl Paul Modrich Aziz Sancar"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2016 laureates nationality citizenship Jean-Pierre Sauvage Sir J. Fraser Stoddart Bernard L. Feringa"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2017 laureates nationality citizenship Jacques Dubochet Joachim Frank Richard Henderson"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2018 laureates nationality citizenship Frances H. Arnold George P. Smith Sir Gregory P. Winter"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2019 laureates nationality citizenship John B. Goodenough M. Stanley Whittingham Akira Yoshino"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2020 laureates nationality citizenship Emmanuelle Charpentier Jennifer A. Doudna"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2021 laureates nationality citizenship Benjamin List David W.C. MacMillan"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2022 laureates nationality citizenship Carolyn R. Bertozzi Morten Meldal K. Barry Sharpless"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2023 laureates nationality citizenship Moungi G. Bawendi Louis E. Brus Aleksey Yekimov"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2024 laureates nationality citizenship David Baker Demis Hassabis John Jumper"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Frances H. Arnold nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "George P. Smith nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Sir Gregory P. Winter nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Carolyn R. Bertozzi nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "K. Barry Sharpless nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Moungi G. Bawendi nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Louis E. Brus nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "David Baker nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Demis Hassabis nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "John Jumper nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org/prizes/chemistry/2021/list/facts affiliation at the time of the award"
+              },
+              {
+                "type": "failed_fetch",
+                "operation": "fetch",
+                "url": "https://www.kva.se/en/news/nobelpriset-i-kemi-2015-2/",
+                "request_id": 1,
+                "source": "backend",
+                "reason": "redirect_loop",
+                "error": "https://www.kva.se/en/news/nobelpriset-i-kemi-2015-2/"
+              },
+              {
+                "type": "failed_fetch",
+                "operation": "fetch",
+                "url": "https://www.axios.com/2018/10/03/british-american-scientists-win-nobel-prize-chemistry",
+                "request_id": 21,
+                "source": "backend",
+                "reason": "http_status",
+                "error": "HTTP 403 for https://www.axios.com/2018/10/03/british-american-scientists-win-nobel-prize-chemistry"
+              },
+              {
+                "type": "failed_fetch",
+                "operation": "fetch",
+                "url": "https://www.princeton.edu/news/2021/10/06/idea-took-macmillan-wins-nobel-prize-opening-huge-new-field-chemistry",
+                "request_id": 25,
+                "source": "backend",
+                "reason": "http_status",
+                "error": "HTTP 403 for https://www.princeton.edu/news/2021/10/06/idea-took-macmillan-wins-nobel-prize-opening-huge-new-field-chemistry"
+              }
+            ],
+            "recorded_at": "2026-10-20T15:05:06.301186+00:00"
+          }
+        ],
+        "version": 2,
+        "module": null,
+        "title": "Record discoveries from inspected evidence without confusing verification with discovery",
+        "body": "Empty discovery placeholders previously caused stalled_search signals; later records do not erase earlier empty events. Inspect each search result group before recording discoveries, preserving search_many input order. If snippets lack names, distinguish that from an empty search: inspect the selected documents and attribute newly identified entities to their originating query before closing its discovery record. Keep a local ledger of entities and originating queries so names learned from fetched documents are not silently omitted from discovery bookkeeping. Record [] honestly for searches that only verify fields of already known entities; useful nationality or affiliation verification need not discover new people. Never invent discoveries or repeat known names merely to suppress a stall signal.",
+        "trigger": "after task",
+        "evidence": [
+          "research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993"
+        ],
+        "updated_at": "2026-10-20T15:06:03.681180+00:00",
+        "refinement_id": "refine_a18e5915593142928381d7cb6324578a"
+      }
+    },
+    {
+      "key": "skill:a3ae0f09db864545b6322e57285e5c5a",
+      "action": "create",
+      "before": null,
+      "after": {
+        "id": "a3ae0f09db864545b6322e57285e5c5a",
+        "kind": "skill",
+        "created_at": "2026-10-20T15:01:04.698295+00:00",
+        "usage": [
+          {
+            "run_id": "research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993",
+            "version": 1,
+            "refinement_id": "refine_a3ae0f09db864545b6322e57285e5c5a"
+          }
+        ],
+        "outcomes": [
+          {
+            "run_id": "research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993",
+            "ok": true,
+            "issues": [],
+            "signals": [
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org chemistry 2016 press release"
+              },
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org chemistry 2017 press release"
+              },
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org chemistry 2018 press release"
+              },
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org chemistry 2019 press release"
+              },
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org chemistry 2020 press release"
+              },
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org chemistry 2022 press release"
+              },
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org chemistry 2023 press release"
+              },
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org chemistry 2024 press release"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel chemistry 2015 press release Swedish British citizen Tomas Lindahl Paul Modrich Aziz Sancar"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2016 laureates nationality citizenship Jean-Pierre Sauvage Sir J. Fraser Stoddart Bernard L. Feringa"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2017 laureates nationality citizenship Jacques Dubochet Joachim Frank Richard Henderson"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2018 laureates nationality citizenship Frances H. Arnold George P. Smith Sir Gregory P. Winter"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2019 laureates nationality citizenship John B. Goodenough M. Stanley Whittingham Akira Yoshino"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2020 laureates nationality citizenship Emmanuelle Charpentier Jennifer A. Doudna"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2021 laureates nationality citizenship Benjamin List David W.C. MacMillan"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2022 laureates nationality citizenship Carolyn R. Bertozzi Morten Meldal K. Barry Sharpless"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2023 laureates nationality citizenship Moungi G. Bawendi Louis E. Brus Aleksey Yekimov"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Nobel Chemistry 2024 laureates nationality citizenship David Baker Demis Hassabis John Jumper"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Frances H. Arnold nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "George P. Smith nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Sir Gregory P. Winter nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Carolyn R. Bertozzi nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "K. Barry Sharpless nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Moungi G. Bawendi nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Louis E. Brus nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "David Baker nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "Demis Hassabis nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "John Jumper nationality citizenship Nobel"
+              },
+              {
+                "type": "stalled_search",
+                "query": "site.nobelprize.org/prizes/chemistry/2021/list/facts affiliation at the time of the award"
+              },
+              {
+                "type": "failed_fetch",
+                "operation": "fetch",
+                "url": "https://www.kva.se/en/news/nobelpriset-i-kemi-2015-2/",
+                "request_id": 1,
+                "source": "backend",
+                "reason": "redirect_loop",
+                "error": "https://www.kva.se/en/news/nobelpriset-i-kemi-2015-2/"
+              },
+              {
+                "type": "failed_fetch",
+                "operation": "fetch",
+                "url": "https://www.axios.com/2018/10/03/british-american-scientists-win-nobel-prize-chemistry",
+                "request_id": 21,
+                "source": "backend",
+                "reason": "http_status",
+                "error": "HTTP 403 for https://www.axios.com/2018/10/03/british-american-scientists-win-nobel-prize-chemistry"
+              },
+              {
+                "type": "failed_fetch",
+                "operation": "fetch",
+                "url": "https://www.princeton.edu/news/2021/10/06/idea-took-macmillan-wins-nobel-prize-opening-huge-new-field-chemistry",
+                "request_id": 25,
+                "source": "backend",
+                "reason": "http_status",
+                "error": "HTTP 403 for https://www.princeton.edu/news/2021/10/06/idea-took-macmillan-wins-nobel-prize-opening-huge-new-field-chemistry"
+              }
+            ],
+            "recorded_at": "2026-10-20T15:05:06.301186+00:00"
+          }
+        ],
+        "version": 1,
+        "module": null,
+        "title": "Recover failed primary-source pages through official alternate formats",
+        "body": "When a primary-source page fails to download, inspect the recorded failure and search for another official publication of the same material, including a downloadable PDF. Select an actual URL from search results, fetch it, and retain its text and URL together. Reuse successful downloads from the original batch. Group extraction by document when it covers several related entities, using an explicit nested schema. Check field coverage separately: a document may support names, dates, affiliations and award motivations without explicitly stating nationality or citizenship. Do not infer citizenship from birthplace or institutional location. Validate extracted quotations against the exact downloaded text before accepting records; PDF column layout and whitespace can affect verbatim quotations.",
+        "trigger": "Official Nobel press release PDFs were directly downloadable and provided grouped evidence for laureates, citizenship, affiliations, and motivations; a failed 2015 academy page was replaced by a PDF discovered through search. Use quote-membership checks after schema-validated extraction.",
+        "evidence": [
+          "research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993"
+        ],
+        "updated_at": "2026-10-20T15:01:04.698298+00:00",
+        "refinement_id": "refine_a3ae0f09db864545b6322e57285e5c5a"
+      }
+    },
+    {
+      "key": "memory:0cd43eafed82465b9daa74187dbc298d",
+      "action": "create",
+      "before": null,
+      "after": {
+        "id": "0cd43eafed82465b9daa74187dbc298d",
+        "kind": "memory",
+        "created_at": "2026-10-20T15:06:03.734279+00:00",
+        "usage": [],
+        "outcomes": [],
+        "version": 1,
+        "module": null,
+        "title": "Resolve semantic audit findings without narrowing the requested field",
+        "body": "A passing schema, quote-membership check, or constraint log does not establish semantic completeness. When an audit identifies additional historical affiliations or other omitted values, resolve the finding against the requested field definition and dated evidence. Do not dismiss concurrent or honorary affiliations solely because a preferred announcement omits them: 'affiliation at award' and 'affiliation listed by the awarding body' are different scopes. Verify whether the additional positions applied at the relevant date, then include supported values or document an evidence-based exclusion. An inconclusive follow-up search does not resolve the finding. Only mark the semantic constraint satisfied after this reconciliation.",
+        "trigger": "after task",
+        "evidence": [
+          "research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993"
+        ],
+        "updated_at": "2026-10-20T15:06:03.734284+00:00",
+        "refinement_id": "refine_0cd43eafed82465b9daa74187dbc298d"
+      }
+    }
+  ],
+  "complete_entry_objects": true
+}
