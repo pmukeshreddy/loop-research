@@ -1,0 +1,35 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_usage_journal_write_failure_can_be_retried_without_losing_the_read ____
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-54gropqk/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+task = Task(task_id='fixture', benchmark='widesearch', question='Hand-written fixture', spec={'columns': ['entity', 'value'], 'keys': ['entity']}, language='en', as_of_date=None, raw={})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x107e57b90>
+
+    def test_usage_journal_write_failure_can_be_retried_without_losing_the_read(ctx, task, monkeypatch):
+        harness = Harness(ctx.root / 'harness')
+        entry = harness.create('memory', 'Hand-written fixture', 'Inspect fixture facts.')
+        session = Session(task, ctx, harness, learning=False, backend=Replies())
+        save = ctx.save
+    
+        def unavailable(name, value):
+            if name == 'harness_usage.json':
+                raise OSError('archive unavailable')
+            return save(name, value)
+    
+        try:
+            monkeypatch.setattr(ctx, 'save', unavailable)
+            with pytest.raises(OSError, match='archive unavailable'):
+                session.retrieve()
+            monkeypatch.setattr(ctx, 'save', save)
+            assert session.retrieve() == [entry]
+>           assert ctx.load('harness_usage.json') == [{'kind': 'memory', 'id': entry['id'], 'version': 1,
+                                                      'refinement_id': entry['refinement_id']}]
+E                                                     AssertionError: assert None == [{'kind': 'memory', 'id': '9c5f1489619c4c0dbf7fb5c603ebc23e', 'version': 1, 'refinement_id': 'refine_754211886ba04fc18c09ee5a1e946291'}]
+E                                                      +  where None = load('harness_usage.json')
+E                                                      +    where load = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-54gropqk/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture').load
+
+tests/test_comparison_inputs.py:97: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_comparison_inputs.py::test_usage_journal_write_failure_can_be_retried_without_losing_the_read
+1 failed in 0.17s

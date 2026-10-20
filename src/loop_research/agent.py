@@ -195,6 +195,7 @@ def run_task(task, benchmark, session):
     prompt, asof, source = make_prompt(task, contract, entries, as_of=ctx.config.agent.as_of,
                                       config=ctx.config, date_archive=ctx.path / "as_of.json", learning=session.learning)
     root_prompt = prompt
+    ctx.save('prompt_metadata.json', {'context_type': 'str', 'context_total_length': len(prompt)})
     with ctx.trace.span("Prompt", "save", size_chars=len(prompt), size_bytes=len(prompt.encode()),
                         sha256=hashlib.sha256(prompt.encode()).hexdigest(), path=str(ctx.path / "prompt.txt")):
         (ctx.path / "prompt.txt").write_text(prompt)

@@ -37,6 +37,7 @@ class Session:
         self.finish_phase = state.get('finish_phase', 'pending')
         self.automatic_id = state.get('automatic_id', uuid4().hex)
         self.fatal = None if resume else state.get('fatal')
+        self.usage = ctx.load('harness_usage.json', [])
         self.refiner = Refiner(harness, ctx, CodexBackend(ctx), self.observation, enabled=learning)
         if ctx.cancellation is not None:
             ctx.cancellation.add_done_callback(lambda _: self.close_worker())
@@ -44,6 +45,20 @@ class Session:
     def close_worker(self):
         with self.lifecycle, self.tools.lock:
             self.research_ctx.cancellation.cancel()
+            self.harness.record_usage(self.usage, self.run_id)
+
+    def record_usage(self, entries):
+        # Keep the current run's bookkeeping out of subsequent researcher reads.
+        # The durable journal survives interruption; shutdown commits it before outcomes.
+        with self.lifecycle:
+            usage = list(self.usage)
+            for entry in entries:
+                use = {key: entry[key] for key in ('kind', 'id', 'version', 'refinement_id')}
+                if use not in usage:
+                    usage.append(use)
+            if usage != self.usage:
+                self.ctx.save('harness_usage.json', usage)
+                self.usage = usage
 
     def checkpoint(self):
         self.ctx.save('session_state.json', {'rollbacks': self.rollbacks, 'finish_phase': self.finish_phase,
@@ -92,7 +107,7 @@ class Session:
                     details['entries'] = [{'id': entry['id'], 'title': entry['title'],
                         'score': scores.get(entry['id'], 0.0),
                         'current_run': (entry['kind'], entry['id']) in current_keys} for entry in entries]
-            self.harness.record_usage(entries, self.run_id)
+            self.record_usage(entries)
             if trace.enabled:
                 details['head_after'] = self.harness.head
             return entries
@@ -218,7 +233,7 @@ class Session:
             if name == 'delete' and result is False:
                 self.refiner.audit('skipped_delete', reason='entry_missing', args=args, kwargs=kwargs)
             if name in {'read', 'get', 'list', 'search'} and result:
-                self.harness.record_usage(result if isinstance(result, list) else [result], self.run_id)
+                self.record_usage(result if isinstance(result, list) else [result])
             return result
         if method == 'refine.run':
             if len(args) > 1 or set(kwargs) - {'focus'}:

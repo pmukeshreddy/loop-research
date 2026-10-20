@@ -1,0 +1,389 @@
+FFFF...                                                                  [100%]
+=================================== FAILURES ===================================
+_ test_repeated_researcher_reads_keep_complete_prior_metadata_until_worker_closes _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-vgemst6i/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+task = Task(task_id='fixture', benchmark='widesearch', question='Hand-written fixture', spec={'columns': ['entity', 'value'], 'keys': ['entity']}, language='en', as_of_date=None, raw={})
+
+    def test_repeated_researcher_reads_keep_complete_prior_metadata_until_worker_closes(ctx, task):
+        harness = Harness(ctx.root / 'harness')
+        entry = harness.create('memory', 'Hand-written fixture', 'Check all fixture evidence.', id='existing')
+        harness.record_usage([entry], 'earlier/task')
+        harness.record_outcome('earlier/task', {'ok': False, 'issues': [{'type': 'missing_evidence'}]})
+        prior = harness.get('memory', entry['id'])
+        session = Session(task, ctx, harness, learning=False, backend=Replies('done'))
+        try:
+            assert session.retrieve() == [prior]
+            for method, args, expected in (
+                ('get', ['memory', 'existing'], prior),
+                ('read', ['memory', 'existing'], prior),
+                ('list', [], [prior]),
+                ('search', ['fixture'], [prior]),
+            ):
+>               assert session.dispatch('harness.' + method, args, {}) == expected
+E               AssertionError: assert {'id': 'exist...ad35d'}], ...} == {'id': 'exist...ad35d'}], ...}
+E                 
+E                 Omitting 12 identical items, use -vv to show
+E                 Differing items:
+E                 {'usage': [{'run_id': 'earlier/task', 'version': 1, 'refinement_id': 'refine_c1337c4b95af45ae87bca720011ad35d'}, {'run_id': 'unit/fixture', 'version': 1, 'refinement_id': 'refine_c1337c4b95af45ae87bca720011ad35d'}]} != {'usage': [{'run_id': 'earlier/task', 'version': 1, 'refinement_id': 'refine_c1337c4b95af45ae87bca720011ad35d'}]}
+E                 Use -v to get more diff
+
+tests/test_comparison_inputs.py:42: AssertionError
+___ test_pending_usage_survives_session_recreation_and_finish_is_idempotent ____
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-vgemst6i/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+task = Task(task_id='fixture', benchmark='widesearch', question='Hand-written fixture', spec={'columns': ['entity', 'value'], 'keys': ['entity']}, language='en', as_of_date=None, raw={})
+
+    def test_pending_usage_survives_session_recreation_and_finish_is_idempotent(ctx, task):
+        harness = Harness(ctx.root / 'harness')
+        entry = harness.create('memory', 'Hand-written fixture', 'Inspect fixture facts.')
+        session = Session(task, ctx, harness, learning=False, backend=Replies())
+        session.retrieve()
+        session.refiner.close()  # Simulate loss of the research session before worker shutdown.
+>       assert harness.get('memory', entry['id'])['usage'] == []
+E       AssertionError: assert [{'run_id': '...6a4ae263cf2'}] == []
+E         
+E         Left contains one more item: {'run_id': 'unit/fixture', 'version': 1, 'refinement_id': 'refine_1869e6e51be34e2bb11036a4ae263cf2'}
+E         Use -v to get more diff
+
+tests/test_comparison_inputs.py:64: AssertionError
+_ test_explicit_base_runs_change_only_complete_entries_in_actual_worker_inputs[False] _
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-vgemst6i/pytest-of-mukeshreddypochamreddy/pytest-0/test_explicit_base_runs_change0')
+config = Config(models=Models(root='offline-root', sub='offline-sub', refine='gpt-6-astra', judge='gpt-6-astra', reasoning_effo...Refine(max_edits=2), bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10bbab3b0>
+different_entries = False
+
+    @pytest.mark.parametrize('different_entries', [False, True])
+    def test_explicit_base_runs_change_only_complete_entries_in_actual_worker_inputs(
+            tmp_path, config, monkeypatch, different_entries):
+        config.agent.as_of = '2024-02-29'
+        config.models.root, config.models.sub = 'offline-root', 'offline-sub'
+        config.rlm.max_iterations = 1
+        harness = Harness(tmp_path / 'harness')
+        existing = harness.create('memory', 'Fixture evidence', 'Inspect fixture sources.', id='existing')
+        harness.record_usage([existing], 'earlier/task')
+        harness.record_outcome('earlier/task', {'ok': True, 'issues': []})
+        base = harness.head
+        original = harness.list()
+        backends = []
+    
+        def backend(ctx, *, budget=None):
+            result = OfflineBackend(lambda prompt, options: code_reply(final_code({'rows': []})))
+            result.budget = budget
+            backends.append(result)
+            return result
+    
+        monkeypatch.setattr(session_module, 'CodexBackend', backend)
+        first = stream.research(tmp_path, config, 'Fixture evidence', ['entity'], ['entity'], 'en',
+                                base=base, no_learning=True, trace=True)
+        if different_entries:
+            harness.create('skill', 'Fixture evidence procedure', 'Cross-check fixture evidence. ' * 50,
+                           id='learned', evidence=['earlier/task'])
+        second_base = harness.head
+        second_entries = harness.list()
+        second = stream.research(tmp_path, config, 'Fixture evidence', ['entity'], ['entity'], 'en',
+                                 base=second_base, no_learning=True, trace=True)
+        roots = [prompt for b in backends for prompt, options in b.calls if options['purpose'] == 'root']
+        assert len(roots) == 2
+        normalized = [entry_sections(prompt) for prompt in roots]
+        assert normalized[0][0] == normalized[1][0]
+        for result, initial, expected in zip((first, second), normalized, (original, second_entries)):
+            assert len(initial[1]) == 2
+            expected_by_id = {entry['id']: entry for entry in expected}
+            for section in initial[1]:
+>               assert {entry['id']: entry for entry in section} == expected_by_id
+E               AssertionError: assert {'existing': ...7905'}], ...}} == {'existing': ...7905'}], ...}}
+E                 
+E                 Differing items:
+E                 {'existing': {'id': 'existing', 'kind': 'memory', 'created_at': '2026-10-20T01:54:38.161652+00:00', 'usage': [{'run_id...df4a2a5df2/814af1f0aa9ce5d6e077fec8', 'version': 1, 'refinement_id': 'refine_6fb7b35b7c7b42bba41276278bfa7905'}], ...}} != {'existing': {'id': 'existing', 'kind': 'memory', 'created_at': '2026-10-20T01:54:38.161652+00:00', 'usage': [{'run_id': 'earlier/task', 'version': 1, 'refinement_id': 'refine_6fb7b35b7c7b42bba41276278bfa7905'}], ...}}
+E                 Use -v to get more diff
+
+tests/test_comparison_inputs.py:118: AssertionError
+----------------------------- Captured stdout call -----------------------------
+Watch live: tail -f /private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-vgemst6i/pytest-of-mukeshreddypochamreddy/pytest-0/test_explicit_base_runs_change0/runs/research-8b675530e7e44446abdc2adf4a2a5df2/trace.log
+# Research trace summary
+
+Run: `research-8b675530e7e44446abdc2adf4a2a5df2`
+
+Times are inclusive summed call durations; concurrent/nested calls overlap.
+
+| Component | Calls | Time (s) |
+| --- | ---: | ---: |
+| Bridge | 8 | 0.012 |
+| Config | 1 | 0.000 |
+| Harness | 2 | 0.047 |
+| Isolation | 1 | 0.085 |
+| Output | 3 | 0.000 |
+| Prompt | 2 | 0.000 |
+| REPL | 1 | 0.000 |
+| RLM | 1 | 0.502 |
+| RLM iteration | 1 | 0.012 |
+| RLM root | 1 | 0.010 |
+| Research | 1 | 1.324 |
+| Worker | 1 | 0.669 |
+
+## Connection map
+
+| Connection | Calls |
+| --- | ---: |
+| Bridge → RLM root | 1 |
+| CLI → Research | 1 |
+| RLM iteration → Bridge | 1 |
+| RLM root → Harness | 1 |
+| RLM root → REPL | 1 |
+| Research → Config | 1 |
+| Research → Harness | 1 |
+| Research → Isolation | 1 |
+| Research → Output | 3 |
+| Research → Prompt | 2 |
+| Research → Worker | 1 |
+| Worker → Bridge | 7 |
+| Worker → RLM | 1 |
+| Worker → RLM iteration | 1 |
+
+## Final cited table
+
+No rows returned.
+
+## Self-check issues
+
+- **empty_output** (1): [{"type": "empty_output"}]
+
+## Self-check signals
+
+None recorded.
+
+## Harness edits from refinement
+
+No edits applied.
+
+Watch live: tail -f /private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-vgemst6i/pytest-of-mukeshreddypochamreddy/pytest-0/test_explicit_base_runs_change0/runs/research-b2ebb1d110944a7390a7447d0404f24b/trace.log
+# Research trace summary
+
+Run: `research-b2ebb1d110944a7390a7447d0404f24b`
+
+Times are inclusive summed call durations; concurrent/nested calls overlap.
+
+| Component | Calls | Time (s) |
+| --- | ---: | ---: |
+| Bridge | 8 | 0.012 |
+| Config | 1 | 0.000 |
+| Harness | 2 | 0.045 |
+| Isolation | 1 | 0.084 |
+| Output | 3 | 0.000 |
+| Prompt | 2 | 0.000 |
+| REPL | 1 | 0.000 |
+| RLM | 1 | 0.502 |
+| RLM iteration | 1 | 0.012 |
+| RLM root | 1 | 0.010 |
+| Research | 1 | 1.315 |
+| Worker | 1 | 0.660 |
+
+## Connection map
+
+| Connection | Calls |
+| --- | ---: |
+| Bridge → RLM root | 1 |
+| CLI → Research | 1 |
+| RLM iteration → Bridge | 1 |
+| RLM root → Harness | 1 |
+| RLM root → REPL | 1 |
+| Research → Config | 1 |
+| Research → Harness | 1 |
+| Research → Isolation | 1 |
+| Research → Output | 3 |
+| Research → Prompt | 2 |
+| Research → Worker | 1 |
+| Worker → Bridge | 7 |
+| Worker → RLM | 1 |
+| Worker → RLM iteration | 1 |
+
+## Final cited table
+
+No rows returned.
+
+## Self-check issues
+
+- **empty_output** (1): [{"type": "empty_output"}]
+
+## Self-check signals
+
+None recorded.
+
+## Harness edits from refinement
+
+No edits applied.
+
+_ test_explicit_base_runs_change_only_complete_entries_in_actual_worker_inputs[True] _
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-vgemst6i/pytest-of-mukeshreddypochamreddy/pytest-0/test_explicit_base_runs_change1')
+config = Config(models=Models(root='offline-root', sub='offline-sub', refine='gpt-6-astra', judge='gpt-6-astra', reasoning_effo...Refine(max_edits=2), bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10bb885f0>
+different_entries = True
+
+    @pytest.mark.parametrize('different_entries', [False, True])
+    def test_explicit_base_runs_change_only_complete_entries_in_actual_worker_inputs(
+            tmp_path, config, monkeypatch, different_entries):
+        config.agent.as_of = '2024-02-29'
+        config.models.root, config.models.sub = 'offline-root', 'offline-sub'
+        config.rlm.max_iterations = 1
+        harness = Harness(tmp_path / 'harness')
+        existing = harness.create('memory', 'Fixture evidence', 'Inspect fixture sources.', id='existing')
+        harness.record_usage([existing], 'earlier/task')
+        harness.record_outcome('earlier/task', {'ok': True, 'issues': []})
+        base = harness.head
+        original = harness.list()
+        backends = []
+    
+        def backend(ctx, *, budget=None):
+            result = OfflineBackend(lambda prompt, options: code_reply(final_code({'rows': []})))
+            result.budget = budget
+            backends.append(result)
+            return result
+    
+        monkeypatch.setattr(session_module, 'CodexBackend', backend)
+        first = stream.research(tmp_path, config, 'Fixture evidence', ['entity'], ['entity'], 'en',
+                                base=base, no_learning=True, trace=True)
+        if different_entries:
+            harness.create('skill', 'Fixture evidence procedure', 'Cross-check fixture evidence. ' * 50,
+                           id='learned', evidence=['earlier/task'])
+        second_base = harness.head
+        second_entries = harness.list()
+        second = stream.research(tmp_path, config, 'Fixture evidence', ['entity'], ['entity'], 'en',
+                                 base=second_base, no_learning=True, trace=True)
+        roots = [prompt for b in backends for prompt, options in b.calls if options['purpose'] == 'root']
+        assert len(roots) == 2
+        normalized = [entry_sections(prompt) for prompt in roots]
+>       assert normalized[0][0] == normalized[1][0]
+E       AssertionError: assert '<system>\nYo...ES\n<entries>' == '<system>\nYo...ES\n<entries>'
+E         
+E         Skipping 8977 identical leading characters in diff, use -v to show
+E         Skipping 293 identical trailing characters in diff, use -v to show
+E         -  a str of 8354 total ch
+E         ?            ---
+E         +  a str of 6498 total ch
+E         ?           +++
+
+tests/test_comparison_inputs.py:113: AssertionError
+----------------------------- Captured stdout call -----------------------------
+Watch live: tail -f /private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-vgemst6i/pytest-of-mukeshreddypochamreddy/pytest-0/test_explicit_base_runs_change1/runs/research-06e5f2542ec54a918860c259d54193a4/trace.log
+# Research trace summary
+
+Run: `research-06e5f2542ec54a918860c259d54193a4`
+
+Times are inclusive summed call durations; concurrent/nested calls overlap.
+
+| Component | Calls | Time (s) |
+| --- | ---: | ---: |
+| Bridge | 8 | 0.012 |
+| Config | 1 | 0.000 |
+| Harness | 2 | 0.046 |
+| Isolation | 1 | 0.085 |
+| Output | 3 | 0.000 |
+| Prompt | 2 | 0.000 |
+| REPL | 1 | 0.000 |
+| RLM | 1 | 0.502 |
+| RLM iteration | 1 | 0.013 |
+| RLM root | 1 | 0.010 |
+| Research | 1 | 1.317 |
+| Worker | 1 | 0.672 |
+
+## Connection map
+
+| Connection | Calls |
+| --- | ---: |
+| Bridge → RLM root | 1 |
+| CLI → Research | 1 |
+| RLM iteration → Bridge | 1 |
+| RLM root → Harness | 1 |
+| RLM root → REPL | 1 |
+| Research → Config | 1 |
+| Research → Harness | 1 |
+| Research → Isolation | 1 |
+| Research → Output | 3 |
+| Research → Prompt | 2 |
+| Research → Worker | 1 |
+| Worker → Bridge | 7 |
+| Worker → RLM | 1 |
+| Worker → RLM iteration | 1 |
+
+## Final cited table
+
+No rows returned.
+
+## Self-check issues
+
+- **empty_output** (1): [{"type": "empty_output"}]
+
+## Self-check signals
+
+None recorded.
+
+## Harness edits from refinement
+
+No edits applied.
+
+Watch live: tail -f /private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-vgemst6i/pytest-of-mukeshreddypochamreddy/pytest-0/test_explicit_base_runs_change1/runs/research-103c4da8740a4bb682992a9f8188e50e/trace.log
+# Research trace summary
+
+Run: `research-103c4da8740a4bb682992a9f8188e50e`
+
+Times are inclusive summed call durations; concurrent/nested calls overlap.
+
+| Component | Calls | Time (s) |
+| --- | ---: | ---: |
+| Bridge | 8 | 0.012 |
+| Config | 1 | 0.000 |
+| Harness | 2 | 0.047 |
+| Isolation | 1 | 0.086 |
+| Output | 3 | 0.000 |
+| Prompt | 2 | 0.000 |
+| REPL | 1 | 0.000 |
+| RLM | 1 | 0.502 |
+| RLM iteration | 1 | 0.013 |
+| RLM root | 1 | 0.011 |
+| Research | 1 | 1.338 |
+| Worker | 1 | 0.668 |
+
+## Connection map
+
+| Connection | Calls |
+| --- | ---: |
+| Bridge → RLM root | 1 |
+| CLI → Research | 1 |
+| RLM iteration → Bridge | 1 |
+| RLM root → Harness | 1 |
+| RLM root → REPL | 1 |
+| Research → Config | 1 |
+| Research → Harness | 1 |
+| Research → Isolation | 1 |
+| Research → Output | 3 |
+| Research → Prompt | 2 |
+| Research → Worker | 1 |
+| Worker → Bridge | 7 |
+| Worker → RLM | 1 |
+| Worker → RLM iteration | 1 |
+
+## Final cited table
+
+No rows returned.
+
+## Self-check issues
+
+- **empty_output** (1): [{"type": "empty_output"}]
+
+## Self-check signals
+
+None recorded.
+
+## Harness edits from refinement
+
+No edits applied.
+
+=========================== short test summary info ============================
+FAILED tests/test_comparison_inputs.py::test_repeated_researcher_reads_keep_complete_prior_metadata_until_worker_closes
+FAILED tests/test_comparison_inputs.py::test_pending_usage_survives_session_recreation_and_finish_is_idempotent
+FAILED tests/test_comparison_inputs.py::test_explicit_base_runs_change_only_complete_entries_in_actual_worker_inputs[False]
+FAILED tests/test_comparison_inputs.py::test_explicit_base_runs_change_only_complete_entries_in_actual_worker_inputs[True]
+4 failed, 3 passed in 6.48s

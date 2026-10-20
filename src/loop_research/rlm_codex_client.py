@@ -246,6 +246,27 @@ class CodexRLM(RLM):
             finally:
                 details['iterations'] = self.trace_iteration
 
+    def _setup_prompt(self, prompt, root_prompt=None):
+        from rlm.core.types import QueryMetadata
+        messages = super()._setup_prompt(prompt, root_prompt=root_prompt)
+        metadata = QueryMetadata(prompt)
+        original = (f'Your context is a {metadata.context_type} of '
+                    f'{metadata.context_total_length} total characters. '
+                    'Each sub-LLM call can handle roughly ~100k tokens at once.')
+        if not messages[1]['content'].endswith(original):
+            raise RuntimeError('Pinned RLM context metadata framing changed')
+        # Only replace the generated suffix, never matching text in the user's task.
+        # Differing entry sizes should not introduce a second difference outside entries.
+        messages[1]['content'] = messages[1]['content'][:-len(original)] + (
+            f'Your context is a {metadata.context_type}. Inspect its size with Python len(context). '
+            'Each sub-LLM call can handle roughly ~100k tokens at once.')
+        if self.trace_enabled:
+            self.transport.call('trace', 'RLM', 'context_metadata', rlm_id=self.rlm_id,
+                                parent_rlm_id=self.parent_rlm_id, depth=self.depth,
+                                context_type=metadata.context_type,
+                                context_total_length=metadata.context_total_length)
+        return messages
+
     def _completion_turn(self, prompt, lm_handler, environment):
         self.trace_iteration += 1
         with self._observe('RLM iteration', 'iteration', iteration=self.trace_iteration):

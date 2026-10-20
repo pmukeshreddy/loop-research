@@ -175,7 +175,14 @@ def test_retrieval_trace_records_scores_without_changing_entries(ctx, task):
     last = read_jsonl(ctx.run_dir / 'trace.jsonl')[-1]['details']
     assert last['entries'][0]['score'] > 0 and last['entries'][0]['id'] == 'fixture'
     assert 'score' not in entries[0]
-    assert last['head_before'] != last['head_after']
+    assert last['head_before'] == last['head_after']
+    assert ctx.load('harness_usage.json') == [
+        {key: entries[0][key] for key in ('kind', 'id', 'version', 'refinement_id')}]
+    session.close_worker()
+    assert harness.head != last['head_after']
+    assert harness.get('memory', 'fixture')['usage'] == [
+        {'run_id': session.run_id, 'version': entries[0]['version'],
+         'refinement_id': entries[0]['refinement_id']}]
 
 
 def test_research_trace_prints_tail_before_isolation_and_saves_failure_summary(tmp_path, config, monkeypatch, capsys):
