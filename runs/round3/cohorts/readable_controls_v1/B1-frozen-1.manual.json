@@ -1,0 +1,698 @@
+{
+  "source_commit": "902abe33d06f64c426a65d55d5e600dd6d6a052a",
+  "prediction_commit": "2ecab945810592a7b9e084c3d3c5dc8b00a4f20a",
+  "analysis_contract": "answer-ready-v2",
+  "runs": {
+    "B1-frozen-1": {
+      "run_id": "research-0e56c7ff4cc94095ba24d90cfa7de92a",
+      "metrics": {
+        "S1_pre_answer_ready_validation": {
+          "value": 1,
+          "reason": "The final executed guard validates the schema, 28 unique identities, yearly coverage, all five nonempty cells, and exact quote membership at every cited URL before first readiness; 140 cells and 168 constraint checks.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Finalguard",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 275
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/trace.jsonl",
+              "note": "Firstrootready",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/trace.jsonl",
+                "bytes": 1334754,
+                "sha256": "32dcb59cab6637c1eab08e7ab0f4bb77e98771f26949b12039ffb1fbfd9978ea"
+              },
+              "line": 1873
+            }
+          ]
+        },
+        "S2_gap_exposed": {
+          "value": 1,
+          "reason": "The executed initial extraction identifies 26 missing nationality cells.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Actualpendingcells",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 34
+            }
+          ]
+        },
+        "S2_supplementary_unique_urls": {
+          "value": 52,
+          "reason": "49 successful initial nationality URLs plus 3 successful new Haldane URLs, all directed at exposed nationality gaps. Haldane’s complete value is eventually repaired.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "51initialnationalityrequests/2failures",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 66
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "5newHaldanefetches/2failures plusretainedIASreuse",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 93
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Validatedrepairapplied",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 95
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+              "note": "Full140-cell and allmanualevidence ledger",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                "bytes": 641853,
+                "sha256": "de0437f3cdf62b9922f9daca031e2a8517c64a6d01a77ed18d964e6a772ff812"
+              },
+              "line": 1
+            }
+          ]
+        },
+        "S3_quote_exception_blocks": {
+          "value": 0,
+          "reason": "No block terminated on a quotation-validation exception. The sole REPL failure is a provider input-limit rejection, counted separately.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/trace.jsonl",
+              "note": "NonquoteREPLerror",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/trace.jsonl",
+                "bytes": 1334754,
+                "sha256": "32dcb59cab6637c1eab08e7ab0f4bb77e98771f26949b12039ffb1fbfd9978ea"
+              },
+              "line": 1113
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+              "note": "Full140-cell and allmanualevidence ledger",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                "bytes": 641853,
+                "sha256": "de0437f3cdf62b9922f9daca031e2a8517c64a6d01a77ed18d964e6a772ff812"
+              },
+              "line": 1
+            }
+          ]
+        },
+        "S3_caught_printed_quote_failures": {
+          "value": 0,
+          "reason": "The initial 26 pending records are missing nationality fields, not quote failures. Later quote checks report no failures. The model’s empty-quote reconciliation proposal is not a failure record printed by an executed quotation check.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Actualpendingrecords",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 34
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Cleanextractionchecks",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 76
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Finalguard",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 275
+            }
+          ]
+        },
+        "S4_citation_violation_cells": {
+          "value": 0,
+          "reason": "All 140 final required cells have exact quote membership in every cited retained URL.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/output.json",
+              "note": "Submittedcells",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/output.json",
+                "bytes": 46790,
+                "sha256": "515f584ac0bb5bc66285c97a1a07720fba2f4f377a37620f00299d2008e7527b"
+              }
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+              "note": "Full140-cell and allmanualevidence ledger",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                "bytes": 641853,
+                "sha256": "de0437f3cdf62b9922f9daca031e2a8517c64a6d01a77ed18d964e6a772ff812"
+              },
+              "line": 1
+            }
+          ]
+        },
+        "V1_bare_quote_exception_blocks": {
+          "value": 0,
+          "reason": "No terminated quotation-exception blocks exist.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+              "note": "Full140-cell and allmanualevidence ledger",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                "bytes": 641853,
+                "sha256": "de0437f3cdf62b9922f9daca031e2a8517c64a6d01a77ed18d964e6a772ff812"
+              },
+              "line": 1
+            }
+          ]
+        },
+        "V1_bare_quote_exception_blocks_conditional": {
+          "value": null,
+          "reason": "S3=0; the conditional diagnostic is not exercised.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+              "note": "Full140-cell and allmanualevidence ledger",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                "bytes": 641853,
+                "sha256": "de0437f3cdf62b9922f9daca031e2a8517c64a6d01a77ed18d964e6a772ff812"
+              },
+              "line": 1
+            }
+          ]
+        },
+        "D0_duplicate_candidate_groups": {
+          "value": 1,
+          "reason": "One Haldane/nationality group has two received candidate items in a single batch. Other initial entity/field groups are unique; ordinary later single-record verification is excluded.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "BritishthenSloveniancandidates",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 70
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Executedfirstmutation",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 76
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+              "note": "Full140-cell and allmanualevidence ledger",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                "bytes": 641853,
+                "sha256": "de0437f3cdf62b9922f9daca031e2a8517c64a6d01a77ed18d964e6a772ff812"
+              },
+              "line": 1
+            }
+          ]
+        },
+        "D1_reconciled_before_mutation_groups": {
+          "value": 0,
+          "reason": "No reconciliation occurred before the Haldane group’s first mutation. The duplicate was noticed and reconciled later.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Firstmutationloop",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 76
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Laterduplicateprint",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 83
+            }
+          ]
+        },
+        "D2_destructive_overwrite_groups": {
+          "value": 1,
+          "reason": "Sequential valid candidate assignments replace British with Slovenian, dropping an explicitly supported component.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Orderedcandidates",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 70
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Assignmentorder",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 76
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+              "note": "Full140-cell and allmanualevidence ledger",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                "bytes": 641853,
+                "sha256": "de0437f3cdf62b9922f9daca031e2a8517c64a6d01a77ed18d964e6a772ff812"
+              },
+              "line": 1
+            }
+          ]
+        },
+        "D3_unresolved_overwrite_groups": {
+          "value": 0,
+          "reason": "The final British and Slovenian value restores the dropped British component. D2 remains 1.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Appliedvalidatedreconciliation",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 95
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/output.json",
+              "note": "FinalHaldanevalue",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/output.json",
+                "bytes": 46790,
+                "sha256": "515f584ac0bb5bc66285c97a1a07720fba2f4f377a37620f00299d2008e7527b"
+              }
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+              "note": "Full140-cell and allmanualevidence ledger",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                "bytes": 641853,
+                "sha256": "de0437f3cdf62b9922f9daca031e2a8517c64a6d01a77ed18d964e6a772ff812"
+              },
+              "line": 1
+            }
+          ]
+        },
+        "F1_failed_response_extraction_calls": {
+          "value": 0,
+          "reason": "Four failed fetches were exposed. Actual source payloads exclude their exact failed returns, including the rejected oversized audit. None of 33 successful subquery prompts contains FETCH_FAILED.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Explicitfilter",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 76
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Haldanefilterandretainedreuse",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 93
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Completefailedpayloadlocals",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 95
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+              "note": "Full140-cell and allmanualevidence ledger",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                "bytes": 641853,
+                "sha256": "de0437f3cdf62b9922f9daca031e2a8517c64a6d01a77ed18d964e6a772ff812"
+              },
+              "line": 1
+            }
+          ]
+        },
+        "F1_failed_response_extraction_calls_conditional": {
+          "value": 0,
+          "reason": "There are four failed fetches, so the conditional value is defined and equals 0.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+              "note": "Full140-cell and allmanualevidence ledger",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                "bytes": 641853,
+                "sha256": "de0437f3cdf62b9922f9daca031e2a8517c64a6d01a77ed18d964e6a772ff812"
+              },
+              "line": 1
+            }
+          ]
+        },
+        "R2_retained_download_reuse_blocks": {
+          "value": 9,
+          "reason": "Executed blocks 4–12 each substantively reuse earlier downloaded text or derived evidence without refetching that URL. This includes gap planning from prior extracted person/field records, actual reuse in the failed-query block, and the final guard. Each block is counted once.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Reuseiteration4: Extract all annual rows from earlier press-page downloads.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 34
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Reuseiteration5: Use earlier extracted pending fields/person/year records to select nationality searches and distinguish known entities.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 66
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Reuseiteration6: Extract nationalities from earlier successful supplementary downloads, excluding failed responses.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 76
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Reuseiteration7: Build submitted rows from earlier accepted cells and review their original sources.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 83
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Reuseiteration8: Whole-roster official-source check and Haldane evidence reconciliation.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 87
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Reuseiteration9: Reuse already fetched IAS page while fetching only new Haldane URLs.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 93
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Reuseiteration10: Apply prior Haldane repair and send a retained-source nationality audit; audit rejected after repair completed.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 95
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Reuseiteration11: Recover by batching complete prior sources without refetching them.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 105
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Reuseiteration12: Final schema/coverage/quote guard uses retained final cells and original source text.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 275
+            }
+          ]
+        },
+        "D1_reconciled_before_mutation_groups_conditional": {
+          "value": 0,
+          "reason": "D0=1; the exposed conditional count equals the raw count.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Firstmutationloop",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 76
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Laterduplicateprint",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 83
+            }
+          ]
+        },
+        "D2_destructive_overwrite_groups_conditional": {
+          "value": 1,
+          "reason": "D0=1; the exposed conditional count equals the raw count.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Orderedcandidates",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 70
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Assignmentorder",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 76
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+              "note": "Full140-cell and allmanualevidence ledger",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                "bytes": 641853,
+                "sha256": "de0437f3cdf62b9922f9daca031e2a8517c64a6d01a77ed18d964e6a772ff812"
+              },
+              "line": 1
+            }
+          ]
+        },
+        "D3_unresolved_overwrite_groups_conditional": {
+          "value": 0,
+          "reason": "D0=1; the exposed conditional count equals the raw count.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Appliedvalidatedreconciliation",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "bytes": 46519396,
+                "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+              },
+              "line": 95
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/output.json",
+              "note": "FinalHaldanevalue",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/output.json",
+                "bytes": 46790,
+                "sha256": "515f584ac0bb5bc66285c97a1a07720fba2f4f377a37620f00299d2008e7527b"
+              }
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+              "note": "Full140-cell and allmanualevidence ledger",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                "bytes": 641853,
+                "sha256": "de0437f3cdf62b9922f9daca031e2a8517c64a6d01a77ed18d964e6a772ff812"
+              },
+              "line": 1
+            }
+          ]
+        }
+      },
+      "semantic_review": {
+        "summary": "All 140 listed values have retained semantic support, including repaired Haldane British/Slovenian citizenship. Five separate concurrent-affiliation coverage concerns remain: four explicit award-era or dated roles (Kosterlitz, Genzel, Aspect, Hinton) and one undated institutional lead (Zeilinger). Supported values are distinct from exhaustive coverage; no established false value was identified.",
+        "evidence": [
+          {
+            "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+            "note": "Full140-cell and allmanualevidence ledger",
+            "file": {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+              "bytes": 641853,
+              "sha256": "de0437f3cdf62b9922f9daca031e2a8517c64a6d01a77ed18d964e6a772ff812"
+            },
+            "line": 1
+          },
+          {
+            "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+            "note": "Agent-imposedofficial-onlyscope",
+            "file": {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B1-frozen-1/runs/research-0e56c7ff4cc94095ba24d90cfa7de92a/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "bytes": 46519396,
+              "sha256": "b63506b33858aece58c8d7de89030e308429799f070c5bfcb7d03b44c16a2f4f"
+            },
+            "line": 87
+          }
+        ],
+        "counts": {
+          "semantically_supported_required_cells": {
+            "value": 140,
+            "reason": "Each listed value has retained support; this does not certify exhaustive affiliations.",
+            "evidence": [
+              {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                "note": "Full140-cell and allmanualevidence ledger",
+                "file": {
+                  "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                  "bytes": 641853,
+                  "sha256": "de0437f3cdf62b9922f9daca031e2a8517c64a6d01a77ed18d964e6a772ff812"
+                },
+                "line": 1
+              }
+            ]
+          },
+          "unresolved_semantic_cells": {
+            "value": 0,
+            "reason": "No unsupported listed value identified; five coverage concerns are reported separately.",
+            "evidence": [
+              {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                "note": "Full140-cell and allmanualevidence ledger",
+                "file": {
+                  "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                  "bytes": 641853,
+                  "sha256": "de0437f3cdf62b9922f9daca031e2a8517c64a6d01a77ed18d964e6a772ff812"
+                },
+                "line": 1
+              }
+            ]
+          },
+          "concurrent_affiliation_scope_concerns": {
+            "value": 5,
+            "reason": "Four concrete award-era or dated concurrent roles plus one undated institutional lead, not five proven false cells.",
+            "evidence": [
+              {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                "note": "Full140-cell and allmanualevidence ledger",
+                "file": {
+                  "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                  "bytes": 641853,
+                  "sha256": "de0437f3cdf62b9922f9daca031e2a8517c64a6d01a77ed18d964e6a772ff812"
+                },
+                "line": 1
+              }
+            ]
+          },
+          "proven_false_required_cells": {
+            "value": 0,
+            "reason": "No established false value identified from the retained corpus.",
+            "evidence": [
+              {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                "note": "Full140-cell and allmanualevidence ledger",
+                "file": {
+                  "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B1-frozen-1.review.json",
+                  "bytes": 641853,
+                  "sha256": "de0437f3cdf62b9922f9daca031e2a8517c64a6d01a77ed18d964e6a772ff812"
+                },
+                "line": 1
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

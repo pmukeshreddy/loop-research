@@ -1,0 +1,321 @@
+{
+  "source_commit": "902abe33d06f64c426a65d55d5e600dd6d6a052a",
+  "analysis_contract": "answer-ready-v2",
+  "runs": {
+    "B0-1": {
+      "run_id": "research-725dec1a6ddf4363936f1894a2bae175",
+      "metrics": {
+        "S1_pre_answer_ready_validation": {
+          "value": 1,
+          "reason": "Iteration 16 validates every required cell of the final 28-row output for nonempty value, sources and quote, then exact membership at every cited URL before the first answer_ready assignment.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Executed final block: full validation precedes readiness.",
+              "line": 168
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Final block completed without error.",
+              "line": 337
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/trace.jsonl",
+              "note": "First depth-0 code.end answer_ready=true.",
+              "line": 2412
+            }
+          ]
+        },
+        "S2_gap_exposed": {
+          "value": 1,
+          "reason": "Iteration 4 prints 26 wholly empty nationality cells. Iteration 8 additionally raises missing supported affiliation components.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "26 missing nationality fields.",
+              "line": 42
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Kajita ICRR and 2017 LIGO/VIRGO omissions exposed.",
+              "line": 116
+            }
+          ]
+        },
+        "S2_supplementary_unique_urls": {
+          "value": 76,
+          "reason": "74 successful distinct nationality-gap URLs plus the Kajita university and Caltech sources directed at explicitly omitted affiliations. Excludes three clean facts pages, UNESCO and Thouless Commons used only for quotation/context repair of already-supported values. The review retains all 81 new successful URLs after the gap with inclusion/exclusion reasons.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "78 nationality URLs returned: 74 success, four FETCH_FAILED.",
+              "line": 73
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Four later new sources; Kajita and Caltech qualify for field gaps.",
+              "line": 140
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+              "note": "manual_analysis.S2.url_inventory enumerates all 81 unique successful post-gap URLs and 76 inclusions."
+            }
+          ]
+        },
+        "S3_quote_exception_blocks": {
+          "value": 0,
+          "reason": "All 16 executed depth-0 blocks completed without a quotation-validation exception; caught/printed failure is recorded separately.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+              "note": "Audit blocks and complete trace inventory show zero root REPL errors."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/audits/B0-1.audit.json",
+              "note": "All 16 executed block records retained."
+            }
+          ]
+        },
+        "S3_caught_printed_quote_failures": {
+          "value": 1,
+          "reason": "Iteration 11 prints the nonempty Strickland motivation patch whose quote fails its PDF citation. It is printed once and repaired in iteration 12. The 26 wholly missing nationality cells count as gaps, not quote failures.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Nonempty patch lists HTML and PDF sources for one quote.",
+              "line": 147
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Patch evidence failures: [(10, prize_motivation)].",
+              "line": 151
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Replaces patch with verified shared motivation and revalidates sources.",
+              "line": 152
+            }
+          ]
+        },
+        "V1_bare_quote_exception_blocks": {
+          "value": 0,
+          "reason": "There are no terminated quote-guard blocks, hence no bare exception blocks.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+              "note": "manual_analysis.S3/V1 and audit blocks: zero quote-exception blocks."
+            }
+          ]
+        },
+        "V1_bare_quote_exception_blocks_conditional": {
+          "value": null,
+          "reason": "No quotation-exception exposure: S3=0, so diagnostic prediction is unexercised.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+              "note": "manual_analysis.V1 raw0/conditional null."
+            }
+          ]
+        },
+        "D0_duplicate_candidate_groups": {
+          "value": 0,
+          "reason": "Initial ten-table extraction yields 28 unique entity-year rows. Each nationality result/patch supplies one result per selected entity-field; later verification/repair of existing rows is excluded by the registration. No received or assembled batch has competing same-key/field candidates.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Initial batch assembly and candidate_rows construction.",
+              "line": 31
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "28 total extracted rows across ten years.",
+              "line": 42
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "One nationality result per missing row.",
+              "line": 76
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "One patch per selected row and field.",
+              "line": 139
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+              "note": "manual_analysis.D includes exact boundary and examined result sets."
+            }
+          ]
+        },
+        "D1_reconciled_before_mutation_groups": {
+          "value": 0,
+          "reason": "No duplicate-candidate group is exposed; zero raw groups reconciled under D1.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+              "note": "manual_analysis.D: D0=0."
+            }
+          ]
+        },
+        "D2_destructive_overwrite_groups": {
+          "value": 0,
+          "reason": "No duplicate-candidate group is exposed; sequential verification/repair is not recast as a duplicate overwrite.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+              "note": "manual_analysis.D: D0=0; all executed merge code retained."
+            }
+          ]
+        },
+        "D3_unresolved_overwrite_groups": {
+          "value": 0,
+          "reason": "No exposed duplicate group or D2 event; no unresolved D2 group at final submission.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+              "note": "manual_analysis.D and final per-cell review."
+            }
+          ]
+        },
+        "D1_reconciled_before_mutation_groups_conditional": {
+          "value": null,
+          "reason": "D0=0; duplicate reconciliation prediction unexercised.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+              "note": "manual_analysis.D."
+            }
+          ]
+        },
+        "D2_destructive_overwrite_groups_conditional": {
+          "value": null,
+          "reason": "D0=0; duplicate overwrite prediction unexercised.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+              "note": "manual_analysis.D."
+            }
+          ]
+        },
+        "D3_unresolved_overwrite_groups_conditional": {
+          "value": null,
+          "reason": "D0=0; unresolved duplicate overwrite prediction unexercised.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+              "note": "manual_analysis.D."
+            }
+          ]
+        },
+        "F1_failed_fetch_exposure": {
+          "value": 1,
+          "reason": "Four failed source downloads returned the exact sentinel FETCH_FAILED; three HTTP403 and one HTTP404.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Four exact failed returns in original fetch_many result.",
+              "line": 73
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+              "note": "manual_analysis.F1.failed_requests and errors retain each identity/reason."
+            }
+          ]
+        },
+        "F1_failed_response_extraction_calls": {
+          "value": 0,
+          "reason": "Every one of the 73 actual research subcall inputs was checked: none contains the exact FETCH_FAILED return. Source payload construction filters failures; there is genuine failed-fetch exposure.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Nationality evidence filters FETCH_FAILED.",
+              "line": 76
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "note": "Repair evidence filters FETCH_FAILED.",
+              "line": 139
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+              "note": "manual_analysis.F1.subcall_inventory binds each prompt hash, input size and failed-return check."
+            }
+          ]
+        },
+        "F1_failed_response_extraction_calls_conditional": {
+          "value": 0,
+          "reason": "Four failures expose F1; zero extraction/verification subcalls include a failed return.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+              "note": "manual_analysis.F1: failed exposure true, all73 inputs checked."
+            }
+          ]
+        },
+        "R2_retained_download_reuse_blocks": {
+          "value": 12,
+          "reason": "Executed blocks 4,5,7,8,9,10,11,12,13,14,15,16 substantively use earlier downloaded text or derived row evidence without refetching the qualifying source in that block. Derived identity/field data used to target research count; merely handling control indices/search hits does not. Each block counted once.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+              "note": "manual_analysis.R2 enumerates every qualifying block with trajectory/trace lines, reason and excluded blocks."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/audits/B0-1.audit.json",
+              "note": "Complete executed block code and source bindings."
+            }
+          ]
+        }
+      },
+      "semantic_review": {
+        "summary": "All 140 listed values are supported in their cited retained-source contexts; exact memberships also pass for every cited URL. No established false value, unresolved supported-component omission or concurrent-affiliation scope concern remains. This is a source-bound review, not an exhaustive new biography search. Hasselmann’s retrospective German-identity testimony and Strickland’s co-recipient motivation citation are explicitly qualified. Long PDF spans preserve the correct named affiliations despite interleaved surrounding columns.",
+        "evidence": [
+          {
+            "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+            "note": "semantic.cell_records contains all140 complete values/quotes, exact source offsets/hashes, individual judgments and qualifications."
+          },
+          {
+            "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/output.json",
+            "note": "Unchanged submitted output."
+          },
+          {
+            "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-1/runs/research-725dec1a6ddf4363936f1894a2bae175/5f579a96530b9d0b8eaa08f9/evidence.json",
+            "note": "Full retained original source text, including all cited contexts."
+          }
+        ],
+        "counts": {
+          "semantically_supported_required_cells": {
+            "value": 140,
+            "reason": "All28 rows x5 required cells individually reviewed against source context.",
+            "evidence": [
+              {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+                "note": "semantic.cell_records and resolved_model_findings."
+              }
+            ]
+          },
+          "unresolved_semantic_cells": {
+            "value": 0,
+            "reason": "No final listed value lacks support in its retained cited-source context.",
+            "evidence": [
+              {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+                "note": "semantic.cell_records and resolved_model_findings."
+              }
+            ]
+          },
+          "concurrent_affiliation_scope_concerns": {
+            "value": 0,
+            "reason": "Observed ICRR/LIGO omissions were repaired; no remaining concrete concurrent-affiliation omission established in the retained evidence.",
+            "evidence": [
+              {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-1.review.json",
+                "note": "semantic.cell_records and resolved_model_findings."
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

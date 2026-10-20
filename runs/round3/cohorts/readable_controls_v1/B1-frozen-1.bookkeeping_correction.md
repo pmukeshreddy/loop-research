@@ -1,0 +1,5 @@
+The original frozen1 review and manual files are preserved unchanged, with their hashes in the companion JSON. Its statements that the full harness state stayed byte-identical to POST_A and that there were no later commits were incorrect: the checkout had been restored after the run.
+
+`research.json` records run head `81af5affa7f3e45f6fc1fb0b047fe59332014d6a`. The three intervening commits record observation (`e11acbb8d32a2f6c240ceb3ba2624b134bdff351`), usage (`8952c837195fdc8af34bc73cd1bd86adb3e09786`) and self-check outcome (`81af5affa7f3e45f6fc1fb0b047fe59332014d6a`). Full state differs in `seen`, `usage`, `outcomes` and entry usage/outcome metadata. Only `harness_state.json` changed; all entry IDs, versions, bodies and other procedural fields are exactly unchanged.
+
+The correct conclusion is **three bookkeeping commits and no procedural changes**. The companion retains the exact full diff, state hashes, recorded head and original-report hashes. This reporting correction does not change archive evidence or manual behavior scores.

@@ -1,0 +1,476 @@
+{
+  "source_commit": "902abe33d06f64c426a65d55d5e600dd6d6a052a",
+  "analysis_contract": "answer-ready-v2",
+  "runs": {
+    "B0-2": {
+      "run_id": "research-937dfa8bc3dd4d89ba58820cb4b61c95",
+      "metrics": {
+        "S1_pre_answer_ready_validation": {
+          "value": 1,
+          "reason": "Executed all140cell/schema/key/source/quote checks before first answerready.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 279,
+              "note": "Final full guard then content/ready assignment; trace1904."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        },
+        "S2_gap_exposed": {
+          "value": 1,
+          "reason": "26required nationalitycells explicitly missing; Manabe remains empty after failedfetch.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 32,
+              "note": "Initial26missing nationalityfields."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 76,
+              "note": "Manabe empty with failed source explanation."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        },
+        "S2_supplementary_unique_urls": {
+          "value": 46,
+          "reason": "41successful URLs after26missingcells plus5targeted Mourou/Manabe supplements. Excludes Thouless quotecontext replacement and Genzel scopeconfirmation; all48postgap successfulURLs have inclusion reasons.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 32,
+              "note": "Gap exposure."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 66,
+              "note": "46URLbatch:41succeeded,5failed."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 79,
+              "note": "Dual-citizenship and empty-Manabe followups."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 87,
+              "note": "Supplementaryfetches."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 93,
+              "note": "MourouCV/Manabe repair."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        },
+        "S3_quote_exception_blocks": {
+          "value": 0,
+          "reason": "All14executed rootblocks inspected; none terminates with quotation exception.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 76,
+              "note": "Caught mismatch list printed, execution continued."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 279,
+              "note": "Final validation completed."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        },
+        "S3_caught_printed_quote_failures": {
+          "value": 6,
+          "reason": "Three nonempty quote/source failures printed in iteration7 and the same three failing cells printed again as diagnostics in iteration8. Missing emptycells are excluded.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 76,
+              "note": "Three mismatch observations."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 79,
+              "note": "Three repeated failing-cell diagnostics."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        },
+        "V1_bare_quote_exception_blocks": {
+          "value": 0,
+          "reason": "No terminated quote guard block.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 279,
+              "note": "All finalguards pass."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        },
+        "V1_bare_quote_exception_blocks_conditional": {
+          "value": null,
+          "reason": "N/A: S3_quote_exception_blocks=0.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 279,
+              "note": "No terminated quotation exception."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        },
+        "D0_duplicate_candidate_groups": {
+          "value": 0,
+          "reason": "No duplicate entity/field groups in actual assembled candidate sets.28initial,26nationality and3sequentialrepair records are eachunique; ordinary sequential repair excluded.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 32,
+              "note": "Initial extractioncollection."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 76,
+              "note": "Nationalitycollection."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 93,
+              "note": "Unique repairmap and rowassignments."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        },
+        "D1_reconciled_before_mutation_groups": {
+          "value": 0,
+          "reason": "No duplicate entity/field groups in actual assembled candidate sets.28initial,26nationality and3sequentialrepair records are eachunique; ordinary sequential repair excluded.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 32,
+              "note": "Initial extractioncollection."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 76,
+              "note": "Nationalitycollection."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 93,
+              "note": "Unique repairmap and rowassignments."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        },
+        "D2_destructive_overwrite_groups": {
+          "value": 0,
+          "reason": "No duplicate entity/field groups in actual assembled candidate sets.28initial,26nationality and3sequentialrepair records are eachunique; ordinary sequential repair excluded.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 32,
+              "note": "Initial extractioncollection."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 76,
+              "note": "Nationalitycollection."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 93,
+              "note": "Unique repairmap and rowassignments."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        },
+        "D3_unresolved_overwrite_groups": {
+          "value": 0,
+          "reason": "No duplicate entity/field groups in actual assembled candidate sets.28initial,26nationality and3sequentialrepair records are eachunique; ordinary sequential repair excluded.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 32,
+              "note": "Initial extractioncollection."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 76,
+              "note": "Nationalitycollection."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 93,
+              "note": "Unique repairmap and rowassignments."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        },
+        "D1_reconciled_before_mutation_groups_conditional": {
+          "value": null,
+          "reason": "N/A: D0=0; no duplicate candidate exposure.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 93,
+              "note": "Unique candidates before mutation."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        },
+        "D2_destructive_overwrite_groups_conditional": {
+          "value": null,
+          "reason": "N/A: D0=0; no duplicate candidate exposure.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 93,
+              "note": "Unique candidates before mutation."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        },
+        "D3_unresolved_overwrite_groups_conditional": {
+          "value": null,
+          "reason": "N/A: D0=0; no duplicate candidate exposure.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 93,
+              "note": "Unique candidates before mutation."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        },
+        "F1_failed_fetch_exposure": {
+          "value": 1,
+          "reason": "Five HTTP failures return exact FETCH_FAILED.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 66,
+              "note": "Five failed URLs printed."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        },
+        "F1_failed_response_extraction_calls": {
+          "value": 4,
+          "reason": "Four actual nationality extraction calls include exact FETCH_FAILED under sources[].text; one contains twofailures. Mixed successfulsources also present. Fivefailedrequests establishexposure.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 69,
+              "note": "Manabefailure payload."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 70,
+              "note": "Peebles+Quelozfailures payload."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 71,
+              "note": "Mouroufailure payload."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 73,
+              "note": "Aspectfailure payload."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        },
+        "F1_failed_response_extraction_calls_conditional": {
+          "value": 4,
+          "reason": "Four actual nationality extraction calls include exact FETCH_FAILED under sources[].text; one contains twofailures. Mixed successfulsources also present. Fivefailedrequests establishexposure.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 69,
+              "note": "Manabefailure payload."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 70,
+              "note": "Peebles+Quelozfailures payload."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 71,
+              "note": "Mouroufailure payload."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 73,
+              "note": "Aspectfailure payload."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        },
+        "R2_retained_download_reuse_blocks": {
+          "value": 10,
+          "reason": "Depth0iterations4,5,6,7,8,9,10,11,13,14 reuse earlier successful downloads or derivedrows withoutrefetching qualifyingURLs. Iteration12onlyliteral search preparation excluded.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 32,
+              "note": "Passes ten earlier complete press-release texts from evidence to structured extraction."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 36,
+              "note": "Reads earlier extracted rows to construct missing-nationality queries."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 66,
+              "note": "Copies earlier complete press releases into source_texts and reads derived rows to assemble nationality evidence."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 76,
+              "note": "Passes prior-block retained nationality texts and failed returns to extraction; validates derived citations against retained sources."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 79,
+              "note": "Reads and prints previously extracted failing nationality cells for diagnosis."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 87,
+              "note": "Checks prior nat_records quotes against retained source_texts before fetching distinct supplementary URLs."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 93,
+              "note": "Uses earlier Thouless/Manabe texts and accumulated nat_records/rows in repair and mutation; Mourou PDFs first downloaded here do not independently establish reuse."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 100,
+              "note": "Checks all accumulated cells then passes prior retained texts to four semantic audit subcalls."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 277,
+              "note": "Validates all earlier rows/quotes and registers168constraints using retained source_texts; new Genzel facts alone would not count."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/B0-2/runs/research-937dfa8bc3dd4d89ba58820cb4b61c95/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "line": 279,
+              "note": "Full final schema/key/value/quote/source validation reads accumulated rows and earlier source_texts before settingready."
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+              "note": "Full reviewed inventory, exact artifacts and classification."
+            }
+          ]
+        }
+      },
+      "semantic_review": {
+        "summary": "140listedvalues supported; no established falsevalue or unresolved listed-value support. Nine concurrent affiliation coverage concerns overlap supportedcells: source-local5dated+4temporal; commonv4 strengthens to8dated+1undated. Two omissions were explicitly exposed then dismissed by worker scope narrowing.",
+        "evidence": [
+          {
+            "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+            "note": "All140cellquotes/sourcecontexts and nine scopefindings; full hashes."
+          },
+          {
+            "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/common_coverage_evidence.v4.json",
+            "note": "Immutablecommon evidenceindex, eightdatedoneundated."
+          }
+        ],
+        "counts": {
+          "semantically_supported_required_cells": {
+            "value": 140,
+            "reason": "All140listed values reviewed against exactcitedsource context.",
+            "evidence": [
+              {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+                "note": "Per-cell and coverage inventories."
+              }
+            ]
+          },
+          "unresolved_semantic_cells": {
+            "value": 0,
+            "reason": "No unresolved support for the values actually listed; coverageconcerns countedseparately.",
+            "evidence": [
+              {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+                "note": "Per-cell and coverage inventories."
+              }
+            ]
+          },
+          "concurrent_affiliation_scope_concerns": {
+            "value": 9,
+            "reason": "Nine distinctaffiliationcells have source-localcoverageconcerns, five dated/fourtemporal; commonv4 gives eightdated/oneundated.",
+            "evidence": [
+              {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/B0-2.review.json",
+                "note": "Per-cell and coverage inventories."
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
