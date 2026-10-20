@@ -21,6 +21,29 @@ MODEL_ROLES = {"root": "root", "baseline": "root", "sub": "sub", "search": "sub"
 PURPOSES = set(MODEL_ROLES)
 _LIMIT = re.compile(r"rate.?limit|usage.limit|exceeded retry limit|exhausted.*credit|spend.cap|slow_down", re.I)
 _SLOT_TICKET = re.compile(r"wait-(\d+)-[0-9a-f]{32}")
+_TURN_START_INPUT_ERROR = re.compile(
+    r"Error: turn/start: turn/start failed: .* \(code -32602\), data: (\{.*\})")
+
+
+def _permanent_input_rejection(error):
+    """Recognize explicit provider metadata, never model or web content."""
+    if isinstance(error, str):
+        # Codex can report a rejected turn/start on stderr before any JSON event.
+        for line in error.splitlines():
+            match = _TURN_START_INPUT_ERROR.fullmatch(line.strip())
+            if match is None:
+                continue
+            try:
+                data = json.loads(match[1])
+            except json.JSONDecodeError:
+                continue
+            if _permanent_input_rejection({"code": -32602, "data": data}):
+                return True
+        return False
+    if not isinstance(error, dict) or error.get("code") != -32602:
+        return False
+    data = error.get("data")
+    return isinstance(data, dict) and data.get("input_error_code") == "input_too_large"
 
 
 def _live_slot_tickets(directory, own_ticket):
@@ -246,6 +269,7 @@ class CodexBackend:
                     if on_attempt is not None:
                         on_attempt({**attempt_event, "status": "dispatched", "error": None})
                     response, stdout, stderr, code, usage, terminal = "", "", "", None, None, []
+                    permanent_input_rejection = False
                     web_actions, web_events = [], []
                     trace_component = 'Codex backend (' + purpose + ')'
                     self.ctx.trace.emit(trace_component, 'exec.start', parent=self.ctx.trace.current.get(), **record)
@@ -253,6 +277,8 @@ class CodexBackend:
                         proc = self.runner(cmd, input=full, text=True, capture_output=True,
                                            cwd=cwd, env=env, timeout=timeout)
                         code, stdout, stderr = proc.returncode, proc.stdout or "", proc.stderr or ""
+                        if code:
+                            permanent_input_rejection = _permanent_input_rejection(stderr)
                     except (subprocess.TimeoutExpired, OSError) as exc:
                         stderr = str(exc)
                         if isinstance(exc, subprocess.TimeoutExpired):
@@ -283,7 +309,9 @@ class CodexBackend:
                             if event.get('type') == 'item.completed':
                                 web_actions.append(event['item'].get('action', {}))
                         if event.get("type") in ("error", "turn.failed"):
-                            terminal.append(str(event.get("error", event.get("message", event))))
+                            error = event.get("error", event.get("message", event))
+                            terminal.append(str(error))
+                            permanent_input_rejection |= _permanent_input_rejection(error)
                     if output.exists():
                         response = output.read_text()
                     failed = bool(code is None or code or terminal or _LIMIT.search(stderr) or not response.strip())
@@ -314,6 +342,10 @@ class CodexBackend:
                     if not failed:
                         return response
                     last = CodexError(cmd, code, record["error"])
+                    if permanent_input_rejection:
+                        # Archive and notify first; finally releases the slot.
+                        # Repeating this unchanged input cannot repair rejection.
+                        raise last
             finally:
                 slot.close()
             if attempt < retries:

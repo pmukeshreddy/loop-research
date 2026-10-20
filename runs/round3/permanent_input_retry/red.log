@@ -1,0 +1,70 @@
+FFF.........                                                             [100%]
+=================================== FAILURES ===================================
+_ test_permanent_provider_input_rejection_records_one_attempt_without_retry[cli_stderr] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-zt0mqe6o/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+channel = 'cli_stderr'
+
+    @pytest.mark.parametrize("channel", ["cli_stderr", "error_event", "turn_failed_event"])
+    def test_permanent_provider_input_rejection_records_one_attempt_without_retry(ctx, channel):
+        stdout = "" if channel == "cli_stderr" else json.dumps({
+            "type": "error" if channel == "error_event" else "turn.failed",
+            "error": STRUCTURED_ERROR,
+        })
+        stderr = INPUT_ERROR if channel == "cli_stderr" else ""
+        backend, error, budget, waits, events = run_failed(ctx, stdout, stderr)
+        records = read_jsonl(ctx.path / "codex_calls.jsonl")
+        # Repeating deterministic rejection wastes reservations and dispatches, even
+        # when the retries are configured and would otherwise be available.
+>       assert count_codex_calls(ctx.path) == budget.count == len(records) == 1
+E       AssertionError: assert 5 == 1
+E        +  where 5 = len([{'call_id': 'a8800d43a6f24e05b0f5a7c7b21e5454', 'timestamp': '2026-10-20T04:09:29.319898+00:00', 'purpose': 'refine',...f93fec80953fe5949', 'timestamp': '2026-10-20T04:09:29.323502+00:00', 'purpose': 'refine', 'model': 'gpt-6-astra', ...}])
+
+tests/test_codex_permanent_input.py:53: AssertionError
+_ test_permanent_provider_input_rejection_records_one_attempt_without_retry[error_event] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-zt0mqe6o/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+channel = 'error_event'
+
+    @pytest.mark.parametrize("channel", ["cli_stderr", "error_event", "turn_failed_event"])
+    def test_permanent_provider_input_rejection_records_one_attempt_without_retry(ctx, channel):
+        stdout = "" if channel == "cli_stderr" else json.dumps({
+            "type": "error" if channel == "error_event" else "turn.failed",
+            "error": STRUCTURED_ERROR,
+        })
+        stderr = INPUT_ERROR if channel == "cli_stderr" else ""
+        backend, error, budget, waits, events = run_failed(ctx, stdout, stderr)
+        records = read_jsonl(ctx.path / "codex_calls.jsonl")
+        # Repeating deterministic rejection wastes reservations and dispatches, even
+        # when the retries are configured and would otherwise be available.
+>       assert count_codex_calls(ctx.path) == budget.count == len(records) == 1
+E       AssertionError: assert 5 == 1
+E        +  where 5 = len([{'call_id': '5dddd9d4da094433b8514024b55f3935', 'timestamp': '2026-10-20T04:09:29.338782+00:00', 'purpose': 'refine',...89992832c538bceef', 'timestamp': '2026-10-20T04:09:29.342488+00:00', 'purpose': 'refine', 'model': 'gpt-6-astra', ...}])
+
+tests/test_codex_permanent_input.py:53: AssertionError
+_ test_permanent_provider_input_rejection_records_one_attempt_without_retry[turn_failed_event] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-zt0mqe6o/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+channel = 'turn_failed_event'
+
+    @pytest.mark.parametrize("channel", ["cli_stderr", "error_event", "turn_failed_event"])
+    def test_permanent_provider_input_rejection_records_one_attempt_without_retry(ctx, channel):
+        stdout = "" if channel == "cli_stderr" else json.dumps({
+            "type": "error" if channel == "error_event" else "turn.failed",
+            "error": STRUCTURED_ERROR,
+        })
+        stderr = INPUT_ERROR if channel == "cli_stderr" else ""
+        backend, error, budget, waits, events = run_failed(ctx, stdout, stderr)
+        records = read_jsonl(ctx.path / "codex_calls.jsonl")
+        # Repeating deterministic rejection wastes reservations and dispatches, even
+        # when the retries are configured and would otherwise be available.
+>       assert count_codex_calls(ctx.path) == budget.count == len(records) == 1
+E       AssertionError: assert 5 == 1
+E        +  where 5 = len([{'call_id': '72cace42582b463b88ba0d2bcb8aefb6', 'timestamp': '2026-10-20T04:09:29.346730+00:00', 'purpose': 'refine',...19402cea3e90cb6f4', 'timestamp': '2026-10-20T04:09:29.350054+00:00', 'purpose': 'refine', 'model': 'gpt-6-astra', ...}])
+
+tests/test_codex_permanent_input.py:53: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_codex_permanent_input.py::test_permanent_provider_input_rejection_records_one_attempt_without_retry[cli_stderr]
+FAILED tests/test_codex_permanent_input.py::test_permanent_provider_input_rejection_records_one_attempt_without_retry[error_event]
+FAILED tests/test_codex_permanent_input.py::test_permanent_provider_input_rejection_records_one_attempt_without_retry[turn_failed_event]
+3 failed, 9 passed in 0.09s

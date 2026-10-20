@@ -1,0 +1,106 @@
+FFF.........                                                             [100%]
+=================================== FAILURES ===================================
+_ test_permanent_provider_input_rejection_records_one_attempt_without_retry[cli_stderr] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-yfb2rsy3/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+channel = 'cli_stderr'
+
+    @pytest.mark.parametrize("channel", ["cli_stderr", "error_event", "turn_failed_event"])
+    def test_permanent_provider_input_rejection_records_one_attempt_without_retry(ctx, channel):
+        stdout = "" if channel == "cli_stderr" else json.dumps({
+            "type": "error" if channel == "error_event" else "turn.failed",
+            "error": STRUCTURED_ERROR,
+        })
+        stderr = INPUT_ERROR if channel == "cli_stderr" else ""
+        backend, error, budget, waits, events = run_failed(ctx, stdout, stderr)
+        records = read_jsonl(ctx.path / "codex_calls.jsonl")
+        # Repeating deterministic rejection wastes reservations and dispatches, even
+        # when the retries are configured and would otherwise be available.
+        assert count_codex_calls(ctx.path) == budget.count == len(records) == 1
+        assert waits == []
+        assert [event["status"] for event in events] == ["dispatched", "failed"]
+        assert events[0]["call_id"] == events[1]["call_id"] == records[0]["call_id"]
+        assert records[0]["attempt"] == 0
+        assert records[0]["response_chars"] == 0
+        assert "input_too_large" in records[0]["error"] == error.stderr_tail
+        if channel == "cli_stderr":
+            assert INPUT_ERROR in records[0]["error"]
+        assert records[0]["prompt_sha256"] == hashlib.sha256(
+            (INSTRUCTION + "unchanged input").encode()
+        ).hexdigest()
+>       assert not any(event["event"] == "retry" for event in read_jsonl(ctx.trace.path))
+                                                                         ^^^^^^^^^^^^^^
+E       AttributeError: 'Trace' object has no attribute 'path'
+
+tests/test_codex_permanent_input.py:65: AttributeError
+_ test_permanent_provider_input_rejection_records_one_attempt_without_retry[error_event] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-yfb2rsy3/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+channel = 'error_event'
+
+    @pytest.mark.parametrize("channel", ["cli_stderr", "error_event", "turn_failed_event"])
+    def test_permanent_provider_input_rejection_records_one_attempt_without_retry(ctx, channel):
+        stdout = "" if channel == "cli_stderr" else json.dumps({
+            "type": "error" if channel == "error_event" else "turn.failed",
+            "error": STRUCTURED_ERROR,
+        })
+        stderr = INPUT_ERROR if channel == "cli_stderr" else ""
+        backend, error, budget, waits, events = run_failed(ctx, stdout, stderr)
+        records = read_jsonl(ctx.path / "codex_calls.jsonl")
+        # Repeating deterministic rejection wastes reservations and dispatches, even
+        # when the retries are configured and would otherwise be available.
+        assert count_codex_calls(ctx.path) == budget.count == len(records) == 1
+        assert waits == []
+        assert [event["status"] for event in events] == ["dispatched", "failed"]
+        assert events[0]["call_id"] == events[1]["call_id"] == records[0]["call_id"]
+        assert records[0]["attempt"] == 0
+        assert records[0]["response_chars"] == 0
+        assert "input_too_large" in records[0]["error"] == error.stderr_tail
+        if channel == "cli_stderr":
+            assert INPUT_ERROR in records[0]["error"]
+        assert records[0]["prompt_sha256"] == hashlib.sha256(
+            (INSTRUCTION + "unchanged input").encode()
+        ).hexdigest()
+>       assert not any(event["event"] == "retry" for event in read_jsonl(ctx.trace.path))
+                                                                         ^^^^^^^^^^^^^^
+E       AttributeError: 'Trace' object has no attribute 'path'
+
+tests/test_codex_permanent_input.py:65: AttributeError
+_ test_permanent_provider_input_rejection_records_one_attempt_without_retry[turn_failed_event] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-yfb2rsy3/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+channel = 'turn_failed_event'
+
+    @pytest.mark.parametrize("channel", ["cli_stderr", "error_event", "turn_failed_event"])
+    def test_permanent_provider_input_rejection_records_one_attempt_without_retry(ctx, channel):
+        stdout = "" if channel == "cli_stderr" else json.dumps({
+            "type": "error" if channel == "error_event" else "turn.failed",
+            "error": STRUCTURED_ERROR,
+        })
+        stderr = INPUT_ERROR if channel == "cli_stderr" else ""
+        backend, error, budget, waits, events = run_failed(ctx, stdout, stderr)
+        records = read_jsonl(ctx.path / "codex_calls.jsonl")
+        # Repeating deterministic rejection wastes reservations and dispatches, even
+        # when the retries are configured and would otherwise be available.
+        assert count_codex_calls(ctx.path) == budget.count == len(records) == 1
+        assert waits == []
+        assert [event["status"] for event in events] == ["dispatched", "failed"]
+        assert events[0]["call_id"] == events[1]["call_id"] == records[0]["call_id"]
+        assert records[0]["attempt"] == 0
+        assert records[0]["response_chars"] == 0
+        assert "input_too_large" in records[0]["error"] == error.stderr_tail
+        if channel == "cli_stderr":
+            assert INPUT_ERROR in records[0]["error"]
+        assert records[0]["prompt_sha256"] == hashlib.sha256(
+            (INSTRUCTION + "unchanged input").encode()
+        ).hexdigest()
+>       assert not any(event["event"] == "retry" for event in read_jsonl(ctx.trace.path))
+                                                                         ^^^^^^^^^^^^^^
+E       AttributeError: 'Trace' object has no attribute 'path'
+
+tests/test_codex_permanent_input.py:65: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_codex_permanent_input.py::test_permanent_provider_input_rejection_records_one_attempt_without_retry[cli_stderr]
+FAILED tests/test_codex_permanent_input.py::test_permanent_provider_input_rejection_records_one_attempt_without_retry[error_event]
+FAILED tests/test_codex_permanent_input.py::test_permanent_provider_input_rejection_records_one_attempt_without_retry[turn_failed_event]
+3 failed, 9 passed in 0.08s

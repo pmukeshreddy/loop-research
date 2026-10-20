@@ -1,0 +1,45 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_selection_is_same_prefix_for_stream_and_baseline _____________
+
+config = Config(models=Models(root='gpt-6-astra', sub='gpt-6-astra', refine='gpt-6-astra', judge='gpt-6-astra', reasoning_effor...Refine(max_edits=2), bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0))
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-5548xhxv/pytest-of-mukeshreddypochamreddy/pytest-0/test_selection_is_same_prefix_0')
+
+    def test_selection_is_same_prefix_for_stream_and_baseline(config, tmp_path):
+        from loop_research.evaluation import select_tasks
+        adapter = WandrBenchmark(Path(__file__).resolve().parents[1], config)
+>       limited = select_tasks(adapter, config, 'wandr')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_baseline.py:185: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/loop_research/evaluation.py:45: in select_tasks
+    tasks = sorted(adapter.load_tasks(), key=lambda task: task.task_id)
+                   ^^^^^^^^^^^^^^^^^^^^
+src/loop_research/benchmarks/wandr/data.py:44: in load_tasks
+    instruction = row["instruction"] or (package / "instruction.md").read_text()
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/pathlib.py:1027: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/permanent-input/data/vendor/wandr/datasets/wandr/forbes-250-claims/instruction.md')
+mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/permanent-input/data/vendor/wandr/datasets/wandr/forbes-250-claims/instruction.md'
+
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/pathlib.py:1013: FileNotFoundError
+=========================== short test summary info ============================
+FAILED tests/test_baseline.py::test_selection_is_same_prefix_for_stream_and_baseline
+1 failed in 0.29s
