@@ -1,0 +1,287 @@
+Watch live: tail -f /Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/readable_controls_v1/workspaces/A/runs/research-a685a2c37ca948fa9d7ab1a551451ff2/trace.log
+# Research trace summary
+
+Run: `research-a685a2c37ca948fa9d7ab1a551451ff2`
+
+Times are inclusive summed call durations; concurrent/nested calls overlap.
+
+| Component | Calls | Time (s) |
+| --- | ---: | ---: |
+| Bridge | 332 | 1210.790 |
+| Codex backend (refine) | 13 | 365.207 |
+| Codex backend (root) | 16 | 242.546 |
+| Codex backend (search) | 31 | 437.006 |
+| Codex backend (sub) | 42 | 425.146 |
+| Config | 1 | 0.000 |
+| Direct fetch | 60 | 674.083 |
+| Harness | 21 | 0.534 |
+| Isolation | 1 | 0.152 |
+| Output | 5 | 0.018 |
+| Prompt | 2 | 0.000 |
+| REPL | 16 | 951.849 |
+| RLM | 1 | 1196.191 |
+| RLM iteration | 16 | 1195.402 |
+| RLM root | 16 | 243.478 |
+| RLM sub | 50 | 618.509 |
+| Refine | 4 | 261.020 |
+| Refiner context | 5 | 0.000 |
+| Refiner context worker | 0 | 0.000 |
+| Research | 1 | 1414.335 |
+| Worker | 1 | 1196.393 |
+| tools.check_constraint | 168 | 2.039 |
+| tools.fetch | 60 | 676.469 |
+| tools.fetch_many | 5 | 618.863 |
+| tools.record_discovery | 31 | 0.165 |
+| tools.search | 31 | 455.461 |
+| tools.search_many | 5 | 127.636 |
+
+## Connection map
+
+| Connection | Calls |
+| --- | ---: |
+| Bridge → Output | 1 |
+| Bridge → RLM root | 16 |
+| Bridge → RLM sub | 13 |
+| Bridge → Refine | 1 |
+| Bridge → tools.check_constraint | 168 |
+| Bridge → tools.fetch | 1 |
+| Bridge → tools.fetch_many | 5 |
+| Bridge → tools.record_discovery | 31 |
+| Bridge → tools.search | 1 |
+| Bridge → tools.search_many | 5 |
+| CLI → Research | 1 |
+| REPL → Bridge | 233 |
+| RLM iteration → Bridge | 16 |
+| RLM root → Codex backend (root) | 16 |
+| RLM root → Harness | 16 |
+| RLM root → REPL | 16 |
+| RLM root → Refine | 1 |
+| RLM sub → Codex backend (sub) | 42 |
+| RLM sub → RLM sub | 37 |
+| Refine → Codex backend (refine) | 1 |
+| Refine → Harness | 4 |
+| Research → Codex backend (refine) | 12 |
+| Research → Config | 1 |
+| Research → Harness | 1 |
+| Research → Isolation | 1 |
+| Research → Output | 4 |
+| Research → Prompt | 2 |
+| Research → Refine | 2 |
+| Research → Worker | 1 |
+| Worker → Bridge | 83 |
+| Worker → RLM | 1 |
+| Worker → RLM iteration | 16 |
+| tools.fetch → Direct fetch | 60 |
+| tools.fetch_many → tools.fetch | 59 |
+| tools.search → Codex backend (search) | 31 |
+| tools.search_many → tools.search | 30 |
+
+## Final cited table
+
+| laureate | year | nationality | affiliation_at_award | prize_motivation |
+| --- | --- | --- | --- | --- |
+| Tomas Lindahl [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | 2015 [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | Swedish [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | Francis Crick Institute and Cancer Research UK at Clare Hall Laboratory, Hertfordshire, UK [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | for mechanistic studies of DNA repair [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) |
+| Paul Modrich [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | 2015 [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | U.S. [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | Howard Hughes Medical Institute and Duke University School of Medicine, Durham, NC, USA [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | for mechanistic studies of DNA repair [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) |
+| Aziz Sancar [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | 2015 [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | U.S. and Turkish [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | University of North Carolina School of Medicine, Chapel Hill, NC, USA [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | for mechanistic studies of DNA repair [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) |
+| Jean-Pierre Sauvage [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | 2016 [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | French [3](<https://en.wikipedia.org/wiki/2016_Nobel_Prizes>) | University of Strasbourg, Strasbourg, France; National Center for Scientific Research (CNRS), France [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | for the design and synthesis of molecular machines [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) |
+| Sir J. Fraser Stoddart [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | 2016 [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | American and British [4](<https://s27388.pcdn.co/wp-content/uploads/2019/06/07-01-19-Stoddart-CV-full_website-version.pdf>) | Northwestern University, Evanston, IL, USA [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | for the design and synthesis of molecular machines [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) |
+| Bernard L. Feringa [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | 2016 [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | Dutch [5](<https://culturesciences.chimie.ens.fr/thematiques/chimie-organique/synthese-et-retrosynthese/prix-nobel-de-chimie-2016-les-machines>) | University of Groningen, the Netherlands [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | for the design and synthesis of molecular machines [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) |
+| Jacques Dubochet [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | 2017 [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | Swiss [7](<https://en.wikipedia.org/wiki/Jacques_Dubochet>) | University of Lausanne, Switzerland [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | for developing cryo-electron microscopy for the high-resolution structure determination of biomolecules in solution [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) |
+| Joachim Frank [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | 2017 [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | American and German [8](<https://en.wikipedia.org/wiki/Joachim_Frank>) | Columbia University, New York, USA [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | for developing cryo-electron microscopy for the high-resolution structure determination of biomolecules in solution [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) |
+| Richard Henderson [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | 2017 [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | British [9](<https://en.wikipedia.org/wiki/Richard_Henderson_%28biologist%29>) | MRC Laboratory of Molecular Biology, Cambridge, UK [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | for developing cryo-electron microscopy for the high-resolution structure determination of biomolecules in solution [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) |
+| Frances H. Arnold [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | 2018 [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | American [11](<https://en.wikipedia.org/wiki/Frances_Arnold>) | California Institute of Technology, Pasadena, USA [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | for the directed evolution of enzymes [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) |
+| George P. Smith [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | 2018 [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | American [12](<https://en.wikipedia.org/wiki/George_Smith_%28chemist%29>) | University of Missouri, Columbia, USA [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | for the phage display of peptides and antibodies [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) |
+| Sir Gregory P. Winter [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | 2018 [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | British [13](<https://en.wikipedia.org/wiki/Gregory_Winter>) | MRC Laboratory of Molecular Biology, Cambridge, UK [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | for the phage display of peptides and antibodies [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) |
+| John B. Goodenough [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | 2019 [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | American [15](<https://en.wikipedia.org/wiki/2019_Nobel_Prizes>) | The University of Texas at Austin, USA [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | for the development of lithium-ion batteries [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) |
+| M. Stanley Whittingham [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | 2019 [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | British-American [16](<https://en.wikipedia.org/wiki/M._Stanley_Whittingham>) | Binghamton University, State University of New York, USA [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | for the development of lithium-ion batteries [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) |
+| Akira Yoshino [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | 2019 [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | Japanese [17](<https://www.mediatheque.lindau-nobel.org/laureates/yoshino>) | Asahi Kasei Corporation, Tokyo, Japan; Meijo University, Nagoya, Japan [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | for the development of lithium-ion batteries [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) |
+| Emmanuelle Charpentier [18](<https://www.nobelprize.org/uploads/2020/10/press-chemistryprize2020.pdf>) | 2020 [18](<https://www.nobelprize.org/uploads/2020/10/press-chemistryprize2020.pdf>) | French [19](<https://mediatheque.lindau-nobel.org/laureates/charpentier>) | Max Planck Unit for the Science of Pathogens, Berlin, Germany [18](<https://www.nobelprize.org/uploads/2020/10/press-chemistryprize2020.pdf>) | for the development of a method for genome editing [18](<https://www.nobelprize.org/uploads/2020/10/press-chemistryprize2020.pdf>) |
+| Jennifer A. Doudna [18](<https://www.nobelprize.org/uploads/2020/10/press-chemistryprize2020.pdf>) | 2020 [18](<https://www.nobelprize.org/uploads/2020/10/press-chemistryprize2020.pdf>) | American [20](<https://www.kavliprize.org/bio/jennifer-a-doudna>) | University of California, Berkeley, USA; Howard Hughes Medical Institute [18](<https://www.nobelprize.org/uploads/2020/10/press-chemistryprize2020.pdf>) | for the development of a method for genome editing [18](<https://www.nobelprize.org/uploads/2020/10/press-chemistryprize2020.pdf>) |
+| Benjamin List [21](<https://www.nobelprize.org/uploads/2021/10/press-chemistryprize2021.pdf>) | 2021 [21](<https://www.nobelprize.org/uploads/2021/10/press-chemistryprize2021.pdf>) | German [22](<https://en.wikipedia.org/wiki/2021_Nobel_Prizes>) | Max Planck Institute for Coal Research, Mülheim an der Ruhr, Germany [21](<https://www.nobelprize.org/uploads/2021/10/press-chemistryprize2021.pdf>) | for the development of asymmetric organocatalysis [21](<https://www.nobelprize.org/uploads/2021/10/press-chemistryprize2021.pdf>) |
+| David W.C. MacMillan [21](<https://www.nobelprize.org/uploads/2021/10/press-chemistryprize2021.pdf>) | 2021 [21](<https://www.nobelprize.org/uploads/2021/10/press-chemistryprize2021.pdf>) | British and American [23](<https://www.princeton.edu/news/2021/10/06/idea-took-macmillan-wins-nobel-prize-opening-huge-new-field-chemistry>) | Princeton University, USA [21](<https://www.nobelprize.org/uploads/2021/10/press-chemistryprize2021.pdf>) | for the development of asymmetric organocatalysis [21](<https://www.nobelprize.org/uploads/2021/10/press-chemistryprize2021.pdf>) |
+| Carolyn R. Bertozzi [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | 2022 [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | American [25](<https://en.wikipedia.org/wiki/Carolyn_Bertozzi>) | Stanford University, CA, USA; Howard Hughes Medical Institute, USA [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | for the development of click chemistry and bioorthogonal chemistry [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) |
+| Morten Meldal [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | 2022 [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | Danish [26](<https://en.wikipedia.org/wiki/2022_Nobel_Prizes>) | University of Copenhagen, Denmark [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | for the development of click chemistry and bioorthogonal chemistry [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) |
+| K. Barry Sharpless [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | 2022 [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | American [26](<https://en.wikipedia.org/wiki/2022_Nobel_Prizes>) | Scripps Research, La Jolla, CA, USA [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | for the development of click chemistry and bioorthogonal chemistry [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) |
+| Moungi G. Bawendi [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | 2023 [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | Tunisian; American; French [28](<https://commons.wikimedia.org/wiki/Category%3AMoungi_Bawendi>) | Massachusetts Institute of Technology (MIT), Cambridge, MA, USA [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | for the discovery and synthesis of quantum dots [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) |
+| Louis E. Brus [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | 2023 [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | American [29](<https://elpais.com/ciencia/2023-10-04/premio-nobel-de-quimica.html>) | Columbia University, New York, NY, USA [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | for the discovery and synthesis of quantum dots [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) |
+| Aleksey Yekimov [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | 2023 [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | American; Russian [30](<https://mediatheque.lindau-nobel.org/laureates/yekimov>) | Nanocrystals Technology Inc., New York, NY, USA [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | for the discovery and synthesis of quantum dots [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) |
+| David Baker [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | 2024 [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | American [32](<https://www.lemonde.fr/sciences/article/2024/10/09/nobel-de-chimie-2024-l-intelligence-artificielle-encore-a-l-honneur_6347492_1650684.html>) | University of Washington, Seattle, WA, USA; Howard Hughes Medical Institute, USA [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | for computational protein design [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) |
+| Demis Hassabis [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | 2024 [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | British [32](<https://www.lemonde.fr/sciences/article/2024/10/09/nobel-de-chimie-2024-l-intelligence-artificielle-encore-a-l-honneur_6347492_1650684.html>) | Google DeepMind, London, UK [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | for protein structure prediction [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) |
+| John Jumper [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | 2024 [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | American [32](<https://www.lemonde.fr/sciences/article/2024/10/09/nobel-de-chimie-2024-l-intelligence-artificielle-encore-a-l-honneur_6347492_1650684.html>) | Google DeepMind, London, UK [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | for protein structure prediction [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) |
+
+## Self-check issues
+
+None recorded.
+
+## Self-check signals
+
+- **failed_fetch** (13): [{"type": "failed_fetch", "operation": "fetch", "url": "https://www.kva.se/en/news/nobelpriset-i-kemi-2015-2/", "request_id": 1, "source": "backend", "reason": "redirect_loop", "error": "https://www.kva.se/en/news/nobelpriset-i-kemi-2015-2/"}, {"type": "failed_fetch", "operation": "fetch", "url": "https://www.enseignementsup-recherche.gouv.fr/fr/jean-pierre-sauvage-prix-nobel-de-chimie-2016-49007", "request_id": 13, "source": "backend", "reason": "http_status", "error": "HTTP 403 for https://www.enseignementsup-recherche.gouv.fr/fr/jean-pierre-sauvage-prix-nobel-de-chimie-2016-49007"}, {"type": "failed_fetch", "operation": "fetch", "url": "https://www.axios.com/2018/10/03/british-american-scientists-win-nobel-prize-chemistry", "request_id": 22, "source": "backend", "reason": "http_status", "error": "HTTP 403 for https://www.axios.com/2018/10/03/british-american-scientists-win-nobel-prize-chemistry"}, {"type": "failed_fetch", "operation": "fetch", "url": "https://www.kva.se/en/news/nobelpriset-i-kemi-2017-2/", "request_id": 21, "source": "backend", "reason": "redirect_loop", "error": "https://www.kva.se/en/news/nobelpriset-i-kemi-2017-2/"}, {"type": "failed_fetch", "operation": "fetch", "url": "https://www.princeton.edu/news/2021/10/06/princetons-david-macmillan-receives-nobel-prize-chemistry", "request_id": 30, "source": "backend", "reason": "http_status", "error": "HTTP 403 for https://www.princeton.edu/news/2021/10/06/princetons-david-macmillan-receives-nobel-prize-chemistry"}, {"type": "failed_fetch", "operation": "fetch", "url": "https://www.prizeatlas.org/nobel-prize/chemistry/2020/emmanuelle-charpentier/", "request_id": 29, "source": "backend", "reason": "download_error", "error": "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'www.prizeatlas.org'. (_ssl.c:1010)"}, {"type": "failed_fetch", "operation": "fetch", "url": "https://www.investing.com/news/world-news/baker-hassabis-jumper-win-2024-nobel-prize-in-chemistry-3654883", "request_id": 42, "source": "backend", "reason": "http_status", "error": "HTTP 403 for https://www.investing.com/news/world-news/baker-hassabis-jumper-win-2024-nobel-prize-in-chemistry-3654883"}, {"type": "failed_fetch", "operation": "fetch", "url": "https://www.mdpi.com/about/announcements/9565", "request_id": 45, "source": "backend", "reason": "http_status", "error": "HTTP 403 for https://www.mdpi.com/about/announcements/9565"}, {"type": "failed_fetch", "operation": "fetch", "url": "https://www.washingtonpost.com/news/speaking-of-science/wp/2017/10/04/2017-nobel-prize-in-chemistry-won-by-jacques-dubochet-joachim-frank-and-richard-henderson/", "request_id": 20, "source": "backend", "reason": "download_error", "error": "[Errno 32] Broken pipe"}, {"type": "failed_fetch", "operation": "fetch", "url": "https://www.tap.info.tn/ar/Portal-Top-News-EN/17487435-president-saied", "request_id": 53, "source": "backend", "reason": "download_error", "error": "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)"}, {"type": "failed_fetch", "operation": "fetch", "url": "https://geniuses.club/genius/moungi-bawendi", "request_id": 58, "source": "backend", "reason": "http_status", "error": "HTTP 403 for https://geniuses.club/genius/moungi-bawendi"}, {"type": "failed_fetch", "operation": "fetch", "url": "https://vietnamtimes.thoidai.com.vn/who-is-alexei-ekimov-russian-born-quantum-dot-pioneer-wins-nobel-prize-in-chemistry-65780.html%26mobile%3Dyes%26amp%3D1", "request_id": 59, "source": "backend", "reason": "http_status", "error": "HTTP 404 for https://vietnamtimes.thoidai.com.vn/"}, {"type": "failed_fetch", "operation": "fetch", "url": "https://www.jeantet.ch/en/laureat/doctor-richard-henderson/", "request_id": 56, "source": "backend", "reason": "redirect_loop", "error": "https://www.jeantet.ch/en/laureat/doctor-richard-henderson/"}]
+- **stalled_search** (29): [{"type": "stalled_search", "query": "site.nobelprize.org chemistry 2016 prize press release"}, {"type": "stalled_search", "query": "site.nobelprize.org chemistry 2017 prize press release"}, {"type": "stalled_search", "query": "site.nobelprize.org chemistry 2018 prize press release"}, {"type": "stalled_search", "query": "site.nobelprize.org chemistry 2020 prize press release"}, {"type": "stalled_search", "query": "site.nobelprize.org chemistry 2021 prize press release"}, {"type": "stalled_search", "query": "site.nobelprize.org chemistry 2022 prize press release"}, {"type": "stalled_search", "query": "site.nobelprize.org chemistry 2023 prize press release"}, {"type": "stalled_search", "query": "site.nobelprize.org chemistry 2024 prize press release"}, {"type": "stalled_search", "query": "Nobel chemistry 2015 press release Lindahl Modrich Sancar citizens"}, {"type": "stalled_search", "query": "Nobel Chemistry 2016 Jean-Pierre Sauvage Sir J. Fraser Stoddart Bernard L. Feringa nationality citizenship"}, {"type": "stalled_search", "query": "Nobel Chemistry 2017 Jacques Dubochet Joachim Frank Richard Henderson nationality citizenship"}, {"type": "stalled_search", "query": "Nobel Chemistry 2018 Frances H. Arnold George P. Smith Sir Gregory P. Winter nationality citizenship"}, {"type": "stalled_search", "query": "Nobel Chemistry 2019 John B. Goodenough M. Stanley Whittingham Akira Yoshino nationality citizenship"}, {"type": "stalled_search", "query": "Nobel Chemistry 2020 Emmanuelle Charpentier Jennifer A. Doudna nationality citizenship"}, {"type": "stalled_search", "query": "Nobel Chemistry 2021 Benjamin List David W.C. MacMillan nationality citizenship"}, {"type": "stalled_search", "query": "Nobel Chemistry 2022 Carolyn R. Bertozzi Morten Meldal K. Barry Sharpless nationality citizenship"}, {"type": "stalled_search", "query": "Nobel Chemistry 2023 Moungi G. Bawendi Louis E. Brus Aleksey Yekimov nationality citizenship"}, {"type": "stalled_search", "query": "Nobel Chemistry 2024 David Baker Demis Hassabis John Jumper nationality citizenship"}, {"type": "stalled_search", "query": "Richard Henderson British Scottish biophysicist Nobel 2017"}, {"type": "stalled_search", "query": "Frances Arnold George Smith American Nobel chemistry 2018"}, {"type": "stalled_search", "query": "Jennifer Doudna American biochemist nationality"}, {"type": "stalled_search", "query": "Frances Arnold American chemical engineer nationality"}, {"type": "stalled_search", "query": "Fraser Stoddart British American citizenship"}, {"type": "stalled_search", "query": "Moungi Bawendi French Tunisian American nationality"}, {"type": "stalled_search", "query": "Alexey Ekimov Russian American citizenship Nobel 2023"}, {"type": "stalled_search", "query": "Richard Henderson nationality British biophysicist"}, {"type": "stalled_search", "query": "Moungi Bawendi \"citizenship\" French Tunisian American"}, {"type": "stalled_search", "query": "Aleksey Yekimov \"American\" \"Russian\" Nobel nationality"}, {"type": "stalled_search", "query": "site.nobelprize.org 2023 yekimov facts affiliation"}]
+
+## Harness edits from refinement
+
+```json
+{
+  "commit": "08e662ec91dda2e96c3515699a8d056b52381153",
+  "request_id": "0849400449214df2a7b23011586e18f6",
+  "job_id": "48e74973b1214300baea6c389394ddf2",
+  "edit": {
+    "action": "create",
+    "kind": "memory",
+    "id": null,
+    "title": "Validate exact source spans before accepting extracted cells",
+    "content": "PDF extraction can interleave columns and preserve long whitespace runs that model-generated quotations omit. Before inserting extracted cells into accumulated rows, require nonempty evidence and verify each quote occurs exactly in every cited fetched source. Keep failed cells pending. Repair by locating and slicing the original source text, preserving intervening text and whitespace, or use another fetched source. Recheck membership and whether the span supports the complete value; substring membership alone does not establish semantic support. A proposed repair is not a verified repair.",
+    "module": null
+  },
+  "operation_id": "refine_6bc3c4962d6e4eafab63ed0189268ec3"
+}
+```
+
+```json
+{
+  "commit": "b78f23073314fe6c2f9ad8277b943ec7af377e84",
+  "request_id": "0849400449214df2a7b23011586e18f6",
+  "job_id": "48e74973b1214300baea6c389394ddf2",
+  "edit": {
+    "action": "create",
+    "kind": "memory",
+    "id": null,
+    "title": "Reconcile duplicate entity records before updating cells",
+    "content": "Extraction batches may return multiple valid records for the same entity and field. Sequential assignment silently makes the last record win, potentially discarding supported citizenships or other multivalued facts. Group records by entity key and field before mutation, detect duplicates, and reconcile their evidence. Preserve supported complementary facts, distinguish citizenship from regional identity or ancestry, and investigate conflicting claims. Ensure the final cell's citation supports its complete value under the output contract; never concatenate unrelated quotations and present them as one contiguous source span.",
+    "module": null
+  },
+  "operation_id": "refine_b98beb481e414d02952f80dbd258928e"
+}
+```
+
+```json
+{
+  "commit": "e23dc24b573104902c38ebc58dd39d05c9189ba1",
+  "request_id": "f46cb2cf1b5f4971bad7764fbbcd4521",
+  "job_id": "a13083e09028499cbac309247a2de22c",
+  "edit": {
+    "action": "update",
+    "kind": "memory",
+    "id": "6bc3c4962d6e4eafab63ed0189268ec3",
+    "title": "Validate exact source spans before accepting extracted cells",
+    "content": "PDF extraction can interleave columns and preserve long whitespace runs that model-generated quotations omit. Before inserting extracted cells into accumulated rows, require nonempty values, evidence and source lists, and verify each quote occurs exactly in every cited fetched source. Stage updates until validation completes; keep failed cells pending. Report failures with the entity, field, source URL and failed condition rather than a bare assertion, so one mismatching citation can be diagnosed without repeating extraction. Repair by locating and slicing the original source text, preserving intervening text and whitespace, or use another fetched source. Remove a mismatching citation only when the remaining citation independently supports the complete value. Recheck membership and semantic support after repair; substring membership alone does not establish semantic support. A proposed repair is not a verified repair.",
+    "module": null
+  },
+  "operation_id": "refine_1524ebf72fdc4c2e91153ccd5e7fdf86"
+}
+```
+
+```json
+{
+  "commit": "d63478eec4f3acd9a71662e79a44183008a364d9",
+  "request_id": "f46cb2cf1b5f4971bad7764fbbcd4521",
+  "job_id": "a13083e09028499cbac309247a2de22c",
+  "edit": {
+    "action": "create",
+    "kind": "skill",
+    "id": null,
+    "title": "Recover evidence from partially failed fetch batches",
+    "content": "When a fetch batch mixes usable text with failures, retain successful downloads by URL and track failures separately; exclude failure sentinels from extraction evidence. Inventory unresolved entity-field pairs after extracting and validating the usable evidence. For each remaining gap, inspect cached text first, then search for and fetch a relevant alternative source. Search snippets are leads, not substitutes for fetched proof. Do not repeat the entire successful portion of a batch or treat retrieval failure as evidence that a fact is absent. Validate the replacement quote against its fetched source and confirm that it supports the complete requested value before closing the gap. A failed URL need not eventually succeed when another verified source resolves the claim.",
+    "module": null
+  },
+  "operation_id": "refine_f9d1625b7c1a49a7824cc94063b6be4c"
+}
+```
+
+
+Proposal: Preserve the existing discovery memory. Add two targeted memories for citation validation and duplicate extraction records; the snapshot does not establish a terminal submission failure.
+
+Proposal: Retain the discovery and reconciliation memories. Strengthen the existing source-validation memory with actionable failure diagnostics, and add a skill for recovering usable evidence from partially failed fetch batches. All supplied signal occurrences were reviewed; deterministic success does not erase recovered process failures.
+
+## Component errors
+
+- Direct fetch / download.end: FetchError: redirect_loop: https://www.kva.se/en/news/nobelpriset-i-kemi-2015-2/
+- Direct fetch / download.end: FetchError: http_status: HTTP 403 for https://www.enseignementsup-recherche.gouv.fr/fr/jean-pierre-sauvage-prix-nobel-de-chimie-2016-49007
+- Direct fetch / download.end: FetchError: http_status: HTTP 403 for https://www.axios.com/2018/10/03/british-american-scientists-win-nobel-prize-chemistry
+- Direct fetch / download.end: FetchError: redirect_loop: https://www.kva.se/en/news/nobelpriset-i-kemi-2017-2/
+- Direct fetch / download.end: FetchError: http_status: HTTP 403 for https://www.princeton.edu/news/2021/10/06/princetons-david-macmillan-receives-nobel-prize-chemistry
+- Direct fetch / download.end: FetchError: download_error: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'www.prizeatlas.org'. (_ssl.c:1010)
+- Direct fetch / download.end: FetchError: http_status: HTTP 403 for https://www.investing.com/news/world-news/baker-hassabis-jumper-win-2024-nobel-prize-in-chemistry-3654883
+- Direct fetch / download.end: FetchError: http_status: HTTP 403 for https://www.mdpi.com/about/announcements/9565
+- Direct fetch / download.end: FetchError: download_error: [Errno 32] Broken pipe
+- REPL / code.end: 
+AssertionError: 
+- Direct fetch / download.end: FetchError: download_error: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)
+- Direct fetch / download.end: FetchError: http_status: HTTP 403 for https://geniuses.club/genius/moungi-bawendi
+- Direct fetch / download.end: FetchError: http_status: HTTP 404 for https://vietnamtimes.thoidai.com.vn/
+- Direct fetch / download.end: FetchError: redirect_loop: https://www.jeantet.ch/en/laureat/doctor-richard-henderson/
+
+| laureate | year | nationality | affiliation_at_award | prize_motivation |
+| --- | --- | --- | --- | --- |
+| Tomas Lindahl [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | 2015 [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | Swedish [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | Francis Crick Institute and Cancer Research UK at Clare Hall Laboratory, Hertfordshire, UK [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | for mechanistic studies of DNA repair [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) |
+| Paul Modrich [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | 2015 [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | U.S. [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | Howard Hughes Medical Institute and Duke University School of Medicine, Durham, NC, USA [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | for mechanistic studies of DNA repair [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) |
+| Aziz Sancar [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | 2015 [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | U.S. and Turkish [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | University of North Carolina School of Medicine, Chapel Hill, NC, USA [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) | for mechanistic studies of DNA repair [1](<https://www.nobelprize.org/uploads/2018/06/press-31.pdf>) |
+| Jean-Pierre Sauvage [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | 2016 [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | French [3](<https://en.wikipedia.org/wiki/2016_Nobel_Prizes>) | University of Strasbourg, Strasbourg, France; National Center for Scientific Research (CNRS), France [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | for the design and synthesis of molecular machines [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) |
+| Sir J. Fraser Stoddart [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | 2016 [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | American and British [4](<https://s27388.pcdn.co/wp-content/uploads/2019/06/07-01-19-Stoddart-CV-full_website-version.pdf>) | Northwestern University, Evanston, IL, USA [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | for the design and synthesis of molecular machines [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) |
+| Bernard L. Feringa [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | 2016 [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | Dutch [5](<https://culturesciences.chimie.ens.fr/thematiques/chimie-organique/synthese-et-retrosynthese/prix-nobel-de-chimie-2016-les-machines>) | University of Groningen, the Netherlands [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) | for the design and synthesis of molecular machines [2](<https://www.nobelprize.org/uploads/2018/06/press-36.pdf>) |
+| Jacques Dubochet [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | 2017 [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | Swiss [7](<https://en.wikipedia.org/wiki/Jacques_Dubochet>) | University of Lausanne, Switzerland [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | for developing cryo-electron microscopy for the high-resolution structure determination of biomolecules in solution [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) |
+| Joachim Frank [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | 2017 [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | American and German [8](<https://en.wikipedia.org/wiki/Joachim_Frank>) | Columbia University, New York, USA [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | for developing cryo-electron microscopy for the high-resolution structure determination of biomolecules in solution [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) |
+| Richard Henderson [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | 2017 [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | British [9](<https://en.wikipedia.org/wiki/Richard_Henderson_%28biologist%29>) | MRC Laboratory of Molecular Biology, Cambridge, UK [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) | for developing cryo-electron microscopy for the high-resolution structure determination of biomolecules in solution [6](<https://www.nobelprize.org/prizes/chemistry/2017/press-release/1000/>) |
+| Frances H. Arnold [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | 2018 [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | American [11](<https://en.wikipedia.org/wiki/Frances_Arnold>) | California Institute of Technology, Pasadena, USA [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | for the directed evolution of enzymes [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) |
+| George P. Smith [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | 2018 [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | American [12](<https://en.wikipedia.org/wiki/George_Smith_%28chemist%29>) | University of Missouri, Columbia, USA [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | for the phage display of peptides and antibodies [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) |
+| Sir Gregory P. Winter [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | 2018 [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | British [13](<https://en.wikipedia.org/wiki/Gregory_Winter>) | MRC Laboratory of Molecular Biology, Cambridge, UK [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) | for the phage display of peptides and antibodies [10](<https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf>) |
+| John B. Goodenough [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | 2019 [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | American [15](<https://en.wikipedia.org/wiki/2019_Nobel_Prizes>) | The University of Texas at Austin, USA [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | for the development of lithium-ion batteries [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) |
+| M. Stanley Whittingham [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | 2019 [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | British-American [16](<https://en.wikipedia.org/wiki/M._Stanley_Whittingham>) | Binghamton University, State University of New York, USA [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | for the development of lithium-ion batteries [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) |
+| Akira Yoshino [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | 2019 [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | Japanese [17](<https://www.mediatheque.lindau-nobel.org/laureates/yoshino>) | Asahi Kasei Corporation, Tokyo, Japan; Meijo University, Nagoya, Japan [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) | for the development of lithium-ion batteries [14](<https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf>) |
+| Emmanuelle Charpentier [18](<https://www.nobelprize.org/uploads/2020/10/press-chemistryprize2020.pdf>) | 2020 [18](<https://www.nobelprize.org/uploads/2020/10/press-chemistryprize2020.pdf>) | French [19](<https://mediatheque.lindau-nobel.org/laureates/charpentier>) | Max Planck Unit for the Science of Pathogens, Berlin, Germany [18](<https://www.nobelprize.org/uploads/2020/10/press-chemistryprize2020.pdf>) | for the development of a method for genome editing [18](<https://www.nobelprize.org/uploads/2020/10/press-chemistryprize2020.pdf>) |
+| Jennifer A. Doudna [18](<https://www.nobelprize.org/uploads/2020/10/press-chemistryprize2020.pdf>) | 2020 [18](<https://www.nobelprize.org/uploads/2020/10/press-chemistryprize2020.pdf>) | American [20](<https://www.kavliprize.org/bio/jennifer-a-doudna>) | University of California, Berkeley, USA; Howard Hughes Medical Institute [18](<https://www.nobelprize.org/uploads/2020/10/press-chemistryprize2020.pdf>) | for the development of a method for genome editing [18](<https://www.nobelprize.org/uploads/2020/10/press-chemistryprize2020.pdf>) |
+| Benjamin List [21](<https://www.nobelprize.org/uploads/2021/10/press-chemistryprize2021.pdf>) | 2021 [21](<https://www.nobelprize.org/uploads/2021/10/press-chemistryprize2021.pdf>) | German [22](<https://en.wikipedia.org/wiki/2021_Nobel_Prizes>) | Max Planck Institute for Coal Research, Mülheim an der Ruhr, Germany [21](<https://www.nobelprize.org/uploads/2021/10/press-chemistryprize2021.pdf>) | for the development of asymmetric organocatalysis [21](<https://www.nobelprize.org/uploads/2021/10/press-chemistryprize2021.pdf>) |
+| David W.C. MacMillan [21](<https://www.nobelprize.org/uploads/2021/10/press-chemistryprize2021.pdf>) | 2021 [21](<https://www.nobelprize.org/uploads/2021/10/press-chemistryprize2021.pdf>) | British and American [23](<https://www.princeton.edu/news/2021/10/06/idea-took-macmillan-wins-nobel-prize-opening-huge-new-field-chemistry>) | Princeton University, USA [21](<https://www.nobelprize.org/uploads/2021/10/press-chemistryprize2021.pdf>) | for the development of asymmetric organocatalysis [21](<https://www.nobelprize.org/uploads/2021/10/press-chemistryprize2021.pdf>) |
+| Carolyn R. Bertozzi [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | 2022 [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | American [25](<https://en.wikipedia.org/wiki/Carolyn_Bertozzi>) | Stanford University, CA, USA; Howard Hughes Medical Institute, USA [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | for the development of click chemistry and bioorthogonal chemistry [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) |
+| Morten Meldal [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | 2022 [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | Danish [26](<https://en.wikipedia.org/wiki/2022_Nobel_Prizes>) | University of Copenhagen, Denmark [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | for the development of click chemistry and bioorthogonal chemistry [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) |
+| K. Barry Sharpless [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | 2022 [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | American [26](<https://en.wikipedia.org/wiki/2022_Nobel_Prizes>) | Scripps Research, La Jolla, CA, USA [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) | for the development of click chemistry and bioorthogonal chemistry [24](<https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf>) |
+| Moungi G. Bawendi [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | 2023 [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | Tunisian; American; French [28](<https://commons.wikimedia.org/wiki/Category%3AMoungi_Bawendi>) | Massachusetts Institute of Technology (MIT), Cambridge, MA, USA [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | for the discovery and synthesis of quantum dots [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) |
+| Louis E. Brus [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | 2023 [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | American [29](<https://elpais.com/ciencia/2023-10-04/premio-nobel-de-quimica.html>) | Columbia University, New York, NY, USA [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | for the discovery and synthesis of quantum dots [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) |
+| Aleksey Yekimov [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | 2023 [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | American; Russian [30](<https://mediatheque.lindau-nobel.org/laureates/yekimov>) | Nanocrystals Technology Inc., New York, NY, USA [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) | for the discovery and synthesis of quantum dots [27](<https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf>) |
+| David Baker [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | 2024 [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | American [32](<https://www.lemonde.fr/sciences/article/2024/10/09/nobel-de-chimie-2024-l-intelligence-artificielle-encore-a-l-honneur_6347492_1650684.html>) | University of Washington, Seattle, WA, USA; Howard Hughes Medical Institute, USA [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | for computational protein design [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) |
+| Demis Hassabis [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | 2024 [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | British [32](<https://www.lemonde.fr/sciences/article/2024/10/09/nobel-de-chimie-2024-l-intelligence-artificielle-encore-a-l-honneur_6347492_1650684.html>) | Google DeepMind, London, UK [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | for protein structure prediction [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) |
+| John Jumper [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | 2024 [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | American [32](<https://www.lemonde.fr/sciences/article/2024/10/09/nobel-de-chimie-2024-l-intelligence-artificielle-encore-a-l-honneur_6347492_1650684.html>) | Google DeepMind, London, UK [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) | for protein structure prediction [31](<https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf>) |
+Self-check: passed
+Signal: {'type': 'stalled_search', 'query': 'site.nobelprize.org chemistry 2016 prize press release'}
+Signal: {'type': 'stalled_search', 'query': 'site.nobelprize.org chemistry 2017 prize press release'}
+Signal: {'type': 'stalled_search', 'query': 'site.nobelprize.org chemistry 2018 prize press release'}
+Signal: {'type': 'stalled_search', 'query': 'site.nobelprize.org chemistry 2020 prize press release'}
+Signal: {'type': 'stalled_search', 'query': 'site.nobelprize.org chemistry 2021 prize press release'}
+Signal: {'type': 'stalled_search', 'query': 'site.nobelprize.org chemistry 2022 prize press release'}
+Signal: {'type': 'stalled_search', 'query': 'site.nobelprize.org chemistry 2023 prize press release'}
+Signal: {'type': 'stalled_search', 'query': 'site.nobelprize.org chemistry 2024 prize press release'}
+Signal: {'type': 'stalled_search', 'query': 'Nobel chemistry 2015 press release Lindahl Modrich Sancar citizens'}
+Signal: {'type': 'stalled_search', 'query': 'Nobel Chemistry 2016 Jean-Pierre Sauvage Sir J. Fraser Stoddart Bernard L. Feringa nationality citizenship'}
+Signal: {'type': 'stalled_search', 'query': 'Nobel Chemistry 2017 Jacques Dubochet Joachim Frank Richard Henderson nationality citizenship'}
+Signal: {'type': 'stalled_search', 'query': 'Nobel Chemistry 2018 Frances H. Arnold George P. Smith Sir Gregory P. Winter nationality citizenship'}
+Signal: {'type': 'stalled_search', 'query': 'Nobel Chemistry 2019 John B. Goodenough M. Stanley Whittingham Akira Yoshino nationality citizenship'}
+Signal: {'type': 'stalled_search', 'query': 'Nobel Chemistry 2020 Emmanuelle Charpentier Jennifer A. Doudna nationality citizenship'}
+Signal: {'type': 'stalled_search', 'query': 'Nobel Chemistry 2021 Benjamin List David W.C. MacMillan nationality citizenship'}
+Signal: {'type': 'stalled_search', 'query': 'Nobel Chemistry 2022 Carolyn R. Bertozzi Morten Meldal K. Barry Sharpless nationality citizenship'}
+Signal: {'type': 'stalled_search', 'query': 'Nobel Chemistry 2023 Moungi G. Bawendi Louis E. Brus Aleksey Yekimov nationality citizenship'}
+Signal: {'type': 'stalled_search', 'query': 'Nobel Chemistry 2024 David Baker Demis Hassabis John Jumper nationality citizenship'}
+Signal: {'type': 'stalled_search', 'query': 'Richard Henderson British Scottish biophysicist Nobel 2017'}
+Signal: {'type': 'stalled_search', 'query': 'Frances Arnold George Smith American Nobel chemistry 2018'}
+Signal: {'type': 'stalled_search', 'query': 'Jennifer Doudna American biochemist nationality'}
+Signal: {'type': 'stalled_search', 'query': 'Frances Arnold American chemical engineer nationality'}
+Signal: {'type': 'stalled_search', 'query': 'Fraser Stoddart British American citizenship'}
+Signal: {'type': 'stalled_search', 'query': 'Moungi Bawendi French Tunisian American nationality'}
+Signal: {'type': 'stalled_search', 'query': 'Alexey Ekimov Russian American citizenship Nobel 2023'}
+Signal: {'type': 'stalled_search', 'query': 'Richard Henderson nationality British biophysicist'}
+Signal: {'type': 'stalled_search', 'query': 'Moungi Bawendi "citizenship" French Tunisian American'}
+Signal: {'type': 'stalled_search', 'query': 'Aleksey Yekimov "American" "Russian" Nobel nationality'}
+Signal: {'type': 'stalled_search', 'query': 'site.nobelprize.org 2023 yekimov facts affiliation'}
+Signal: {'type': 'failed_fetch', 'operation': 'fetch', 'url': 'https://www.kva.se/en/news/nobelpriset-i-kemi-2015-2/', 'request_id': 1, 'source': 'backend', 'reason': 'redirect_loop', 'error': 'https://www.kva.se/en/news/nobelpriset-i-kemi-2015-2/'}
+Signal: {'type': 'failed_fetch', 'operation': 'fetch', 'url': 'https://www.enseignementsup-recherche.gouv.fr/fr/jean-pierre-sauvage-prix-nobel-de-chimie-2016-49007', 'request_id': 13, 'source': 'backend', 'reason': 'http_status', 'error': 'HTTP 403 for https://www.enseignementsup-recherche.gouv.fr/fr/jean-pierre-sauvage-prix-nobel-de-chimie-2016-49007'}
+Signal: {'type': 'failed_fetch', 'operation': 'fetch', 'url': 'https://www.axios.com/2018/10/03/british-american-scientists-win-nobel-prize-chemistry', 'request_id': 22, 'source': 'backend', 'reason': 'http_status', 'error': 'HTTP 403 for https://www.axios.com/2018/10/03/british-american-scientists-win-nobel-prize-chemistry'}
+Signal: {'type': 'failed_fetch', 'operation': 'fetch', 'url': 'https://www.kva.se/en/news/nobelpriset-i-kemi-2017-2/', 'request_id': 21, 'source': 'backend', 'reason': 'redirect_loop', 'error': 'https://www.kva.se/en/news/nobelpriset-i-kemi-2017-2/'}
+Signal: {'type': 'failed_fetch', 'operation': 'fetch', 'url': 'https://www.princeton.edu/news/2021/10/06/princetons-david-macmillan-receives-nobel-prize-chemistry', 'request_id': 30, 'source': 'backend', 'reason': 'http_status', 'error': 'HTTP 403 for https://www.princeton.edu/news/2021/10/06/princetons-david-macmillan-receives-nobel-prize-chemistry'}
+Signal: {'type': 'failed_fetch', 'operation': 'fetch', 'url': 'https://www.prizeatlas.org/nobel-prize/chemistry/2020/emmanuelle-charpentier/', 'request_id': 29, 'source': 'backend', 'reason': 'download_error', 'error': "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'www.prizeatlas.org'. (_ssl.c:1010)"}
+Signal: {'type': 'failed_fetch', 'operation': 'fetch', 'url': 'https://www.investing.com/news/world-news/baker-hassabis-jumper-win-2024-nobel-prize-in-chemistry-3654883', 'request_id': 42, 'source': 'backend', 'reason': 'http_status', 'error': 'HTTP 403 for https://www.investing.com/news/world-news/baker-hassabis-jumper-win-2024-nobel-prize-in-chemistry-3654883'}
+Signal: {'type': 'failed_fetch', 'operation': 'fetch', 'url': 'https://www.mdpi.com/about/announcements/9565', 'request_id': 45, 'source': 'backend', 'reason': 'http_status', 'error': 'HTTP 403 for https://www.mdpi.com/about/announcements/9565'}
+Signal: {'type': 'failed_fetch', 'operation': 'fetch', 'url': 'https://www.washingtonpost.com/news/speaking-of-science/wp/2017/10/04/2017-nobel-prize-in-chemistry-won-by-jacques-dubochet-joachim-frank-and-richard-henderson/', 'request_id': 20, 'source': 'backend', 'reason': 'download_error', 'error': '[Errno 32] Broken pipe'}
+Signal: {'type': 'failed_fetch', 'operation': 'fetch', 'url': 'https://www.tap.info.tn/ar/Portal-Top-News-EN/17487435-president-saied', 'request_id': 53, 'source': 'backend', 'reason': 'download_error', 'error': '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)'}
+Signal: {'type': 'failed_fetch', 'operation': 'fetch', 'url': 'https://geniuses.club/genius/moungi-bawendi', 'request_id': 58, 'source': 'backend', 'reason': 'http_status', 'error': 'HTTP 403 for https://geniuses.club/genius/moungi-bawendi'}
+Signal: {'type': 'failed_fetch', 'operation': 'fetch', 'url': 'https://vietnamtimes.thoidai.com.vn/who-is-alexei-ekimov-russian-born-quantum-dot-pioneer-wins-nobel-prize-in-chemistry-65780.html%26mobile%3Dyes%26amp%3D1', 'request_id': 59, 'source': 'backend', 'reason': 'http_status', 'error': 'HTTP 404 for https://vietnamtimes.thoidai.com.vn/'}
+Signal: {'type': 'failed_fetch', 'operation': 'fetch', 'url': 'https://www.jeantet.ch/en/laureat/doctor-richard-henderson/', 'request_id': 56, 'source': 'backend', 'reason': 'redirect_loop', 'error': 'https://www.jeantet.ch/en/laureat/doctor-richard-henderson/'}
+Archive: research-a685a2c37ca948fa9d7ab1a551451ff2
