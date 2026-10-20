@@ -1,0 +1,23 @@
+Resolved 1 package in 17ms
+   Building loop-research @ file:///Users/mukeshreddypochamreddy/Desktop/loop-research
+  × Failed to build `loop-research @
+  │ file:///Users/mukeshreddypochamreddy/Desktop/loop-research`
+  ├─▶ The build backend returned an error
+  ╰─▶ Call to `hatchling.build.build_wheel` failed (exit status: 1)
+
+      [stderr]
+      Traceback (most recent call last):
+        File "<string>", line 8, in <module>
+      ModuleNotFoundError: No module named 'hatchling'
+
+      hint: This error likely indicates that `loop-research@0.1.0` depends
+      on `hatchling`, but doesn't declare it as a build dependency. If
+      `loop-research` is a first-party package, consider adding `hatchling`
+      to its `build-system.requires`. Otherwise, either add it to your
+      `pyproject.toml` under:
+
+      [tool.uv.extra-build-dependencies]
+      loop-research = ["hatchling"]
+
+      or `uv pip install hatchling` into the environment and re-run with
+      `--no-build-isolation`.
