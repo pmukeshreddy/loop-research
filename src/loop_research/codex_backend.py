@@ -1,4 +1,7 @@
 """Stateless, subscription-only Codex transport. No provider SDK clients."""
+from concurrent.futures import CancelledError, Future
+from contextlib import contextmanager
+from dataclasses import replace
 import hashlib
 import fcntl
 import json
@@ -11,6 +14,7 @@ import tempfile
 import threading
 import time
 from uuid import uuid4
+from weakref import ref
 from .archive import RunContext, append_json, stamp, write_json
 
 INSTRUCTION = ("You are a component inside a program. Do not run shell commands, "
@@ -108,11 +112,73 @@ class CallBudget:
             return {'limit': self.limit, 'reserved': self.count, 'remaining': max(0, self.limit - self.count)}
 
 
+class _ScopedBackend:
+    """Close admission before cancellation and drain only this scope's calls."""
+    def __init__(self, backend):
+        self._backend, self.ctx = backend, backend.ctx
+        self._condition = threading.Condition()
+        self._closed = False
+        self._active = 0
+
+    @property
+    def last_usage(self):
+        return self._backend.last_usage
+
+    def complete(self, *args, **kwargs):
+        with self._condition:
+            if self._closed:
+                raise CancelledError("Backend scope closed")
+            self._active += 1
+        try:
+            result = self._backend.complete(*args, **kwargs)
+            # An injected runner can finish after cancellation without observing
+            # the child context. Do not return that result to a cancelled owner.
+            self.ctx.check_cancelled()
+            return result
+        finally:
+            with self._condition:
+                self._active -= 1
+                self._condition.notify_all()
+
+    def close(self):
+        with self._condition:
+            self._closed = True
+        try:
+            self.ctx.cancellation.cancel()
+        finally:
+            with self._condition:
+                self._condition.wait_for(lambda: self._active == 0)
+
+
 class CodexBackend:
     def __init__(self, run_ctx: RunContext, *, budget=None, runner=None, sleep=time.sleep, jitter=random.random):
         self.ctx, self.config, self.budget = run_ctx, run_ctx.config, budget
+        self._runner_override = runner
         self.runner, self.sleep, self.jitter = runner or run_ctx.run_process, sleep, jitter
         self.local = threading.local()
+
+    @contextmanager
+    def scope(self, *, budget):
+        """A cancellable child transport sharing configuration and archive state."""
+        child_ctx = replace(self.ctx, cancellation=Future())
+        if self.ctx.cancellation is not None:
+            # Parent futures can outlive many completed scopes; keep no strong
+            # reference to their child contexts/process cancellation callbacks.
+            child_ref = ref(child_ctx.cancellation)
+
+            def propagate_cancellation(parent):
+                child = child_ref()
+                if parent.cancelled() and child is not None:
+                    child.cancel()
+
+            self.ctx.cancellation.add_done_callback(propagate_cancellation)
+        child = _ScopedBackend(CodexBackend(
+            child_ctx, budget=budget, runner=self._runner_override,
+            sleep=self.sleep, jitter=self.jitter))
+        try:
+            yield child
+        finally:
+            child.close()
 
     def _acquire_slot(self, timeout):
         # FIFO is the order of registration under queue.lock, across processes
