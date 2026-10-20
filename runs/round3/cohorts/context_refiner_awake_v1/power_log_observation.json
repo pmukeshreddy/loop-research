@@ -1,0 +1,24 @@
+{
+  "recorded_at": "2026-10-20T14:27:31.558564+00:00",
+  "observation_type": "bounded read-only local power-log inspection",
+  "command": [
+    "/usr/bin/pmset",
+    "-g",
+    "log"
+  ],
+  "tool_receipt": "574cdc",
+  "window_start_utc": "2026-10-20T08:40:38.772741+00:00",
+  "window_start_basis": "environment_protocol.json filesystem modification timestamp at inspection",
+  "window_end_utc": "2026-10-20T09:01:30.765983+00:00",
+  "filter": "Parse timestamped events; retain event names Sleep, Wake, DarkWake, WakeTime, or SleepService inside the inclusive UTC window.",
+  "matching_event_count": 0,
+  "matching_events": [],
+  "interpretation": "No matching sleep/wake event was observed in the available local power log during this bounded window, which contains the entire saved replay. This negative observation is not a universal proof of uninterrupted wakefulness.",
+  "privacy": "Only this filtered result is retained; unrelated host log details were neither included in the report nor retained in a new file.",
+  "environment_protocol": {
+    "path": "runs/round3/cohorts/context_refiner_awake_v1/environment_protocol.json",
+    "bytes": 942,
+    "sha256": "1e33c25947d24d65eabf4589602aea5d0ca5eb26b1a15efc5de692e995c5048d"
+  },
+  "caffeinate_limit": "The configured caffeinate -i prevents idle sleep, not clamshell/explicit sleep or shutdown."
+}

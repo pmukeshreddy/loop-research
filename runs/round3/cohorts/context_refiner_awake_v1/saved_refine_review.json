@@ -1,0 +1,1004 @@
+{
+  "reviewer": "fetch_review",
+  "reviewed_at": "2026-10-20T08:57:58.048632+00:00",
+  "source_commit": "5cd8fcbc3065a49717fd534ab3a804bd99d8090a",
+  "cohort": "context_refiner_awake_v1",
+  "verdict": "FAILED saved preflight; four direct replays pass, overflow whole-trajectory output exceeds provider limit. Do not authorize main research from this cohort.",
+  "scope": "Read-only archives plus offline JSON/schema/hash/identity/accounting checks; no models, web, subprocess probes, source/harness modifications, installation or commits.",
+  "execution": {
+    "status": "failed",
+    "started_at": "2026-10-20T08:52:23.577811+00:00",
+    "ended_at": "2026-10-20T08:53:20.161780+00:00",
+    "shared_codex_max_concurrent": 4,
+    "max_concurrent_cases": 4
+  },
+  "totals": {
+    "replays": 5,
+    "complete_replays": 4,
+    "failed_replays": 1,
+    "model_attempts": 7,
+    "successful_attempts": 6,
+    "failed_attempts": 1,
+    "retries": 0,
+    "worker_processes": 1,
+    "edits": 5,
+    "decisions": 16,
+    "non_refine_calls": 0,
+    "search_fetch_calls": 0,
+    "web_actions": 0,
+    "installed_modules_reverified": 31,
+    "original_file_records_reverified": 1159,
+    "original_file_bytes_reverified": 141262196
+  },
+  "cases": [
+    {
+      "label": "A_distinct_pages_midtask",
+      "status": "failed",
+      "run_id": "refine-replay-02154493d8d847b58f3e787aceef79aa",
+      "task_id": "289901ce021c28d56fdac993",
+      "original_job_id": "c46f20919acc42a6993fe56246acacb7",
+      "snapshot_head": "0bb2137ca70fa257aa00b8ae5cd750ee86f2ca7d",
+      "source_file_records_checked": 372,
+      "source_file_bytes_checked": 58714524,
+      "original_logical_input_chars": 3025024,
+      "original_logical_input_sha256": "83e038d46718825b016d5e43ec21ca79ef132d0995552d1d97a87112c2e3def3",
+      "schema_mode": "exact",
+      "schema_change_count": 0,
+      "original_schema_sha256": "4f3b234f6027ef98c081e384dd786732e0e9d8fc1a334ac213aa33e306811892",
+      "current_schema_sha256": "4f3b234f6027ef98c081e384dd786732e0e9d8fc1a334ac213aa33e306811892",
+      "input_full_identity_verified": true,
+      "candidate_inventory": [
+        {
+          "id": "self_check:issues:empty_output",
+          "count": 1
+        },
+        {
+          "id": "self_check:signals:stalled_search",
+          "count": 35
+        },
+        {
+          "id": "self_check:signals:failed_fetch",
+          "count": 10
+        }
+      ],
+      "model_attempts": 3,
+      "failed_attempts": 1,
+      "successful_attempts": 2,
+      "retries": 0,
+      "worker_processes": 1,
+      "prompt_chars": [
+        4926,
+        57575,
+        3039692
+      ],
+      "calls": [
+        {
+          "call_id": "c996630583884601bae1f94b279da7a3",
+          "timestamp": "2026-10-20T08:53:02.943627+00:00",
+          "purpose": "refine",
+          "model": "gpt-6-astra",
+          "attempt": 0,
+          "prompt_sha256": "bb7c7bfdad58f45eba0c38f86f3278cc6d24c2cd602b1b25ce8745dffa4a5ab4",
+          "prompt_chars": 4926,
+          "duration_s": 9.097296041989466,
+          "exit_code": 0,
+          "response_chars": 608,
+          "web_actions": [],
+          "web_events": [],
+          "usage": {
+            "input_tokens": 17130,
+            "cached_input_tokens": 15232,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 172,
+            "reasoning_output_tokens": 21
+          },
+          "usage_status": "reported",
+          "error": null
+        },
+        {
+          "call_id": "e3e2664b9c1144afbe5fa84213e2ba60",
+          "timestamp": "2026-10-20T08:53:12.048803+00:00",
+          "purpose": "refine",
+          "model": "gpt-6-astra",
+          "attempt": 0,
+          "prompt_sha256": "ece42ba980fcc49947930fdfb3155c9e33d821f4d744bffb927ca260bd87de7e",
+          "prompt_chars": 57575,
+          "duration_s": 5.846641540993005,
+          "exit_code": 0,
+          "response_chars": 181,
+          "web_actions": [],
+          "web_events": [],
+          "usage": {
+            "input_tokens": 30827,
+            "cached_input_tokens": 0,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 49,
+            "reasoning_output_tokens": 0
+          },
+          "usage_status": "reported",
+          "error": null
+        },
+        {
+          "call_id": "14da5843c4bd42bf83e3f547d2ce9b45",
+          "timestamp": "2026-10-20T08:53:18.025098+00:00",
+          "purpose": "refine",
+          "model": "gpt-6-astra",
+          "attempt": 0,
+          "prompt_sha256": "9d0138c83134f17a68a25dba44c6867b89a4e1e5594924268196f1e295eca1b9",
+          "prompt_chars": 3039692,
+          "duration_s": 0.9960197919863276,
+          "exit_code": 1,
+          "response_chars": 0,
+          "web_actions": [],
+          "web_events": [],
+          "usage": null,
+          "usage_status": "unavailable",
+          "error": "Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":3039692}\n\nMissing or empty final message"
+        }
+      ],
+      "edits": [],
+      "decisions": [],
+      "evidence_references_resolved": 0,
+      "dual_schema_and_accounting_valid": null,
+      "error": "RuntimeError: RuntimeError: CodexError: Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":3039692}\n\nMissing or empty final message",
+      "evidence_paths": {
+        "result": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_distinct_pages_midtask/replay_result.json",
+        "original_input": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_distinct_pages_midtask/evidence/original_logical_input.json",
+        "schema_contract": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_distinct_pages_midtask/schema_contract.json",
+        "input_verification": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/289901ce021c28d56fdac993/input_verification.json",
+        "trace": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/trace.jsonl",
+        "calls": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/289901ce021c28d56fdac993/codex_calls.jsonl"
+      }
+    },
+    {
+      "label": "A_full_pages_finalizer",
+      "status": "complete",
+      "run_id": "refine-replay-97af429922e449889b50e49103040990",
+      "task_id": "289901ce021c28d56fdac993",
+      "original_job_id": "b07049d849e54bad8ece2a1237c8606d",
+      "snapshot_head": "3b1af3ff4b4e2635d64ab09b4ed54d9f7453f36a",
+      "source_file_records_checked": 260,
+      "source_file_bytes_checked": 38775983,
+      "original_logical_input_chars": 1977401,
+      "original_logical_input_sha256": "8974150224c7005b7957b486f2380214bffb07bce953db5b21d1707005987416",
+      "schema_mode": "exact",
+      "schema_change_count": 0,
+      "original_schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542",
+      "current_schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542",
+      "input_full_identity_verified": true,
+      "candidate_inventory": [
+        {
+          "id": "self_check:signals:stalled_search",
+          "count": 34
+        },
+        {
+          "id": "self_check:signals:failed_fetch",
+          "count": 2
+        }
+      ],
+      "model_attempts": 1,
+      "failed_attempts": 0,
+      "successful_attempts": 1,
+      "retries": 0,
+      "worker_processes": 0,
+      "prompt_chars": [
+        855991
+      ],
+      "calls": [
+        {
+          "call_id": "33734776cc7545cc83edfa0bc53bd854",
+          "timestamp": "2026-10-20T08:52:25.008282+00:00",
+          "purpose": "refine",
+          "model": "gpt-6-astra",
+          "attempt": 0,
+          "prompt_sha256": "a1275aeead23e7d4bcc10e6da32e3048a89cb6b0aaff0086830bf24a9f9cdb88",
+          "prompt_chars": 855991,
+          "schema_chars": 8959,
+          "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542",
+          "duration_s": 52.88270245800959,
+          "exit_code": 0,
+          "response_chars": 6853,
+          "web_actions": [],
+          "web_events": [],
+          "usage": {
+            "input_tokens": 242752,
+            "cached_input_tokens": 0,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 1485,
+            "reasoning_output_tokens": 65
+          },
+          "usage_status": "reported",
+          "error": null
+        }
+      ],
+      "edits": [
+        {
+          "action": "create",
+          "kind": "memory",
+          "id": null,
+          "title": "Compare replacement cells with previously verified evidence",
+          "content": "A follow-up extraction can pass schema and verbatim-quote checks while silently dropping supported parts of an existing value. Before replacing a populated cell, supply its current value and supporting evidence alongside the new evidence, then compare the proposed replacement for lost attributes, qualifiers, or sources. A shorter statement in a navigation list or another person's page does not establish that omitted attributes are false. Preserve stronger person-specific evidence unless new evidence justifies a correction; investigate actual conflicts rather than blindly taking the latest extraction. Stage replacements until this comparison and quote checks pass. A failed corroborating fetch does not invalidate evidence already verified.",
+          "module": null
+        }
+      ],
+      "decisions": [
+        {
+          "candidate_id": "self_check:signals:stalled_search",
+          "decision": "declined",
+          "reason": "Reviewed all 34 occurrences. Signals 0–6 concern seven annual searches whose returned snippets contained no laureate names; inspection preceded the empty discovery records. Signals 7–31 concern nationality research for 25 already identified people, and signals 32–33 concern two further verification searches. These searches supplied useful evidence without discovering new entities. Entry 0 explicitly permits honest empty records for such cases. Its usage outcome therefore does not demonstrate recurrence of the premature-placeholder failure or justify changing it.",
+          "evidence_refs": [
+            "/self_check/signals/0",
+            "/self_check/signals/1",
+            "/self_check/signals/2",
+            "/self_check/signals/3",
+            "/self_check/signals/4",
+            "/self_check/signals/5",
+            "/self_check/signals/6",
+            "/self_check/signals/7",
+            "/self_check/signals/8",
+            "/self_check/signals/9",
+            "/self_check/signals/10",
+            "/self_check/signals/11",
+            "/self_check/signals/12",
+            "/self_check/signals/13",
+            "/self_check/signals/14",
+            "/self_check/signals/15",
+            "/self_check/signals/16",
+            "/self_check/signals/17",
+            "/self_check/signals/18",
+            "/self_check/signals/19",
+            "/self_check/signals/20",
+            "/self_check/signals/21",
+            "/self_check/signals/22",
+            "/self_check/signals/23",
+            "/self_check/signals/24",
+            "/self_check/signals/25",
+            "/self_check/signals/26",
+            "/self_check/signals/27",
+            "/self_check/signals/28",
+            "/self_check/signals/29",
+            "/self_check/signals/30",
+            "/self_check/signals/31",
+            "/self_check/signals/32",
+            "/self_check/signals/33",
+            "/self_check/discoveries",
+            "/trajectory",
+            "/entries/0"
+          ],
+          "edit_indexes": []
+        },
+        {
+          "candidate_id": "self_check:signals:failed_fetch",
+          "decision": "declined",
+          "reason": "Both occurrences were isolated backend failures: Princeton returned HTTP 403, and TAP failed certificate verification. The first was resolved through a previously discovered alternative profile; the second left stronger previously fetched evidence available, ultimately restored. Neither URL was repeatedly retried or cited as successfully fetched. No host-specific prohibition or separate fetch-failure memory is warranted; the consequential replacement regression is handled separately.",
+          "evidence_refs": [
+            "/self_check/signals/34",
+            "/self_check/signals/35",
+            "/self_check/fetches",
+            "/trajectory"
+          ],
+          "edit_indexes": []
+        },
+        {
+          "candidate_id": "replacement_evidence_regression",
+          "decision": "accepted",
+          "reason": "The follow-up prompt omitted the existing person-specific evidence. Its output reduced a previously supported three-country nationality to one country from another person's page, and the mutation passed structure and quote checks. The next turn explicitly recognized the lost information and restored the original cell. This recovered failure exposes a semantic replacement check absent from the existing discovery, PDF-repair, and missing-field entries. Preserve that failure mode as a memory without storing the task's answer.",
+          "evidence_refs": [
+            "/trajectory",
+            "/entries",
+            "/self_check/ok"
+          ],
+          "edit_indexes": [
+            0
+          ]
+        },
+        {
+          "candidate_id": "pdf_quote_repair",
+          "decision": "declined",
+          "reason": "The initial affiliation quotation substituted text from the wrong interleaved PDF line. The agent located the actual passage, sliced the stored text, and rechecked membership; final citation checks passed. Entry 1 already captures this exact failure and complete repair procedure. Its recorded successful outcome supplies no evidence for revision or deletion.",
+          "evidence_refs": [
+            "/trajectory",
+            "/entries/1",
+            "/self_check/citations"
+          ],
+          "edit_indexes": []
+        },
+        {
+          "candidate_id": "missing_field_diagnosis",
+          "decision": "declined",
+          "reason": "Review established that the later annual releases lacked explicit nationality, prompting targeted alternative-source research rather than birthplace inference. Semantic audits also caught omitted affiliation locations and a former-role qualifier, which were repaired. Entry 2 already covers source absence, secondary institutions, and temporal qualifiers. Some audit suggestions expanded beyond announcement-listed affiliations, but the agent clarified scope and completed review; no additional edit is needed for this group.",
+          "evidence_refs": [
+            "/trajectory",
+            "/entries/2"
+          ],
+          "edit_indexes": []
+        }
+      ],
+      "evidence_references_resolved": 55,
+      "dual_schema_and_accounting_valid": true,
+      "error": null,
+      "evidence_paths": {
+        "result": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_full_pages_finalizer/replay_result.json",
+        "original_input": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_full_pages_finalizer/evidence/original_logical_input.json",
+        "schema_contract": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_full_pages_finalizer/schema_contract.json",
+        "input_verification": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_full_pages_finalizer/workspace/runs/refine-replay-97af429922e449889b50e49103040990/289901ce021c28d56fdac993/input_verification.json",
+        "trace": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_full_pages_finalizer/workspace/runs/refine-replay-97af429922e449889b50e49103040990/trace.jsonl",
+        "calls": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_full_pages_finalizer/workspace/runs/refine-replay-97af429922e449889b50e49103040990/289901ce021c28d56fdac993/codex_calls.jsonl"
+      }
+    },
+    {
+      "label": "B1_finalizer",
+      "status": "complete",
+      "run_id": "refine-replay-2cf4c9eb0e434c768df393ad7915f066",
+      "task_id": "5f579a96530b9d0b8eaa08f9",
+      "original_job_id": "59b7d284d540427c9bab98456bd97862",
+      "snapshot_head": "0ddd53ca24643316f5e408c35d17876b9dbbea19",
+      "source_file_records_checked": 209,
+      "source_file_bytes_checked": 18563752,
+      "original_logical_input_chars": 1090254,
+      "original_logical_input_sha256": "a2df96054b731789203a20ff1ba7e2f73d0d95b53056c7bbb5c8323ecce2f076",
+      "schema_mode": "legacy_anchor_restriction",
+      "schema_change_count": 3,
+      "original_schema_sha256": "feb9724ff30afeefc4c7907c05cf143d9a903fedcb394786b4f052982dec5b09",
+      "current_schema_sha256": "8e2c58b673ca47c38059f2baa333920f8950e1895ed888e4999e3e97830ecdb0",
+      "input_full_identity_verified": true,
+      "candidate_inventory": [
+        {
+          "id": "self_check:signals:stalled_search",
+          "count": 16
+        },
+        {
+          "id": "self_check:signals:failed_fetch",
+          "count": 21
+        }
+      ],
+      "model_attempts": 1,
+      "failed_attempts": 0,
+      "successful_attempts": 1,
+      "retries": 0,
+      "worker_processes": 0,
+      "prompt_chars": [
+        690910
+      ],
+      "calls": [
+        {
+          "call_id": "ed31bc21b87d4ad7931808dcae6b12cf",
+          "timestamp": "2026-10-20T08:52:24.953724+00:00",
+          "purpose": "refine",
+          "model": "gpt-6-astra",
+          "attempt": 0,
+          "prompt_sha256": "d29e7fdd6fe4095b11860da2387ad60ded332a0bd283af11d5711f4ad64317a6",
+          "prompt_chars": 690910,
+          "schema_chars": 9232,
+          "schema_sha256": "8e2c58b673ca47c38059f2baa333920f8950e1895ed888e4999e3e97830ecdb0",
+          "duration_s": 54.84928641698207,
+          "exit_code": 0,
+          "response_chars": 8000,
+          "web_actions": [],
+          "web_events": [],
+          "usage": {
+            "input_tokens": 217798,
+            "cached_input_tokens": 0,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 1727,
+            "reasoning_output_tokens": 51
+          },
+          "usage_status": "reported",
+          "error": null
+        }
+      ],
+      "edits": [
+        {
+          "action": "update",
+          "kind": "memory",
+          "id": "bf8ebe4929de4c4493017583193abedc",
+          "title": "Inspect discoveries and reconcile name variants",
+          "content": "Empty discovery placeholders caused stalled_search issues even when later calls recorded entities for the same queries. After each search, inspect its results and record actual newly discovered entities once; for search_many, do this separately for each query in input order. Do not emit [] before inspecting results or assume a later record erases an earlier empty event. Reconcile names against known entities before computing novelty: punctuation variants, added initials, shortened names, and unambiguous surnames can denote an already discovered entity. Keep an evidence-backed alias map; do not merge ambiguous names automatically. String inequality alone does not establish a new entity. Use [] honestly when no new entities were found, including verification searches that supply useful new field evidence. Do not invent discoveries to suppress a stall warning.",
+          "module": null
+        },
+        {
+          "action": "update",
+          "kind": "skill",
+          "id": "cb12bfc487d14873a4ef88755b6a8dba",
+          "title": "Recover missing or incomplete fields from rendered pages",
+          "content": "When a model-rendered fetch returns usable but incomplete text, identify the specific missing or partial fields before fetching again. Request concise factual summaries for those fields, with brief supporting excerpts where needed, rather than full-page reproduction. Test the revised focus on one page and inspect whether it supplies the missing evidence before expanding. Preserve each fetched response with its URL and focus so later responses do not overwrite earlier support. Review populated cells as well as blanks: a summary or excerpt can pass quote-membership checks while omitting required scope or exact wording. Maintain unresolved field requirements separately from cell values; do not insert editorial gap notes into values or count a nonempty partial value as complete. Reuse saved evidence first, then retrieve targeted evidence for unresolved requirements. Keep unstated facts unresolved rather than inferring them from birthplace, institutional location, or ambiguous collective descriptions. Validate quotes against an individual saved response and separately check entity attribution, relevant time, and completeness. For shared statements, confirm applicability to each entity and avoid copying partner-specific framing that creates self-reference. After repair, repeat structural and semantic checks on the changed fields. This procedure applies to incomplete successful responses; FETCH_FAILED calls for bounded retries and source switching.",
+          "module": null
+        }
+      ],
+      "decisions": [
+        {
+          "candidate_id": "self_check:signals:stalled_search",
+          "decision": "declined",
+          "reason": "All 16 occurrences concern follow-up verification: six year-level nationality queries, three targeted affiliation/nationality queries, four individual nationality queries, and three final audit queries. Their empty discovery records are consistent with researching already known entities, and several yielded useful field evidence. Initial discovery was recorded after inspection. Entry 0 already permits honest empty verification records; recurring signals alone do not demonstrate that guidance failed. The separate alias-novelty defect is addressed below.",
+          "evidence_refs": [
+            "/self_check/signals/0",
+            "/self_check/signals/1",
+            "/self_check/signals/2",
+            "/self_check/signals/3",
+            "/self_check/signals/4",
+            "/self_check/signals/5",
+            "/self_check/signals/6",
+            "/self_check/signals/7",
+            "/self_check/signals/8",
+            "/self_check/signals/9",
+            "/self_check/signals/10",
+            "/self_check/signals/11",
+            "/self_check/signals/12",
+            "/self_check/signals/13",
+            "/self_check/signals/14",
+            "/self_check/signals/15",
+            "/self_check/discoveries",
+            "/entries/0",
+            "/trajectory"
+          ],
+          "edit_indexes": []
+        },
+        {
+          "candidate_id": "self_check:signals:failed_fetch",
+          "decision": "declined",
+          "reason": "Reviewed all 21 failures: ten initial same-site pages, two early alternative sources, five subsequent gap-research sources, two nationality sources, and two final audit sources. The run tracked attempted URLs, tested a small alternative batch, reused saved hits, and recovered through other sources without repeating failed URLs. Clean URLs and a PDF also failed, so URL formatting is not an established cause. Entry 1 already covers this failure mode and the observed recovery; its usage outcomes do not justify deletion or another edit.",
+          "evidence_refs": [
+            "/self_check/signals/16",
+            "/self_check/signals/17",
+            "/self_check/signals/18",
+            "/self_check/signals/19",
+            "/self_check/signals/20",
+            "/self_check/signals/21",
+            "/self_check/signals/22",
+            "/self_check/signals/23",
+            "/self_check/signals/24",
+            "/self_check/signals/25",
+            "/self_check/signals/26",
+            "/self_check/signals/27",
+            "/self_check/signals/28",
+            "/self_check/signals/29",
+            "/self_check/signals/30",
+            "/self_check/signals/31",
+            "/self_check/signals/32",
+            "/self_check/signals/33",
+            "/self_check/signals/34",
+            "/self_check/signals/35",
+            "/self_check/signals/36",
+            "/self_check/fetches",
+            "/entries/1",
+            "/trajectory"
+          ],
+          "edit_indexes": []
+        },
+        {
+          "candidate_id": "discovery_alias_novelty",
+          "decision": "accepted",
+          "reason": "The discoveries ledger counts shortened names, added middle initials, an apostrophe variant, and surnames as new entities after their full names were already recorded. The trajectory computes novelty through exact membership in known_names. Final rows avoid duplication, but discovery accounting remains misleading. Extend the existing discovery memory with evidence-backed alias reconciliation rather than create another entry.",
+          "evidence_refs": [
+            "/self_check/discoveries",
+            "/trajectory",
+            "/entries/0"
+          ],
+          "edit_indexes": [
+            0
+          ]
+        },
+        {
+          "candidate_id": "populated_but_incomplete_fields",
+          "decision": "accepted",
+          "reason": "Quote checks repeatedly passed while a motivation remained an excerpt; a later repair even produced a nonempty value containing an editorial gap note, so the missing-cell report showed no gaps. Semantic review identified the omitted scope, targeted retrieval supplied it, and final validation passed. Reviews also repaired partner-specific quotation framing. Extend the existing recovery skill with this successful review-and-repair procedure. Entry 2 has no usage outcomes, so this is an evidence-based extension, not a claim that it performed badly.",
+          "evidence_refs": [
+            "/trajectory",
+            "/self_check/citations",
+            "/entries/2",
+            "/self_check/ok"
+          ],
+          "edit_indexes": [
+            1
+          ]
+        }
+      ],
+      "evidence_references_resolved": 56,
+      "dual_schema_and_accounting_valid": true,
+      "error": null,
+      "evidence_paths": {
+        "result": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/B1_finalizer/replay_result.json",
+        "original_input": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/B1_finalizer/evidence/original_logical_input.json",
+        "schema_contract": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/B1_finalizer/schema_contract.json",
+        "input_verification": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/B1_finalizer/workspace/runs/refine-replay-2cf4c9eb0e434c768df393ad7915f066/5f579a96530b9d0b8eaa08f9/input_verification.json",
+        "trace": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/B1_finalizer/workspace/runs/refine-replay-2cf4c9eb0e434c768df393ad7915f066/trace.jsonl",
+        "calls": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/B1_finalizer/workspace/runs/refine-replay-2cf4c9eb0e434c768df393ad7915f066/5f579a96530b9d0b8eaa08f9/codex_calls.jsonl"
+      }
+    },
+    {
+      "label": "B1_fragments_finalizer",
+      "status": "complete",
+      "run_id": "refine-replay-8529b5ccd01b48988f43e41e4356cba1",
+      "task_id": "5f579a96530b9d0b8eaa08f9",
+      "original_job_id": "cda7017a679d4a70b460c7ec4039cdb8",
+      "snapshot_head": "81d31e1b54186d25dbc7fd5c292561833180e919",
+      "source_file_records_checked": 277,
+      "source_file_bytes_checked": 24086836,
+      "original_logical_input_chars": 1225782,
+      "original_logical_input_sha256": "8ee33048ad1a5ddefdf69f0048e58f0b7bf4df578ec5e50933032d7e5bdf2df7",
+      "schema_mode": "exact",
+      "schema_change_count": 0,
+      "original_schema_sha256": "d99ac3e7107d274fd5b32f4a5cdfc9a7c7beb452454c7714c47a5a0a939c2dec",
+      "current_schema_sha256": "d99ac3e7107d274fd5b32f4a5cdfc9a7c7beb452454c7714c47a5a0a939c2dec",
+      "input_full_identity_verified": true,
+      "candidate_inventory": [
+        {
+          "id": "self_check:signals:stalled_search",
+          "count": 29
+        },
+        {
+          "id": "self_check:signals:failed_fetch",
+          "count": 26
+        }
+      ],
+      "model_attempts": 1,
+      "failed_attempts": 0,
+      "successful_attempts": 1,
+      "retries": 0,
+      "worker_processes": 0,
+      "prompt_chars": [
+        757559
+      ],
+      "calls": [
+        {
+          "call_id": "f4f85154400e4183b1effb1a9803ef2e",
+          "timestamp": "2026-10-20T08:52:25.007489+00:00",
+          "purpose": "refine",
+          "model": "gpt-6-astra",
+          "attempt": 0,
+          "prompt_sha256": "ab47639f93a0249927e169fe753460f8b2a9e9b0a3c86bec42aa9336bf6d1a2e",
+          "prompt_chars": 757559,
+          "schema_chars": 10531,
+          "schema_sha256": "d99ac3e7107d274fd5b32f4a5cdfc9a7c7beb452454c7714c47a5a0a939c2dec",
+          "duration_s": 53.750364665989764,
+          "exit_code": 0,
+          "response_chars": 7225,
+          "web_actions": [],
+          "web_events": [],
+          "usage": {
+            "input_tokens": 234397,
+            "cached_input_tokens": 0,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 1589,
+            "reasoning_output_tokens": 88
+          },
+          "usage_status": "reported",
+          "error": null
+        }
+      ],
+      "edits": [
+        {
+          "action": "update",
+          "kind": "memory",
+          "id": "64b134a0c5ad4afe9d971db70f03ca36",
+          "title": "Separate quotation provenance, factual support and field meaning",
+          "content": "Quote membership in model-rendered fetch output does not by itself establish source wording or support for the complete claim. Distinguish source excerpts from explicitly identified summaries, generated labels and assembled passages; do not reject an excerpt solely because the fetch tool renders text. Before recording a positive constraint verdict, verify the entity, applicable time period and every substantive component of the value. Keep extraction and audit prompts aligned with the requested field: explicit national descriptors can support nationality, but do not establish legal citizenship or dual citizenship. Birthplace, ancestry, workplace, flags and unlinked country labels are insufficient substitutes. Preserve supported compound national descriptors without converting them into citizenship claims. Treat audit findings as claims to check against saved evidence and the task contract, not instructions to apply automatically. For composite affiliations, distinguish actual affiliated institutions from parenthetical organizational descriptions before declaring omissions. When sources support different parts of a composite claim, retain an internal claim-to-excerpt mapping and respect the output contract rather than stitching excerpts into a purported verbatim quote. Recheck semantic support after final mutations, even when schema, substring and coverage checks pass.",
+          "module": null
+        }
+      ],
+      "decisions": [
+        {
+          "candidate_id": "self_check:signals:stalled_search",
+          "decision": "declined",
+          "reason": "Reviewed all 29 occurrences: the first four are fallback searches returning already discovered people; the next nine verify nationalities; the following eleven target missing nationality, affiliation or motivation evidence; the last five target remaining cells. Their empty discoveries reflect known entities, not premature placeholders. Several searches supplied useful new evidence without new people. Entry 0 already explicitly permits honest empty discovery records for verification searches. Its recurring signals therefore do not establish consistently bad behavior or justify suppressing them.",
+          "evidence_refs": [
+            "/self_check/signals/0",
+            "/self_check/signals/1",
+            "/self_check/signals/2",
+            "/self_check/signals/3",
+            "/self_check/signals/4",
+            "/self_check/signals/5",
+            "/self_check/signals/6",
+            "/self_check/signals/7",
+            "/self_check/signals/8",
+            "/self_check/signals/9",
+            "/self_check/signals/10",
+            "/self_check/signals/11",
+            "/self_check/signals/12",
+            "/self_check/signals/13",
+            "/self_check/signals/14",
+            "/self_check/signals/15",
+            "/self_check/signals/16",
+            "/self_check/signals/17",
+            "/self_check/signals/18",
+            "/self_check/signals/19",
+            "/self_check/signals/20",
+            "/self_check/signals/21",
+            "/self_check/signals/22",
+            "/self_check/signals/23",
+            "/self_check/signals/24",
+            "/self_check/signals/25",
+            "/self_check/signals/26",
+            "/self_check/signals/27",
+            "/self_check/signals/28",
+            "/self_check/discoveries",
+            "/trajectory",
+            "/entries/0"
+          ],
+          "edit_indexes": []
+        },
+        {
+          "candidate_id": "self_check:signals:failed_fetch",
+          "decision": "declined",
+          "reason": "Reviewed all 26 failures: nine initial same-host failures, six failures in the expanded alternative batch, seven during nationality retrieval, two during gap retrieval and two during final targeted retrieval. The nationality batch retried two previously failed URLs; another URL failed after an earlier successful retrieval, demonstrating why successful versions must be retained. Recovery is observed in successful alternative-host probes and subsequent evidence retrievals. Entry 1's current version already adds probing before large batches, failed-URL tracking, preservation of successful evidence and avoidance of unchanged retries. Usage records identify version 1, so these failures do not demonstrate failure of the revised version 2. No additional fetch rule or inferred outage cause is warranted.",
+          "evidence_refs": [
+            "/self_check/signals/29",
+            "/self_check/signals/30",
+            "/self_check/signals/31",
+            "/self_check/signals/32",
+            "/self_check/signals/33",
+            "/self_check/signals/34",
+            "/self_check/signals/35",
+            "/self_check/signals/36",
+            "/self_check/signals/37",
+            "/self_check/signals/38",
+            "/self_check/signals/39",
+            "/self_check/signals/40",
+            "/self_check/signals/41",
+            "/self_check/signals/42",
+            "/self_check/signals/43",
+            "/self_check/signals/44",
+            "/self_check/signals/45",
+            "/self_check/signals/46",
+            "/self_check/signals/47",
+            "/self_check/signals/48",
+            "/self_check/signals/49",
+            "/self_check/signals/50",
+            "/self_check/signals/51",
+            "/self_check/signals/52",
+            "/self_check/signals/53",
+            "/self_check/signals/54",
+            "/self_check/fetches",
+            "/entries/1"
+          ],
+          "edit_indexes": []
+        },
+        {
+          "candidate_id": "audit_field_and_provenance_drift",
+          "decision": "accepted",
+          "reason": "The second audit explicitly demanded citizenship for a nationality column and rejected national labels on that basis. Later prompts clarified that national descriptors were acceptable, and a final review recovered a compound descriptor previously narrowed to one nationality. Reviews also challenged rendered name–institution excerpts and later flagged a parenthetical parent organization; targeted adjudication retained the supported institution cell. These recovered process errors justify clarifying entry 3 rather than adding another memory. Its existing semantic-support safeguards remain useful, and entry 2 already covers quotation repair from saved evidence. Passing citation membership and constraint coverage checks do not resolve these interpretation errors.",
+          "evidence_refs": [
+            "/trajectory",
+            "/entries/2",
+            "/entries/3",
+            "/self_check/citations",
+            "/self_check/constraint_coverage"
+          ],
+          "edit_indexes": [
+            0
+          ]
+        }
+      ],
+      "evidence_references_resolved": 69,
+      "dual_schema_and_accounting_valid": true,
+      "error": null,
+      "evidence_paths": {
+        "result": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/B1_fragments_finalizer/replay_result.json",
+        "original_input": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/B1_fragments_finalizer/evidence/original_logical_input.json",
+        "schema_contract": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/B1_fragments_finalizer/schema_contract.json",
+        "input_verification": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/B1_fragments_finalizer/workspace/runs/refine-replay-8529b5ccd01b48988f43e41e4356cba1/5f579a96530b9d0b8eaa08f9/input_verification.json",
+        "trace": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/B1_fragments_finalizer/workspace/runs/refine-replay-8529b5ccd01b48988f43e41e4356cba1/trace.jsonl",
+        "calls": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/B1_fragments_finalizer/workspace/runs/refine-replay-8529b5ccd01b48988f43e41e4356cba1/5f579a96530b9d0b8eaa08f9/codex_calls.jsonl"
+      }
+    },
+    {
+      "label": "SI_midtask",
+      "status": "complete",
+      "run_id": "refine-replay-1f8f1437f7ad4f0fab3082f3aaf63f76",
+      "task_id": "1109eb057f25ad2429b6e77e",
+      "original_job_id": "560f1dfc0000442ab1bee7dfa0914999",
+      "snapshot_head": "16650c80eabf61bec475db8083ee9273a5d40e39",
+      "source_file_records_checked": 41,
+      "source_file_bytes_checked": 1121101,
+      "original_logical_input_chars": 57663,
+      "original_logical_input_sha256": "2d921312a3ccb999e462c327fbfdf88b5d3ab09f050820bdea7c24711958e64f",
+      "schema_mode": "legacy_anchor_restriction",
+      "schema_change_count": 3,
+      "original_schema_sha256": "feb9724ff30afeefc4c7907c05cf143d9a903fedcb394786b4f052982dec5b09",
+      "current_schema_sha256": "2605795ef936dd60a86acbfeca954ffe98091f2e0be2d8ef4d4280c317c03902",
+      "input_full_identity_verified": true,
+      "candidate_inventory": [
+        {
+          "id": "self_check:issues:empty_output",
+          "count": 1
+        },
+        {
+          "id": "self_check:signals:stalled_search",
+          "count": 2
+        }
+      ],
+      "model_attempts": 1,
+      "failed_attempts": 0,
+      "successful_attempts": 1,
+      "retries": 0,
+      "worker_processes": 0,
+      "prompt_chars": [
+        52954
+      ],
+      "calls": [
+        {
+          "call_id": "a7af66f2137546599528fe78a78cb59b",
+          "timestamp": "2026-10-20T08:52:23.918971+00:00",
+          "purpose": "refine",
+          "model": "gpt-6-astra",
+          "attempt": 0,
+          "prompt_sha256": "90a28fbe88f79d41a8c0627b34d05bce8d7adc2569a636843a9a343d8705f1eb",
+          "prompt_chars": 52954,
+          "schema_chars": 3355,
+          "schema_sha256": "2605795ef936dd60a86acbfeca954ffe98091f2e0be2d8ef4d4280c317c03902",
+          "duration_s": 37.88548616701155,
+          "exit_code": 0,
+          "response_chars": 4486,
+          "web_actions": [],
+          "web_events": [],
+          "usage": {
+            "input_tokens": 30628,
+            "cached_input_tokens": 0,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 1019,
+            "reasoning_output_tokens": 83
+          },
+          "usage_status": "reported",
+          "error": null
+        }
+      ],
+      "edits": [
+        {
+          "action": "create",
+          "kind": "skill",
+          "id": null,
+          "title": "Reuse fetched evidence across single and batched requests",
+          "content": "When single and batched fetching share candidate URLs, keep a URL-keyed cache of fetched text. Deduplicate candidate URLs while preserving order, exclude URLs already cached, fetch the remaining URLs together, and associate returned pages with their input URLs. Build extraction evidence from successful cached pages and reuse those same texts for source and verbatim-quote checks. Do not treat failed fetch responses as usable evidence. Reuse a cached rendering only when it covers the information needed for the current extraction.",
+          "module": null
+        }
+      ],
+      "decisions": [
+        {
+          "candidate_id": "self_check:issues:empty_output",
+          "decision": "declined",
+          "reason": "The self-check reports empty output, but the visible trajectory ends during the block that calls refinement before assigning answer content and readiness. Extraction already produced five rows with no reported validation failures, and constraint calls completed. There is no completed final worker result establishing a submission failure or recovery; this snapshot is insufficient to justify a failure memory.",
+          "evidence_refs": [
+            "/self_check/issues/0",
+            "/trajectory/19",
+            "/trajectory/20",
+            "/trajectory/40"
+          ],
+          "edit_indexes": []
+        },
+        {
+          "candidate_id": "self_check:signals:stalled_search",
+          "decision": "declined",
+          "reason": "Both flagged batch queries returned four hits and recorded no new entities after the initial search had recorded all requested quantities. The task explicitly required batched search, and the batch supplied pages subsequently fetched for evidence. Neither occurrence establishes an unproductive search loop; empty discovery lists were appropriate for this fixed entity set.",
+          "evidence_refs": [
+            "/self_check/signals/0",
+            "/self_check/signals/1",
+            "/self_check/searches",
+            "/self_check/discoveries",
+            "/trajectory/0",
+            "/trajectory/7",
+            "/trajectory/14"
+          ],
+          "edit_indexes": []
+        },
+        {
+          "candidate_id": "trajectory:cached_evidence_reuse",
+          "decision": "accepted",
+          "reason": "The fetch block excluded the already cached URL from a deduplicated batch, retained four usable pages, and reused their text for extraction and quote checks. The worker reported no validation failures, and fetch records show four successful backend fetches. This supports a reusable cache procedure independently of the unresolved final submission. No existing entries require updating.",
+          "evidence_refs": [
+            "/trajectory/11",
+            "/trajectory/15",
+            "/trajectory/19",
+            "/self_check/fetches",
+            "/entries"
+          ],
+          "edit_indexes": [
+            0
+          ]
+        },
+        {
+          "candidate_id": "trajectory:structured_extraction_validation",
+          "decision": "declined",
+          "reason": "The nested schema and subsequent checks successfully validated the extracted rows, but the immutable base instructions already require schema-validated extraction, programmatic coverage checks, and verbatim evidence validation. Another entry would largely duplicate that coverage. The task-specific expected-value dictionary should not be preserved as an answer key.",
+          "evidence_refs": [
+            "/trajectory/0",
+            "/trajectory/16",
+            "/trajectory/19",
+            "/trajectory/20"
+          ],
+          "edit_indexes": []
+        }
+      ],
+      "evidence_references_resolved": 28,
+      "dual_schema_and_accounting_valid": true,
+      "error": null,
+      "evidence_paths": {
+        "result": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/SI_midtask/replay_result.json",
+        "original_input": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/SI_midtask/evidence/original_logical_input.json",
+        "schema_contract": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/SI_midtask/schema_contract.json",
+        "input_verification": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/SI_midtask/workspace/runs/refine-replay-1f8f1437f7ad4f0fab3082f3aaf63f76/1109eb057f25ad2429b6e77e/input_verification.json",
+        "trace": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/SI_midtask/workspace/runs/refine-replay-1f8f1437f7ad4f0fab3082f3aaf63f76/trace.jsonl",
+        "calls": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/SI_midtask/workspace/runs/refine-replay-1f8f1437f7ad4f0fab3082f3aaf63f76/1109eb057f25ad2429b6e77e/codex_calls.jsonl"
+      }
+    }
+  ],
+  "semantic_review": {
+    "A_full_pages_finalizer": {
+      "summary": "One general replacement-evidence memory is supported by the explicit loss/restoration of earlier multi-country evidence; declines retain existing PDF and missing-field procedures. No answer key or target URL rule is proposed.",
+      "evidence": [
+        {
+          "input_pointer": "/trajectory/118",
+          "note": "Root explicitly identifies loss of two supported nationalities and restores prior person-specific evidence."
+        },
+        {
+          "input_pointer": "/trajectory/121",
+          "note": "Executed block performs stored-quote check and restores prior cell."
+        }
+      ]
+    },
+    "B1_finalizer": {
+      "summary": "Alias-aware discovery and populated-cell completeness are general lessons with visible matching recovery code. Historical model-rendered-fetch advice is explicitly conditional; it is not validated as guidance for the current direct full-page transport.",
+      "evidence": [
+        {
+          "input_pointer": "/trajectory/43",
+          "note": "Novelty uses exact known_names membership."
+        },
+        {
+          "input_pointer": "/trajectory/58",
+          "note": "Executed discovery block retains exact-string novelty logic."
+        },
+        {
+          "input_pointer": "/trajectory/126",
+          "note": "Repair prompt requests full motivation and prohibits editorial notes in values."
+        }
+      ]
+    },
+    "B1_fragments_finalizer": {
+      "summary": "Proposed update separates quotation provenance, field meaning and semantic support. The recorded sub-audit imposes citizenship evidence on a nationality column, supporting the field-scope concern. Other fine-grained historical assertions were not independently re-adjudicated against external pages.",
+      "evidence": [
+        {
+          "input_pointer": "/trajectory/93",
+          "note": "Sub-audit says nationality cells lack explicit citizenship evidence and national labels do not establish citizenship."
+        },
+        {
+          "input_pointer": "/entries/3",
+          "note": "Existing semantic-support skill is updated, rather than creating duplicate guidance."
+        }
+      ]
+    },
+    "SI_midtask": {
+      "summary": "One cache procedure is supported by actual executed reuse/extraction checks. Final-output and redundant structured-validation candidates are appropriately declined for this midtask snapshot; no task-specific expected-value dictionary is retained.",
+      "evidence": [
+        {
+          "input_pointer": "/trajectory/11",
+          "note": "Model code deduplicates batch URLs and reuses fetch_cache."
+        },
+        {
+          "input_pointer": "/trajectory/15",
+          "note": "Executed block reports four usable pages and cached reuse."
+        },
+        {
+          "input_pointer": "/trajectory/19",
+          "note": "Executed check reports five rows and zero validation failures."
+        }
+      ]
+    },
+    "A_distinct_pages_midtask": {
+      "summary": "No proposal exists; no candidate decisions or semantic improvement can be credited. Available complete context was initially inspected, then the entire trajectory was printed into history.",
+      "evidence": []
+    }
+  },
+  "overflow": {
+    "logical_payload_chars": 3027914,
+    "logical_payload_sha256": "2c9dd4b6c0a8aac815b784af57ca5501bbdd20fd3664d0b96204565c8499c663",
+    "schema_sha256": "4f3b234f6027ef98c081e384dd786732e0e9d8fc1a334ac213aa33e306811892",
+    "context_equal_to_original_plus_index": true,
+    "snapshot_read_line": 1,
+    "loaded_trajectory_records": 77,
+    "model_call_links": [
+      {
+        "action_id": "fab90f9a26ce4876860dbd9c56648ec5",
+        "call_id": "c996630583884601bae1f94b279da7a3",
+        "role": "planner",
+        "model_start_line": 2,
+        "dispatch_line": 3,
+        "completion_line": 4,
+        "prompt_chars": 4926,
+        "prompt_sha256": "bb7c7bfdad58f45eba0c38f86f3278cc6d24c2cd602b1b25ce8745dffa4a5ab4",
+        "status": "succeeded"
+      },
+      {
+        "action_id": "16a8fd3491d346558f8509b45588e1e4",
+        "call_id": "e3e2664b9c1144afbe5fa84213e2ba60",
+        "role": "planner",
+        "model_start_line": 9,
+        "dispatch_line": 10,
+        "completion_line": 11,
+        "prompt_chars": 57575,
+        "prompt_sha256": "ece42ba980fcc49947930fdfb3155c9e33d821f4d744bffb927ca260bd87de7e",
+        "status": "succeeded"
+      },
+      {
+        "action_id": "085474b5369f4bafb5e32bcaa1e10136",
+        "call_id": "14da5843c4bd42bf83e3f547d2ce9b45",
+        "role": "planner",
+        "model_start_line": 16,
+        "dispatch_line": 17,
+        "completion_line": 18,
+        "prompt_chars": 3039692,
+        "prompt_sha256": "9d0138c83134f17a68a25dba44c6867b89a4e1e5594924268196f1e295eca1b9",
+        "status": "failed"
+      }
+    ],
+    "code_blocks": [
+      {
+        "actions_line": 7,
+        "iteration": 1,
+        "stdout_chars": 51972,
+        "stdout_sha256": "88b729044bf1239be67f3eba658b020dd3b98c9785971cc5a71a3fe9bec84ab5",
+        "stderr_chars": 0,
+        "answer_ready": false
+      },
+      {
+        "actions_line": 14,
+        "iteration": 2,
+        "stdout_chars": 2981867,
+        "stdout_sha256": "cec30bcf71eb99e8618559d3299e16c1e080696cfa0f8e6c468d69ccd0c1d825",
+        "stderr_chars": 0,
+        "answer_ready": false
+      }
+    ],
+    "subcalls": 0,
+    "proposal": null,
+    "first_stdout_chars": 51972,
+    "second_stdout_chars": 2981867,
+    "second_stdout_exactly_equals_all_trajectory_records": true,
+    "actual_backend_prompt_chars": [
+      4926,
+      57575,
+      3039692
+    ],
+    "backend_prefix_chars": 182,
+    "final_coordinator_prompt_chars": 3039510,
+    "failure_code": "input_too_large",
+    "provider_reported_actual_chars": 3039692,
+    "provider_reported_max_chars": 1048576,
+    "retry_count": 0,
+    "diagnosis": "Second model response chooses code that prints all 77 complete trajectory records. The full stdout is retained and appended unchanged to subsequent coordinator history; the third prompt consequently exceeds the provider limit. This follows the current untruncated transport and violates its model instruction to print focused diagnostics. It is not snapshot corruption, host-selected content expansion, sleep/queue delay or the earlier cleanup EPERM.",
+    "role_instructions_present": true,
+    "evidence_paths": {
+      "actions": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/289901ce021c28d56fdac993/refine_planners/29ed2c2a399d40839eece9bb00b2aab1/actions.jsonl",
+      "context": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/289901ce021c28d56fdac993/refine_planners/29ed2c2a399d40839eece9bb00b2aab1/context.json",
+      "manifest": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/289901ce021c28d56fdac993/refine_planners/29ed2c2a399d40839eece9bb00b2aab1/manifest.json",
+      "schema": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/289901ce021c28d56fdac993/refine_planners/29ed2c2a399d40839eece9bb00b2aab1/schema.json",
+      "calls": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/289901ce021c28d56fdac993/codex_calls.jsonl",
+      "worker_log": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/289901ce021c28d56fdac993/refine_planners/29ed2c2a399d40839eece9bb00b2aab1/worker.log",
+      "failed_transport": "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/289901ce021c28d56fdac993/transport/003/transport_result.json"
+    }
+  },
+  "checks": [
+    "Original saved bytes, logical payloads, snapshots and candidate inventories remain equal across all five cases.",
+    "Four direct dispatches decode to the exact original logical input plus generated anchor index; current schema bytes/hashes and both final schema validations pass.",
+    "Two historical cases use the authorized three-change restrictive anchor upgrade; other three schemas are exact originals.",
+    "All 16 returned decisions cover every presented/additional candidate exactly once, resolve every evidence pointer, and correctly link five accepted edits.",
+    "Every overflow model action joins to exactly one durable backend call and completion; full prompt/response/stream identity checked.",
+    "All actual calls are refinement role/model, with no research/search/fetch/web actions.",
+    "Permanent oversized-input response is attempted once and retained; no transient retries, timeout, capacity or cleanup errors appear among these seven attempts."
+  ],
+  "limitations": [
+    "Cohort remains failed despite four direct successes; no overflow proposal or completed candidate accounting exists.",
+    "Structured pointer/schema validity does not alone prove every historical semantic narrative. Accepted edit content and selected executed evidence were independently read; external page facts were not researched again.",
+    "Model-selected huge output is a genuine demonstrated transport failure under the current planner loop; no truncation, summary, extra retry or counterfactual repair was applied by this review."
+  ],
+  "evidence_hashes": {
+    "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/execution.json": "b9f894d0db97c1eeafe6f4270a69770e23cb2d5801039f0112f1c2b1ff62bfee",
+    "runs/round3/cohorts/context_refiner_awake_v1/installed_verification.json": "a51379b53e7d117563a1372d9d5f7685ccdeb5ced8e2f7d247d88cfb3be4805a",
+    "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/289901ce021c28d56fdac993/refine_planners/29ed2c2a399d40839eece9bb00b2aab1/actions.jsonl": "a36420de33a8117736be753a1cb95cfd2d68685cd7e44e6bb4765211c1bd6309",
+    "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/289901ce021c28d56fdac993/refine_planners/29ed2c2a399d40839eece9bb00b2aab1/context.json": "2c9dd4b6c0a8aac815b784af57ca5501bbdd20fd3664d0b96204565c8499c663",
+    "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/289901ce021c28d56fdac993/refine_planners/29ed2c2a399d40839eece9bb00b2aab1/manifest.json": "0aeac10d637cac2a46edeaf4c96deead0083c6ce89ebe9ef7be5b791d908eb9c",
+    "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_distinct_pages_midtask/replay_result.json": "88e30565ebce94e8f9530115f125e225bb66233edd05f84d3622cf1adf8f0a0e",
+    "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/A_full_pages_finalizer/replay_result.json": "2966efe67fe47d8d6b587daa4d66643dc565549b0f4433c386f7737b3c4ac844",
+    "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/B1_finalizer/replay_result.json": "ca14ce9ddfb613a7702d34fd6dce353748633ba3bba80285f9690088bf7df99c",
+    "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/B1_fragments_finalizer/replay_result.json": "0dca183d02f8104d497588fcd49d01b5a0273c02678da2466729679fb52a98da",
+    "runs/round3/cohorts/context_refiner_awake_v1/saved_refine/SI_midtask/replay_result.json": "9ae73008cfcac348a6c19d05246f96364bf05e0d28906d76f7c44ccc4ca587a0"
+  }
+}

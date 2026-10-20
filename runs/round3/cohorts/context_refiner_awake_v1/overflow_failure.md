@@ -1,0 +1,29 @@
+The awake saved preflight failed because the overflow planner printed its complete historical trajectory into the next model input. The initial external-context load succeeded; the later accumulated prompt exceeded the provider limit. Frozen source: `5cd8fcbc3065a49717fd534ab3a804bd99d8090a`. This is an archival diagnosis, with no product change or new execution.
+
+The full sequence is in [actions.jsonl](saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/289901ce021c28d56fdac993/refine_planners/29ed2c2a399d40839eece9bb00b2aab1/actions.jsonl) and [trace.jsonl](saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/trace.jsonl). Actions line 1 loaded the complete **3,027,914-character** logical context (UTF-8 SHA-256 `2c9dd4b6c0a8aac815b784af57ca5501bbdd20fd3664d0b96204565c8499c663`). That identity uses `json.dumps(context, ensure_ascii=False)` and is distinct from the raw context file's byte hash. The exact strict schema, candidate inventory, and original input survived; [input verification](saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/289901ce021c28d56fdac993/input_verification.json) records the original-plus-index comparison. The prospective 1,611,089-character direct prompt was not dispatched.
+
+| Actions model.start line | Action ID | Complete backend characters | UTF-8 prompt SHA-256 |
+|---:|---|---:|---|
+| 2 | fab90f9a26ce4876860dbd9c56648ec5 | 4,926 | `bb7c7bfdad58f45eba0c38f86f3278cc6d24c2cd602b1b25ce8745dffa4a5ab4` |
+| 9 | 16a8fd3491d346558f8509b45588e1e4 | 57,575 | `ece42ba980fcc49947930fdfb3155c9e33d821f4d744bffb927ca260bd87de7e` |
+| 16 | 085474b5369f4bafb5e32bcaa1e10136 | 3,039,692 | `9d0138c83134f17a68a25dba44c6867b89a4e1e5594924268196f1e295eca1b9` |
+
+The first call (`c996630583884601bae1f94b279da7a3`) succeeded. Code at actions line 6 inspected metadata, schema, candidate groups, anchors, entries, and self-check. Line 7 preserved **51,972 stdout characters**, SHA-256 `88b729044bf1239be67f3eba658b020dd3b98c9785971cc5a71a3fe9bec84ab5`, with zero stderr. This exact output appears in the next prompt; the second call (`e3e2664b9c1144afbe5fa84213e2ba60`) also succeeded.
+
+At **08:53:17.902066 UTC**, actions line 13 executed this entire second block (code SHA-256 `75d527343835a1bc667f959e6b2475f8a77f235db11d041671b6c5bc5535c366`):
+
+```python
+print("TRAJECTORY LENGTH", len(context["trajectory"]))
+for i, record in enumerate(context["trajectory"]):
+    print("RECORD", i, json.dumps(record, ensure_ascii=False))
+```
+
+Actions line 14 preserved **2,981,867 stdout characters**, SHA-256 `cec30bcf71eb99e8618559d3299e16c1e080696cfa0f8e6c468d69ccd0c1d825`, with zero stderr. Independent disk-only reconstruction of that print format over all 77 stored records matches the full stdout exactly. The complete stdout occurs unchanged in the third coordinator prompt: **3,039,510 characters**, plus the **182-character** backend prefix, giving **3,039,692**.
+
+Call `14da5843c4bd42bf83e3f547d2ce9b45` dispatched at **08:53:18.027693 UTC** (actions line 17); line 18 records the failure at **08:53:19.037013 UTC**. The provider reported `input_error_code=input_too_large`, JSON-RPC `-32602`, `actual_chars=3039692`, and `max_chars=1048576`. [Raw stdin](saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/289901ce021c28d56fdac993/transport/003/stdin.txt) equals the actions backend prompt and [codex_calls.jsonl](saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-02154493d8d847b58f3e787aceef79aa/289901ce021c28d56fdac993/codex_calls.jsonl) prompt exactly, including UTF-8 hash; its **3,073,800 bytes** differ from its character count because of Unicode. The failed call returned zero response characters. It had attempt index 0 and no retry. Trace lines 17–19 carry the same failure through discarded/planning.end/run.end; these are propagation records of one provider rejection, not additional failures.
+
+No proposal was returned. The three presented candidate groups—empty_output (1 occurrence), stalled_search (35), failed_fetch (10)—have no final decisions. They cannot be counted as a legitimate zero-edit decline. Across the entire preflight, the four direct successes produced five proposed edits and 16 decisions; the original independent review retains their complete content and qualifications.
+
+At this frozen source, `src/loop_research/refine_context.py:200` loads the full snapshot; lines 211–214 execute and archive complete streams; lines 220–224 append those streams to history; line 205 sends that accumulated transcript. The initial instructions ask for focused diagnostics and prohibit sending the entire oversized snapshot, but the observed code printed the whole trajectory anyway. Externalizing the first input therefore does not guarantee bounded later inputs. The issue generalizes to sufficiently large model-selected output or cumulative history, independent of any source site or candidate lesson. This replay made no semantic subcalls, so it does not demonstrate a working partitioned review. Exact preservation here concerns the supplied snapshot and streams, not a claim that every earlier research observation was uncapped.
+
+All seven saved-preflight attempts completed without an observed timeout, capacity rejection, or EPERM; the available bounded power log contained no matched sleep/wake event. The specific failure is supported directly by the generated code, complete stdout, identical outgoing prompt and structured provider rejection. [Detailed hashes and timestamps](overflow_failure.json), [power-log limits](power_log_observation.json), and [pre-existing archive inventory](superseded_archive_hashes.json) preserve the evidence. Passing offline checks and direct cases do not establish overflow-route readiness or a final Round3 result.
