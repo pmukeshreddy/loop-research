@@ -1,0 +1,10 @@
+{
+  "status": "corrected",
+  "failed_tool_receipt": "f579a8",
+  "error_type": "FileNotFoundError",
+  "root_cause": "The ad-hoc receipt builder looked for codex_calls.jsonl under the run directory; RunContext stores calls under the recorded task_dir.",
+  "correction": "Read the canonical task_dir from each saved replay result and hash that exact call archive.",
+  "affected_work": "Receipt construction only; no source/model/harness mutation and no preflight receipt was written by the failed attempt.",
+  "rerun": "This corrected construction validates all four completed replay results, exact call archives, errors, retries, accounting and source equality.",
+  "runtime_source_unchanged": "09c77902babb879abe2b0dcc8cab7cf5209bf5ae"
+}

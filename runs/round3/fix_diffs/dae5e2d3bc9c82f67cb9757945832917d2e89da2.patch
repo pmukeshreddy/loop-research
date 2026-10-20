@@ -1,0 +1,2859 @@
+commit dae5e2d3bc9c82f67cb9757945832917d2e89da2
+Author:     mukesh reddy p <88029886+pmukeshreddy@users.noreply.github.com>
+AuthorDate: Tue Oct 20 00:22:35 2026 -0400
+Commit:     mukesh reddy p <88029886+pmukeshreddy@users.noreply.github.com>
+CommitDate: Tue Oct 20 00:22:54 2026 -0400
+
+    Share canonical JSON-quoted text without losing planner evidence
+
+diff --git a/runs/round3/quoted_text_first_green.log b/runs/round3/quoted_text_first_green.log
+new file mode 100644
+index 0000000..00ec732
+--- /dev/null
++++ b/runs/round3/quoted_text_first_green.log
+@@ -0,0 +1,191 @@
++..........F..................................F.......................... [ 44%]
++...................FFFFFFFF............................................. [ 88%]
++..................                                                       [100%]
++=================================== FAILURES ===================================
++___ test_v3_escapes_literal_new_marker_and_keeps_nested_references_distinct ____
++
++    def test_v3_escapes_literal_new_marker_and_keeps_nested_references_distinct():
++        source = 'Evidence with "quotes", 雪 and newlines\n' * 100
++        payload = {'$json_quote': {'$shared_text': 0}, 'source': source,
++                   'prompts': ['read ' + json.dumps(source, ensure_ascii=False) for _ in range(3)]}
++        encoded = encode_shared_text(payload)
++>       assert encoded['format'] == 'shared-text-v3'
++E       AssertionError: assert 'shared-text-v2' == 'shared-text-v3'
++E         
++E         - shared-text-v3
++E         ?              ^
++E         + shared-text-v2
++E         ?              ^
++
++tests/test_shared_text_quotes.py:57: AssertionError
++____ test_savings_must_cover_complete_wrapper_not_just_references_and_table ____
++
++    def test_savings_must_cover_complete_wrapper_not_just_references_and_table():
++        payload = ["x" * 60, "x" * 60]
++        candidate = wire([{"$shared_text": 0}, {"$shared_text": 0}], ["x" * 60])
++        assert len(compact(candidate)) >= len(compact(payload))
++>       assert encode(payload) == wire(payload)
++E       AssertionError: assert {'format': 's...ed_text': 0}]} == {'format': 's...xxxxxxxxxxx']}
++E         
++E         Differing items:
++E         {'format': 'shared-text-v3'} != {'format': 'shared-text-v2'}
++E         {'payload': [{'$shared_text': 0}, {'$shared_text': 0}]} != {'payload': ['xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx']}
++E         {'shared_texts': ['xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx']} != {'shared_texts': []}
++E         Use -v to get more diff
++
++tests/test_shared_text.py:60: AssertionError
++__ test_different_prompts_share_embedded_quoted_text_without_losing_wrappers ___
++
++    def test_different_prompts_share_embedded_quoted_text_without_losing_wrappers():
++        passage = 'Exact evidence with 雪, "quotes", slash \\, and newline\n' * 30
++        payload = {'prompts': [f'Request {i}: ' + compact({'text': passage, 'record': i})
++                               + f'\nEnd {i}.' for i in range(8)], 'number': 1.0}
++        original = copy.deepcopy(payload)
++        encoded = encode_shared_text(payload)
++>       assert encoded['format'] == 'shared-text-v2'
++E       AssertionError: assert 'shared-text-v3' == 'shared-text-v2'
++E         
++E         - shared-text-v2
++E         ?              ^
++E         + shared-text-v3
++E         ?              ^
++
++tests/test_shared_text_fragments.py:20: AssertionError
++__ test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\n] ___
++
++ending = '\n'
++
++    @pytest.mark.parametrize('ending', ['\n', '\r\n', '\r', '\v', '\f', '\u2028', '\u2029'])
++    def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending):
++        value = ('  exact \\ "quoted" 雪 e\u0301' + ending) * 20
++        payload = [f'prefix-{i} ' + compact(value) + ending + f'suffix-{i}' for i in range(5)]
++        encoded = encode_shared_text(payload)
++>       assert encoded['format'] == 'shared-text-v2'
++E       AssertionError: assert 'shared-text-v3' == 'shared-text-v2'
++E         
++E         - shared-text-v2
++E         ?              ^
++E         + shared-text-v3
++E         ?              ^
++
++tests/test_shared_text_fragments.py:33: AssertionError
++_ test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\r\n] __
++
++ending = '\r\n'
++
++    @pytest.mark.parametrize('ending', ['\n', '\r\n', '\r', '\v', '\f', '\u2028', '\u2029'])
++    def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending):
++        value = ('  exact \\ "quoted" 雪 e\u0301' + ending) * 20
++        payload = [f'prefix-{i} ' + compact(value) + ending + f'suffix-{i}' for i in range(5)]
++        encoded = encode_shared_text(payload)
++>       assert encoded['format'] == 'shared-text-v2'
++E       AssertionError: assert 'shared-text-v3' == 'shared-text-v2'
++E         
++E         - shared-text-v2
++E         ?              ^
++E         + shared-text-v3
++E         ?              ^
++
++tests/test_shared_text_fragments.py:33: AssertionError
++__ test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\r] ___
++
++ending = '\r'
++
++    @pytest.mark.parametrize('ending', ['\n', '\r\n', '\r', '\v', '\f', '\u2028', '\u2029'])
++    def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending):
++        value = ('  exact \\ "quoted" 雪 e\u0301' + ending) * 20
++        payload = [f'prefix-{i} ' + compact(value) + ending + f'suffix-{i}' for i in range(5)]
++        encoded = encode_shared_text(payload)
++>       assert encoded['format'] == 'shared-text-v2'
++E       AssertionError: assert 'shared-text-v3' == 'shared-text-v2'
++E         
++E         - shared-text-v2
++E         ?              ^
++E         + shared-text-v3
++E         ?              ^
++
++tests/test_shared_text_fragments.py:33: AssertionError
++_ test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\x0b] __
++
++ending = '\x0b'
++
++    @pytest.mark.parametrize('ending', ['\n', '\r\n', '\r', '\v', '\f', '\u2028', '\u2029'])
++    def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending):
++        value = ('  exact \\ "quoted" 雪 e\u0301' + ending) * 20
++        payload = [f'prefix-{i} ' + compact(value) + ending + f'suffix-{i}' for i in range(5)]
++        encoded = encode_shared_text(payload)
++>       assert encoded['format'] == 'shared-text-v2'
++E       AssertionError: assert 'shared-text-v3' == 'shared-text-v2'
++E         
++E         - shared-text-v2
++E         ?              ^
++E         + shared-text-v3
++E         ?              ^
++
++tests/test_shared_text_fragments.py:33: AssertionError
++_ test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\x0c] __
++
++ending = '\x0c'
++
++    @pytest.mark.parametrize('ending', ['\n', '\r\n', '\r', '\v', '\f', '\u2028', '\u2029'])
++    def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending):
++        value = ('  exact \\ "quoted" 雪 e\u0301' + ending) * 20
++        payload = [f'prefix-{i} ' + compact(value) + ending + f'suffix-{i}' for i in range(5)]
++        encoded = encode_shared_text(payload)
++>       assert encoded['format'] == 'shared-text-v2'
++E       AssertionError: assert 'shared-text-v3' == 'shared-text-v2'
++E         
++E         - shared-text-v2
++E         ?              ^
++E         + shared-text-v3
++E         ?              ^
++
++tests/test_shared_text_fragments.py:33: AssertionError
++_ test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\u2028] _
++
++ending = '\u2028'
++
++    @pytest.mark.parametrize('ending', ['\n', '\r\n', '\r', '\v', '\f', '\u2028', '\u2029'])
++    def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending):
++        value = ('  exact \\ "quoted" 雪 e\u0301' + ending) * 20
++        payload = [f'prefix-{i} ' + compact(value) + ending + f'suffix-{i}' for i in range(5)]
++        encoded = encode_shared_text(payload)
++>       assert encoded['format'] == 'shared-text-v2'
++E       AssertionError: assert 'shared-text-v3' == 'shared-text-v2'
++E         
++E         - shared-text-v2
++E         ?              ^
++E         + shared-text-v3
++E         ?              ^
++
++tests/test_shared_text_fragments.py:33: AssertionError
++_ test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\u2029] _
++
++ending = '\u2029'
++
++    @pytest.mark.parametrize('ending', ['\n', '\r\n', '\r', '\v', '\f', '\u2028', '\u2029'])
++    def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending):
++        value = ('  exact \\ "quoted" 雪 e\u0301' + ending) * 20
++        payload = [f'prefix-{i} ' + compact(value) + ending + f'suffix-{i}' for i in range(5)]
++        encoded = encode_shared_text(payload)
++>       assert encoded['format'] == 'shared-text-v2'
++E       AssertionError: assert 'shared-text-v3' == 'shared-text-v2'
++E         
++E         - shared-text-v2
++E         ?              ^
++E         + shared-text-v3
++E         ?              ^
++
++tests/test_shared_text_fragments.py:33: AssertionError
++=========================== short test summary info ============================
++FAILED tests/test_shared_text_quotes.py::test_v3_escapes_literal_new_marker_and_keeps_nested_references_distinct
++FAILED tests/test_shared_text.py::test_savings_must_cover_complete_wrapper_not_just_references_and_table
++FAILED tests/test_shared_text_fragments.py::test_different_prompts_share_embedded_quoted_text_without_losing_wrappers
++FAILED tests/test_shared_text_fragments.py::test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\n]
++FAILED tests/test_shared_text_fragments.py::test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\r\n]
++FAILED tests/test_shared_text_fragments.py::test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\r]
++FAILED tests/test_shared_text_fragments.py::test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\x0b]
++FAILED tests/test_shared_text_fragments.py::test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\x0c]
++FAILED tests/test_shared_text_fragments.py::test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\u2028]
++FAILED tests/test_shared_text_fragments.py::test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\u2029]
++10 failed, 152 passed in 2.98s
+diff --git a/runs/round3/quoted_text_fix.md b/runs/round3/quoted_text_fix.md
+new file mode 100644
+index 0000000..22e84e2
+--- /dev/null
++++ b/runs/round3/quoted_text_fix.md
+@@ -0,0 +1,59 @@
++# Lossless quoted-text sharing
++
++The final A refiner failed on a 1,592,078-character backend prompt. V2's mixed quote lexer missed embedded JSON after prose apostrophes, and its literal references could not share raw fetched text with the same text embedded as a JSON string. The separately supplied 8,959-character schema was not the cause. The disk-only [failure diagnosis](refiner_input_failure.md) and [measurements](refiner_input_failure.json) preserve the rejected input, all five attempts and four retries, and the unsuccessful representation experiments.
++
++The fix changes only the representation of the supplied logical planner input and the refiner instructions explaining that representation. It changes no observation selection, candidate accounting, schema rules, root instructions, models, budgets, retry policy or refinement timing.
++
++## Representation and cost contract
++
++V3 retains a table of literal strings. `{"$shared_text": N}` copies a raw string; `{"$json_quote": N}` applies `json.dumps(shared_texts[N], ensure_ascii=False)` **exactly once**, including the surrounding double quotes and escapes. Either reference can appear in a `$shared_text_parts` concatenation. The quote operation has no configurable depth and no recursively encoded table.
++
++The candidate lexer considers double-quoted spans independently of prose apostrophes. A quoted occurrence is eligible only if decoding it and re-encoding it with the specified operation reproduces its exact spelling. Invalid JSON and noncanonical escaping remain literal text. The candidate encoding preserves every value, key, ordering and scalar type accepted by the existing JSON validator.
++
++The new marker and its literal-object escaping apply only to v3. V1/v2 decoding treats `$json_quote` as ordinary data, and the complete prior v2 encoder and its marker-escape set remain intact. Malformed v3 references, booleans used as indices, extra marker fields and unsupported concatenation parts are rejected.
++
++Selection compares the complete compact JSON character cost, including actual reference-index widths, escapes, table entries, concatenation objects and the outer wrapper. V3 is selected only when it is strictly smaller than both the complete v2 encoding and the original logical JSON; otherwise the original v2 result is retained. Ties retain v2. No input-limit threshold, task identity, site name or seeded lesson participates in selection.
++
++## Exact saved-input verification
++
++The explicit disk-only helper [verify_quoted_text_saved_input.py](verify_quoted_text_saved_input.py) takes a saved job, expected logical SHA and observed limit as arguments. The limit is a regression assertion, never an encoder parameter. It verifies archived wire/logical hashes, exact decoded JSON, unchanged schema evidence enumeration and unchanged original archive bytes. The [final receipt](quoted_text_saved_green.json) also binds all measurements to the executing source-file hashes.
++
++| Measurement | Original | Fixed |
++|---|---:|---:|
++| Logical JSON characters | 1,984,123 | 1,984,123 |
++| Wire characters | 1,588,531 | 851,924 |
++| Refiner instructions | 3,365 | 3,885 |
++| Backend prefix | 182 | 182 |
++| Full backend prompt characters | 1,592,078 | **855,991** |
++| Separate schema characters | 8,959 | 8,959 |
++
++The fixed prompt is 736,087 characters smaller and has 192,585 characters of headroom against the observed 1,048,576-character limit. All 292 supplied trajectory records, three complete entries, two candidate groups and 344 evidence anchors remain. The logical SHA is unchanged:
++
++`2cd53600de561fdfad4d7ce8832de41e756cbadec841ccc2ca522c5a3e37bcd2`
++
++The schema SHA is unchanged:
++
++`ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542`
++
++## Test evidence
++
++The isolated branch starts at `e9b1dcd9d2e1a81e8d37ba09cdc028a6dd49feed`. Tests use the existing main `.venv` with the isolated source selected by pytest's `pythonpath`; no package installation or live calls occurred.
++
++- The prior focused suite passed 134 tests before implementation.
++- [New-test RED](quoted_text_red.log): 9 failed, 19 passed against v2. [Saved-input RED](quoted_text_saved_red.log) reproduced the exact 1,592,078-character failing prompt with unchanged hashes.
++- [First implementation run](quoted_text_first_green.log): 10 failed, 152 passed. Eight failures were expected version/table-form assertions; those tests now run against both the unchanged v2 encoder and selected v3, preserving their size and equality checks. One new collision fixture repeated whole prompts and correctly preferred v2; its prompts were made distinct to test actual v3 escaping. The remaining failure exposed a real small-payload profitability regression; the original complete-wrapper test was kept and the encoder was corrected.
++- [Final focused run](quoted_text_second_green.log): **193 passed**, including saved-input v1/v2/v3 compatibility, generic raw/quoted repetition, Unicode and all line endings, noncanonical spellings, malformed markers, literal collisions, original fallback behavior and complete candidate costs across three-digit indices.
++- [Final saved-input receipt](quoted_text_saved_green.json): exact logical round trip and unchanged archive, including the real updated refiner instructions and backend prefix.
++- Independent review by `fetch_review` ran the same 193 tests plus 300 deterministic generic property cases and independently reproduced the saved input and schema identities. Its separate receipt is `codec_review.md/json`.
++- The [isolated full-suite attempt](quoted_text_full_suite.log) reported 950 passed, five failed and one deselected. All five failures were benchmark fixture revision checks: the local copy omitted the fixture repositories' `.git` directories, causing Git to resolve the enclosing worktree instead. Restoring only those directories from the existing pinned local fixtures yielded clean WANDR `ccb0baeb96f1c77a48e47f92122c57479ee99700` and WideSearch `9825ba7b140b71d81b364793f86dabe4cfed6749` checkouts. [Rerunning both entire affected test files](quoted_text_fixture_corrected.log) passed all 33 tests, including every previously failed node. No product/test changes were made for these failures. This is a failed full attempt plus a successful targeted correction, not a claim that a new full run passed; the parent still runs the required integrated suite.
++
++The normal suite has no dependency on the ignored local failed archive. The separate saved-input command is:
++
++```sh
++PYTHONPATH=src /path/to/main/.venv/bin/python runs/round3/verify_quoted_text_saved_input.py \
++  --job /path/to/archived/refine_state.json \
++  --expected-logical-sha256 2cd53600de561fdfad4d7ce8832de41e756cbadec841ccc2ca522c5a3e37bcd2 \
++  --max-prompt-chars 1048576
++```
++
++These checks establish losslessness for the **supplied logical planner payload**. They do not establish raw-trajectory losslessness: the inherited `c944f51` observation projection still omits later accumulated root prompts and locals/`rlm_calls` without an equality proof. This fix does not alter that policy. Unique, incompressible inputs can still exceed a finite provider limit. Successful live saved-input replay and a fresh research cohort remain separate integration gates owned by the parent.
+diff --git a/runs/round3/quoted_text_fixture_corrected.log b/runs/round3/quoted_text_fixture_corrected.log
+new file mode 100644
+index 0000000..e4850d5
+--- /dev/null
++++ b/runs/round3/quoted_text_fixture_corrected.log
+@@ -0,0 +1,2 @@
++.................................                                        [100%]
++33 passed in 6.75s
+diff --git a/runs/round3/quoted_text_full_suite.log b/runs/round3/quoted_text_full_suite.log
+new file mode 100644
+index 0000000..9dbf3e6
+--- /dev/null
++++ b/runs/round3/quoted_text_full_suite.log
+@@ -0,0 +1,196 @@
++........................................................................ [  7%]
++........................................................................ [ 15%]
++........................................................................ [ 22%]
++........................................................................ [ 30%]
++........................................................................ [ 37%]
++........................................................................ [ 45%]
++........................................................................ [ 52%]
++........................................................................ [ 60%]
++........................................................................ [ 67%]
++........................................................................ [ 75%]
++........................................................................ [ 82%]
++........................................................................ [ 90%]
++.............................................F.........F....F..........F [ 98%]
++....F..............                                                      [100%]
++=================================== FAILURES ===================================
++___________________ test_release_and_canonical_instructions ____________________
++
++wandr = <loop_research.benchmarks.wandr.grader.WandrBenchmark object at 0x116f4ffb0>
++
++    def test_release_and_canonical_instructions(wandr):
++>       wandr.verify_sources()
++
++tests/test_wandr.py:85: 
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++
++self = <loop_research.benchmarks.wandr.grader.WandrBenchmark object at 0x116f4ffb0>
++
++    def verify_sources(self):
++        sha = subprocess.check_output(["git", "-C", str(self.code), "rev-parse", "HEAD"], text=True).strip()
++        dirty = subprocess.check_output(["git", "-C", str(self.code), "status", "--porcelain", "--untracked-files=no"], text=True)
++        if sha != CODE_REVISION or dirty:
++>           raise ValueError("WANDR harness must be clean at its pinned revision")
++E           ValueError: WANDR harness must be clean at its pinned revision
++
++src/loop_research/benchmarks/wandr/data.py:31: ValueError
++________________ test_browser_readiness_uses_configured_timeout ________________
++
++wandr = <loop_research.benchmarks.wandr.grader.WandrBenchmark object at 0x116eaf590>
++monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x117084980>
++
++    def test_browser_readiness_uses_configured_timeout(wandr, monkeypatch):
++        wandr.config.verify.browser_timeout_s = 19
++        real_run = __import__('subprocess').run
++        def probe(command, **kwargs):
++            if command[0] == 'git':
++                return real_run(command, **kwargs)
++            assert kwargs['timeout'] == 19
++            return SimpleNamespace(returncode=0, stdout='fixture browser ready', stderr='')
++        monkeypatch.setattr('loop_research.benchmarks.wandr.grader.subprocess.run', probe)
++>       assert wandr.verify()[1][1] is True
++               ^^^^^^^^^^^^^^
++
++tests/test_wandr.py:343: 
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++src/loop_research/benchmarks/wandr/grader.py:173: in verify
++    self.verify_sources()
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++
++self = <loop_research.benchmarks.wandr.grader.WandrBenchmark object at 0x116eaf590>
++
++    def verify_sources(self):
++        sha = subprocess.check_output(["git", "-C", str(self.code), "rev-parse", "HEAD"], text=True).strip()
++        dirty = subprocess.check_output(["git", "-C", str(self.code), "status", "--porcelain", "--untracked-files=no"], text=True)
++        if sha != CODE_REVISION or dirty:
++>           raise ValueError("WANDR harness must be clean at its pinned revision")
++E           ValueError: WANDR harness must be clean at its pinned revision
++
++src/loop_research/benchmarks/wandr/data.py:31: ValueError
++________________ test_adapter_grade_preserves_metrics_and_label ________________
++
++ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-gs6v1s50/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
++benchmark = <loop_research.benchmarks.widesearch.data.WideSearchData object at 0x119191820>
++task = Task(task_id='fixture', benchmark='widesearch', question='Hand-written fixture', spec={'columns': ['entity', 'value'], 'keys': ['entity']}, language='en', as_of_date=None, raw={})
++output = {'rows': [{'entity': 'fixture-a', 'cells': {'entity': {'value': 'fixture-a', 'sources': ['https://example.org'], 'quote': 'fixture-a'}, 'value': {'value': 'fixture-value', 'sources': ['https://example.org'], 'quote': 'fixture-value'}}}]}
++capsys = <_pytest.capture.CaptureFixture object at 0x11935c110>
++
++    def test_adapter_grade_preserves_metrics_and_label(ctx, benchmark, task, output, capsys):
++        from loop_research.benchmarks.widesearch.grader import WideSearchBenchmark
++    
++        ctx.config.models.root = "fixture-root"
++        ctx.config.models.judge = "fixture-judge"
++        graded = WideSearchBenchmark(ctx.root, ctx.config)
++        graded.code = benchmark.code
++        graded.download.mkdir(parents=True)
++        modules = official_modules(graded.code)
++        query = fixture_query(modules)
++        row = {"instance_id": "fixture", "query": task.question,
++               "evaluation": json.dumps(query.evaluation), "language": "en"}
++        (graded.download / "widesearch.jsonl").write_text(json.dumps(row) + "\n")
++        gold = graded.download / "widesearch_gold"
++        gold.mkdir()
++        query.answer.to_csv(gold / "fixture.csv", index=False)
++>       result = graded.grade(task, graded.to_submission(task, output), ctx)
++                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++
++tests/test_widesearch.py:78: 
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++src/loop_research/benchmarks/widesearch/grader.py:109: in grade
++    self.verify_code()
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++
++self = <loop_research.benchmarks.widesearch.grader.WideSearchBenchmark object at 0x11935caa0>
++
++    def verify_code(self):
++        sha = subprocess.check_output(["git", "-C", str(self.code), "rev-parse", "HEAD"], text=True).strip()
++        dirty = subprocess.check_output(["git", "-C", str(self.code), "status", "--porcelain", "--untracked-files=no"], text=True)
++        if sha != CODE_REVISION or dirty:
++>           raise ValueError("Official WideSearch checkout is not clean at the pinned revision")
++E           ValueError: Official WideSearch checkout is not clean at the pinned revision
++
++src/loop_research/benchmarks/widesearch/data.py:115: ValueError
++______ test_preparation_exposes_complete_release_without_saved_partitions ______
++
++benchmark = <loop_research.benchmarks.widesearch.data.WideSearchData object at 0x118e69ca0>
++monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x118eb24b0>
++widesearch_download = PosixPath('/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/quoted-text/data/downloads/widesearch')
++
++    def test_preparation_exposes_complete_release_without_saved_partitions(benchmark, monkeypatch, widesearch_download):
++        import shutil
++        from loop_research.archive import read_json
++        from loop_research.benchmarks.widesearch import data
++    
++        shutil.copytree(widesearch_download, benchmark.download)
++        def no_network(*args, **kwargs):
++            raise AssertionError('The pinned release is already downloaded')
++        monkeypatch.setattr(data.urllib.request, 'urlopen', no_network)
++>       benchmark.prepare()
++
++tests/test_widesearch.py:154: 
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++src/loop_research/benchmarks/widesearch/data.py:103: in prepare
++    self.verify_code()
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++
++self = <loop_research.benchmarks.widesearch.data.WideSearchData object at 0x118e69ca0>
++
++    def verify_code(self):
++        sha = subprocess.check_output(["git", "-C", str(self.code), "rev-parse", "HEAD"], text=True).strip()
++        dirty = subprocess.check_output(["git", "-C", str(self.code), "status", "--porcelain", "--untracked-files=no"], text=True)
++        if sha != CODE_REVISION or dirty:
++>           raise ValueError("Official WideSearch checkout is not clean at the pinned revision")
++E           ValueError: Official WideSearch checkout is not clean at the pinned revision
++
++src/loop_research/benchmarks/widesearch/data.py:115: ValueError
++_ test_empty_grade_uses_official_absent_response_without_judge_or_stale_alignment _
++
++ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-gs6v1s50/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
++benchmark = <loop_research.benchmarks.widesearch.data.WideSearchData object at 0x1172da570>
++task = Task(task_id='fixture', benchmark='widesearch', question='Hand-written fixture', spec={'columns': ['entity', 'value'], 'keys': ['entity']}, language='en', as_of_date=None, raw={})
++
++    def test_empty_grade_uses_official_absent_response_without_judge_or_stale_alignment(ctx, benchmark, task):
++        from loop_research.benchmarks.widesearch.grader import WideSearchBenchmark
++        graded = WideSearchBenchmark(ctx.root, ctx.config)
++        graded.code = benchmark.code
++        graded.download.mkdir(parents=True)
++        query = fixture_query(official_modules(graded.code))
++        # Even judge-based criteria must not invoke a model for an absent response.
++        query.evaluation['eval_pipeline']['value']['metric'] = ['llm_judge']
++        row = {'instance_id': task.task_id, 'query': task.question,
++               'evaluation': json.dumps(query.evaluation), 'language': 'en'}
++        (graded.download / 'widesearch.jsonl').write_text(json.dumps(row) + '\n')
++        gold = graded.download / 'widesearch_gold'
++        gold.mkdir()
++        query.answer.to_csv(gold / 'fixture.csv', index=False)
++        ctx.path.mkdir(parents=True)
++        (ctx.path / 'alignment.csv').write_text('stale alignment from previous attempt')
++        class NoJudge:
++            def complete(self, *args, **kwargs):
++                raise AssertionError('Empty official submissions need no model call')
++        submission = graded.to_submission(task, graded.output_contract(task).empty)
++>       grade = graded.grade(task, submission, ctx, backend=NoJudge())
++                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++
++tests/test_widesearch.py:203: 
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++src/loop_research/benchmarks/widesearch/grader.py:109: in grade
++    self.verify_code()
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++
++self = <loop_research.benchmarks.widesearch.grader.WideSearchBenchmark object at 0x1174ed220>
++
++    def verify_code(self):
++        sha = subprocess.check_output(["git", "-C", str(self.code), "rev-parse", "HEAD"], text=True).strip()
++        dirty = subprocess.check_output(["git", "-C", str(self.code), "status", "--porcelain", "--untracked-files=no"], text=True)
++        if sha != CODE_REVISION or dirty:
++>           raise ValueError("Official WideSearch checkout is not clean at the pinned revision")
++E           ValueError: Official WideSearch checkout is not clean at the pinned revision
++
++src/loop_research/benchmarks/widesearch/data.py:115: ValueError
++=========================== short test summary info ============================
++FAILED tests/test_wandr.py::test_release_and_canonical_instructions - ValueEr...
++FAILED tests/test_wandr.py::test_browser_readiness_uses_configured_timeout - ...
++FAILED tests/test_widesearch.py::test_adapter_grade_preserves_metrics_and_label
++FAILED tests/test_widesearch.py::test_preparation_exposes_complete_release_without_saved_partitions
++FAILED tests/test_widesearch.py::test_empty_grade_uses_official_absent_response_without_judge_or_stale_alignment
++5 failed, 950 passed, 1 deselected in 118.49s (0:01:58)
+diff --git a/runs/round3/quoted_text_red.log b/runs/round3/quoted_text_red.log
+new file mode 100644
+index 0000000..73a90ec
+--- /dev/null
++++ b/runs/round3/quoted_text_red.log
+@@ -0,0 +1,299 @@
++FFFFFFFF..F.................                                             [100%]
++=================================== FAILURES ===================================
++___ test_prose_apostrophe_does_not_hide_json_evidence_shared_with_raw_source ___
++
++    def test_prose_apostrophe_does_not_hide_json_evidence_shared_with_raw_source():
++        source = ('Exact page: 雪, "quoted", apostrophe\'s, backslash\\, newline\n' * 100)
++        payload = {'source': source, 'again': source,
++                   'prompts': ["Check each person's evidence.\n" + compact({'text': source, 'i': i})
++                               for i in range(4)]}
++        original = copy.deepcopy(payload)
++        encoded = encode_shared_text(payload)
++>       assert encoded['format'] == 'shared-text-v3'
++E       AssertionError: assert 'shared-text-v2' == 'shared-text-v3'
++E         
++E         - shared-text-v3
++E         ?              ^
++E         + shared-text-v2
++E         ?              ^
++
++tests/test_shared_text_quotes.py:25: AssertionError
++______ test_v3_quote_reference_is_exactly_one_json_string_serialization[] ______
++
++source = ''
++
++    @pytest.mark.parametrize('source', [
++        '', '雪 😀 e\u0301', '"quoted" and \\\\slashes', '\n\r\t\b\f\x00',
++        '\\u2603 is literal; ☃ is actual', 'already "quoted" /', 'apostrophe\'s',
++    ])
++    def test_v3_quote_reference_is_exactly_one_json_string_serialization(source):
++        encoded = wrapper({'$shared_text_parts': [
++            'before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}, [source])
++        original = copy.deepcopy(encoded)
++>       assert decode_shared_text(encoded) == 'before:' + source + '/' + json.dumps(source, ensure_ascii=False) + ':after'
++               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
++
++tests/test_shared_text_quotes.py:42: 
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++
++wrapper = {'format': 'shared-text-v3', 'shared_texts': [''], 'payload': {'$shared_text_parts': ['before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}}
++
++    def decode_shared_text(wrapper):
++        """Restore the exact JSON value; reject malformed wrappers with ValueError.
++    
++        A reference must be exactly {"$shared_text": integer_index}; booleans are
++        not indices. A literal-object escape decodes the values of its mapping,
++        while preserving that mapping's own keys without interpreting them again.
++        """
++        _string_counts(wrapper)
++        if (type(wrapper) is not dict
++                or set(wrapper) != {"format", "shared_texts", "payload"}
++                or type(wrapper['format']) is not str
++                or wrapper["format"] not in {"shared-text-v1", _FORMAT}):
++>           raise ValueError("Expected a supported shared-text wrapper")
++E           ValueError: Expected a supported shared-text wrapper
++
++src/loop_research/shared_text.py:168: ValueError
++_ test_v3_quote_reference_is_exactly_one_json_string_serialization[\u96ea \U0001f600 e\u0301] _
++
++source = '雪 😀 é'
++
++    @pytest.mark.parametrize('source', [
++        '', '雪 😀 e\u0301', '"quoted" and \\\\slashes', '\n\r\t\b\f\x00',
++        '\\u2603 is literal; ☃ is actual', 'already "quoted" /', 'apostrophe\'s',
++    ])
++    def test_v3_quote_reference_is_exactly_one_json_string_serialization(source):
++        encoded = wrapper({'$shared_text_parts': [
++            'before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}, [source])
++        original = copy.deepcopy(encoded)
++>       assert decode_shared_text(encoded) == 'before:' + source + '/' + json.dumps(source, ensure_ascii=False) + ':after'
++               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
++
++tests/test_shared_text_quotes.py:42: 
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++
++wrapper = {'format': 'shared-text-v3', 'shared_texts': ['雪 😀 é'], 'payload': {'$shared_text_parts': ['before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}}
++
++    def decode_shared_text(wrapper):
++        """Restore the exact JSON value; reject malformed wrappers with ValueError.
++    
++        A reference must be exactly {"$shared_text": integer_index}; booleans are
++        not indices. A literal-object escape decodes the values of its mapping,
++        while preserving that mapping's own keys without interpreting them again.
++        """
++        _string_counts(wrapper)
++        if (type(wrapper) is not dict
++                or set(wrapper) != {"format", "shared_texts", "payload"}
++                or type(wrapper['format']) is not str
++                or wrapper["format"] not in {"shared-text-v1", _FORMAT}):
++>           raise ValueError("Expected a supported shared-text wrapper")
++E           ValueError: Expected a supported shared-text wrapper
++
++src/loop_research/shared_text.py:168: ValueError
++_ test_v3_quote_reference_is_exactly_one_json_string_serialization["quoted" and \\\\slashes] _
++
++source = '"quoted" and \\\\slashes'
++
++    @pytest.mark.parametrize('source', [
++        '', '雪 😀 e\u0301', '"quoted" and \\\\slashes', '\n\r\t\b\f\x00',
++        '\\u2603 is literal; ☃ is actual', 'already "quoted" /', 'apostrophe\'s',
++    ])
++    def test_v3_quote_reference_is_exactly_one_json_string_serialization(source):
++        encoded = wrapper({'$shared_text_parts': [
++            'before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}, [source])
++        original = copy.deepcopy(encoded)
++>       assert decode_shared_text(encoded) == 'before:' + source + '/' + json.dumps(source, ensure_ascii=False) + ':after'
++               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
++
++tests/test_shared_text_quotes.py:42: 
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++
++wrapper = {'format': 'shared-text-v3', 'shared_texts': ['"quoted" and \\\\slashes'], 'payload': {'$shared_text_parts': ['before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}}
++
++    def decode_shared_text(wrapper):
++        """Restore the exact JSON value; reject malformed wrappers with ValueError.
++    
++        A reference must be exactly {"$shared_text": integer_index}; booleans are
++        not indices. A literal-object escape decodes the values of its mapping,
++        while preserving that mapping's own keys without interpreting them again.
++        """
++        _string_counts(wrapper)
++        if (type(wrapper) is not dict
++                or set(wrapper) != {"format", "shared_texts", "payload"}
++                or type(wrapper['format']) is not str
++                or wrapper["format"] not in {"shared-text-v1", _FORMAT}):
++>           raise ValueError("Expected a supported shared-text wrapper")
++E           ValueError: Expected a supported shared-text wrapper
++
++src/loop_research/shared_text.py:168: ValueError
++_ test_v3_quote_reference_is_exactly_one_json_string_serialization[\n\r\t\x08\x0c\x00] _
++
++source = '\n\r\t\x08\x0c\x00'
++
++    @pytest.mark.parametrize('source', [
++        '', '雪 😀 e\u0301', '"quoted" and \\\\slashes', '\n\r\t\b\f\x00',
++        '\\u2603 is literal; ☃ is actual', 'already "quoted" /', 'apostrophe\'s',
++    ])
++    def test_v3_quote_reference_is_exactly_one_json_string_serialization(source):
++        encoded = wrapper({'$shared_text_parts': [
++            'before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}, [source])
++        original = copy.deepcopy(encoded)
++>       assert decode_shared_text(encoded) == 'before:' + source + '/' + json.dumps(source, ensure_ascii=False) + ':after'
++               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
++
++tests/test_shared_text_quotes.py:42: 
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++
++wrapper = {'format': 'shared-text-v3', 'shared_texts': ['\n\r\t\x08\x0c\x00'], 'payload': {'$shared_text_parts': ['before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}}
++
++    def decode_shared_text(wrapper):
++        """Restore the exact JSON value; reject malformed wrappers with ValueError.
++    
++        A reference must be exactly {"$shared_text": integer_index}; booleans are
++        not indices. A literal-object escape decodes the values of its mapping,
++        while preserving that mapping's own keys without interpreting them again.
++        """
++        _string_counts(wrapper)
++        if (type(wrapper) is not dict
++                or set(wrapper) != {"format", "shared_texts", "payload"}
++                or type(wrapper['format']) is not str
++                or wrapper["format"] not in {"shared-text-v1", _FORMAT}):
++>           raise ValueError("Expected a supported shared-text wrapper")
++E           ValueError: Expected a supported shared-text wrapper
++
++src/loop_research/shared_text.py:168: ValueError
++_ test_v3_quote_reference_is_exactly_one_json_string_serialization[\\u2603 is literal; \u2603 is actual] _
++
++source = '\\u2603 is literal; ☃ is actual'
++
++    @pytest.mark.parametrize('source', [
++        '', '雪 😀 e\u0301', '"quoted" and \\\\slashes', '\n\r\t\b\f\x00',
++        '\\u2603 is literal; ☃ is actual', 'already "quoted" /', 'apostrophe\'s',
++    ])
++    def test_v3_quote_reference_is_exactly_one_json_string_serialization(source):
++        encoded = wrapper({'$shared_text_parts': [
++            'before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}, [source])
++        original = copy.deepcopy(encoded)
++>       assert decode_shared_text(encoded) == 'before:' + source + '/' + json.dumps(source, ensure_ascii=False) + ':after'
++               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
++
++tests/test_shared_text_quotes.py:42: 
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++
++wrapper = {'format': 'shared-text-v3', 'shared_texts': ['\\u2603 is literal; ☃ is actual'], 'payload': {'$shared_text_parts': ['before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}}
++
++    def decode_shared_text(wrapper):
++        """Restore the exact JSON value; reject malformed wrappers with ValueError.
++    
++        A reference must be exactly {"$shared_text": integer_index}; booleans are
++        not indices. A literal-object escape decodes the values of its mapping,
++        while preserving that mapping's own keys without interpreting them again.
++        """
++        _string_counts(wrapper)
++        if (type(wrapper) is not dict
++                or set(wrapper) != {"format", "shared_texts", "payload"}
++                or type(wrapper['format']) is not str
++                or wrapper["format"] not in {"shared-text-v1", _FORMAT}):
++>           raise ValueError("Expected a supported shared-text wrapper")
++E           ValueError: Expected a supported shared-text wrapper
++
++src/loop_research/shared_text.py:168: ValueError
++_ test_v3_quote_reference_is_exactly_one_json_string_serialization[already "quoted" /] _
++
++source = 'already "quoted" /'
++
++    @pytest.mark.parametrize('source', [
++        '', '雪 😀 e\u0301', '"quoted" and \\\\slashes', '\n\r\t\b\f\x00',
++        '\\u2603 is literal; ☃ is actual', 'already "quoted" /', 'apostrophe\'s',
++    ])
++    def test_v3_quote_reference_is_exactly_one_json_string_serialization(source):
++        encoded = wrapper({'$shared_text_parts': [
++            'before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}, [source])
++        original = copy.deepcopy(encoded)
++>       assert decode_shared_text(encoded) == 'before:' + source + '/' + json.dumps(source, ensure_ascii=False) + ':after'
++               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
++
++tests/test_shared_text_quotes.py:42: 
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++
++wrapper = {'format': 'shared-text-v3', 'shared_texts': ['already "quoted" /'], 'payload': {'$shared_text_parts': ['before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}}
++
++    def decode_shared_text(wrapper):
++        """Restore the exact JSON value; reject malformed wrappers with ValueError.
++    
++        A reference must be exactly {"$shared_text": integer_index}; booleans are
++        not indices. A literal-object escape decodes the values of its mapping,
++        while preserving that mapping's own keys without interpreting them again.
++        """
++        _string_counts(wrapper)
++        if (type(wrapper) is not dict
++                or set(wrapper) != {"format", "shared_texts", "payload"}
++                or type(wrapper['format']) is not str
++                or wrapper["format"] not in {"shared-text-v1", _FORMAT}):
++>           raise ValueError("Expected a supported shared-text wrapper")
++E           ValueError: Expected a supported shared-text wrapper
++
++src/loop_research/shared_text.py:168: ValueError
++_ test_v3_quote_reference_is_exactly_one_json_string_serialization[apostrophe's] _
++
++source = "apostrophe's"
++
++    @pytest.mark.parametrize('source', [
++        '', '雪 😀 e\u0301', '"quoted" and \\\\slashes', '\n\r\t\b\f\x00',
++        '\\u2603 is literal; ☃ is actual', 'already "quoted" /', 'apostrophe\'s',
++    ])
++    def test_v3_quote_reference_is_exactly_one_json_string_serialization(source):
++        encoded = wrapper({'$shared_text_parts': [
++            'before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}, [source])
++        original = copy.deepcopy(encoded)
++>       assert decode_shared_text(encoded) == 'before:' + source + '/' + json.dumps(source, ensure_ascii=False) + ':after'
++               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
++
++tests/test_shared_text_quotes.py:42: 
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++
++wrapper = {'format': 'shared-text-v3', 'shared_texts': ["apostrophe's"], 'payload': {'$shared_text_parts': ['before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}}
++
++    def decode_shared_text(wrapper):
++        """Restore the exact JSON value; reject malformed wrappers with ValueError.
++    
++        A reference must be exactly {"$shared_text": integer_index}; booleans are
++        not indices. A literal-object escape decodes the values of its mapping,
++        while preserving that mapping's own keys without interpreting them again.
++        """
++        _string_counts(wrapper)
++        if (type(wrapper) is not dict
++                or set(wrapper) != {"format", "shared_texts", "payload"}
++                or type(wrapper['format']) is not str
++                or wrapper["format"] not in {"shared-text-v1", _FORMAT}):
++>           raise ValueError("Expected a supported shared-text wrapper")
++E           ValueError: Expected a supported shared-text wrapper
++
++src/loop_research/shared_text.py:168: ValueError
++___ test_v3_escapes_literal_new_marker_and_keeps_nested_references_distinct ____
++
++    def test_v3_escapes_literal_new_marker_and_keeps_nested_references_distinct():
++        source = 'Evidence with "quotes", 雪 and newlines\n' * 100
++        payload = {'$json_quote': {'$shared_text': 0}, 'source': source,
++                   'prompts': ['read ' + json.dumps(source, ensure_ascii=False) for _ in range(3)]}
++        encoded = encode_shared_text(payload)
++>       assert encoded['format'] == 'shared-text-v3'
++E       AssertionError: assert 'shared-text-v2' == 'shared-text-v3'
++E         
++E         - shared-text-v3
++E         ?              ^
++E         + shared-text-v2
++E         ?              ^
++
++tests/test_shared_text_quotes.py:57: AssertionError
++=========================== short test summary info ============================
++FAILED tests/test_shared_text_quotes.py::test_prose_apostrophe_does_not_hide_json_evidence_shared_with_raw_source
++FAILED tests/test_shared_text_quotes.py::test_v3_quote_reference_is_exactly_one_json_string_serialization[]
++FAILED tests/test_shared_text_quotes.py::test_v3_quote_reference_is_exactly_one_json_string_serialization[\u96ea \U0001f600 e\u0301]
++FAILED tests/test_shared_text_quotes.py::test_v3_quote_reference_is_exactly_one_json_string_serialization["quoted" and \\\\slashes]
++FAILED tests/test_shared_text_quotes.py::test_v3_quote_reference_is_exactly_one_json_string_serialization[\n\r\t\x08\x0c\x00]
++FAILED tests/test_shared_text_quotes.py::test_v3_quote_reference_is_exactly_one_json_string_serialization[\\u2603 is literal; \u2603 is actual]
++FAILED tests/test_shared_text_quotes.py::test_v3_quote_reference_is_exactly_one_json_string_serialization[already "quoted" /]
++FAILED tests/test_shared_text_quotes.py::test_v3_quote_reference_is_exactly_one_json_string_serialization[apostrophe's]
++FAILED tests/test_shared_text_quotes.py::test_v3_escapes_literal_new_marker_and_keeps_nested_references_distinct
++9 failed, 19 passed in 0.07s
+diff --git a/runs/round3/quoted_text_saved_first_green.log b/runs/round3/quoted_text_saved_first_green.log
+new file mode 100644
+index 0000000..0bab154
+--- /dev/null
++++ b/runs/round3/quoted_text_saved_first_green.log
+@@ -0,0 +1,16 @@
++{
++  "job": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/fair_slots_v1/workspaces/A/runs/research-0fd1b020f55e4155989dcd8c40c418f1/289901ce021c28d56fdac993/refine_state.json",
++  "job_sha256": "5ecca81175881e538d8f63d24e24480b4e0c6c929d0697fc4633bb5eace302d0",
++  "logical_chars": 1984123,
++  "logical_sha256": "2cd53600de561fdfad4d7ce8832de41e756cbadec841ccc2ca522c5a3e37bcd2",
++  "format": "shared-text-v3",
++  "old_wire_chars": 1588531,
++  "wire_chars": 851924,
++  "wire_sha256": "6471ec961a5268a3a4e3b00d47eede7264c766a9d4285ccb8d393c0a0148b133",
++  "instruction_chars": 4067,
++  "backend_prompt_chars": 855991,
++  "backend_prompt_sha256": "a1275aeead23e7d4bcc10e6da32e3048a89cb6b0aaff0086830bf24a9f9cdb88",
++  "observed_limit_chars": 1048576,
++  "exact_logical_roundtrip": true,
++  "original_job_unchanged": true
++}
+diff --git a/runs/round3/quoted_text_saved_green.json b/runs/round3/quoted_text_saved_green.json
+new file mode 100644
+index 0000000..0123460
+--- /dev/null
++++ b/runs/round3/quoted_text_saved_green.json
+@@ -0,0 +1,43 @@
++{
++  "job": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/fair_slots_v1/workspaces/A/runs/research-0fd1b020f55e4155989dcd8c40c418f1/289901ce021c28d56fdac993/refine_state.json",
++  "job_sha256": "5ecca81175881e538d8f63d24e24480b4e0c6c929d0697fc4633bb5eace302d0",
++  "logical_chars": 1984123,
++  "logical_sha256": "2cd53600de561fdfad4d7ce8832de41e756cbadec841ccc2ca522c5a3e37bcd2",
++  "format": "shared-text-v3",
++  "old_wire_chars": 1588531,
++  "old_backend_prompt_chars": 1592078,
++  "wire_chars": 851924,
++  "wire_sha256": "6471ec961a5268a3a4e3b00d47eede7264c766a9d4285ccb8d393c0a0148b133",
++  "instruction_chars": 4067,
++  "refiner_instruction_chars": 3885,
++  "backend_prefix_chars": 182,
++  "backend_prompt_chars": 855991,
++  "backend_prompt_sha256": "a1275aeead23e7d4bcc10e6da32e3048a89cb6b0aaff0086830bf24a9f9cdb88",
++  "schema_chars": 8959,
++  "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542",
++  "logical_collection_counts": {
++    "candidate_inventory": 2,
++    "entries": 3,
++    "trajectory": 292,
++    "self_check": 10,
++    "evidence_index": 344
++  },
++  "schema_evidence_index_equal": true,
++  "source_files": {
++    "codex_backend.py": {
++      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/quoted-text/src/loop_research/codex_backend.py",
++      "sha256": "b8f46de7dd14ee64143adbc4683cf6752233a1d3a81205116873537ee38106ac"
++    },
++    "refine.py": {
++      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/quoted-text/src/loop_research/refine.py",
++      "sha256": "9e37d099ae0c8e22077a54ceb36b72eb9778ff670e1cc986d4867553278634c0"
++    },
++    "shared_text.py": {
++      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/quoted-text/src/loop_research/shared_text.py",
++      "sha256": "21f8f633a5042ca7bcf23831a394326ec380b83b2579c9e1e5f38fb76a1849cf"
++    }
++  },
++  "observed_limit_chars": 1048576,
++  "exact_logical_roundtrip": true,
++  "original_job_unchanged": true
++}
+diff --git a/runs/round3/quoted_text_saved_red.log b/runs/round3/quoted_text_saved_red.log
+new file mode 100644
+index 0000000..881eee5
+--- /dev/null
++++ b/runs/round3/quoted_text_saved_red.log
+@@ -0,0 +1,23 @@
++{
++  "job": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/fair_slots_v1/workspaces/A/runs/research-0fd1b020f55e4155989dcd8c40c418f1/289901ce021c28d56fdac993/refine_state.json",
++  "job_sha256": "5ecca81175881e538d8f63d24e24480b4e0c6c929d0697fc4633bb5eace302d0",
++  "logical_chars": 1984123,
++  "logical_sha256": "2cd53600de561fdfad4d7ce8832de41e756cbadec841ccc2ca522c5a3e37bcd2",
++  "format": "shared-text-v2",
++  "old_wire_chars": 1588531,
++  "wire_chars": 1588531,
++  "wire_sha256": "a62e20e36b22b86d793182e24d63508106de4912a19d1d45a926642f15b3896a",
++  "instruction_chars": 3547,
++  "backend_prompt_chars": 1592078,
++  "backend_prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
++  "observed_limit_chars": 1048576,
++  "exact_logical_roundtrip": true,
++  "original_job_unchanged": true
++}
++Traceback (most recent call last):
++  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/quoted-text/runs/round3/verify_quoted_text_saved_input.py", line 49, in <module>
++    main()
++  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/quoted-text/runs/round3/verify_quoted_text_saved_input.py", line 45, in main
++    assert len(full) <= args.max_prompt_chars, 'Saved input still exceeds the observed provider limit'
++           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++AssertionError: Saved input still exceeds the observed provider limit
+diff --git a/runs/round3/quoted_text_second_green.log b/runs/round3/quoted_text_second_green.log
+new file mode 100644
+index 0000000..3d9d755
+--- /dev/null
++++ b/runs/round3/quoted_text_second_green.log
+@@ -0,0 +1,4 @@
++........................................................................ [ 37%]
++........................................................................ [ 74%]
++.................................................                        [100%]
++193 passed in 3.57s
+diff --git a/runs/round3/refiner_input_failure.json b/runs/round3/refiner_input_failure.json
+new file mode 100644
+index 0000000..3862307
+--- /dev/null
++++ b/runs/round3/refiner_input_failure.json
+@@ -0,0 +1,1431 @@
++{
++  "created_at": "2026-10-20T04:09:35.912992+00:00",
++  "source_commit": "dab5cf89963805d20d3d305ba14d8c8611cd8cf4",
++  "scope": "Read-only disk diagnosis; no product edits, installations, model/network calls, original archive mutations or research runs.",
++  "run_id": "research-0fd1b020f55e4155989dcd8c40c418f1",
++  "task_id": "289901ce021c28d56fdac993",
++  "job_id": "b07049d849e54bad8ece2a1237c8606d",
++  "request_id": "e526f2d58c344551b9af464ae640f659",
++  "run_record": {
++    "run_id": "research-0fd1b020f55e4155989dcd8c40c418f1",
++    "created_at": "2026-10-20T03:34:25.475608+00:00",
++    "learning": true,
++    "base_sha": "2a423027212fe1c430dfd200bdd55f3a27b22d70",
++    "lineage": "lineage-778a7f19258b44bdb580f6a3b1f3ac30",
++    "return_branch": "round3-start",
++    "task_id": "289901ce021c28d56fdac993",
++    "config": {
++      "models": {
++        "root": "gpt-6-astra",
++        "sub": "gpt-6-astra",
++        "refine": "gpt-6-astra",
++        "judge": "gpt-6-astra",
++        "reasoning_effort": null
++      },
++      "codex": {
++        "bin": "codex",
++        "max_concurrent": 4,
++        "timeout_s": 600.0,
++        "max_retries": 4,
++        "retry_delay_cap_s": 60.0,
++        "log_full_text": false
++      },
++      "rlm": {
++        "max_iterations": 30,
++        "max_depth": 2
++      },
++      "agent": {
++        "task_timeout_s": 3600.0,
++        "max_codex_calls": 300,
++        "as_of": "2026-10-18"
++      },
++      "data": {
++        "seed": 42,
++        "languages": [
++          "en",
++          "zh"
++        ]
++      },
++      "wandr": {
++        "final_n_tasks": 50,
++        "seed": 42
++      },
++      "harness": {
++        "retrieval_limit": 10
++      },
++      "stream": {
++        "rolling_window": 10
++      },
++      "refine": {
++        "max_edits": 2
++      },
++      "bridge": {
++        "socket_timeout_s": 5.0
++      },
++      "verify": {
++        "codex_timeout_s": 30.0,
++        "browser_timeout_s": 120.0
++      }
++    },
++    "status": "interrupted",
++    "harness_head": "3b1af3ff4b4e2635d64ab09b4ed54d9f7453f36a",
++    "error": "RuntimeError: Refinement failed: CodexError: Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message"
++  },
++  "files": [
++    {
++      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/fair_slots_v1/workspaces/A/runs/research-0fd1b020f55e4155989dcd8c40c418f1/289901ce021c28d56fdac993/refine_state.json",
++      "bytes": 3865136,
++      "sha256": "5ecca81175881e538d8f63d24e24480b4e0c6c929d0697fc4633bb5eace302d0"
++    },
++    {
++      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/fair_slots_v1/workspaces/A/runs/research-0fd1b020f55e4155989dcd8c40c418f1/research.json",
++      "bytes": 1734,
++      "sha256": "2744c288ec2153aa1e27fa244b509c4894b225e8ded039cb7ab79034a2b2f20f"
++    },
++    {
++      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/fair_slots_v1/workspaces/A/runs/research-0fd1b020f55e4155989dcd8c40c418f1/trace.jsonl",
++      "bytes": 1230099,
++      "sha256": "9639ab348e39ca69d358372b99c9f0c0c616518a6c8e9cd19095f02470640528"
++    },
++    {
++      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/fair_slots_v1/workspaces/A/runs/research-0fd1b020f55e4155989dcd8c40c418f1/289901ce021c28d56fdac993/trajectory.jsonl",
++      "bytes": 16740290,
++      "sha256": "bbf2c17eb022cd033bfa915a8b59e4b05b253ca8d4a1ce1273e60e805896dd5e"
++    },
++    {
++      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/src/loop_research/shared_text.py",
++      "bytes": 8590,
++      "sha256": "df3e834422ba1b4728ac4c5029ff88f517afa93d97f0bfa69f751e3bab8b3d14"
++    },
++    {
++      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/src/loop_research/refine.py",
++      "bytes": 25120,
++      "sha256": "7fa3a2be7a19c905033edaa8f21e2cd19670b545bf3afd135594459ba8ee8cdb"
++    },
++    {
++      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/src/loop_research/codex_backend.py",
++      "bytes": 17651,
++      "sha256": "b8f46de7dd14ee64143adbc4683cf6752233a1d3a81205116873537ee38106ac"
++    },
++    {
++      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round2/fix_quality_review.md",
++      "bytes": 28072,
++      "sha256": "7fc72eecee833cc789b014c0a319acf42cb0bb142a21e80409399b97f681af6e"
++    }
++  ],
++  "sizes": {
++    "logical_default_json_chars": 1984123,
++    "logical_compact_json_chars": 1970560,
++    "wire_payload_chars": 1588531,
++    "refiner_instructions_chars": 3365,
++    "archived_planner_prompt_chars": 1591896,
++    "backend_prefix_chars": 182,
++    "full_backend_prompt_chars": 1592078,
++    "provider_limit_chars": 1048576,
++    "excess_chars": 543502,
++    "separate_schema_chars": 8959,
++    "evidence_anchors_count": 344,
++    "evidence_anchor_list_compact_chars": 6359,
++    "wire_table_chars": 257567,
++    "wire_payload_member_chars": 1330910,
++    "table_only_factoring_lower_bound_backend_chars": 1334457
++  },
++  "logical_sha256": "2cd53600de561fdfad4d7ce8832de41e756cbadec841ccc2ca522c5a3e37bcd2",
++  "wire_sha256": "a62e20e36b22b86d793182e24d63508106de4912a19d1d45a926642f15b3896a",
++  "logical_roundtrip_exact": true,
++  "logical_member_compact_chars": {
++    "focus": 4,
++    "candidate_inventory": 1138,
++    "entries": 16367,
++    "trajectory": 1867667,
++    "self_check": 78921,
++    "max_edits": 1,
++    "evidence_index": 6359
++  },
++  "trajectory_type_counts": {
++    "model": 61,
++    "tool": 219,
++    "worker_iteration": 12
++  },
++  "trajectory_type_compact_chars": {
++    "model": 1203204,
++    "tool": 523438,
++    "worker_iteration": 140732
++  },
++  "trajectory_field_compact_chars": {
++    "model/type": 427,
++    "model/purpose": 317,
++    "model/model": 793,
++    "model/prompt": 1115913,
++    "model/response": 62653,
++    "tool/type": 1314,
++    "tool/tool": 3833,
++    "tool/args": 7696,
++    "tool/kwargs": 34056,
++    "tool/result": 466684,
++    "worker_iteration/type": 216,
++    "worker_iteration/event": 140300,
++    "model/schema": 19820
++  },
++  "preserved_content": {
++    "entries": 3,
++    "trajectory_records": 292,
++    "self_check_issues": 0,
++    "self_check_signals": 36,
++    "candidate_inventory": [
++      {
++        "id": "self_check:signals:stalled_search",
++        "source": "self_check.signals",
++        "type": "stalled_search",
++        "count": 34,
++        "evidence_refs": [
++          "/self_check/signals/0",
++          "/self_check/signals/1",
++          "/self_check/signals/2",
++          "/self_check/signals/3",
++          "/self_check/signals/4",
++          "/self_check/signals/5",
++          "/self_check/signals/6",
++          "/self_check/signals/7",
++          "/self_check/signals/8",
++          "/self_check/signals/9",
++          "/self_check/signals/10",
++          "/self_check/signals/11",
++          "/self_check/signals/12",
++          "/self_check/signals/13",
++          "/self_check/signals/14",
++          "/self_check/signals/15",
++          "/self_check/signals/16",
++          "/self_check/signals/17",
++          "/self_check/signals/18",
++          "/self_check/signals/19",
++          "/self_check/signals/20",
++          "/self_check/signals/21",
++          "/self_check/signals/22",
++          "/self_check/signals/23",
++          "/self_check/signals/24",
++          "/self_check/signals/25",
++          "/self_check/signals/26",
++          "/self_check/signals/27",
++          "/self_check/signals/28",
++          "/self_check/signals/29",
++          "/self_check/signals/30",
++          "/self_check/signals/31",
++          "/self_check/signals/32",
++          "/self_check/signals/33"
++        ]
++      },
++      {
++        "id": "self_check:signals:failed_fetch",
++        "source": "self_check.signals",
++        "type": "failed_fetch",
++        "count": 2,
++        "evidence_refs": [
++          "/self_check/signals/34",
++          "/self_check/signals/35"
++        ]
++      }
++    ],
++    "max_edits": 2,
++    "entry_keys": [
++      [
++        "id",
++        "kind",
++        "created_at",
++        "usage",
++        "outcomes",
++        "version",
++        "module",
++        "title",
++        "body",
++        "trigger",
++        "evidence",
++        "updated_at",
++        "refinement_id"
++      ],
++      [
++        "id",
++        "kind",
++        "created_at",
++        "usage",
++        "outcomes",
++        "version",
++        "module",
++        "title",
++        "body",
++        "trigger",
++        "evidence",
++        "updated_at",
++        "refinement_id"
++      ],
++      [
++        "id",
++        "kind",
++        "created_at",
++        "usage",
++        "outcomes",
++        "version",
++        "module",
++        "title",
++        "body",
++        "trigger",
++        "evidence",
++        "updated_at",
++        "refinement_id"
++      ]
++    ]
++  },
++  "failed_dispatches": [
++    {
++      "timestamp": "2026-10-20T04:02:44.393490+00:00",
++      "component": "Codex backend (refine)",
++      "event": "exec.start",
++      "details": {
++        "call_id": "af957713d9ff49269efdc1fb5dc4d4e0",
++        "timestamp": "2026-10-20T04:02:44.392103+00:00",
++        "purpose": "refine",
++        "model": "gpt-6-astra",
++        "attempt": 0,
++        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
++        "prompt_chars": 1592078,
++        "schema_chars": 8959,
++        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542"
++      },
++      "parent": "Refine",
++      "line": 1865
++    },
++    {
++      "timestamp": "2026-10-20T04:02:46.695426+00:00",
++      "component": "Codex backend (refine)",
++      "event": "exec.start",
++      "details": {
++        "call_id": "6b35d4645f774ee4981f9d60d2bc65f8",
++        "timestamp": "2026-10-20T04:02:46.693891+00:00",
++        "purpose": "refine",
++        "model": "gpt-6-astra",
++        "attempt": 1,
++        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
++        "prompt_chars": 1592078,
++        "schema_chars": 8959,
++        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542"
++      },
++      "parent": "Refine",
++      "line": 1868
++    },
++    {
++      "timestamp": "2026-10-20T04:02:49.582152+00:00",
++      "component": "Codex backend (refine)",
++      "event": "exec.start",
++      "details": {
++        "call_id": "ad71e27ff70743b9ad8602048ab058a3",
++        "timestamp": "2026-10-20T04:02:49.580742+00:00",
++        "purpose": "refine",
++        "model": "gpt-6-astra",
++        "attempt": 2,
++        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
++        "prompt_chars": 1592078,
++        "schema_chars": 8959,
++        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542"
++      },
++      "parent": "Refine",
++      "line": 1871
++    },
++    {
++      "timestamp": "2026-10-20T04:02:54.613572+00:00",
++      "component": "Codex backend (refine)",
++      "event": "exec.start",
++      "details": {
++        "call_id": "befaf9031ada436e9f68929886d3f296",
++        "timestamp": "2026-10-20T04:02:54.612161+00:00",
++        "purpose": "refine",
++        "model": "gpt-6-astra",
++        "attempt": 3,
++        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
++        "prompt_chars": 1592078,
++        "schema_chars": 8959,
++        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542"
++      },
++      "parent": "Refine",
++      "line": 1874
++    },
++    {
++      "timestamp": "2026-10-20T04:03:04.098515+00:00",
++      "component": "Codex backend (refine)",
++      "event": "exec.start",
++      "details": {
++        "call_id": "5d87720cc8d7407c9a8f8c9bf50a5547",
++        "timestamp": "2026-10-20T04:03:04.095428+00:00",
++        "purpose": "refine",
++        "model": "gpt-6-astra",
++        "attempt": 4,
++        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
++        "prompt_chars": 1592078,
++        "schema_chars": 8959,
++        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542"
++      },
++      "parent": "Refine",
++      "line": 1877
++    }
++  ],
++  "failed_completions": [
++    {
++      "timestamp": "2026-10-20T04:02:45.309831+00:00",
++      "component": "Codex backend (refine)",
++      "event": "exec.end",
++      "details": {
++        "call_id": "af957713d9ff49269efdc1fb5dc4d4e0",
++        "purpose": "refine",
++        "model": "gpt-6-astra",
++        "attempt": 0,
++        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
++        "prompt_chars": 1592078,
++        "schema_chars": 8959,
++        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542",
++        "exit_code": 1,
++        "response_chars": 0,
++        "web_actions": [],
++        "web_events": [],
++        "usage": null,
++        "usage_status": "unavailable",
++        "error": "Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message",
++        "web_action_count": 0,
++        "retries": 0
++      },
++      "duration_s": 0.9169106250046752,
++      "line": 1866
++    },
++    {
++      "timestamp": "2026-10-20T04:02:47.276186+00:00",
++      "component": "Codex backend (refine)",
++      "event": "exec.end",
++      "details": {
++        "call_id": "6b35d4645f774ee4981f9d60d2bc65f8",
++        "purpose": "refine",
++        "model": "gpt-6-astra",
++        "attempt": 1,
++        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
++        "prompt_chars": 1592078,
++        "schema_chars": 8959,
++        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542",
++        "exit_code": 1,
++        "response_chars": 0,
++        "web_actions": [],
++        "web_events": [],
++        "usage": null,
++        "usage_status": "unavailable",
++        "error": "Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message",
++        "web_action_count": 0,
++        "retries": 1
++      },
++      "duration_s": 0.5814634589769412,
++      "line": 1869
++    },
++    {
++      "timestamp": "2026-10-20T04:02:50.292249+00:00",
++      "component": "Codex backend (refine)",
++      "event": "exec.end",
++      "details": {
++        "call_id": "ad71e27ff70743b9ad8602048ab058a3",
++        "purpose": "refine",
++        "model": "gpt-6-astra",
++        "attempt": 2,
++        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
++        "prompt_chars": 1592078,
++        "schema_chars": 8959,
++        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542",
++        "exit_code": 1,
++        "response_chars": 0,
++        "web_actions": [],
++        "web_events": [],
++        "usage": null,
++        "usage_status": "unavailable",
++        "error": "Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message",
++        "web_action_count": 0,
++        "retries": 2
++      },
++      "duration_s": 0.7104234169819392,
++      "line": 1872
++    },
++    {
++      "timestamp": "2026-10-20T04:02:55.420467+00:00",
++      "component": "Codex backend (refine)",
++      "event": "exec.end",
++      "details": {
++        "call_id": "befaf9031ada436e9f68929886d3f296",
++        "purpose": "refine",
++        "model": "gpt-6-astra",
++        "attempt": 3,
++        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
++        "prompt_chars": 1592078,
++        "schema_chars": 8959,
++        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542",
++        "exit_code": 1,
++        "response_chars": 0,
++        "web_actions": [],
++        "web_events": [],
++        "usage": null,
++        "usage_status": "unavailable",
++        "error": "Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message",
++        "web_action_count": 0,
++        "retries": 3
++      },
++      "duration_s": 0.8068230409990065,
++      "line": 1875
++    },
++    {
++      "timestamp": "2026-10-20T04:03:04.850430+00:00",
++      "component": "Codex backend (refine)",
++      "event": "exec.end",
++      "details": {
++        "call_id": "5d87720cc8d7407c9a8f8c9bf50a5547",
++        "purpose": "refine",
++        "model": "gpt-6-astra",
++        "attempt": 4,
++        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
++        "prompt_chars": 1592078,
++        "schema_chars": 8959,
++        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542",
++        "exit_code": 1,
++        "response_chars": 0,
++        "web_actions": [],
++        "web_events": [],
++        "usage": null,
++        "usage_status": "unavailable",
++        "error": "Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message",
++        "web_action_count": 0,
++        "retries": 4
++      },
++      "duration_s": 0.7539946670003701,
++      "line": 1878
++    }
++  ],
++  "retries": [
++    {
++      "timestamp": "2026-10-20T04:02:45.310410+00:00",
++      "component": "Codex backend (refine)",
++      "event": "retry",
++      "details": {
++        "attempt": 0,
++        "next_attempt": 1,
++        "delay_s": 1.380526584979112,
++        "error": "Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message"
++      },
++      "line": 1867
++    },
++    {
++      "timestamp": "2026-10-20T04:02:47.277698+00:00",
++      "component": "Codex backend (refine)",
++      "event": "retry",
++      "details": {
++        "attempt": 1,
++        "next_attempt": 2,
++        "delay_s": 2.2969268269173133,
++        "error": "Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message"
++      },
++      "line": 1870
++    },
++    {
++      "timestamp": "2026-10-20T04:02:50.295933+00:00",
++      "component": "Codex backend (refine)",
++      "event": "retry",
++      "details": {
++        "attempt": 2,
++        "next_attempt": 3,
++        "delay_s": 4.310657378011017,
++        "error": "Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message"
++      },
++      "line": 1873
++    },
++    {
++      "timestamp": "2026-10-20T04:02:55.429989+00:00",
++      "component": "Codex backend (refine)",
++      "event": "retry",
++      "details": {
++        "attempt": 3,
++        "next_attempt": 4,
++        "delay_s": 8.661895186895354,
++        "error": "Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message"
++      },
++      "line": 1876
++    }
++  ],
++  "refinement_failure_events": [
++    {
++      "timestamp": "2026-10-20T04:03:04.892940+00:00",
++      "component": "Refine",
++      "event": "discarded",
++      "details": {
++        "focus": null,
++        "request_id": "e526f2d58c344551b9af464ae640f659",
++        "job_id": "b07049d849e54bad8ece2a1237c8606d",
++        "reason": "planning_failed",
++        "error": "Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message",
++        "proposal": null
++      },
++      "line": 1879
++    },
++    {
++      "timestamp": "2026-10-20T04:03:04.894018+00:00",
++      "component": "Refine",
++      "event": "planning.end",
++      "details": {
++        "span_id": "834fc68eb24a4a4a97e543e184df49de",
++        "focus": null,
++        "request_id": "e526f2d58c344551b9af464ae640f659",
++        "job_id": "b07049d849e54bad8ece2a1237c8606d",
++        "error": "CodexError: Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message"
++      },
++      "duration_s": 20.74807512498228,
++      "line": 1880
++    },
++    {
++      "timestamp": "2026-10-20T04:03:04.894246+00:00",
++      "component": "Refine",
++      "event": "failed",
++      "details": {
++        "focus": null,
++        "reason": "refinement",
++        "error": "Refinement failed: CodexError: Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message"
++      },
++      "line": 1881
++    },
++    {
++      "timestamp": "2026-10-20T04:03:04.917107+00:00",
++      "component": "Harness",
++      "event": "head_after",
++      "details": {
++        "sha": "3b1af3ff4b4e2635d64ab09b4ed54d9f7453f36a"
++      },
++      "line": 1882
++    },
++    {
++      "timestamp": "2026-10-20T04:03:04.917402+00:00",
++      "component": "Research",
++      "event": "run.end",
++      "details": {
++        "span_id": "a71358784e454ddda31e69f970f9d9a7",
++        "error": "RuntimeError: Refinement failed: CodexError: Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message"
++      },
++      "duration_s": 1558.4513554159785,
++      "line": 1883
++    }
++  ],
++  "root_submission": [
++    {
++      "timestamp": "2026-10-20T04:02:43.137263+00:00",
++      "component": "REPL",
++      "event": "code.end",
++      "details": {
++        "depth": 0,
++        "first_lines": "jsonschema.validate(your_output, output_schema)\nassert len(your_output[\"rows\"]) == 28\nchecks_completed = 0\nfor i, row in enumerate(your_output[\"rows\"]):\n    for j, column in enumerate(columns):\n        cell = row[\"cells\"][column]\n        assert cell[\"value\"] and cell[\"quote\"] and cell[\"sources\"]\n        assert all(cell[\"quote\"] in evidence[u] for u in cell[\"sources\"])",
++        "rlm_id": "c61c14c15e4647349593f4f7b3e75318",
++        "parent_rlm_id": null,
++        "stdout": "",
++        "error": null,
++        "answer_ready": true
++      },
++      "duration_s": 1.6793103749805596,
++      "line": 1844
++    }
++  ],
++  "mixed_quote_example": {
++    "logical_path": "/trajectory/99/prompt",
++    "chars": 85585,
++    "sha256": "a686349f075f137729b26b52fa923a862b482614b17e87599602662ba62a51d6",
++    "json_object_start": 482,
++    "old_lexer_spans": [
++      {
++        "start": 180,
++        "end": 18087,
++        "chars": 17907,
++        "opening_quote": "'"
++      },
++      {
++        "start": 18601,
++        "end": 85583,
++        "chars": 66982,
++        "opening_quote": "\""
++      }
++    ],
++    "first_span_context": "\naffiliations, and each person's exact prize motivation. Distinguish curren"
++  },
++  "raw_and_canonical_json_quote_occurrences": [
++    {
++      "source_trajectory": 27,
++      "result_index": 0,
++      "raw_chars": 9633,
++      "quoted_chars": 9723,
++      "sha256": "3b85e8a4df2c3488ca152a51cfde560695b83ff061dec490eca688768ef0b073",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 35,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 46,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 97,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 27,
++      "result_index": 1,
++      "raw_chars": 8899,
++      "quoted_chars": 8981,
++      "sha256": "ddf0b7f22ee406e13fc7124c805f4ad7b782d5c930912b702de9f6dda9e58a08",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 34,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 44,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 95,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 27,
++      "result_index": 2,
++      "raw_chars": 7712,
++      "quoted_chars": 7854,
++      "sha256": "78eba2f0581d0c227833d3de976fa4df03bcc14e049b54afa1cc883e25115ac1",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 33,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 45,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 100,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 27,
++      "result_index": 3,
++      "raw_chars": 10129,
++      "quoted_chars": 10214,
++      "sha256": "ebc434b0a32a65ecfe7ae1afd79624a2fc2993e72667dba851692956ed9b7e05",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 32,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 47,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 96,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 108,
++          "occurrences": 2
++        }
++      ]
++    },
++    {
++      "source_trajectory": 27,
++      "result_index": 4,
++      "raw_chars": 9109,
++      "quoted_chars": 9186,
++      "sha256": "5c599561592a294617a33d98e575ea3f6f02ce82e29a85de7abe52b88ee8ca04",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 39,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 50,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 102,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 27,
++      "result_index": 5,
++      "raw_chars": 9059,
++      "quoted_chars": 9139,
++      "sha256": "7e54e1be8a9695d400da2ea6d5ac6dbb73c3a6d41284fcc271c3917fe5c2efc2",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 37,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 48,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 99,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 27,
++      "result_index": 6,
++      "raw_chars": 8482,
++      "quoted_chars": 8558,
++      "sha256": "f358d54ffcb9c8b6a0b288ddf0644afcbef4d8e6059e023d9c48b70d2775820b",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 36,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 49,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 98,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 108,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 27,
++      "result_index": 7,
++      "raw_chars": 8657,
++      "quoted_chars": 8734,
++      "sha256": "9a8cf6a7149aa984cec92196543837b86f3a59947e175cdfb6fb440b807ca644",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 38,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 51,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 101,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 27,
++      "result_index": 8,
++      "raw_chars": 9192,
++      "quoted_chars": 9272,
++      "sha256": "2ebd4e3f4e61cf11ac53cb3bf322bc1030b14817efd710e34bde2379c6dbf5d4",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 40,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 53,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 104,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 108,
++          "occurrences": 2
++        }
++      ]
++    },
++    {
++      "source_trajectory": 27,
++      "result_index": 9,
++      "raw_chars": 9638,
++      "quoted_chars": 9719,
++      "sha256": "0a65e53f3fc59ce0696d4f2e1eb412e6c736c40c12e6b359b4dbaa3c52be452d",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 41,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 52,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 103,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 0,
++      "raw_chars": 2109,
++      "quoted_chars": 2207,
++      "sha256": "57ca627ee48a20569aca2a06181249d710aba90381891ee7bd28773876c3aaa3",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 87,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 95,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 1,
++      "raw_chars": 37706,
++      "quoted_chars": 38619,
++      "sha256": "d287b1cc025d3303dbe5897e9883cffa4f9fc65fc11473213465fdee892429af",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 87,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 95,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 2,
++      "raw_chars": 2774,
++      "quoted_chars": 2894,
++      "sha256": "418f102f3d19d65a19311c799e0bbc7a58384cd7960304fdecc1029253d3ee28",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 87,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 95,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 3,
++      "raw_chars": 2222,
++      "quoted_chars": 2320,
++      "sha256": "e2243246357591c03b44762a06651d66399c8de6d172309d9729f2b86bfa657f",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 87,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 100,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 4,
++      "raw_chars": 2177,
++      "quoted_chars": 2279,
++      "sha256": "e491e9d021f47534d17939be5c74af629d41e2d0dc331fc09d38358251f1078c",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 87,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 100,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 5,
++      "raw_chars": 12493,
++      "quoted_chars": 13128,
++      "sha256": "2fdea3f99d0c9411b60bf940c13bc9b7082c6836ae7ae6bcdaee416de1c0c047",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 88,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 100,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 6,
++      "raw_chars": 2112,
++      "quoted_chars": 2217,
++      "sha256": "74d5b05d7de494ee8ed711ab7804772d3c020561ecc03c2d8f24f47722efb978",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 88,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 96,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 7,
++      "raw_chars": 2110,
++      "quoted_chars": 2208,
++      "sha256": "d92cf755731261f8eb068a132e8f6135b7ef87a8a55eef21cf5daa5e56540415",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 88,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 96,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 8,
++      "raw_chars": 2073,
++      "quoted_chars": 2172,
++      "sha256": "00d787b569fe647de6df93eb023949612a8d3276c3cd4605fdd1318c3fc37422",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 88,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 96,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 9,
++      "raw_chars": 49662,
++      "quoted_chars": 51409,
++      "sha256": "ee7bb06de1ee0e6add83ca93426fa795cd683498ccff3e35adf51ea0d2703bf3",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 88,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 102,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 10,
++      "raw_chars": 24383,
++      "quoted_chars": 24985,
++      "sha256": "91b6cddd3f083d760692fdded1cbb346137b1efe88d3a28effec279b48cff065",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 86,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 102,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 11,
++      "raw_chars": 5969,
++      "quoted_chars": 6217,
++      "sha256": "d29495eb13b2d02235b78fc4103b6e7a9d31b9158579d0a547567bf0daa4d406",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 86,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 102,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 12,
++      "raw_chars": 2298,
++      "quoted_chars": 2401,
++      "sha256": "5e2add384653610c986de3ea9f5d61cbcbee3ce2f58f05f42984998d499bf6d1",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 86,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 99,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 13,
++      "raw_chars": 7229,
++      "quoted_chars": 7333,
++      "sha256": "bc051ab35e2bc59b7f482a3649744ca4b6b2862f29d9fd83ed7dd8f5a01e62b7",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 86,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 14,
++      "raw_chars": 2119,
++      "quoted_chars": 2221,
++      "sha256": "5409106898552453492d9154214073ac2dfafb00bfaddd34a84d076cf37c99e2",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 86,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 98,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 15,
++      "raw_chars": 12,
++      "quoted_chars": 14,
++      "sha256": "566d6a4021d6e4062b59b6ed14779c243b4fbf24a19ae636afca35ca2d1a130f",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 89,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 115,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 16,
++      "raw_chars": 39134,
++      "quoted_chars": 40115,
++      "sha256": "9f338b807589993b30b5149c8ec76767fd23b175678dfe7d26413863e324f6dd",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 89,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 101,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 17,
++      "raw_chars": 2165,
++      "quoted_chars": 2265,
++      "sha256": "0e2d2500db33944f55127a6d1dacb5986e78f268be53ac5e2223d7d844641fe3",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 89,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 101,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 18,
++      "raw_chars": 2255,
++      "quoted_chars": 2356,
++      "sha256": "48d012c208402f43bb2003be45fbd1d3cea00cea45eba0b2a4d6b0a267ee1fb8",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 89,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 101,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 19,
++      "raw_chars": 7875,
++      "quoted_chars": 8150,
++      "sha256": "f6de23468b94f26a370dd3df14ab6ad31820017e438cfa707f89ca48cead1753",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 89,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 104,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 20,
++      "raw_chars": 2025,
++      "quoted_chars": 2116,
++      "sha256": "b02f1ea2f4ed4c2ad91017aa0552abf56fcbc9624231585a4e3cbfded0c946b6",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 90,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 104,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 21,
++      "raw_chars": 2050,
++      "quoted_chars": 2141,
++      "sha256": "eb3e32a7b6b818e23f83bdb3c9b0ea2886eaedb20ed0d0ad405987e00ab70537",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 90,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 104,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 22,
++      "raw_chars": 21273,
++      "quoted_chars": 21875,
++      "sha256": "6cb6b27fd12b826c1eb46dfd41119e8aa69741307390f96d282d9748f07fd8db",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 90,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 103,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 23,
++      "raw_chars": 1860,
++      "quoted_chars": 1895,
++      "sha256": "1aeb0879a9352f2c5268ce66057e6333b6339ed2d2d18ede94a86c16d31d3012",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 90,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 103,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 84,
++      "result_index": 24,
++      "raw_chars": 1725,
++      "quoted_chars": 1806,
++      "sha256": "bcfa8bb495963d5022d9666aec7ae16d561be2068dd670bc80722bb2e1cac287",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 90,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 103,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 93,
++      "result_index": 0,
++      "raw_chars": 69601,
++      "quoted_chars": 71105,
++      "sha256": "a53629c8913b4756311a40989027fd26ddeb973c4a804e80cd0fc6b74099b4e0",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 94,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 99,
++          "occurrences": 1
++        }
++      ]
++    },
++    {
++      "source_trajectory": 93,
++      "result_index": 1,
++      "raw_chars": 2285,
++      "quoted_chars": 2391,
++      "sha256": "b63b62cd638f7bac0f866c59563c7657f4a8deb4629e670f2acf6d3a9910902b",
++      "embedded_quoted_occurrences": [
++        {
++          "trajectory_index": 94,
++          "occurrences": 1
++        },
++        {
++          "trajectory_index": 98,
++          "occurrences": 1
++        }
++      ]
++    }
++  ],
++  "offline_measured_representation_trials": [
++    {
++      "name": "original_v2",
++      "wire_chars": 1588531,
++      "same_overhead_backend_chars": 1592078,
++      "wire_saving_vs_original": 0,
++      "exact_decode_equals_logical": true,
++      "fits_observed_limit_with_old_instructions": false
++    },
++    {
++      "name": "fragment_only_selection",
++      "wire_chars": 1594460,
++      "same_overhead_backend_chars": 1598007,
++      "wire_saving_vs_original": -5929,
++      "exact_decode_equals_logical": true,
++      "fits_observed_limit_with_old_instructions": false
++    },
++    {
++      "name": "double_quoted_partition_only",
++      "wire_chars": 1266200,
++      "same_overhead_backend_chars": 1269747,
++      "wire_saving_vs_original": 322331,
++      "exact_decode_equals_logical": true,
++      "fits_observed_limit_with_old_instructions": false
++    },
++    {
++      "name": "single_quoted_partition_only",
++      "wire_chars": 1787887,
++      "same_overhead_backend_chars": 1791434,
++      "wire_saving_vs_original": -199356,
++      "exact_decode_equals_logical": true,
++      "fits_observed_limit_with_old_instructions": false
++    },
++    {
++      "name": "actual_newline_partition",
++      "wire_chars": 1811835,
++      "same_overhead_backend_chars": 1815382,
++      "wire_saving_vs_original": -223304,
++      "exact_decode_equals_logical": true,
++      "fits_observed_limit_with_old_instructions": false
++    },
++    {
++      "name": "actual_and_escaped_newline_partition",
++      "wire_chars": 1484574,
++      "same_overhead_backend_chars": 1488121,
++      "wire_saving_vs_original": 103957,
++      "exact_decode_equals_logical": true,
++      "fits_observed_limit_with_old_instructions": false
++    },
++    {
++      "name": "content_defined_exact_chunks_6_bits",
++      "wire_chars": 1336273,
++      "same_overhead_backend_chars": 1339820,
++      "wire_saving_vs_original": 252258,
++      "exact_decode_equals_logical": true,
++      "fits_observed_limit_with_old_instructions": false
++    },
++    {
++      "name": "content_defined_exact_chunks_7_bits",
++      "wire_chars": 1326807,
++      "same_overhead_backend_chars": 1330354,
++      "wire_saving_vs_original": 261724,
++      "exact_decode_equals_logical": true,
++      "fits_observed_limit_with_old_instructions": false
++    },
++    {
++      "name": "content_defined_exact_chunks_8_bits",
++      "wire_chars": 1360725,
++      "same_overhead_backend_chars": 1364272,
++      "wire_saving_vs_original": 227806,
++      "exact_decode_equals_logical": true,
++      "fits_observed_limit_with_old_instructions": false
++    },
++    {
++      "name": "content_defined_exact_chunks_9_bits",
++      "wire_chars": 1382882,
++      "same_overhead_backend_chars": 1386429,
++      "wire_saving_vs_original": 205649,
++      "exact_decode_equals_logical": true,
++      "fits_observed_limit_with_old_instructions": false
++    }
++  ],
++  "other_reviewer_candidate": {
++    "attribution": "fetch_review reported independently measured prototype; see its separate report for implementation/equality proof",
++    "strategy": "Independent double-quoted lexer plus canonical JSON-quoted reference to raw shared strings",
++    "wire_chars": 846191,
++    "backend_chars_with_old_instructions": 849738,
++    "headroom_with_old_instructions": 198838,
++    "reported_exact_logical_sha256": "2cd53600de561fdfad4d7ce8832de41e756cbadec841ccc2ca522c5a3e37bcd2",
++    "outer_v2_factoring_wire_chars": 796049,
++    "implemented_product_fix": false
++  },
++  "constraints": [
++    "Preserve exact complete supplied logical planner payload, full initial task prompt, all trajectory observations, self-check, complete entries and candidate accounting.",
++    "Preserve current candidate schema and validation; schema is not the observed over-limit input.",
++    "Preserve v1/v2 decoding and reserved-marker collision safety; any new references must be explicit, inspectable and exactly reversible.",
++    "Do not claim the inherited c944f51 planner-observation policy or upstream root formatter is globally lossless; this codec acts on the existing supplied logical payload.",
++    "Cost-select complete representations generically; do not select evidence using provider limits or task/site identifiers.",
++    "No codec can guarantee an arbitrary irreducible input fits a finite provider bound; preserve and fail visibly rather than omit content."
++  ]
++}
+diff --git a/runs/round3/refiner_input_failure.md b/runs/round3/refiner_input_failure.md
+new file mode 100644
+index 0000000..2388822
+--- /dev/null
++++ b/runs/round3/refiner_input_failure.md
+@@ -0,0 +1,63 @@
++# Final-refiner input-size failure
++
++The `fair_slots_v1` A run reached root submission, then failed during automatic final refinement because its **prompt** exceeded the provider's character limit. The output schema was separate and small. This is a different product failure from the earlier concurrency starvation. No new B arm started, and no semantic score for this failed A is assigned here.
++
++Source: `dab5cf89963805d20d3d305ba14d8c8611cd8cf4`. Run: `research-0fd1b020f55e4155989dcd8c40c418f1`. Final planner request/job: `e526f2d58c344551b9af464ae640f659` / `b07049d849e54bad8ece2a1237c8606d`. [Full measurements, hashes, preserved errors, exact source-occurrence examples, and trial results](refiner_input_failure.json).
++
++## Exact failure and separation of causes
++
++The first root `REPL code.end` with `answer_ready=true` is trace 1844 at 04:02:43.137263 UTC. Final refinement begins at trace 1864. Backend attempts 0–4, trace 1865–1878, all dispatch the same prompt hash `109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564` and fail with `input_too_large`, actual characters 1,592,078 and maximum 1,048,576. All five dispatches/completions and four retries are retained; none produced a proposal or usage report. The final failure propagates to research trace 1883 at 04:03:04.917402 UTC. The manifest records `status: interrupted` with this RuntimeError; that status does not establish an operator interruption.
++
++| Component | Exact characters |
++|---|---:|
++| Complete supplied logical payload, default JSON | 1,984,123 |
++| Same payload, compact JSON | 1,970,560 |
++| Shared-text-v2 wire payload | 1,588,531 |
++| Refiner instructions | 3,365 |
++| Archived planner prompt | 1,591,896 |
++| Backend instruction prefix | 182 |
++| Actual backend prompt / provider `actual_chars` | **1,592,078** |
++| Provider input limit | **1,048,576** |
++| Excess | **543,502** |
++| Separate output schema | 8,959 |
++
++The 344 evidence anchors occupy 6,359 compact JSON characters. They remain in the logical payload and the strict schema. Removing or weakening that enumeration would not fix the observed prompt limit; the provider's reported size exactly equals the prompt alone. Candidate accounting is also small: 1,138 compact characters for two groups preserving all 34 stalled-search and two failed-fetch occurrences.
++
++The final supplied payload has three complete harness entries, 292 trajectory observations (61 model, 219 tool, 12 worker-iteration records), zero self-check issues and 36 signals. Its trajectory occupies 1,867,667 compact characters. Model-prompt fields account for 1,115,913 compact characters; tool results account for 466,684. The successful mid-task planner had only 458,546 logical / 326,921 wire characters and committed two entries. That earlier success did not test the final observation's larger and differently serialized evidence.
++
++## Why v2 misses sufficient reuse
++
++The existing representation is reversible, but its sharing candidates do not cover this input's duplication well:
++
++1. **A mixed quote lexer can absorb JSON evidence into unrelated spans.** In `/trajectory/99/prompt`, the prose apostrophe in “person's” starts a 17,907-character single-quote span at character 180. The following match spans 66,982 characters. The actual JSON object begins at character 482. Thus the repeated page strings inside that object are not independently recognized. The exact offsets and prompt hash are recorded in the JSON report. Trying independent double-quoted segmentation saves 322,331 wire characters, but still exceeds the limit.
++2. **Raw text and its JSON-quoted form are different literal strings.** The supplied observation retains original fetch text and later prompts embedding that text through `json.dumps`. V2 can share identical quoted occurrences with each other, but cannot represent a quoted occurrence by applying a specified JSON-quoting operation to the already retained raw literal. For example, `/trajectory/93/result/0` is 69,601 raw characters; its canonical 71,105-character quoted form appears in both `/trajectory/94/prompt` and `/trajectory/99/prompt`. Exact hashes and every measured occurrence are retained. Sharing these forms requires an explicit reversible representation rule, not deleting either occurrence.
++3. **Factoring only the current literal table cannot suffice.** The v2 table occupies 257,567 characters, but its encoded `payload` member alone occupies 1,330,910. Even an impossible zero-cost table would leave at least 1,334,457 backend characters including the existing instructions. Recursive table sharing can complement a fix, but cannot by itself remove this failure.
++
++The unchanged retry loop treats the permanent provider rejection like a retryable call failure. That explains the five identical rejected attempts and added delay; it did not create the oversized input. A separate backend correction is being implemented by another agent.
++
++## Measured lossless candidates
++
++All trials below operated on decoded saved input, changed no product source, and checked exact decoded equality, including every field/string occurrence. “Backend” adds the existing 3,547 instruction characters; a new format must measure its own final instructions.
++
++| Offline representation trial | Wire characters | Backend with existing instructions | Fits observed limit |
++|---|---:|---:|---|
++| Existing v2 | 1,588,531 | 1,592,078 | No |
++| Fragment-only selection instead of whole-value-first | 1,594,460 | 1,598,007 | No |
++| Independent double-quote partition | 1,266,200 | 1,269,747 | No |
++| Actual and escaped newline partition | 1,484,574 | 1,488,121 | No |
++| Best of measured content-defined exact substring partitions | 1,326,807 | 1,330,354 | No |
++| Independent double-quote partition plus canonical JSON-quoted references to raw strings, measured by `fetch_review` | **846,191** | **849,738** | **Yes** |
++
++The last prototype was independently reported by `fetch_review`, with the same decoded logical SHA-256 `2cd53600de561fdfad4d7ce8832de41e756cbadec841ccc2ca522c5a3e37bcd2` and 198,838 characters of headroom using the old instructions. Its additional outer v2 factoring measured 796,049 wire characters. Those prototype results establish a promising representation change, not an implemented or live-validated fix; its separate analysis supplies the algorithm and evidence.
++
++The smallest supported direction is a generic, inspectable representation that shares exact raw text with canonical JSON-quoted occurrences and avoids treating prose apostrophes as a reason to miss double-quoted JSON strings. Preserve v1/v2 decoding, exact reference/escape semantics, complete-cost selection, and every logical field. Any new quoting marker must specify exact escaping, preserve noncanonical literal spellings unchanged, and reject malformed references. Additional table factoring should be selected only if its complete serialized cost decreases.
++
++This does **not** authorize dropping tool results, later history, usage/outcomes, candidates or schema validation; replacing observations with summaries; capping the root prompt/stdout; changing models/limits; task/site-specific branches; or forced lessons. Nor can a lossless codec guarantee arbitrary irreducible content fits a finite provider limit. Such a case must remain visible rather than silently omit evidence.
++
++## Preservation boundary and next verification
++
++[The Round 2 fix-quality review](../round2/fix_quality_review.md) distinguishes the pre-existing `c944f51` planner-observation policy from the codec: it retains the full initial task prompt and supplied observations but does not retain every subsequent root prompt in the planner observation. The pinned root formatter also has an inherited output cap. This diagnosis proposes no change to either boundary and makes no claim that either is globally lossless. Exact losslessness here means the **complete supplied logical planner payload**, whose original default serialization and SHA were independently reproduced from the archived v2 input.
++
++A product fix needs tests for exact JSON quoting/unquoting, apostrophes preceding embedded JSON, Unicode/escape variants, marker collisions, malformed references, all preserved scalar/container types, old-format compatibility, strict candidate accounting, and full-cost selection. Replay this failed saved planner input with the new complete serialized instructions and unchanged logical payload; also repeat prior saved cases and the full offline suite. A replay success must retain all candidate decisions and does not establish a new research comparison. The parent will preserve the failed cohort and perform the authorized full fresh replay after source/preflight gates pass.
++
++This diagnosis made no model/web calls, package installs, product edits, original archive/harness mutations, or new research runs. All measurements are from disk.
+diff --git a/runs/round3/verify_quoted_text_saved_input.py b/runs/round3/verify_quoted_text_saved_input.py
+new file mode 100644
+index 0000000..b5e1e3d
+--- /dev/null
++++ b/runs/round3/verify_quoted_text_saved_input.py
+@@ -0,0 +1,63 @@
++"""Explicit disk-only regression; no CI dependency on local research archives."""
++import argparse
++import hashlib
++import json
++from pathlib import Path
++
++from loop_research import codex_backend, refine, shared_text
++from loop_research.codex_backend import INSTRUCTION
++from loop_research.refine import INSTRUCTIONS
++from loop_research.shared_text import decode_shared_text, encode_shared_text
++
++
++def digest(text):
++    return hashlib.sha256(text.encode()).hexdigest()
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--job', type=Path, required=True)
++    parser.add_argument('--expected-logical-sha256', required=True)
++    parser.add_argument('--max-prompt-chars', type=int, required=True)
++    args = parser.parse_args()
++    original = args.job.read_bytes()
++    job = json.loads(original)
++    old = job['planner_representation']
++    old_text = job['planner_prompt'][-old['wire_payload_chars']:]
++    assert digest(old_text) == old['wire_payload_sha256']
++    payload = decode_shared_text(json.loads(old_text))
++    logical = json.dumps(payload, ensure_ascii=False)
++    assert len(logical) == old['logical_payload_chars']
++    assert digest(logical) == old['logical_payload_sha256'] == args.expected_logical_sha256
++    encoded = encode_shared_text(payload)
++    text = json.dumps(encoded, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
++    assert json.dumps(decode_shared_text(json.loads(text)), ensure_ascii=False) == logical
++    full = INSTRUCTION + INSTRUCTIONS + text
++    schema = json.dumps(job['planner_schema'], ensure_ascii=False)
++    assert job['planner_schema']['$defs']['EvidenceRef']['enum'] == payload['evidence_index']
++    assert args.job.read_bytes() == original
++    result = {'job': str(args.job.resolve()), 'job_sha256': hashlib.sha256(original).hexdigest(),
++              'logical_chars': len(logical), 'logical_sha256': digest(logical),
++              'format': encoded['format'], 'old_wire_chars': len(old_text),
++              'old_backend_prompt_chars': len(INSTRUCTION + job['planner_prompt']),
++              'wire_chars': len(text), 'wire_sha256': digest(text),
++              'instruction_chars': len(INSTRUCTION) + len(INSTRUCTIONS),
++              'refiner_instruction_chars': len(INSTRUCTIONS),
++              'backend_prefix_chars': len(INSTRUCTION),
++              'backend_prompt_chars': len(full), 'backend_prompt_sha256': digest(full),
++              'schema_chars': len(schema), 'schema_sha256': digest(schema),
++              'logical_collection_counts': {key: len(value) for key, value in payload.items()
++                                             if type(value) in (dict, list)},
++              'schema_evidence_index_equal': True,
++              'source_files': {Path(module.__file__).name: {
++                  'path': str(Path(module.__file__).resolve()),
++                  'sha256': hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest()}
++                  for module in (codex_backend, refine, shared_text)},
++              'observed_limit_chars': args.max_prompt_chars,
++              'exact_logical_roundtrip': True, 'original_job_unchanged': True}
++    print(json.dumps(result, indent=2))
++    assert len(full) <= args.max_prompt_chars, 'Saved input still exceeds the observed provider limit'
++
++
++if __name__ == '__main__':
++    main()
+diff --git a/src/loop_research/refine.py b/src/loop_research/refine.py
+index 2a1b817..24d3fad 100644
+--- a/src/loop_research/refine.py
++++ b/src/loop_research/refine.py
+@@ -189,11 +189,17 @@ No answer keys or grades are available. Preserve procedures and failure modes, n
+ Skills may include a standalone Python module as source text; it will execute only in the isolated REPL.
+ Use create/update/delete, the existing bare ids, and full title/content for create/update.
+ For delete use null title/content/module. For create use null id. Return the requested JSON schema.
+-The input is a lossless shared-text-v2 representation, not a summary. Its shared_texts array
++The input uses a lossless shared-text-v2 or shared-text-v3 representation, not a summary.
++The format field identifies the selected version. Its shared_texts array
+ contains exact literal strings. In payload, {"$shared_text": N} means that complete string
+ at zero-based index N. {"$shared_text_parts": PARTS} means concatenate the listed literal
+ strings and shared-text references in order, with no added separators or normalization.
+ This preserves repeated text embedded inside otherwise different prompts and code blocks.
++In v3 only, {"$json_quote": N} means apply json.dumps(shared_texts[N], ensure_ascii=False)
++exactly once, including the surrounding double quotes and JSON escapes. This reference can
++also be a part in $shared_text_parts. It preserves a JSON-quoted occurrence of the same
++raw text; it does not change the original string's spelling. All table entries remain
++literal strings. V1/v2 have no $json_quote marker; that key is an ordinary literal key there.
+ {"$literal_object": OBJECT} escapes an original object with a reserved
+ marker shape: keep that object's keys and recursively decode its values. Decode references
+ recursively; every original field and string occurrence is retained. Evidence pointers address
+diff --git a/src/loop_research/shared_text.py b/src/loop_research/shared_text.py
+index accd64b..ead1e86 100644
+--- a/src/loop_research/shared_text.py
++++ b/src/loop_research/shared_text.py
+@@ -12,8 +12,10 @@ import re
+ 
+ 
+ _FORMAT = "shared-text-v2"
++_QUOTED_FORMAT = "shared-text-v3"
+ _MARKERS = {"$shared_text", "$shared_text_parts", "$literal_object"}
+ _QUOTED = re.compile(r'''"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*' ''', re.DOTALL | re.VERBOSE)
++_JSON_QUOTED = re.compile(r'"(?:\\.|[^"\\])*"', re.DOTALL)
+ 
+ 
+ def _compact(value):
+@@ -114,7 +116,7 @@ def _add_profitable(counts, strings, indices):
+             strings.append(value)
+ 
+ 
+-def encode_shared_text(payload):
++def _encode_v2(payload):
+     """Return a shared-text-v2 wrapper, without modifying the JSON payload.
+ 
+     Repeated strings are considered in first-occurrence order. Each selected
+@@ -153,6 +155,102 @@ def encode_shared_text(payload):
+     return wrapper
+ 
+ 
++def _json_fragments(value):
++    """Prose apostrophes cannot consume a later double-quoted JSON string."""
++    position = 0
++    for match in _JSON_QUOTED.finditer(value):
++        yield from value[position:match.start()].splitlines(keepends=True)
++        yield match[0]
++        position = match.end()
++    yield from value[position:].splitlines(keepends=True)
++
++
++def _unquote_canonical(value):
++    if value.startswith('"'):
++        try:
++            decoded = json.loads(value)
++        except ValueError:
++            pass
++        else:
++            if type(decoded) is str and json.dumps(decoded, ensure_ascii=False) == value:
++                return decoded, True
++    return value, False
++
++
++def _encode_quoted(payload):
++    counts = _string_counts(payload)
++    quoted_counts = Counter()
++    for value, count in counts.items():
++        for part in _json_fragments(value):
++            base, quoted = _unquote_canonical(part)
++            if quoted:
++                quoted_counts[base] += count
++    strings, indices = [], {}
++    for value in dict.fromkeys([*counts, *quoted_counts]):
++        index = len(strings)
++        literal_chars = len(_compact(value))
++        raw_reference = len(_compact({"$shared_text": index}))
++        quoted_reference = len(_compact({"$json_quote": index}))
++        quoted_chars = len(_compact(json.dumps(value, ensure_ascii=False)))
++        saving = (counts[value] * (literal_chars - raw_reference)
++                  + quoted_counts[value] * (quoted_chars - quoted_reference))
++        if saving > literal_chars + bool(strings):
++            indices[value] = index
++            strings.append(value)
++
++    def visit(value, used):
++        if type(value) is str:
++            if value in indices:
++                used.add(indices[value])
++                return {"$shared_text": indices[value]}
++            parts, references = [], set()
++            for part in _json_fragments(value):
++                base, quoted = _unquote_canonical(part)
++                if base in indices:
++                    index = indices[base]
++                    parts.append({"$json_quote" if quoted else "$shared_text": index})
++                    references.add(index)
++                elif parts and type(parts[-1]) is str:
++                    parts[-1] += part
++                else:
++                    parts.append(part)
++            candidate = {"$shared_text_parts": parts}
++            if references and len(_compact(candidate)) < len(_compact(value)):
++                used.update(references)
++                return candidate
++            return value
++        if type(value) is list:
++            return [visit(item, used) for item in value]
++        if type(value) is dict:
++            mapping = {key: visit(item, used) for key, item in value.items()}
++            return {"$literal_object": mapping} if (_MARKERS | {"$json_quote"}).intersection(value) else mapping
++        return value
++
++    used = set()
++    visit(payload, used)
++    strings = [value for index, value in enumerate(strings) if index in used]
++    indices = {value: index for index, value in enumerate(strings)}
++    return {"format": _QUOTED_FORMAT, "shared_texts": strings, "payload": visit(payload, set())}
++
++
++def encode_shared_text(payload):
++    """Select the smaller complete lossless v2/v3 representation.
++
++    V3 can share raw text with an exact canonical JSON-quoted occurrence.
++    Its table still contains literal strings; $json_quote applies exactly one
++    json.dumps(..., ensure_ascii=False), including quotes and escapes. No
++    depth counters, summaries, input limits, or content-specific rules apply.
++    Candidate costs include actual index widths, escaped literals, table
++    entries, parts wrappers, and the complete serialized result. V2 wins ties.
++    """
++    original = _encode_v2(payload)
++    quoted = _encode_quoted(payload)
++    quoted_chars = len(_compact(quoted))
++    if quoted_chars < len(_compact(payload)) and quoted_chars < len(_compact(original)):
++        return quoted
++    return original
++
++
+ def decode_shared_text(wrapper):
+     """Restore the exact JSON value; reject malformed wrappers with ValueError.
+ 
+@@ -164,22 +262,30 @@ def decode_shared_text(wrapper):
+     if (type(wrapper) is not dict
+             or set(wrapper) != {"format", "shared_texts", "payload"}
+             or type(wrapper['format']) is not str
+-            or wrapper["format"] not in {"shared-text-v1", _FORMAT}):
++            or wrapper["format"] not in {"shared-text-v1", _FORMAT, _QUOTED_FORMAT}):
+         raise ValueError("Expected a supported shared-text wrapper")
+     strings = wrapper["shared_texts"]
+     if type(strings) is not list or any(type(value) is not str for value in strings):
+         raise ValueError("shared_texts must be a list of literal strings")
++    quoted_format = wrapper["format"] == _QUOTED_FORMAT
+ 
+     def decode(value):
+         if isinstance(value, list):
+             return [decode(item) for item in value]
+         if isinstance(value, dict):
+-            if wrapper['format'] == _FORMAT and '$shared_text_parts' in value:
++            if quoted_format and "$json_quote" in value:
++                index = value["$json_quote"]
++                if (set(value) != {"$json_quote"} or type(index) is not int
++                        or not 0 <= index < len(strings)):
++                    raise ValueError("Invalid JSON-quoted shared-text reference")
++                return json.dumps(strings[index], ensure_ascii=False)
++            if wrapper['format'] in {_FORMAT, _QUOTED_FORMAT} and '$shared_text_parts' in value:
+                 parts = value['$shared_text_parts']
+                 if set(value) != {'$shared_text_parts'} or type(parts) is not list:
+                     raise ValueError('Invalid shared-text parts')
+                 if any(type(part) is not str and
+-                       not (type(part) is dict and set(part) == {'$shared_text'}) for part in parts):
++                       not (type(part) is dict and (set(part) == {'$shared_text'} or
++                            (quoted_format and set(part) == {'$json_quote'}))) for part in parts):
+                     raise ValueError('String parts require literals or shared-text references')
+                 return ''.join(decode(part) for part in parts)
+             if "$shared_text" in value:
+diff --git a/tests/test_saved_refine_input.py b/tests/test_saved_refine_input.py
+index c92fccb..8797e2e 100644
+--- a/tests/test_saved_refine_input.py
++++ b/tests/test_saved_refine_input.py
+@@ -40,7 +40,7 @@ def fixture(version):
+     return job, expected
+ 
+ 
+-@pytest.mark.parametrize('version', ['shared-text-v1', 'shared-text-v2'])
++@pytest.mark.parametrize('version', ['shared-text-v1', 'shared-text-v2', 'shared-text-v3'])
+ def test_saved_encoded_prompt_matches_original_logical_fields_and_index(version):
+     job, expected = fixture(version)
+     before = copy.deepcopy(job)
+diff --git a/tests/test_shared_text_fragments.py b/tests/test_shared_text_fragments.py
+index 008c725..3d2a047 100644
+--- a/tests/test_shared_text_fragments.py
++++ b/tests/test_shared_text_fragments.py
+@@ -4,21 +4,24 @@ import json
+ 
+ import pytest
+ 
+-from loop_research.shared_text import decode_shared_text, encode_shared_text
++from loop_research.shared_text import _encode_v2, decode_shared_text, encode_shared_text
+ 
+ 
+ def compact(value):
+     return json.dumps(value, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
+ 
+ 
+-def test_different_prompts_share_embedded_quoted_text_without_losing_wrappers():
++@pytest.mark.parametrize('encoder,version', [
++    (_encode_v2, 'shared-text-v2'), (encode_shared_text, 'shared-text-v3'),
++])
++def test_different_prompts_share_embedded_quoted_text_without_losing_wrappers(encoder, version):
+     passage = 'Exact evidence with 雪, "quotes", slash \\, and newline\n' * 30
+     payload = {'prompts': [f'Request {i}: ' + compact({'text': passage, 'record': i})
+                            + f'\nEnd {i}.' for i in range(8)], 'number': 1.0}
+     original = copy.deepcopy(payload)
+-    encoded = encode_shared_text(payload)
+-    assert encoded['format'] == 'shared-text-v2'
+-    assert compact(passage) in encoded['shared_texts']
++    encoded = encoder(payload)
++    assert encoded['format'] == version
++    assert (compact(passage) if version == 'shared-text-v2' else passage) in encoded['shared_texts']
+     assert compact(encoded).count('$shared_text_parts') == len(payload['prompts'])
+     assert len(compact(encoded)) < len(compact(payload)) - 6 * len(compact(passage))
+     assert compact(decode_shared_text(json.loads(compact(encoded)))) == compact(original)
+@@ -26,12 +29,15 @@ def test_different_prompts_share_embedded_quoted_text_without_losing_wrappers():
+ 
+ 
+ @pytest.mark.parametrize('ending', ['\n', '\r\n', '\r', '\v', '\f', '\u2028', '\u2029'])
+-def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending):
++@pytest.mark.parametrize('encoder,version', [
++    (_encode_v2, 'shared-text-v2'), (encode_shared_text, 'shared-text-v3'),
++])
++def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending, encoder, version):
+     value = ('  exact \\ "quoted" 雪 e\u0301' + ending) * 20
+     payload = [f'prefix-{i} ' + compact(value) + ending + f'suffix-{i}' for i in range(5)]
+-    encoded = encode_shared_text(payload)
+-    assert encoded['format'] == 'shared-text-v2'
+-    assert compact(value) in encoded['shared_texts']
++    encoded = encoder(payload)
++    assert encoded['format'] == version
++    assert (compact(value) if version == 'shared-text-v2' else value) in encoded['shared_texts']
+     assert compact(decode_shared_text(json.loads(compact(encoded)))) == compact(payload)
+ 
+ 
+diff --git a/tests/test_shared_text_quotes.py b/tests/test_shared_text_quotes.py
+new file mode 100644
+index 0000000..4ab8209
+--- /dev/null
++++ b/tests/test_shared_text_quotes.py
+@@ -0,0 +1,132 @@
++"""Lossless sharing across raw source text and its canonical JSON spelling."""
++import copy
++import json
++
++import pytest
++
++from loop_research.shared_text import (
++    _encode_quoted, _encode_v2, decode_shared_text, encode_shared_text,
++)
++
++
++def compact(value):
++    return json.dumps(value, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
++
++
++def wrapper(payload, strings=None, version='shared-text-v3'):
++    return {'format': version, 'shared_texts': strings or [], 'payload': payload}
++
++
++def test_prose_apostrophe_does_not_hide_json_evidence_shared_with_raw_source():
++    source = ('Exact page: 雪, "quoted", apostrophe\'s, backslash\\, newline\n' * 100)
++    payload = {'source': source, 'again': source,
++               'prompts': ["Check each person's evidence.\n" + compact({'text': source, 'i': i})
++                           for i in range(4)]}
++    original = copy.deepcopy(payload)
++    encoded = encode_shared_text(payload)
++    assert encoded['format'] == 'shared-text-v3'
++    assert encoded['shared_texts'].count(source) == 1
++    assert compact(source) not in encoded['shared_texts']
++    assert '$json_quote' in compact(encoded)
++    assert len(compact(encoded)) < len(compact(payload)) / 3
++    assert compact(decode_shared_text(json.loads(compact(encoded)))) == compact(original)
++    assert payload == original
++
++
++@pytest.mark.parametrize('source', [
++    '', '雪 😀 e\u0301', '"quoted" and \\\\slashes', '\n\r\t\b\f\x00',
++    '\\u2603 is literal; ☃ is actual', 'already "quoted" /', 'apostrophe\'s',
++])
++def test_v3_quote_reference_is_exactly_one_json_string_serialization(source):
++    encoded = wrapper({'$shared_text_parts': [
++        'before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}, [source])
++    original = copy.deepcopy(encoded)
++    assert decode_shared_text(encoded) == 'before:' + source + '/' + json.dumps(source, ensure_ascii=False) + ':after'
++    assert encoded == original
++
++
++@pytest.mark.parametrize('version', ['shared-text-v1', 'shared-text-v2'])
++def test_older_formats_keep_new_marker_keys_literal(version):
++    payload = {'$json_quote': 0, 'nested': {'$json_quote': False}}
++    assert decode_shared_text(wrapper(payload, ['text'], version)) == payload
++
++
++def test_v3_escapes_literal_new_marker_and_keeps_nested_references_distinct():
++    source = 'Evidence with "quotes", 雪 and newlines\n' * 100
++    payload = {'$json_quote': {'$shared_text': 0}, 'source': source,
++               'prompts': [f'read {i} ' + json.dumps(source, ensure_ascii=False) for i in range(3)]}
++    encoded = encode_shared_text(payload)
++    assert encoded['format'] == 'shared-text-v3'
++    assert set(encoded['payload']) == {'$literal_object'}
++    assert decode_shared_text(encoded) == payload
++    assert decode_shared_text(wrapper({'$literal_object': {'$json_quote': {'$json_quote': 0}}},
++                                     [source])) == {'$json_quote': json.dumps(source, ensure_ascii=False)}
++
++
++@pytest.mark.parametrize('index', [True, False, -1, 1, 0.0, '0', None, [], {}])
++def test_v3_rejects_bad_quote_indices_without_coercion(index):
++    with pytest.raises(ValueError):
++        decode_shared_text(wrapper({'$json_quote': index}, ['only zero']))
++
++
++@pytest.mark.parametrize('marker', [
++    {'$json_quote': 0, 'extra': 1},
++    {'$json_quote': 0, '$shared_text': 0},
++    {'$shared_text_parts': [{'$json_quote': True}]},
++    {'$shared_text_parts': [{'$json_quote': 0, 'depth': 2}]},
++    {'$shared_text_parts': [{'$shared_text_parts': ['nested']}]},
++])
++def test_v3_rejects_malformed_quote_and_part_shapes(marker):
++    with pytest.raises(ValueError):
++        decode_shared_text(wrapper(marker, ['source']))
++
++
++def test_noncanonical_escapes_and_invalid_json_fragments_are_not_normalized():
++    source = '雪 and / "quoted" \n' * 60
++    unusual = json.dumps(source, ensure_ascii=True).replace('/', '\\/')
++    payload = {'raw': source, 'valid': [json.dumps(source, ensure_ascii=False)] * 3,
++               'noncanonical': unusual, 'invalid': 'prose "\nnot JSON" and "\\xZ"'}
++    encoded = encode_shared_text(payload)
++    assert compact(decode_shared_text(encoded)) == compact(payload)
++    assert decode_shared_text(encoded)['noncanonical'] == unusual
++
++
++def test_unprofitable_new_representation_retains_original_v2_encoding():
++    payload = {'text': 'Unique literal without repetition', 'quoted': '"different unique literal"'}
++    assert encode_shared_text(payload) == wrapper(payload, version='shared-text-v2')
++
++
++@pytest.mark.parametrize('payload', [
++    {'$json_quote': 7, 'other': {'$json_quote': False}},
++    ['single-quoted evidence: ' + "'a long unchanged literal ' " * 10] * 3,
++    ['x' * 60] * 2,
++])
++def test_v2_fallback_retains_its_original_marker_escape_rules_and_complete_cost(payload):
++    original = _encode_v2(payload)
++    assert original['format'] == 'shared-text-v2'
++    assert encode_shared_text(payload) == original
++    assert decode_shared_text(original) == payload
++    if type(payload) is dict:
++        assert original['payload'] == payload
++
++
++def test_selection_compares_complete_serialized_candidates_with_actual_index_widths():
++    sources = [f'source {i}: 雪 "quoted" \\\n' * 40 for i in range(110)]
++    payload = {'raw': sources, 'prompts': [
++        f"Person's evidence {i}: " + compact({'text': value})
++        for i, value in enumerate(sources)]}
++    candidates = [_encode_v2(payload), _encode_quoted(payload)]
++    assert len(candidates[1]['shared_texts']) >= 100
++    expected = min(candidates, key=lambda value: len(compact(value)))
++    assert expected['format'] == 'shared-text-v3'
++    assert encode_shared_text(payload) == expected
++    assert compact(decode_shared_text(expected)) == compact(payload)
++
++
++def test_quoted_text_encoding_is_deterministic_and_preserves_all_scalar_types():
++    text = '雪\\ and exact newline\n' * 80
++    payload = {'raw': text, 'quoted': [json.dumps(text, ensure_ascii=False)] * 4,
++               'types': [None, False, True, 0, -1, 1.0, -0.0, [], {}]}
++    first = encode_shared_text(payload)
++    assert first == encode_shared_text(copy.deepcopy(payload))
++    assert compact(decode_shared_text(first)) == compact(payload)

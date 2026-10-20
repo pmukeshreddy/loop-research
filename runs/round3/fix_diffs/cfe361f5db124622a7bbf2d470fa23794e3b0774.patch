@@ -1,0 +1,1062 @@
+commit cfe361f5db124622a7bbf2d470fa23794e3b0774
+Author:     mukesh reddy p <88029886+pmukeshreddy@users.noreply.github.com>
+AuthorDate: Mon Oct 19 23:29:26 2026 -0400
+Commit:     mukesh reddy p <88029886+pmukeshreddy@users.noreply.github.com>
+CommitDate: Mon Oct 19 23:29:44 2026 -0400
+
+    Admit queued Codex calls fairly across processes
+
+diff --git a/runs/round3/fair_slots/fair_slots_baseline_failure.log b/runs/round3/fair_slots/fair_slots_baseline_failure.log
+new file mode 100644
+index 0000000..c13abf8
+--- /dev/null
++++ b/runs/round3/fair_slots/fair_slots_baseline_failure.log
+@@ -0,0 +1,45 @@
++F                                                                        [100%]
++=================================== FAILURES ===================================
++____________ test_selection_is_same_prefix_for_stream_and_baseline _____________
++
++config = Config(models=Models(root='gpt-6-astra', sub='gpt-6-astra', refine='gpt-6-astra', judge='gpt-6-astra', reasoning_effor...Refine(max_edits=2), bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0))
++tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-j513hpac/pytest-of-mukeshreddypochamreddy/pytest-0/test_selection_is_same_prefix_0')
++
++    def test_selection_is_same_prefix_for_stream_and_baseline(config, tmp_path):
++        from loop_research.evaluation import select_tasks
++        adapter = WandrBenchmark(Path(__file__).resolve().parents[1], config)
++>       limited = select_tasks(adapter, config, 'wandr')
++                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++
++tests/test_baseline.py:185: 
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++src/loop_research/evaluation.py:45: in select_tasks
++    tasks = sorted(adapter.load_tasks(), key=lambda task: task.task_id)
++                   ^^^^^^^^^^^^^^^^^^^^
++src/loop_research/benchmarks/wandr/data.py:38: in load_tasks
++    for line in (self.download / "data/test.jsonl").read_text().splitlines():
++                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/pathlib.py:1027: in read_text
++    with self.open(mode='r', encoding=encoding, errors=errors) as f:
++         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++
++self = PosixPath('/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/fair-slots/data/downloads/wandr/data/test.jsonl')
++mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
++
++    def open(self, mode='r', buffering=-1, encoding=None,
++             errors=None, newline=None):
++        """
++        Open the file pointed to by this path and return a file object, as
++        the built-in open() function does.
++        """
++        if "b" not in mode:
++            encoding = io.text_encoding(encoding)
++>       return io.open(self, mode, buffering, encoding, errors, newline)
++               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/fair-slots/data/downloads/wandr/data/test.jsonl'
++
++../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/pathlib.py:1013: FileNotFoundError
++=========================== short test summary info ============================
++FAILED tests/test_baseline.py::test_selection_is_same_prefix_for_stream_and_baseline
++1 failed in 0.23s
+diff --git a/runs/round3/fair_slots/fair_slots_full.log b/runs/round3/fair_slots/fair_slots_full.log
+new file mode 100644
+index 0000000..17cffe4
+--- /dev/null
++++ b/runs/round3/fair_slots/fair_slots_full.log
+@@ -0,0 +1,57 @@
++........................................................................ [  7%]
++...................F.................................................... [ 15%]
++........................................................................ [ 23%]
++........................................................................ [ 31%]
++........................................................................ [ 39%]
++........................................................................ [ 47%]
++........................................................................ [ 55%]
++........................................................................ [ 63%]
++........................................................................ [ 70%]
++........................................................................ [ 78%]
++........................................................................ [ 86%]
++........................................................................ [ 94%]
++..................................................                       [100%]
++=================================== FAILURES ===================================
++____________ test_selection_is_same_prefix_for_stream_and_baseline _____________
++
++config = Config(models=Models(root='gpt-6-astra', sub='gpt-6-astra', refine='gpt-6-astra', judge='gpt-6-astra', reasoning_effor...Refine(max_edits=2), bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0))
++tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-a4mlz73w/pytest-of-mukeshreddypochamreddy/pytest-0/test_selection_is_same_prefix_0')
++
++    def test_selection_is_same_prefix_for_stream_and_baseline(config, tmp_path):
++        from loop_research.evaluation import select_tasks
++        adapter = WandrBenchmark(Path(__file__).resolve().parents[1], config)
++>       limited = select_tasks(adapter, config, 'wandr')
++                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++
++tests/test_baseline.py:185: 
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++src/loop_research/evaluation.py:45: in select_tasks
++    tasks = sorted(adapter.load_tasks(), key=lambda task: task.task_id)
++                   ^^^^^^^^^^^^^^^^^^^^
++src/loop_research/benchmarks/wandr/data.py:38: in load_tasks
++    for line in (self.download / "data/test.jsonl").read_text().splitlines():
++                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/pathlib.py:1027: in read_text
++    with self.open(mode='r', encoding=encoding, errors=errors) as f:
++         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
++
++self = PosixPath('/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/fair-slots/data/downloads/wandr/data/test.jsonl')
++mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
++
++    def open(self, mode='r', buffering=-1, encoding=None,
++             errors=None, newline=None):
++        """
++        Open the file pointed to by this path and return a file object, as
++        the built-in open() function does.
++        """
++        if "b" not in mode:
++            encoding = io.text_encoding(encoding)
++>       return io.open(self, mode, buffering, encoding, errors, newline)
++               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++E       FileNotFoundError: [Errno 2] No such file or directory: '/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/fair-slots/data/downloads/wandr/data/test.jsonl'
++
++../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/pathlib.py:1013: FileNotFoundError
++=========================== short test summary info ============================
++FAILED tests/test_baseline.py::test_selection_is_same_prefix_for_stream_and_baseline
++1 failed, 913 passed, 1 deselected in 112.03s (0:01:52)
+diff --git a/runs/round3/fair_slots/fair_slots_full_final.log b/runs/round3/fair_slots/fair_slots_full_final.log
+new file mode 100644
+index 0000000..bf58df5
+--- /dev/null
++++ b/runs/round3/fair_slots/fair_slots_full_final.log
+@@ -0,0 +1,14 @@
++........................................................................ [  7%]
++........................................................................ [ 15%]
++........................................................................ [ 23%]
++........................................................................ [ 31%]
++........................................................................ [ 39%]
++........................................................................ [ 47%]
++........................................................................ [ 55%]
++........................................................................ [ 63%]
++........................................................................ [ 70%]
++........................................................................ [ 78%]
++........................................................................ [ 86%]
++........................................................................ [ 94%]
++..................................................                       [100%]
++914 passed, 1 deselected in 104.97s (0:01:44)
+diff --git a/runs/round3/fair_slots/fair_slots_full_green.log b/runs/round3/fair_slots/fair_slots_full_green.log
+new file mode 100644
+index 0000000..95b895a
+--- /dev/null
++++ b/runs/round3/fair_slots/fair_slots_full_green.log
+@@ -0,0 +1,79 @@
++........................................................................ [  7%]
++.......................F................................................ [ 15%]
++........................................................................ [ 23%]
++........................................................................ [ 31%]
++........................................................................ [ 39%]
++........................................................................ [ 47%]
++........................................................................ [ 55%]
++........................................................................ [ 63%]
++........................................................................ [ 70%]
++........................................................................ [ 78%]
++........................................................................ [ 86%]
++........................................................................ [ 94%]
++..................................................                       [100%]
++=================================== FAILURES ===================================
++_ test_parallel_completion_keeps_sequential_results_archives_and_report_order __
++
++tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-lkqjlf48/pytest-of-mukeshreddypochamreddy/pytest-0/test_parallel_completion_keeps0')
++config = Config(models=Models(root='gpt-6-astra', sub='gpt-6-astra', refine='gpt-6-astra', judge='gpt-6-astra', reasoning_effor...Refine(max_edits=2), bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0))
++offline = namespace(tasks=[Task(task_id='t0', benchmark='wandr', question='Find the fixture.', spec={'nodes': [{'task_id': 'node...rocess=<function RunContext.run_process at 0x10b40a7a0>, harness=<loop_research.harness.Harness object at 0x1168a8980>)
++monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1168ab0e0>
++
++    def test_parallel_completion_keeps_sequential_results_archives_and_report_order(tmp_path, config, offline, monkeypatch):
++        import csv
++        import threading
++        from concurrent.futures import ThreadPoolExecutor
++        from loop_research import baseline
++    
++        sequential = baseline.baseline(tmp_path, config, 'wandr')
++        config.codex.max_concurrent = 2
++        original = baseline.RunContext.run_process
++        started = {task_id: threading.Event() for task_id in ['t2', 't1', 't3']}
++        release = threading.Event()
++        lock = threading.Lock()
++        active = peak = 0
++        def runner(ctx, command, **kwargs):
++            nonlocal active, peak
++            with lock:
++                active += 1
++                peak = max(peak, active)
++            started[ctx.task_id].set()
++            try:
++                if ctx.task_id == 't2':
++                    assert release.wait(5)
++                return original(ctx, command, **kwargs)
++            finally:
++                with lock:
++                    active -= 1
++        monkeypatch.setattr(baseline.RunContext, 'run_process', runner)
++        with ThreadPoolExecutor(max_workers=1) as pool:
++            future = pool.submit(baseline.baseline, tmp_path, config, 'wandr')
++            try:
++                assert started['t2'].wait(5)
++                assert started['t1'].wait(2), 'Second task must run while the first is blocked'
++                assert started['t3'].wait(2), 'A completed task must free a slot before the first finishes'
++            finally:
++                release.set()
++            parallel = future.result(timeout=5)
++>       assert peak == 2
++E       assert 1 == 2
++
++tests/test_baseline.py:271: AssertionError
++----------------------------- Captured stdout call -----------------------------
++Archive: baseline-wandr-56ca88d41edc4991ba4f6026bbb86329; planned tasks: 3
++[1/3] t2: started
++[1/3] t2: succeeded; soft_f1_full=0.75
++[2/3] t1: started
++[2/3] t1: succeeded; soft_f1_full=0.75
++[3/3] t3: started
++[3/3] t3: succeeded; soft_f1_full=0.75
++Archive: baseline-wandr-da3c0398bf394f1895f24fa0d0e4e956; planned tasks: 3
++[1/3] t2: started
++[2/3] t1: started
++[2/3] t1: succeeded; soft_f1_full=0.75
++[3/3] t3: started
++[3/3] t3: succeeded; soft_f1_full=0.75
++[1/3] t2: succeeded; soft_f1_full=0.75
++=========================== short test summary info ============================
++FAILED tests/test_baseline.py::test_parallel_completion_keeps_sequential_results_archives_and_report_order
++1 failed, 913 passed, 1 deselected in 107.35s (0:01:47)
+diff --git a/runs/round3/fair_slots/fair_slots_green.log b/runs/round3/fair_slots/fair_slots_green.log
+new file mode 100644
+index 0000000..7967640
+--- /dev/null
++++ b/runs/round3/fair_slots/fair_slots_green.log
+@@ -0,0 +1,2 @@
++......................................                                   [100%]
++38 passed in 1.86s
+diff --git a/runs/round3/fair_slots/fair_slots_green_extended.log b/runs/round3/fair_slots/fair_slots_green_extended.log
+new file mode 100644
+index 0000000..992d3e9
+--- /dev/null
++++ b/runs/round3/fair_slots/fair_slots_green_extended.log
+@@ -0,0 +1,2 @@
++............................................                             [100%]
++44 passed in 2.14s
+diff --git a/runs/round3/fair_slots/fair_slots_parallel_check.log b/runs/round3/fair_slots/fair_slots_parallel_check.log
+new file mode 100644
+index 0000000..8b8cba7
+--- /dev/null
++++ b/runs/round3/fair_slots/fair_slots_parallel_check.log
+@@ -0,0 +1,67 @@
++F                                                                        [100%]
++=================================== FAILURES ===================================
++_ test_parallel_completion_keeps_sequential_results_archives_and_report_order __
++
++tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-885xcyz7/pytest-of-mukeshreddypochamreddy/pytest-0/test_parallel_completion_keeps0')
++config = Config(models=Models(root='gpt-6-astra', sub='gpt-6-astra', refine='gpt-6-astra', judge='gpt-6-astra', reasoning_effor...Refine(max_edits=2), bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0))
++offline = namespace(tasks=[Task(task_id='t0', benchmark='wandr', question='Find the fixture.', spec={'nodes': [{'task_id': 'node...rocess=<function RunContext.run_process at 0x10b4d67a0>, harness=<loop_research.harness.Harness object at 0x10ca4f4d0>)
++monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ca4c110>
++
++    def test_parallel_completion_keeps_sequential_results_archives_and_report_order(tmp_path, config, offline, monkeypatch):
++        import csv
++        import threading
++        from concurrent.futures import ThreadPoolExecutor
++        from loop_research import baseline
++    
++        sequential = baseline.baseline(tmp_path, config, 'wandr')
++        config.codex.max_concurrent = 2
++        original = baseline.RunContext.run_process
++        started = {task_id: threading.Event() for task_id in ['t2', 't1', 't3']}
++        release = threading.Event()
++        lock = threading.Lock()
++        active = peak = 0
++        def runner(ctx, command, **kwargs):
++            nonlocal active, peak
++            with lock:
++                active += 1
++                peak = max(peak, active)
++            started[ctx.task_id].set()
++            try:
++                if ctx.task_id == 't2':
++                    assert release.wait(5)
++                return original(ctx, command, **kwargs)
++            finally:
++                with lock:
++                    active -= 1
++        monkeypatch.setattr(baseline.RunContext, 'run_process', runner)
++        with ThreadPoolExecutor(max_workers=1) as pool:
++            future = pool.submit(baseline.baseline, tmp_path, config, 'wandr')
++            try:
++                assert started['t2'].wait(5)
++                assert started['t1'].wait(2), 'Second task must run while the first is blocked'
++                assert started['t3'].wait(2), 'A completed task must free a slot before the first finishes'
++            finally:
++                release.set()
++            parallel = future.result(timeout=5)
++>       assert peak == 2
++E       assert 1 == 2
++
++tests/test_baseline.py:271: AssertionError
++----------------------------- Captured stdout call -----------------------------
++Archive: baseline-wandr-8f6e664a673f4a648cc1084c14bb684c; planned tasks: 3
++[1/3] t2: started
++[1/3] t2: succeeded; soft_f1_full=0.75
++[2/3] t1: started
++[2/3] t1: succeeded; soft_f1_full=0.75
++[3/3] t3: started
++[3/3] t3: succeeded; soft_f1_full=0.75
++Archive: baseline-wandr-2ebb059fd6ba470c9289ae6f525db81b; planned tasks: 3
++[1/3] t2: started
++[2/3] t1: started
++[2/3] t1: succeeded; soft_f1_full=0.75
++[3/3] t3: started
++[3/3] t3: succeeded; soft_f1_full=0.75
++[1/3] t2: succeeded; soft_f1_full=0.75
++=========================== short test summary info ============================
++FAILED tests/test_baseline.py::test_parallel_completion_keeps_sequential_results_archives_and_report_order
++1 failed in 0.72s
+diff --git a/runs/round3/fair_slots/fair_slots_parallel_repeated.log b/runs/round3/fair_slots/fair_slots_parallel_repeated.log
+new file mode 100644
+index 0000000..f84c4cb
+--- /dev/null
++++ b/runs/round3/fair_slots/fair_slots_parallel_repeated.log
+@@ -0,0 +1,40 @@
++Trial 1: exit 0
++.                                                                        [100%]
++1 passed in 0.66s
++ 
++Trial 2: exit 0
++.                                                                        [100%]
++1 passed in 0.61s
++ 
++Trial 3: exit 0
++.                                                                        [100%]
++1 passed in 0.56s
++ 
++Trial 4: exit 0
++.                                                                        [100%]
++1 passed in 0.56s
++ 
++Trial 5: exit 0
++.                                                                        [100%]
++1 passed in 0.55s
++ 
++Trial 6: exit 0
++.                                                                        [100%]
++1 passed in 0.55s
++ 
++Trial 7: exit 0
++.                                                                        [100%]
++1 passed in 0.57s
++ 
++Trial 8: exit 0
++.                                                                        [100%]
++1 passed in 0.55s
++ 
++Trial 9: exit 0
++.                                                                        [100%]
++1 passed in 0.56s
++ 
++Trial 10: exit 0
++.                                                                        [100%]
++1 passed in 0.56s
++ 
+diff --git a/runs/round3/fair_slots/fair_slots_red.log b/runs/round3/fair_slots/fair_slots_red.log
+new file mode 100644
+index 0000000..9510714
+--- /dev/null
++++ b/runs/round3/fair_slots/fair_slots_red.log
+@@ -0,0 +1,99 @@
++FF                                                                       [100%]
++=================================== FAILURES ===================================
++_ test_queued_thread_precedes_late_arrival_even_when_late_arrival_polls_first __
++
++ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-kt17t1q3/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
++monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x107902360>
++
++    def test_queued_thread_precedes_late_arrival_even_when_late_arrival_polls_first(ctx, monkeypatch):
++        """Removing queue-order enforcement lets the late caller take the freed slot."""
++        ctx.config.codex.max_concurrent = 1
++        backend = CodexBackend(ctx)
++        occupied = backend._acquire_slot(5)
++        older_sleeping, resume_older, late_attempted = (threading.Event() for _ in range(3))
++        releases = {label: threading.Event() for label in ("older", "late")}
++        admitted = queue.Queue()
++        real_sleep = time.sleep
++        first_old_sleep = True
++        labels = threading.local()
++    
++        def scheduled_sleep(delay):
++            nonlocal first_old_sleep
++            if labels.value == "older" and first_old_sleep:
++                first_old_sleep = False
++                older_sleeping.set()
++                assert resume_older.wait(5)
++            if labels.value == "late":
++                late_attempted.set()
++            real_sleep(min(delay, .005))
++    
++        def acquire(label):
++            labels.value = label
++            with backend._acquire_slot(5):
++                if label == "late":
++                    late_attempted.set()
++                admitted.put(label)
++                assert releases[label].wait(5)
++    
++        monkeypatch.setattr(codex_backend, "time", SimpleNamespace(
++            monotonic=time.monotonic, sleep=scheduled_sleep))
++        with ThreadPoolExecutor(max_workers=2) as pool:
++            older = pool.submit(acquire, "older")
++            late = None
++            try:
++                assert older_sleeping.wait(5)
++                occupied.close()
++                late = pool.submit(acquire, "late")
++                assert late_attempted.wait(5)
++                resume_older.set()
++                first = admitted.get(timeout=5)
++                releases[first].set()
++                second = admitted.get(timeout=5)
++                releases[second].set()
++                older.result(timeout=5)
++                late.result(timeout=5)
++>               assert [first, second] == ["older", "late"]
++E               AssertionError: assert ['late', 'older'] == ['older', 'late']
++E                 
++E                 At index 0 diff: 'late' != 'older'
++E                 Use -v to get more diff
++
++tests/test_codex_slot_fairness.py:91: AssertionError
++_ test_queued_process_precedes_late_process_even_when_late_process_polls_first _
++
++ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-kt17t1q3/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
++
++    def test_queued_process_precedes_late_process_even_when_late_process_polls_first(ctx):
++        """A process-local queue cannot protect an older request in another process."""
++        ctx.config.codex.max_concurrent = 1
++        occupied = CodexBackend(ctx)._acquire_slot(5)
++        mp = multiprocessing.get_context("spawn")
++        admitted = mp.Queue()
++        old_sleeping, resume_old, old_attempted, late_attempted = (mp.Event() for _ in range(4))
++        releases = {label: mp.Event() for label in ("older", "late")}
++        old = mp.Process(target=_slot_process, args=(
++            ctx, "older", admitted, releases["older"], old_attempted, old_sleeping, resume_old))
++        late = mp.Process(target=_slot_process, args=(
++            ctx, "late", admitted, releases["late"], late_attempted))
++        old.start()
++        try:
++            assert old_sleeping.wait(5)
++            occupied.close()
++            late.start()
++            assert late_attempted.wait(5)
++            resume_old.set()
++            first = admitted.get(timeout=5)
++            releases[first].set()
++            second = admitted.get(timeout=5)
++            releases[second].set()
++>           assert [first, second] == ["older", "late"]
++E           AssertionError: assert ['late', 'older'] == ['older', 'late']
++E             
++E             At index 0 diff: 'late' != 'older'
++E             Use -v to get more diff
++
++tests/test_codex_slot_fairness.py:123: AssertionError
++=========================== short test summary info ============================
++FAILED tests/test_codex_slot_fairness.py::test_queued_thread_precedes_late_arrival_even_when_late_arrival_polls_first
++FAILED tests/test_codex_slot_fairness.py::test_queued_process_precedes_late_process_even_when_late_process_polls_first
++2 failed, 5 deselected in 0.28s
+diff --git a/runs/round3/fair_slots/log_manifest.json b/runs/round3/fair_slots/log_manifest.json
+new file mode 100644
+index 0000000..98cd3b5
+--- /dev/null
++++ b/runs/round3/fair_slots/log_manifest.json
+@@ -0,0 +1,50 @@
++{
++  "source_base": "9de64148a8b4bde40015d3001bc79d1c43b0a8ba",
++  "logs": [
++    {
++      "path": "fair_slots_red.log",
++      "sha256": "ac060f9d2bc35077e8efc10400c4680c0c444e6319bbe4d92f8c6c897c8472d9",
++      "bytes": 4999
++    },
++    {
++      "path": "fair_slots_green.log",
++      "sha256": "aa4848986693ee7e6cdb4706afbcd3e0230e8d8895e8fce8c64d4a35ed921efe",
++      "bytes": 99
++    },
++    {
++      "path": "fair_slots_green_extended.log",
++      "sha256": "0e448d43900f635cfef9e6d91dec9d154b01ebf5671720ea6edf322d30a9c5e8",
++      "bytes": 99
++    },
++    {
++      "path": "fair_slots_full.log",
++      "sha256": "49dd45b266479e2aaebd25c8a082eeb49897737aa66699289e47e03b1ca7c150",
++      "bytes": 3996
++    },
++    {
++      "path": "fair_slots_baseline_failure.log",
++      "sha256": "dafee761176bab5973b3f5f26bc5764a25757911151baaeb86e4e62486baeeb1",
++      "bytes": 2998
++    },
++    {
++      "path": "fair_slots_full_green.log",
++      "sha256": "2415e57ab75cf35030754527bc94fe7b4ecd8b98d926cb243c8e1299bbdd6354",
++      "bytes": 4481
++    },
++    {
++      "path": "fair_slots_parallel_check.log",
++      "sha256": "7dd5a6be04f59bf59ea189efa6478bc1f8802f4c955e1c148d6ef8530a39538f",
++      "bytes": 3483
++    },
++    {
++      "path": "fair_slots_parallel_repeated.log",
++      "sha256": "fa98e06fb64841e75c256697ed3af0b2e81cd0caa998d28a41c27aafaaf716f0",
++      "bytes": 1161
++    },
++    {
++      "path": "fair_slots_full_final.log",
++      "sha256": "df016ba65d8019aa16ee9bf7803b356ce598e21a290509505fbadeb5543bd035",
++      "bytes": 1086
++    }
++  ]
++}
+diff --git a/runs/round3/fair_slots/rootcause.md b/runs/round3/fair_slots/rootcause.md
+new file mode 100644
+index 0000000..f5151f1
+--- /dev/null
++++ b/runs/round3/fair_slots/rootcause.md
+@@ -0,0 +1,57 @@
++# Fair Codex slot admission
++
++This fix replaces the cross-process slot lottery with FIFO admission in `CodexBackend._acquire_slot`. It changes no research prompts, refinement scheduling, model choices, configuration limits, transport retries, or call accounting. Work began from source commit `9de64148a8b4bde40015d3001bc79d1c43b0a8ba` in the isolated `round3/fair-slots` worktree.
++
++## Observed failure and reproduction
++
++The superseded `cohorts/final` B0-1 run is `research-25eb3a4bccde4c03b0b61cce55ded4c9`. Its saved `trace.jsonl` line 332 starts search span `ea7c10869e014f47bd1d8bd047448453` at `2026-10-20T02:59:21.704158+00:00`. Line 394 ends that span at `03:09:21.711503+00:00`, with duration `600.0071062920033` seconds and `BudgetExceeded: Deadline while waiting for Codex concurrency slot`. Later requests could obtain slots while this request remained waiting. The parent preserved and interrupted the affected cohort; this patch does not edit that evidence.
++
++Before the fix, `_acquire_slot` scanned numbered slot files from zero through `max_concurrent - 1`, attempted a nonblocking exclusive `flock`, then slept up to 50 ms if every slot was occupied. An arriving request and an older waiting request had exactly the same eligibility. A newly arriving request could take a just-released slot while the older request slept, repeatedly, until the older request's deadline expired. OS locks protected capacity and released slots after a crash, but provided no queued admission order.
++
++The first new tests ran against the unchanged implementation. They hold the sole slot, let an older request reach its wait, pause that request's polling, release the slot, and let a later request poll first. They exercise real OS locks, once with threads and once with spawned processes. Both fail with actual admission `["late", "older"]` instead of `["older", "late"]`. The sleep hook controls the adversarial schedule; it does not replace locking or admission. See [the original red log](fair_slots_red.log).
++
++## Protocol and cleanup
++
++The existing per-user temporary directory and numbered slot locks remain. A persistent `queue.lock` inode serializes only queue registration, inspection, and slot claims. It is never unlinked, because replacing the inode could split mutual exclusion between participants.
++
++Under that mutex, each requester creates an exclusive, uniquely named ticket, with an ordinal greater than every currently live queued ordinal and a UUID suffix. The requester locks the ticket before releasing the mutex. There is no mutable counter file or JSON queue manifest, so a process killed during a partial counter write cannot corrupt ordering. Empty ticket files carry only their filename and OS-held ownership lock.
++
++Only the oldest live ticket may claim an eligible numbered slot. Successful admission removes its ticket immediately and releases the mutex before the model runs, allowing subsequent tickets to fill the other slots. A locked ticket is live; an unlocked ticket can be removed after acquiring its lock while holding the mutex. Liveness does not depend on a PID, PID reuse, wall-clock age, or assumptions about execution duration.
++
++Cancellation or deadline expiry unlinks the requester's unique ticket without waiting for the queue mutex, then closes the ownership lock. Concurrent readers tolerate a missing path. A claimed slot is also closed if cancellation or deadline expiry races the claim. A process killed while queued, while holding a slot, or between ticket creation and ticket locking leaves OS locks released; the next entrant cleans up an abandoned ticket and can proceed. Malformed ticket names cause a visible failure; they are not silently treated as permission to evict a potentially live owner.
++
++Both queue-mutex admission and capacity waiting check cancellation and the same original slot-wait deadline. Capacity waits retain the 50 ms maximum polling interval. The short metadata mutex uses a 1 ms maximum retry interval, for the regression described below. This is not a deadline extension or transport retry change. `complete`, `CallBudget`, the configured concurrency of four, operation timeout of 600 seconds, task timeout of 3600 seconds, call budget of 300, and existing retry policy remain unchanged.
++
++## Full-suite regression found and corrected
++
++The first focused run passed 38 tests; after additional cancellation/crash coverage, 44 focused tests passed, including 13 new tests and 31 existing backend/isolation tests.
++
++The first full-suite attempt produced **913 passed, 1 failed, 1 deselected**. The failure was `test_selection_is_same_prefix_for_stream_and_baseline`: the new worktree had copied pinned fixtures under `.verification`, while this existing test requires `data/downloads/wandr/data/test.jsonl`. The repair created worktree-local `data/vendor` and `data/downloads` links to the worktree's own copied fixture directories. No installation, download, main-worktree fixture change, or test change was made. See [the full failure log](fair_slots_full.log) and [isolated reproduction](fair_slots_baseline_failure.log).
++
++The second full-suite attempt produced **913 passed, 1 failed, 1 deselected**. This was a real new admission-latency regression: `test_parallel_completion_keeps_sequential_results_archives_and_report_order` measured peak concurrency one instead of two. Copying the original 50 ms capacity polling interval to the new, short queue mutex made a registering thread sleep while free capacity existed; fast fixture calls could finish before it retried. The same failure reproduced in isolation.
++
++Only the queue-mutex retry interval changed to at most 1 ms. Capacity polling remains at most 50 ms, and no test assertion was changed. The previously failing concurrency test then passed in **10 out of 10 fresh pytest invocations**. The second full-suite log has the historical, misleading filename `fair_slots_full_green.log`; it is a **failure log**, not green evidence. See [that preserved log](fair_slots_full_green.log), [isolated concurrency failure](fair_slots_parallel_check.log), and [ten subsequent passes](fair_slots_parallel_repeated.log). The final retry change was made just before the second suite finished; only the subsequent complete run is evidence for the final source state.
++
++The final source passed the complete offline suite: **914 passed, 1 deselected in 104.97 seconds**. The deselected test carries the existing live marker. The source remained unchanged throughout this final run. Command: `PYTHONPATH=src /Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/python -m pytest -q`, from the isolated worktree. See [the final full-suite log](fair_slots_full_final.log).
++
++The nine raw logs are preserved byte for byte, including pytest's trailing whitespace; `log_manifest.json` records their hashes. Source, tests, documentation, and the manifest pass the whitespace check. An unfiltered check also reports the unchanged whitespace in those raw logs.
++
++## Tests and independent review
++
++The new tests cover thread FIFO; spawned-process FIFO; four simultaneous admitted processes with a fifth blocked; canceled and timed-out heads; killed queued and admitted processes; cancellation and deadline while waiting for the queue mutex; cancellation immediately after ticket registration and slot claim; a process killed after ticket creation but before ownership locking; and malformed live-ticket state failing without deleting ownership.
++
++Existing backend process-sharing, durable attempt accounting, cancellation, retry, and ambient-slot isolation tests are retained. Offline tests keep their isolated `TMPDIR`; no test contends with production slots or invokes a model or network transport. Pinned WideSearch and WANDR files were copied from disk into the isolated worktree; no source dependency or vendor implementation was changed.
++
++Two independent agents reviewed the initial FIFO protocol and each ran the 13 new tests successfully. They checked the persistent guard inode, registration and crash windows, lock-based liveness, unique-owner cleanup, deadlines/cancellation, concurrent capacity, and original red evidence. The final 1 ms mutex retry delta received a separate independent review with no significant remaining issue. That reviewer ran all 13 fairness tests plus the exact existing baseline parallelism regression: **14 passed in 1.87 seconds**, bound to the final backend hash below. Their separate receipts are `runs/round3/fair_slots_independent_review.md` and `.json` in the parent workspace; those parent-owned files are not included in this commit.
++
++Final source SHA-256: `src/loop_research/codex_backend.py` is `b8f46de7dd14ee64143adbc4683cf6752233a1d3a81205116873537ee38106ac`; `tests/test_codex_slot_fairness.py` is `5024c91e5e9ebc435bcca04d7d9aa9ceca8529744eefc145b95f79848c39040d`.
++
++## Generalization and limits
++
++The queue is shared by all callers using the same per-user temporary directory and protocol, regardless of task, model role, source website, run ID, or research topic. It contains no seeded lesson or case-specific path. It prevents a later registered request from taking capacity ahead of an older live registered request.
++
++FIFO means **successful registration order under the queue mutex**, not exact wall-clock function-entry order. The mutex itself uses cancellable nonblocking polling; the scheduler must still let a waiting process run. FIFO does not guarantee completion under overload, during indefinitely long held calls, or within a budget too small for the admitted workload. Those failures remain visible under the existing deadlines.
++
++All participants should use the same `max_concurrent`, as the cohort does. With conflicting limits, a limit-one head can wait for slot zero while higher numbered slots are free; later tickets cannot bypass it. Therefore concurrent work-conservation is demonstrated for an agreed limit, not claimed for inconsistent configurations. Old code that ignores the queue can still compete for existing slots, so the parent must install the new source consistently and start the new cohort after the prior owned processes stop.
++
++The fix retains stable empty slot/mutex files deliberately; they are coordination inodes, not leaked ownership. Live tickets are removed on admission/cancellation/timeout, and abandoned tickets from killed owners are reaped by subsequent admission. No claim is made that a process killed without any later caller can execute its own cleanup.
+diff --git a/src/loop_research/codex_backend.py b/src/loop_research/codex_backend.py
+index 8b5d43f..445c613 100644
+--- a/src/loop_research/codex_backend.py
++++ b/src/loop_research/codex_backend.py
+@@ -20,6 +20,33 @@ MODEL_ROLES = {"root": "root", "baseline": "root", "sub": "sub", "search": "sub"
+                "refine": "refine", "grade": "judge", "repair": "root"}
+ PURPOSES = set(MODEL_ROLES)
+ _LIMIT = re.compile(r"rate.?limit|usage.limit|exceeded retry limit|exhausted.*credit|spend.cap|slow_down", re.I)
++_SLOT_TICKET = re.compile(r"wait-(\d+)-[0-9a-f]{32}")
++
++
++def _live_slot_tickets(directory, own_ticket):
++    """Called under queue.lock; an owner holds its ticket lock until admission."""
++    live = []
++    for path in directory.glob("wait-*"):
++        match = _SLOT_TICKET.fullmatch(path.name)
++        if match is None:
++            raise ValueError(f"Invalid Codex slot queue ticket: {path}")
++        if path == own_ticket:
++            live.append((int(match[1]), path))
++            continue
++        try:
++            probe = path.open("r+")
++        except FileNotFoundError:
++            continue  # A canceled owner may unregister without taking queue.lock.
++        with probe:
++            try:
++                fcntl.flock(probe, fcntl.LOCK_EX | fcntl.LOCK_NB)
++            except BlockingIOError:
++                live.append((int(match[1]), path))
++            else:
++                # No live owner. OS locks, not PIDs or wall-clock ages, establish
++                # this after a crash (including a crash during registration).
++                path.unlink(missing_ok=True)
++    return sorted(live)
+ 
+ 
+ class CodexError(RuntimeError):
+@@ -65,24 +92,83 @@ class CodexBackend:
+         self.local = threading.local()
+ 
+     def _acquire_slot(self, timeout):
+-        # File locks coordinate root processes, research workers, and their threads.
+-        # Locks are released by the OS if a worker is interrupted or killed.
++        # FIFO is the order of registration under queue.lock, across processes
++        # and threads. Only admission is serialized; admitted calls run in all
++        # configured slots concurrently. All participants should use the same
++        # limit: a smaller-limit head still waits for one of its eligible slots.
+         directory = Path(tempfile.gettempdir()) / f"loop-codex-slots-{os.getuid()}"
+         directory.mkdir(exist_ok=True)
+         deadline = time.monotonic() + timeout
+-        while True:
++
++        def remaining():
+             self.ctx.check_cancelled()
+-            for number in range(self.config.codex.max_concurrent):
+-                slot = (directory / str(number)).open("a")
+-                try:
+-                    fcntl.flock(slot, fcntl.LOCK_EX | fcntl.LOCK_NB)
+-                    return slot
+-                except BlockingIOError:
+-                    slot.close()
+-            remaining = deadline - time.monotonic()
+-            if remaining <= 0:
++            value = deadline - time.monotonic()
++            if value <= 0:
+                 raise BudgetExceeded("Deadline while waiting for Codex concurrency slot")
+-            time.sleep(min(.05, remaining))
++            return value
++
++        ticket = ticket_path = selected = None
++        try:
++            # Never unlink this mutex: replacing its inode can split the queue.
++            with (directory / "queue.lock").open("a") as guard:
++                while selected is None:
++                    remaining()
++                    try:
++                        fcntl.flock(guard, fcntl.LOCK_EX | fcntl.LOCK_NB)
++                    except BlockingIOError:
++                        # The guard protects only metadata, not running calls.
++                        # A capacity-sized sleep here leaves free slots idle
++                        # while a registering caller waits behind a brief scan.
++                        time.sleep(min(.001, remaining()))
++                        continue
++                    try:
++                        remaining()
++                        live = _live_slot_tickets(directory, ticket_path)
++                        if ticket is None:
++                            # No mutable counter or partially written manifest.
++                            # Registration is atomic under the mutex; a unique
++                            # suffix makes concurrent owner cleanup safe.
++                            number = live[-1][0] + 1 if live else 0
++                            ticket_path = directory / f"wait-{number:020d}-{uuid4().hex}"
++                            ticket = ticket_path.open("x")
++                            fcntl.flock(ticket, fcntl.LOCK_EX | fcntl.LOCK_NB)
++                            live.append((number, ticket_path))
++                        if live[0][1] == ticket_path:
++                            for number in range(self.config.codex.max_concurrent):
++                                remaining()
++                                slot = (directory / str(number)).open("a")
++                                try:
++                                    fcntl.flock(slot, fcntl.LOCK_EX | fcntl.LOCK_NB)
++                                except BlockingIOError:
++                                    slot.close()
++                                except BaseException:
++                                    slot.close()
++                                    raise
++                                else:
++                                    selected = slot
++                                    remaining()  # Cancellation may race the claim.
++                                    ticket_path.unlink()
++                                    ticket.close()
++                                    ticket = None
++                                    break
++                    finally:
++                        fcntl.flock(guard, fcntl.LOCK_UN)
++                    if selected is None:
++                        time.sleep(min(.05, remaining()))
++            remaining()
++            result, selected = selected, None
++            return result
++        finally:
++            if selected is not None:
++                selected.close()
++            if ticket is not None:
++                # Unique owner paths may be removed without waiting for the
++                # mutex, even after cancellation/deadline. Readers tolerate the
++                # disappearance; the liveness lock stays held until unlink.
++                try:
++                    ticket_path.unlink(missing_ok=True)
++                finally:
++                    ticket.close()
+ 
+     @property
+     def last_usage(self):
+diff --git a/tests/test_codex_slot_fairness.py b/tests/test_codex_slot_fairness.py
+new file mode 100644
+index 0000000..852670a
+--- /dev/null
++++ b/tests/test_codex_slot_fairness.py
+@@ -0,0 +1,335 @@
++"""Exercise real OS slot locks without invoking a model or making network calls."""
++from concurrent.futures import CancelledError, Future, ThreadPoolExecutor
++import multiprocessing
++import fcntl
++import os
++from pathlib import Path
++import queue
++import tempfile
++import threading
++import time
++from types import SimpleNamespace
++
++import pytest
++
++from loop_research import codex_backend
++from loop_research.codex_backend import BudgetExceeded, CodexBackend
++
++
++def _tickets():
++    directory = Path(tempfile.gettempdir()) / f"loop-codex-slots-{os.getuid()}"
++    return list(directory.glob("wait-*"))
++
++
++def _queue_directory():
++    directory = Path(tempfile.gettempdir()) / f"loop-codex-slots-{os.getuid()}"
++    directory.mkdir(exist_ok=True)
++    return directory
++
++
++def _slot_process(ctx, label, admitted, release, attempted, sleeping=None, resume=None):
++    """Only control the polling schedule; file locking and admission stay real."""
++    real_sleep = time.sleep
++    blocked = False
++
++    def scheduled_sleep(delay):
++        nonlocal blocked
++        attempted.set()
++        if sleeping is not None and not blocked:
++            blocked = True
++            sleeping.set()
++            assert resume.wait(5), "Test did not resume the queued process"
++        real_sleep(min(delay, .005))
++
++    codex_backend.time = SimpleNamespace(monotonic=time.monotonic, sleep=scheduled_sleep)
++    with CodexBackend(ctx)._acquire_slot(5):
++        attempted.set()
++        admitted.put(label)
++        assert release.wait(5), "Test did not release the admitted process"
++
++
++def test_queued_thread_precedes_late_arrival_even_when_late_arrival_polls_first(ctx, monkeypatch):
++    """Removing queue-order enforcement lets the late caller take the freed slot."""
++    ctx.config.codex.max_concurrent = 1
++    backend = CodexBackend(ctx)
++    occupied = backend._acquire_slot(5)
++    older_sleeping, resume_older, late_attempted = (threading.Event() for _ in range(3))
++    releases = {label: threading.Event() for label in ("older", "late")}
++    admitted = queue.Queue()
++    real_sleep = time.sleep
++    first_old_sleep = True
++    labels = threading.local()
++
++    def scheduled_sleep(delay):
++        nonlocal first_old_sleep
++        if labels.value == "older" and first_old_sleep:
++            first_old_sleep = False
++            older_sleeping.set()
++            assert resume_older.wait(5)
++        if labels.value == "late":
++            late_attempted.set()
++        real_sleep(min(delay, .005))
++
++    def acquire(label):
++        labels.value = label
++        with backend._acquire_slot(5):
++            if label == "late":
++                late_attempted.set()
++            admitted.put(label)
++            assert releases[label].wait(5)
++
++    monkeypatch.setattr(codex_backend, "time", SimpleNamespace(
++        monotonic=time.monotonic, sleep=scheduled_sleep))
++    with ThreadPoolExecutor(max_workers=2) as pool:
++        older = pool.submit(acquire, "older")
++        late = None
++        try:
++            assert older_sleeping.wait(5)
++            occupied.close()
++            late = pool.submit(acquire, "late")
++            assert late_attempted.wait(5)
++            resume_older.set()
++            first = admitted.get(timeout=5)
++            releases[first].set()
++            second = admitted.get(timeout=5)
++            releases[second].set()
++            older.result(timeout=5)
++            late.result(timeout=5)
++            assert [first, second] == ["older", "late"]
++        finally:
++            occupied.close()
++            resume_older.set()
++            for event in releases.values():
++                event.set()
++    assert _tickets() == []
++
++
++def test_queued_process_precedes_late_process_even_when_late_process_polls_first(ctx):
++    """A process-local queue cannot protect an older request in another process."""
++    ctx.config.codex.max_concurrent = 1
++    occupied = CodexBackend(ctx)._acquire_slot(5)
++    mp = multiprocessing.get_context("spawn")
++    admitted = mp.Queue()
++    old_sleeping, resume_old, old_attempted, late_attempted = (mp.Event() for _ in range(4))
++    releases = {label: mp.Event() for label in ("older", "late")}
++    old = mp.Process(target=_slot_process, args=(
++        ctx, "older", admitted, releases["older"], old_attempted, old_sleeping, resume_old))
++    late = mp.Process(target=_slot_process, args=(
++        ctx, "late", admitted, releases["late"], late_attempted))
++    old.start()
++    try:
++        assert old_sleeping.wait(5)
++        occupied.close()
++        late.start()
++        assert late_attempted.wait(5)
++        resume_old.set()
++        first = admitted.get(timeout=5)
++        releases[first].set()
++        second = admitted.get(timeout=5)
++        releases[second].set()
++        assert [first, second] == ["older", "late"]
++    finally:
++        occupied.close()
++        resume_old.set()
++        for event in releases.values():
++            event.set()
++        for process in (old, late):
++            if process.pid is not None:
++                process.join(5)
++                if process.is_alive():
++                    process.kill()
++                    process.join(5)
++    assert old.exitcode == late.exitcode == 0
++    assert _tickets() == []
++
++
++def test_fifo_admission_fills_all_slots_without_waiting_for_earlier_calls_to_finish(ctx):
++    """Serializing execution instead of admission would leave three slots idle."""
++    ctx.config.codex.max_concurrent = 4
++    mp = multiprocessing.get_context("spawn")
++    admitted, release = mp.Queue(), mp.Event()
++    attempts = [mp.Event() for _ in range(5)]
++    processes = [mp.Process(target=_slot_process, args=(ctx, i, admitted, release, attempts[i]))
++                 for i in range(5)]
++    try:
++        for process in processes[:4]:
++            process.start()
++        assert {admitted.get(timeout=5) for _ in range(4)} == {0, 1, 2, 3}
++        processes[4].start()
++        assert attempts[4].wait(5)
++        with pytest.raises(queue.Empty):
++            admitted.get(timeout=.1)
++        release.set()
++        assert admitted.get(timeout=5) == 4
++    finally:
++        release.set()
++        for process in processes:
++            if process.pid is not None:
++                process.join(5)
++                if process.is_alive():
++                    process.kill()
++                    process.join(5)
++    assert all(process.exitcode == 0 for process in processes)
++    assert _tickets() == []
++
++
++@pytest.mark.parametrize("reason", ["cancel", "timeout"])
++def test_departing_head_does_not_block_next_request(ctx, reason):
++    """A canceled or expired head must remove its ticket and never consume capacity."""
++    ctx.config.codex.max_concurrent = 1
++    occupied = CodexBackend(ctx)._acquire_slot(5)
++    ctx.cancellation = Future()
++    backend = CodexBackend(ctx)
++    with ThreadPoolExecutor(max_workers=1) as pool:
++        future = pool.submit(backend._acquire_slot, .1 if reason == "timeout" else 5)
++        try:
++            deadline = time.monotonic() + 3
++            while not _tickets() and not future.done() and time.monotonic() < deadline:
++                time.sleep(.005)
++            if reason == "cancel":
++                ctx.cancellation.cancel()
++            with pytest.raises(CancelledError if reason == "cancel" else BudgetExceeded):
++                future.result(timeout=3)
++        finally:
++            ctx.cancellation.cancel()
++            occupied.close()
++    ctx.cancellation = None
++    with backend._acquire_slot(.5):
++        assert _tickets() == []
++
++
++@pytest.mark.parametrize("kill_state", ["queued", "admitted"])
++def test_killed_process_releases_ticket_or_slot_for_successor(ctx, kill_state):
++    """SIGKILL cannot run finally: progress must rely on OS liveness locks."""
++    ctx.config.codex.max_concurrent = 1
++    mp = multiprocessing.get_context("spawn")
++    admitted, release, attempted = mp.Queue(), mp.Event(), mp.Event()
++    occupied = CodexBackend(ctx)._acquire_slot(5) if kill_state == "queued" else None
++    process = mp.Process(target=_slot_process, args=(ctx, "victim", admitted, release, attempted))
++    process.start()
++    try:
++        if kill_state == "admitted":
++            assert admitted.get(timeout=5) == "victim"
++        else:
++            assert attempted.wait(5)
++        process.kill()
++        process.join(5)
++        if occupied:
++            occupied.close()
++        with CodexBackend(ctx)._acquire_slot(.5):
++            assert _tickets() == []
++    finally:
++        if occupied:
++            occupied.close()
++        if process.is_alive():
++            process.kill()
++        process.join(5)
++    assert process.exitcode != 0
++
++
++@pytest.mark.parametrize("reason", ["cancel", "timeout"])
++def test_waiting_for_queue_mutex_obeys_cancellation_and_deadline(ctx, monkeypatch, reason):
++    """A blocking queue mutex must not introduce an uncancellable, unbounded wait."""
++    ctx.cancellation = Future()
++    waiting = threading.Event()
++    real_sleep = time.sleep
++
++    def observed_sleep(delay):
++        waiting.set()
++        real_sleep(delay)
++
++    monkeypatch.setattr(codex_backend, "time", SimpleNamespace(
++        monotonic=time.monotonic, sleep=observed_sleep))
++    with (_queue_directory() / "queue.lock").open("a") as held:
++        fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
++        with ThreadPoolExecutor(max_workers=1) as pool:
++            future = pool.submit(CodexBackend(ctx)._acquire_slot, .1 if reason == "timeout" else 5)
++            try:
++                assert waiting.wait(3)
++                if reason == "cancel":
++                    ctx.cancellation.cancel()
++                with pytest.raises(CancelledError if reason == "cancel" else BudgetExceeded):
++                    future.result(timeout=3)
++            finally:
++                ctx.cancellation.cancel()
++    ctx.cancellation = None
++    with CodexBackend(ctx)._acquire_slot(.5):
++        assert _tickets() == []
++
++
++@pytest.mark.parametrize("stage", ["ticket", "slot"])
++def test_cancellation_racing_registration_or_claim_releases_all_locks(ctx, monkeypatch, stage):
++    """Cancellation after successful flock must not return a slot or leak a ticket."""
++    ctx.config.codex.max_concurrent = 1
++    ctx.cancellation = Future()
++    real_flock = fcntl.flock
++    fired = False
++
++    def cancel_after_claim(file, operation):
++        nonlocal fired
++        result = real_flock(file, operation)
++        name = Path(file.name).name
++        target = name.startswith("wait-") if stage == "ticket" else name == "0"
++        if not fired and operation == fcntl.LOCK_EX | fcntl.LOCK_NB and target:
++            fired = True
++            ctx.cancellation.cancel()
++        return result
++
++    monkeypatch.setattr(fcntl, "flock", cancel_after_claim)
++    with pytest.raises(CancelledError):
++        CodexBackend(ctx)._acquire_slot(.5)
++    assert fired
++    assert _tickets() == []
++    ctx.cancellation = None
++    with CodexBackend(ctx)._acquire_slot(.5):
++        pass
++
++
++def _crash_during_registration(ctx, created, release):
++    real_flock = fcntl.flock
++
++    def stop_before_ticket_lock(file, operation):
++        if Path(file.name).name.startswith("wait-"):
++            created.set()
++            assert release.wait(5)
++        return real_flock(file, operation)
++
++    fcntl.flock = stop_before_ticket_lock
++    CodexBackend(ctx)._acquire_slot(5)
++
++
++def test_killed_registration_releases_mutex_and_unowned_ticket(ctx):
++    """A crash between create and flock must not corrupt a counter or strand a head."""
++    mp = multiprocessing.get_context("spawn")
++    created, release = mp.Event(), mp.Event()
++    process = mp.Process(target=_crash_during_registration, args=(ctx, created, release))
++    process.start()
++    try:
++        assert created.wait(5)
++        process.kill()
++        process.join(5)
++        with CodexBackend(ctx)._acquire_slot(.5):
++            assert _tickets() == []
++    finally:
++        if process.is_alive():
++            process.kill()
++        process.join(5)
++    assert process.exitcode != 0
++
++
++def test_malformed_live_ticket_fails_visibly_without_deleting_ownership(ctx):
++    """Unexpected queue state must not silently evict a potentially live owner."""
++    path = _queue_directory() / "wait-malformed"
++    try:
++        with path.open("x") as owner:
++            fcntl.flock(owner, fcntl.LOCK_EX | fcntl.LOCK_NB)
++            with pytest.raises(ValueError, match="Invalid Codex slot queue ticket"):
++                CodexBackend(ctx)._acquire_slot(.5)
++            assert path.exists()
++            with path.open("r+") as probe:
++                with pytest.raises(BlockingIOError):
++                    fcntl.flock(probe, fcntl.LOCK_EX | fcntl.LOCK_NB)
++    finally:
++        path.unlink(missing_ok=True)
++    with CodexBackend(ctx)._acquire_slot(.5):
++        assert _tickets() == []
