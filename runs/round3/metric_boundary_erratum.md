@@ -1,0 +1,7 @@
+# Preregistered S1 boundary error
+
+Predictions were committed in ac93f47 after A finished and before B started. The frozen product exposes answer.ready submission; it does not expose records.add. S1 erroneously names a first records.add event. This is an analysis-definition error in the preregistration, not a research/product failure or an observed B outcome.
+
+The original predictions remain byte-for-byte unchanged. Literal S1 is reported N/A for every run with the unavailable-boundary reason. The independently useful all-cell check before answer.ready is reported only as a separately labeled post-hoc diagnostic, excluded from claims that a directional preregistered prediction succeeded. No zero substitution or silent endpoint change is allowed.
+
+The cause was writing the proposed operational boundary without verifying the actual submission API in src/loop_research/agent.py. The reporting fix is to require manual metric reasons/evidence, retain literal S1 as null, and fail closed on missing scores. All affected scoring will be regenerated through that contract. No product, task, model, launcher, harness or running input changed, so no research run is affected by this reporting-only correction. The correction was identified while the first B arms were running, before any B archive was analyzed for outcomes. It is not justification for replacing the committed predictions after observing B.

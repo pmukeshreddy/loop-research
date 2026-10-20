@@ -1,0 +1,164 @@
+{
+  "source_commit": "9585403c5b78bdac50d89818aba262ff89837fca",
+  "runs": {
+    "A": {
+      "run_id": "research-02b638fc28e84730973a253e28af1b30",
+      "metrics": {
+        "S1_preadd_validation": {
+          "value": null,
+          "reason": "Literal preregistered S1 names records.add, an unavailable API; do not substitute answer.ready after registration.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/predictions.md",
+              "note": "Literal preregistered S1 names records.add, an unavailable API; do not substitute answer.ready after registration.",
+              "line": 16
+            }
+          ]
+        },
+        "S2_gap_exposed": {
+          "value": 1,
+          "reason": "Executed candidate-cell check reports 25 missing nationality cells and two affiliation quote mismatches.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/final/workspaces/A/runs/research-02b638fc28e84730973a253e28af1b30/289901ce021c28d56fdac993/trajectory.jsonl",
+              "note": "Executed candidate-cell check reports 25 missing nationality cells and two affiliation quote mismatches.",
+              "line": 37
+            }
+          ]
+        },
+        "S2_supplementary_unique_urls": {
+          "value": 9,
+          "reason": "Following the nationality gap, search retained nine year-page hits, then fetch_many succeeds for nine distinct Wikipedia year pages directed at nationality. The earlier 2015 replacement for a failed page precedes this attribute gap and is not counted.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/final/workspaces/A/runs/research-02b638fc28e84730973a253e28af1b30/289901ce021c28d56fdac993/trajectory.jsonl",
+              "note": "Following the nationality gap, search retained nine year-page hits, then fetch_many succeeds for nine distinct Wikipedia year pages directed at nationality. The earlier 2015 replacement for a failed page precedes this attribute gap and is not counted.",
+              "line": 63
+            }
+          ]
+        },
+        "S3_quote_exception_blocks": {
+          "value": 1,
+          "reason": "Exact-quote assertion rejected a normalized PDF affiliation before mutation; later original-text slicing repairs it.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/final/workspaces/A/runs/research-02b638fc28e84730973a253e28af1b30/trace.jsonl",
+              "note": "Exact-quote assertion rejected a normalized PDF affiliation before mutation; later original-text slicing repairs it.",
+              "line": 688
+            }
+          ]
+        },
+        "S3_caught_printed_quote_failures": {
+          "value": 2,
+          "reason": "One printed check result lists two quote mismatch records (Sauvage and Baker). Other printed items in that result are missing nationality, not quote mismatches; later full check prints no failures.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/final/workspaces/A/runs/research-02b638fc28e84730973a253e28af1b30/289901ce021c28d56fdac993/trajectory.jsonl",
+              "note": "One printed check result lists two quote mismatch records (Sauvage and Baker). Other printed items in that result are missing nationality, not quote mismatches; later full check prints no failures.",
+              "line": 37
+            }
+          ]
+        },
+        "posthoc_fullcell_validation_before_answer_ready": {
+          "value": 1,
+          "reason": "Separate post-hoc boundary diagnostic: final block verifies every value/source/quote and membership against every URL before answer.ready; not a scored preregistered S1.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/final/workspaces/A/runs/research-02b638fc28e84730973a253e28af1b30/289901ce021c28d56fdac993/trajectory.jsonl",
+              "note": "Separate post-hoc boundary diagnostic: final block verifies every value/source/quote and membership against every URL before answer.ready; not a scored preregistered S1.",
+              "line": 244
+            }
+          ]
+        }
+      },
+      "semantic_review": {
+        "summary": "28 identities match Round2 Chemistry with Stoddart alias; all140quotes are exact. Lindahl nationality narrowed from Swedish and British to Swedish; prior model-mediated evidence leaves completeness unresolved. Other differences are formatting or supported affiliation expansion.",
+        "evidence": [
+          {
+            "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/final/A.quality_review.json",
+            "note": "Independent disk-only semantic/quote review."
+          }
+        ]
+      }
+    },
+    "SI": {
+      "run_id": "research-1f76e7b0b87045b88fd94aa92bb5ee2d",
+      "metrics": {
+        "S1_preadd_validation": {
+          "value": null,
+          "reason": "Literal preregistered S1 names records.add, an unavailable API; do not substitute answer.ready after registration.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/predictions.md",
+              "note": "Literal preregistered S1 names records.add, an unavailable API; do not substitute answer.ready after registration.",
+              "line": 16
+            }
+          ]
+        },
+        "S2_gap_exposed": {
+          "value": 0,
+          "reason": "Candidate extraction and executed checks report no missing required fields; all15cells match priorSI values.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/final/workspaces/SI/runs/research-1f76e7b0b87045b88fd94aa92bb5ee2d/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "note": "Candidate extraction and executed checks report no missing required fields; all15cells match priorSI values.",
+              "line": 21
+            }
+          ]
+        },
+        "S2_supplementary_unique_urls": {
+          "value": 0,
+          "reason": "No missing-attribute gap is exposed. Three source downloads and one cache reuse were task-requested initial evidence collection; conditional prediction not exercised.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/final/workspaces/SI/runs/research-1f76e7b0b87045b88fd94aa92bb5ee2d/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "note": "No missing-attribute gap is exposed. Three source downloads and one cache reuse were task-requested initial evidence collection; conditional prediction not exercised.",
+              "line": 16
+            }
+          ]
+        },
+        "S3_quote_exception_blocks": {
+          "value": 0,
+          "reason": "Complete trace contains no error-bearing REPL end; independent full audit confirms.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/final/SI.quality_review.json",
+              "note": "Complete trace contains no error-bearing REPL end; independent full audit confirms."
+            }
+          ]
+        },
+        "S3_caught_printed_quote_failures": {
+          "value": 0,
+          "reason": "The complete executed candidate check prints Validation failures: []; no quote failure record is printed elsewhere.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/final/workspaces/SI/runs/research-1f76e7b0b87045b88fd94aa92bb5ee2d/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "note": "The complete executed candidate check prints Validation failures: []; no quote failure record is printed elsewhere.",
+              "line": 21
+            }
+          ]
+        },
+        "posthoc_fullcell_validation_before_answer_ready": {
+          "value": 1,
+          "reason": "Separate post-hoc diagnostic: schema requires all cells/nonempty source lists, iteration4 checks every quote/source and exact quantities, iteration5 checks unit/symbol expected values before answer.ready.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/final/workspaces/SI/runs/research-1f76e7b0b87045b88fd94aa92bb5ee2d/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "note": "Separate post-hoc diagnostic: schema requires all cells/nonempty source lists, iteration4 checks every quote/source and exact quantities, iteration5 checks unit/symbol expected values before answer.ready.",
+              "line": 43
+            }
+          ]
+        }
+      },
+      "semantic_review": {
+        "summary": "All5quantity identities and15value strings match Round2SI; official archivedNIST relation supports each cell. Noerrors, missingfields oruncitedcells.",
+        "evidence": [
+          {
+            "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/final/SI.quality_review.json",
+            "note": "Independent disk-only semantic/quote review."
+          }
+        ]
+      }
+    }
+  }
+}
