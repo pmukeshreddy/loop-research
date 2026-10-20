@@ -269,7 +269,45 @@ def refinement_details(label, audit):
                    f'Status: **{job["status"]}**; focus: {json.dumps(job.get("focus"), ensure_ascii=False)}; '
                    f'{link("full job snapshot and input", path)}.', '']
         prompt = job.get('planner_prompt')
-        if prompt is not None:
+        if job.get('planner_transport', {}).get('kind') == 'repl-context-v1':
+            directory = task / 'refine_planners' / job['job_id']
+            result += ['Transport: **complete snapshot through isolated REPL**. The saved `planner_prompt` '
+                'is the prospective legacy representation, **not dispatched** as a model input. '
+                f'{link("Complete logical context", directory / "context.json")}; '
+                f'{link("strict schema", directory / "schema.json")}; '
+                f'{link("full model inputs and action journal", directory / "actions.jsonl")}; '
+                f'{link("transport manifest", directory / "manifest.json")}.', '']
+            if (directory / 'actions.jsonl').exists():
+                actions = rows(directory / 'actions.jsonl')
+                attempted = {action['call_id']: action for action in actions
+                    if action['event'] == 'model.attempt' and action['status'] == 'dispatched'}
+                starts = {action['action_id']: action for action in actions if action['event'] == 'model.start'}
+                by_id = {call['call_id']: call for call in calls}
+                matching = []
+                for identity, action in attempted.items():
+                    call = by_id.get(identity)
+                    receipt = task / 'codex_attempts' / (identity + '.json')
+                    if call is None and not receipt.exists():
+                        raise ValueError('Refinement context attempt lacks durable dispatch evidence: ' + identity)
+                    current = dict(call if call is not None else read(receipt))
+                    actual_input = starts[action['action_id']]['backend_prompt']
+                    if (current['purpose'] != 'refine' or len(actual_input) != current['prompt_chars'] or
+                            sha(actual_input) != current['prompt_sha256'] or
+                            (call is not None and call.get('prompt') != actual_input)):
+                        raise ValueError('Refinement context attempt input does not match its archive')
+                    if call is None:
+                        current['error'] = 'completion unavailable (dispatched; outcome and usage unavailable)'
+                    matching.append(current)
+                result += table(['Actual model call', 'Attempt', 'Backend input characters', 'Backend input SHA-256', 'Error'], [
+                    [call['call_id'], call['attempt'], call['prompt_chars'], call['prompt_sha256'], call.get('error')]
+                    for call in matching])
+                result += ['Model retries remain separate attempts. Planner and submodel calls above all use the '
+                    'refinement role; these are separate from research root/sub measurements. The complete original '
+                    'supplied observation remains accessible through the snapshot capability. No full-raw-trajectory '
+                    'losslessness claim is implied.', '']
+            else:
+                result += ['No action journal was recorded; no actual planner dispatch is inferred.', '']
+        elif prompt is not None:
             backend = INSTRUCTION + prompt
             matching = [call for call in calls if call['purpose'] == 'refine' and call['prompt_sha256'] == sha(backend)]
             result += table(['Input measurement', 'Value'], [

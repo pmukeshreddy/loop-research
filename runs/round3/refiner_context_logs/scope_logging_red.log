@@ -1,0 +1,154 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+_ test_scope_logging_override_preserves_failed_reply_and_parent_archive_policy _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-y85npm5_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_scope_logging_override_preserves_failed_reply_and_parent_archive_policy(ctx):
+        ctx.config.codex.log_full_text = False
+        ctx.config.codex.max_retries = 1
+        original_config = ctx.config.model_dump()
+        parent_budget, child_budget = CallBudget(10, 30), CallBudget(10, 30)
+        failed_reply = "failed attempt reply that must remain visible"
+        attempts, waits = [], []
+    
+        def runner(command, **kwargs):
+            assert ctx.config.model_dump() == original_config
+            attempts.append(command)
+            if len(attempts) == 1:
+                result = completed(command, failed_reply)
+                result.returncode, result.stderr = 1, "temporary failure after a partial reply"
+                return result
+            return completed(command, "success")
+    
+        parent = CodexBackend(ctx, runner=runner, sleep=waits.append, jitter=lambda: 0,
+                              budget=parent_budget)
+>       with parent.scope(budget=child_budget, log_full_text=True) as child:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_codex_scope.py:268: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/contextlib.py:301: in helper
+    return _GeneratorContextManager(func, args, kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <contextlib._GeneratorContextManager object at 0x1071d3020>
+func = <function CodexBackend.scope at 0x10765d440>
+args = (<loop_research.codex_backend.CodexBackend object at 0x107667440>,)
+kwds = {'budget': <loop_research.codex_backend.CallBudget object at 0x107665970>, 'log_full_text': True}
+
+    def __init__(self, func, args, kwds):
+>       self.gen = func(*args, **kwds)
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: CodexBackend.scope() got an unexpected keyword argument 'log_full_text'
+
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/contextlib.py:105: TypeError
+_ test_scope_logging_none_inherits_and_false_overrides_only_child[False-None-False] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-y85npm5_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+parent_flag = False, override = None, expected = False
+
+    @pytest.mark.parametrize("parent_flag,override,expected", [
+        (False, None, False), (True, None, True), (True, False, False),
+    ])
+    def test_scope_logging_none_inherits_and_false_overrides_only_child(ctx, parent_flag,
+                                                                     override, expected):
+        ctx.config.codex.log_full_text = parent_flag
+        original_config = ctx.config.model_dump()
+        parent = CodexBackend(ctx, runner=lambda command, **_: completed(command, "kept reply"))
+>       with parent.scope(budget=CallBudget(10, 30), log_full_text=override) as child:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_codex_scope.py:299: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/contextlib.py:301: in helper
+    return _GeneratorContextManager(func, args, kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <contextlib._GeneratorContextManager object at 0x107cd9e20>
+func = <function CodexBackend.scope at 0x10765d440>
+args = (<loop_research.codex_backend.CodexBackend object at 0x107cd9d90>,)
+kwds = {'budget': <loop_research.codex_backend.CallBudget object at 0x107cd9ac0>, 'log_full_text': None}
+
+    def __init__(self, func, args, kwds):
+>       self.gen = func(*args, **kwds)
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: CodexBackend.scope() got an unexpected keyword argument 'log_full_text'
+
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/contextlib.py:105: TypeError
+_ test_scope_logging_none_inherits_and_false_overrides_only_child[True-None-True] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-y85npm5_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+parent_flag = True, override = None, expected = True
+
+    @pytest.mark.parametrize("parent_flag,override,expected", [
+        (False, None, False), (True, None, True), (True, False, False),
+    ])
+    def test_scope_logging_none_inherits_and_false_overrides_only_child(ctx, parent_flag,
+                                                                     override, expected):
+        ctx.config.codex.log_full_text = parent_flag
+        original_config = ctx.config.model_dump()
+        parent = CodexBackend(ctx, runner=lambda command, **_: completed(command, "kept reply"))
+>       with parent.scope(budget=CallBudget(10, 30), log_full_text=override) as child:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_codex_scope.py:299: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/contextlib.py:301: in helper
+    return _GeneratorContextManager(func, args, kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <contextlib._GeneratorContextManager object at 0x107cda840>
+func = <function CodexBackend.scope at 0x10765d440>
+args = (<loop_research.codex_backend.CodexBackend object at 0x107cd9c70>,)
+kwds = {'budget': <loop_research.codex_backend.CallBudget object at 0x107cda810>, 'log_full_text': None}
+
+    def __init__(self, func, args, kwds):
+>       self.gen = func(*args, **kwds)
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: CodexBackend.scope() got an unexpected keyword argument 'log_full_text'
+
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/contextlib.py:105: TypeError
+_ test_scope_logging_none_inherits_and_false_overrides_only_child[True-False-False] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-y85npm5_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+parent_flag = True, override = False, expected = False
+
+    @pytest.mark.parametrize("parent_flag,override,expected", [
+        (False, None, False), (True, None, True), (True, False, False),
+    ])
+    def test_scope_logging_none_inherits_and_false_overrides_only_child(ctx, parent_flag,
+                                                                     override, expected):
+        ctx.config.codex.log_full_text = parent_flag
+        original_config = ctx.config.model_dump()
+        parent = CodexBackend(ctx, runner=lambda command, **_: completed(command, "kept reply"))
+>       with parent.scope(budget=CallBudget(10, 30), log_full_text=override) as child:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_codex_scope.py:299: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/contextlib.py:301: in helper
+    return _GeneratorContextManager(func, args, kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <contextlib._GeneratorContextManager object at 0x107cdaa20>
+func = <function CodexBackend.scope at 0x10765d440>
+args = (<loop_research.codex_backend.CodexBackend object at 0x107cdb770>,)
+kwds = {'budget': <loop_research.codex_backend.CallBudget object at 0x107cdad80>, 'log_full_text': False}
+
+    def __init__(self, func, args, kwds):
+>       self.gen = func(*args, **kwds)
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: CodexBackend.scope() got an unexpected keyword argument 'log_full_text'
+
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/contextlib.py:105: TypeError
+=========================== short test summary info ============================
+FAILED tests/test_codex_scope.py::test_scope_logging_override_preserves_failed_reply_and_parent_archive_policy
+FAILED tests/test_codex_scope.py::test_scope_logging_none_inherits_and_false_overrides_only_child[False-None-False]
+FAILED tests/test_codex_scope.py::test_scope_logging_none_inherits_and_false_overrides_only_child[True-None-True]
+FAILED tests/test_codex_scope.py::test_scope_logging_none_inherits_and_false_overrides_only_child[True-False-False]
+4 failed, 8 deselected in 0.07s

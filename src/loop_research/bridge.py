@@ -11,7 +11,7 @@ class _ThreadingUnixStreamServer(socketserver.ThreadingUnixStreamServer):
 
 
 class Server:
-    def __init__(self, path, dispatch, *, socket_timeout_s, trace=None):
+    def __init__(self, path, dispatch, *, socket_timeout_s, trace=None, drain_handlers=False):
         trace = trace or Trace()
         active, lock = set(), threading.Lock()
         class Handler(socketserver.StreamRequestHandler):
@@ -37,11 +37,14 @@ class Server:
                     with lock:
                         active.discard(self.request)
         self.server = _ThreadingUnixStreamServer(str(path), Handler)
-        self.server.daemon_threads = True
+        self.drain_handlers = drain_handlers
         self.active, self.lock = active, lock
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
 
     def __enter__(self):
+        # Owners opting in must cancel their work before exit. Joining the
+        # complete handler also settles post-call archival, not only model I/O.
+        self.server.daemon_threads = not self.drain_handlers
         self.thread.start()
         return self
 

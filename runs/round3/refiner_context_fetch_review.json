@@ -1,0 +1,136 @@
+{
+  "reviewer": "fetch_review",
+  "created_at": "2026-10-20T05:02:30.146629+00:00",
+  "worktree": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/refiner-context",
+  "prerequisite_head": "3560419b059fd21635b878df42ed82a377b69be9",
+  "source_state": "hash_bound_working_tree",
+  "verdict": "no_important_unresolved_product_findings",
+  "reviewed_file_sha256": {
+    "src/loop_research/refine_context.py": "06b8433d3a8253e1db9c318f9098154aa1e68d562624d82ce915503709c69166",
+    "src/loop_research/refine.py": "f897d48529053151404da1b1edc2701e461d7864c91cdde08d05098ae092f50e",
+    "src/loop_research/codex_backend.py": "87ee41940e031dad9d0e9fbdf7c22c61e91a713ad936ec8a8a52624c7393eaba",
+    "src/loop_research/bridge.py": "438b3cc74f4e1e6df8723d45ad5d2d88f162f33cad41696146b97f0e138554ce",
+    "runs/round2/render.py": "9a098c83c1932e3df685e605bb9e3c145f069696d2000e318c4c8893488f643a",
+    "tests/test_refine_context.py": "174946fd1fb6af9f0f0dd67c2a57fa2cc0a5beae185b7dcd903820e392e31268",
+    "tests/test_codex_scope.py": "5c96b6355915070376453e902146bff3a587544220171eddaabeff9f240c7016",
+    "tests/test_bridge.py": "2445c570476f10e6502ec78fa785f100ffb7e0d157a213e5810c314fef634da8",
+    "tests/test_refine_render.py": "bc9992346de1bc6d11e743d98df8d7fba74b826a74a8676b76df96b7513a17e3",
+    "tests/test_refine.py": "83712d41f7fb54c0a18a398bb034a6bd31b441e33c530fe5de6d0de0f8d65e27",
+    "tests/test_refine_candidates.py": "9eea8592c6b0e3f738e1754f3a204d311c5ec454fcaa41c34a2f3056f561c52b",
+    "tests/test_refine_representation.py": "585fd5d1de2b7fbb554369e405ed830383bb66a61c26977fc0c4adbf455f6fa8",
+    "tests/test_refine_evidence_anchors.py": "b21eca3de5ce133242dc0d4775299f1df2cc7fdebcc3b64a35f5e36a3fb2f39c"
+  },
+  "unchanged_from_runtime": {
+    "commit": "09c77902babb879abe2b0dcc8cab7cf5209bf5ae",
+    "files": [
+      "src/loop_research/agent.py",
+      "src/loop_research/session.py",
+      "src/loop_research/page_fetch.py",
+      "src/loop_research/repl_tools.py",
+      "src/loop_research/rlm_codex_client.py",
+      "src/loop_research/isolation.py",
+      "src/loop_research/structured_models.py",
+      "src/loop_research/selfcheck.py",
+      "src/loop_research/evaluation.py",
+      "src/loop_research/benchmarks/widesearch/grader.py",
+      "src/loop_research/benchmarks/wandr/grader.py",
+      "config.yaml",
+      "pyproject.toml"
+    ]
+  },
+  "direct_instructions_sha256": "72937f276d0bf1119d129f622123a744bb9bda388a4a1ab51fe17cc0bca4d3f6",
+  "closed_findings": [
+    {
+      "id": "broker_journal_drain",
+      "status": "closed",
+      "validation": "actual server regression in 70-test suite"
+    },
+    {
+      "id": "failed_retry_response_missing",
+      "status": "closed",
+      "red_tool_receipt": "cd8ed8",
+      "green_tool_receipt": "5dd725",
+      "failed_response_chars": 45
+    },
+    {
+      "id": "renderer_incomplete_attempt",
+      "status": "closed",
+      "validation": "durable attempt fallback; missing evidence rejected"
+    }
+  ],
+  "independent_checks": [
+    {
+      "name": "targeted_suite",
+      "passed": 70,
+      "failed": 0,
+      "duration_s": 14.62,
+      "tool_receipt": "882209",
+      "test_files": [
+        "tests/test_refine_context.py",
+        "tests/test_codex_scope.py",
+        "tests/test_bridge.py",
+        "tests/test_refine_render.py",
+        "tests/test_refine.py",
+        "tests/test_refine_candidates.py",
+        "tests/test_refine_representation.py",
+        "tests/test_refine_evidence_anchors.py"
+      ]
+    },
+    {
+      "name": "initial_targeted_suite",
+      "passed": 6,
+      "failed": 1,
+      "duration_s": 7.18,
+      "tool_receipt": "c47d16",
+      "known_failure": "TimeoutExpired normalization subsequently fixed"
+    },
+    {
+      "name": "boundary_probe",
+      "cases": 3,
+      "passed": 3,
+      "tool_receipt": "229c66",
+      "threshold_injected": true,
+      "below_and_equal": "direct",
+      "above": "context_only"
+    },
+    {
+      "name": "actual_archived_snapshot_mock_worker",
+      "tool_receipt": "811e6e",
+      "logical_chars": 3027914,
+      "logical_sha256": "2c9dd4b6c0a8aac815b784af57ca5501bbdd20fd3664d0b96204565c8499c663",
+      "schema_sha256": "4f3b234f6027ef98c081e384dd786732e0e9d8fc1a334ac213aa33e306811892",
+      "original_archive_unchanged": true,
+      "prospective_backend_chars": 1611089,
+      "actual_fake_dispatch_chars": [
+        4926
+      ],
+      "candidate_decisions": 3,
+      "purpose": "refine",
+      "semantic_or_live_success_claim": false
+    }
+  ],
+  "scratch_probe_sha256": {
+    "/tmp/fetch_review_failed_attempt_archive.py": "b414827c0c1c7b339117d306bbade68229c4fee48253eaa0f10b8de4db2cd65b",
+    "/tmp/fetch_review_route_boundary.py": "cc838f3e284e935731775b1cf53e60e7e95bafd7e3ad90a7fc9cb06e3dd00476",
+    "/tmp/fetch_review_actual_saved_context.py": "488b62fd1b34363ef876a32e1e4d2b52bad9fb28ac992054fca783313bb4fdf6"
+  },
+  "bounds": {
+    "aggregate_timeout_config": "codex.timeout_s",
+    "aggregate_timeout_s": 600,
+    "iteration_limit_config": "rlm.max_iterations",
+    "iteration_limit": 30,
+    "new_attempt_allowance": false,
+    "stricter_aggregate_semantics_explicit": true
+  },
+  "restrictions": {
+    "production_edits": false,
+    "tests_offline_only": true,
+    "live_model_or_web_calls": false,
+    "install_or_commit": false,
+    "research_run_modification": false
+  },
+  "report_path": "runs/round3/refiner_context_fetch_review.md",
+  "report_sha256": "4b860466b16f98e5d3fa28341e73493a8c1135fd6af25435d1dd1736694697db",
+  "raw_test_log_retained": false,
+  "evidence_format": "tool output receipts"
+}

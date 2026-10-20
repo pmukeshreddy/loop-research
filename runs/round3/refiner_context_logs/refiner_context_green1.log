@@ -1,0 +1,76 @@
+......F                                                                  [100%]
+=================================== FAILURES ===================================
+__________ test_overflow_python_deadline_is_visible_and_does_not_edit __________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-s8k6ydob/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+large_observation = {'trajectory': [{'type': 'tool', 'result': 'nJJSjlhlMgBlpwRFaohTQPQMXPnSzNDwswqgQPZJCMhJxjkBnxFugzmmktdHXuLWchPRHivTUP...[{'type': 'fixture_signal', 'detail': 'first occurrence'}, {'type': 'fixture_signal', 'detail': 'second occurrence'}]}}
+
+    def test_overflow_python_deadline_is_visible_and_does_not_edit(ctx, large_observation):
+        ctx.config.codex.timeout_s = 2
+        with pytest.raises((RuntimeError, TimeoutError)):
+>           execute(ctx, large_observation, lambda *_: '```repl\nwhile True:\n    pass\n```')
+
+tests/test_refine_context.py:154: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_refine_context.py:57: in execute
+    refiner.boundary(wait=True)
+src/loop_research/refine.py:392: in boundary
+    job = future.result()
+          ^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:323: in _plan
+    return self._plan_job(job)
+           ^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:356: in _plan_job
+    text = plan_context(self.ctx, self.backend, job['job_id'], logical_text, schema,
+src/loop_research/refine_context.py:145: in plan_context
+    process = child.ctx.run_process(isolated_command(work, [sys.executable, '-m',
+src/loop_research/archive.py:128: in run_process
+    code = process.wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/subprocess.py:1264: in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Popen: returncode: -9 args: ['/usr/bin/sandbox-exec', '-p', '(version 1)\n(...>
+timeout = 1.9975407080200966
+
+    def _wait(self, timeout):
+        """Internal implementation of wait() on POSIX."""
+        if self.returncode is not None:
+            return self.returncode
+    
+        if timeout is not None:
+            endtime = _time() + timeout
+            # Enter a busy loop if we have a timeout.  This busy loop was
+            # cribbed from Lib/threading.py in Thread.wait() at r71065.
+            delay = 0.0005 # 500 us -> initial delay of 1 ms
+            while True:
+                if self._waitpid_lock.acquire(False):
+                    try:
+                        if self.returncode is not None:
+                            break  # Another thread waited.
+                        (pid, sts) = self._try_wait(os.WNOHANG)
+                        assert pid == self.pid or pid == 0
+                        if pid == self.pid:
+                            self._handle_exitstatus(sts)
+                            break
+                    finally:
+                        self._waitpid_lock.release()
+                remaining = self._remaining_time(endtime)
+                if remaining <= 0:
+>                   raise TimeoutExpired(self.args, timeout)
+E                   subprocess.TimeoutExpired: Command '['/usr/bin/sandbox-exec', '-p', '(version 1)\n(deny default)\n(allow process-fork process-exec)\n(allow sysctl-read)\n(allow file-map-executable)\n(allow file-read-metadata)\n; dyld needs the root directory itself, never its recursive contents.\n(allow file-read* (literal "/") (subpath "/System") (subpath "/usr") (subpath "/bin") (subpath "/sbin") (subpath "/Library") (subpath "/opt/homebrew") (subpath "/Users/mukeshreddypochamreddy/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none") (subpath "/Users/mukeshreddypochamreddy/Desktop/loop-research/.venv") (subpath "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/refiner-context/src") (subpath "/private/etc") (subpath "/private/var/db/timezone") (subpath "/dev") (subpath "/private/tmp/lr-refine-uqivvoe5"))\n(allow file-write* (subpath "/private/tmp/lr-refine-uqivvoe5") (literal "/dev/null"))\n(allow network-outbound (remote ip "localhost:*") (subpath "/private/tmp/lr-refine-uqivvoe5"))\n(allow network-inbound network-bind (local ip "localhost:*") (subpath "/private/tmp/lr-refine-uqivvoe5"))\n', '/Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/python', '-m', 'loop_research.refine_context', '/private/tmp/lr-refine-uqivvoe5/request.json']' timed out after 1.9975407080200966 seconds
+
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/subprocess.py:2045: TimeoutExpired
+=========================== short test summary info ============================
+FAILED tests/test_refine_context.py::test_overflow_python_deadline_is_visible_and_does_not_edit
+1 failed, 6 passed in 7.23s

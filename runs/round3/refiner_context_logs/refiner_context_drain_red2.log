@@ -1,0 +1,45 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________ test_planner_server_exit_drains_post_dispatch_work ______________
+
+short_socket_dir = PosixPath('/tmp/refine-test-e22hr0ve')
+
+    def test_planner_server_exit_drains_post_dispatch_work(short_socket_dir):
+        from loop_research.bridge import Client, Server
+        entered, release, exiting, exited, recorded = (threading.Event() for _ in range(5))
+        def dispatch(*_):
+            entered.set()
+            assert release.wait(5)
+            recorded.set()
+            return None
+        socket = short_socket_dir / 'host.sock'
+        server = Server(socket, dispatch, socket_timeout_s=5)
+        # Exercise the opt-in behavior without requiring a changed constructor for RED.
+        server.drain_handlers = True
+        def owner():
+            with server:
+                assert entered.wait(5)
+                exiting.set()
+            exited.set()
+        thread = threading.Thread(target=owner)
+        thread.start()
+        caller_errors = []
+        def call():
+            try:
+                Client(socket).call('model')
+            except Exception as error:
+                caller_errors.append(error)
+        caller = threading.Thread(target=call)
+        caller.start()
+        assert exiting.wait(5)
+        try:
+>           assert not exited.wait(.7), 'Server exited before the handler finished its archive writes'
+E           AssertionError: Server exited before the handler finished its archive writes
+E           assert not True
+E            +  where True = wait(0.7)
+E            +    where wait = <threading.Event at 0x10bbca4b0: set>.wait
+
+tests/test_refine_context.py:196: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_refine_context.py::test_planner_server_exit_drains_post_dispatch_work
+1 failed in 0.56s

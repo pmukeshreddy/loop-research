@@ -1,0 +1,423 @@
+FFFFFFF                                                                  [100%]
+=================================== FAILURES ===================================
+___________ test_full_snapshot_code_subcall_and_untruncated_feedback ___________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-16c7z5wp/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+large_observation = {'trajectory': [{'type': 'tool', 'result': 'nJJSjlhlMgBlpwRFaohTQPQMXPnSzNDwswqgQPZJCMhJxjkBnxFugzmmktdHXuLWchPRHivTUP...[{'type': 'fixture_signal', 'detail': 'first occurrence'}, {'type': 'fixture_signal', 'detail': 'second occurrence'}]}}
+
+    def test_full_snapshot_code_subcall_and_untruncated_feedback(ctx, large_observation):
+        original = copy.deepcopy(large_observation)
+        expected_hash = hashlib.sha256(original['trajectory'][0]['result'].encode()).hexdigest()
+        secret = ctx.root / 'private.txt'
+        secret.write_text('host-only fixture')
+        printed = 'visible-feedback-' * 1800
+        schema = {'type': 'object', 'properties': {'count': {'type': 'integer'}},
+                  'required': ['count'], 'additionalProperties': False}
+        root_calls = 0
+        def respond(prompt, requested_schema):
+            nonlocal root_calls
+            if requested_schema is not None:
+                assert requested_schema == schema
+                assert 'second occurrence' in prompt
+                return '{"count":2}'
+            root_calls += 1
+            if root_calls == 1:
+                return '```repl\n' + f'''
+    import hashlib, json
+    from pathlib import Path
+    assert hashlib.sha256(context['trajectory'][0]['result'].encode()).hexdigest() == {expected_hash!r}
+    assert context['trajectory'][0]['unknown'] == [False, None, '雪']
+    assert context['candidate_inventory'][0]['count'] == 2
+    assert context['candidate_inventory'][0]['evidence_refs'] == ['/self_check/signals/0', '/self_check/signals/1']
+    assert context == snapshot()
+    context['trajectory'][0]['result'] = 'local change'
+    assert hashlib.sha256(snapshot()['trajectory'][0]['result'].encode()).hexdigest() == {expected_hash!r}
+    try:
+        Path({str(secret)!r}).read_text()
+    except PermissionError:
+        pass
+    else:
+        raise AssertionError('worker read outside snapshot capability')
+    print({printed!r})
+    ''' + '\n```'
+            assert root_calls == 2
+            assert printed + '\n' in prompt
+            return '```repl\n' + f'''
+    result = llm_query_json(json.dumps(snapshot()['self_check']['signals']), {schema!r})
+    assert result == {{'count': 2}}
+    proposal = {declined_proposal()!r}
+    answer['content'] = json.dumps(proposal)
+    answer['ready'] = True
+    ''' + '\n```'
+>       state, seen, harness = execute(ctx, original, respond)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_refine_context.py:107: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_refine_context.py:57: in execute
+    refiner.boundary(wait=True)
+src/loop_research/refine.py:374: in boundary
+    job = future.result()
+          ^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:320: in _plan
+    return self._plan_job(job)
+           ^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:347: in _plan_job
+    text = self.backend.complete(prompt, purpose='refine', model=self.ctx.config.models.refine, schema=schema)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/codex_backend.py:277: in complete
+    proc = self.runner(cmd, input=full, text=True, capture_output=True,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = ['codex', 'exec', '--sandbox', 'read-only', '--skip-git-repo-check', '--cd', ...]
+kwargs = {'input': 'You are a component inside a program. Do not run shell commands, read local files, or edit files. Reply wit...'cwd': PosixPath('/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-16c7z5wp/loop-codex-avfh63bl/empty'), ...}
+
+    def run(command, **kwargs):
+        prompt = kwargs['input']
+>       assert len(prompt) <= 1_048_576, 'Planner dispatched oversized input instead of inspecting its full snapshot'
+E       AssertionError: Planner dispatched oversized input instead of inspecting its full snapshot
+E       assert 1064771 <= 1048576
+E        +  where 1064771 = len('You are a component inside a program. Do not run shell commands, read local files, or edit files. Reply with text onl...tory/0","/self_check/ok","/self_check/issues","/self_check/signals","/self_check/signals/0","/self_check/signals/1"]}}')
+
+tests/test_refine_context.py:39: AssertionError
+_ test_overflow_keeps_strict_proposal_validation_before_edits[missing_candidate] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-16c7z5wp/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+large_observation = {'trajectory': [{'type': 'tool', 'result': 'nJJSjlhlMgBlpwRFaohTQPQMXPnSzNDwswqgQPZJCMhJxjkBnxFugzmmktdHXuLWchPRHivTUP...[{'type': 'fixture_signal', 'detail': 'first occurrence'}, {'type': 'fixture_signal', 'detail': 'second occurrence'}]}}
+failure = 'missing_candidate'
+
+    @pytest.mark.parametrize('failure', ['missing_candidate', 'wrong_type', 'too_many_edits', 'bad_evidence'])
+    def test_overflow_keeps_strict_proposal_validation_before_edits(ctx, large_observation, failure):
+        proposal = declined_proposal()
+        if failure == 'missing_candidate':
+            proposal['decisions'] = []
+        elif failure == 'wrong_type':
+            proposal['decisions'][0]['reason'] = 42
+        elif failure == 'too_many_edits':
+            proposal['edits'] = [{'action': 'create', 'kind': 'memory', 'id': None, 'title': 'Fixture',
+                                  'content': 'Procedure', 'module': None}] * 3
+        else:
+            proposal['decisions'][0]['evidence_refs'] = ['/self_check/signals/99']
+        code = 'import json\nanswer["content"] = json.dumps(' + repr(proposal) + ')\nanswer["ready"] = True'
+        with pytest.raises((ValueError, RuntimeError)):
+>           execute(ctx, large_observation, lambda *_: '```repl\n' + code + '\n```')
+
+tests/test_refine_context.py:138: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_refine_context.py:57: in execute
+    refiner.boundary(wait=True)
+src/loop_research/refine.py:374: in boundary
+    job = future.result()
+          ^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:320: in _plan
+    return self._plan_job(job)
+           ^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:347: in _plan_job
+    text = self.backend.complete(prompt, purpose='refine', model=self.ctx.config.models.refine, schema=schema)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/codex_backend.py:277: in complete
+    proc = self.runner(cmd, input=full, text=True, capture_output=True,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = ['codex', 'exec', '--sandbox', 'read-only', '--skip-git-repo-check', '--cd', ...]
+kwargs = {'input': 'You are a component inside a program. Do not run shell commands, read local files, or edit files. Reply wit...'cwd': PosixPath('/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-16c7z5wp/loop-codex-lvkbvcz7/empty'), ...}
+
+    def run(command, **kwargs):
+        prompt = kwargs['input']
+>       assert len(prompt) <= 1_048_576, 'Planner dispatched oversized input instead of inspecting its full snapshot'
+E       AssertionError: Planner dispatched oversized input instead of inspecting its full snapshot
+E       assert 1064771 <= 1048576
+E        +  where 1064771 = len('You are a component inside a program. Do not run shell commands, read local files, or edit files. Reply with text onl...tory/0","/self_check/ok","/self_check/issues","/self_check/signals","/self_check/signals/0","/self_check/signals/1"]}}')
+
+tests/test_refine_context.py:39: AssertionError
+___ test_overflow_keeps_strict_proposal_validation_before_edits[wrong_type] ____
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-16c7z5wp/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+large_observation = {'trajectory': [{'type': 'tool', 'result': 'nJJSjlhlMgBlpwRFaohTQPQMXPnSzNDwswqgQPZJCMhJxjkBnxFugzmmktdHXuLWchPRHivTUP...[{'type': 'fixture_signal', 'detail': 'first occurrence'}, {'type': 'fixture_signal', 'detail': 'second occurrence'}]}}
+failure = 'wrong_type'
+
+    @pytest.mark.parametrize('failure', ['missing_candidate', 'wrong_type', 'too_many_edits', 'bad_evidence'])
+    def test_overflow_keeps_strict_proposal_validation_before_edits(ctx, large_observation, failure):
+        proposal = declined_proposal()
+        if failure == 'missing_candidate':
+            proposal['decisions'] = []
+        elif failure == 'wrong_type':
+            proposal['decisions'][0]['reason'] = 42
+        elif failure == 'too_many_edits':
+            proposal['edits'] = [{'action': 'create', 'kind': 'memory', 'id': None, 'title': 'Fixture',
+                                  'content': 'Procedure', 'module': None}] * 3
+        else:
+            proposal['decisions'][0]['evidence_refs'] = ['/self_check/signals/99']
+        code = 'import json\nanswer["content"] = json.dumps(' + repr(proposal) + ')\nanswer["ready"] = True'
+        with pytest.raises((ValueError, RuntimeError)):
+>           execute(ctx, large_observation, lambda *_: '```repl\n' + code + '\n```')
+
+tests/test_refine_context.py:138: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_refine_context.py:57: in execute
+    refiner.boundary(wait=True)
+src/loop_research/refine.py:374: in boundary
+    job = future.result()
+          ^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:320: in _plan
+    return self._plan_job(job)
+           ^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:347: in _plan_job
+    text = self.backend.complete(prompt, purpose='refine', model=self.ctx.config.models.refine, schema=schema)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/codex_backend.py:277: in complete
+    proc = self.runner(cmd, input=full, text=True, capture_output=True,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = ['codex', 'exec', '--sandbox', 'read-only', '--skip-git-repo-check', '--cd', ...]
+kwargs = {'input': 'You are a component inside a program. Do not run shell commands, read local files, or edit files. Reply wit...'cwd': PosixPath('/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-16c7z5wp/loop-codex-ne_lwrv1/empty'), ...}
+
+    def run(command, **kwargs):
+        prompt = kwargs['input']
+>       assert len(prompt) <= 1_048_576, 'Planner dispatched oversized input instead of inspecting its full snapshot'
+E       AssertionError: Planner dispatched oversized input instead of inspecting its full snapshot
+E       assert 1064771 <= 1048576
+E        +  where 1064771 = len('You are a component inside a program. Do not run shell commands, read local files, or edit files. Reply with text onl...tory/0","/self_check/ok","/self_check/issues","/self_check/signals","/self_check/signals/0","/self_check/signals/1"]}}')
+
+tests/test_refine_context.py:39: AssertionError
+_ test_overflow_keeps_strict_proposal_validation_before_edits[too_many_edits] __
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-16c7z5wp/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+large_observation = {'trajectory': [{'type': 'tool', 'result': 'nJJSjlhlMgBlpwRFaohTQPQMXPnSzNDwswqgQPZJCMhJxjkBnxFugzmmktdHXuLWchPRHivTUP...[{'type': 'fixture_signal', 'detail': 'first occurrence'}, {'type': 'fixture_signal', 'detail': 'second occurrence'}]}}
+failure = 'too_many_edits'
+
+    @pytest.mark.parametrize('failure', ['missing_candidate', 'wrong_type', 'too_many_edits', 'bad_evidence'])
+    def test_overflow_keeps_strict_proposal_validation_before_edits(ctx, large_observation, failure):
+        proposal = declined_proposal()
+        if failure == 'missing_candidate':
+            proposal['decisions'] = []
+        elif failure == 'wrong_type':
+            proposal['decisions'][0]['reason'] = 42
+        elif failure == 'too_many_edits':
+            proposal['edits'] = [{'action': 'create', 'kind': 'memory', 'id': None, 'title': 'Fixture',
+                                  'content': 'Procedure', 'module': None}] * 3
+        else:
+            proposal['decisions'][0]['evidence_refs'] = ['/self_check/signals/99']
+        code = 'import json\nanswer["content"] = json.dumps(' + repr(proposal) + ')\nanswer["ready"] = True'
+        with pytest.raises((ValueError, RuntimeError)):
+>           execute(ctx, large_observation, lambda *_: '```repl\n' + code + '\n```')
+
+tests/test_refine_context.py:138: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_refine_context.py:57: in execute
+    refiner.boundary(wait=True)
+src/loop_research/refine.py:374: in boundary
+    job = future.result()
+          ^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:320: in _plan
+    return self._plan_job(job)
+           ^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:347: in _plan_job
+    text = self.backend.complete(prompt, purpose='refine', model=self.ctx.config.models.refine, schema=schema)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/codex_backend.py:277: in complete
+    proc = self.runner(cmd, input=full, text=True, capture_output=True,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = ['codex', 'exec', '--sandbox', 'read-only', '--skip-git-repo-check', '--cd', ...]
+kwargs = {'input': 'You are a component inside a program. Do not run shell commands, read local files, or edit files. Reply wit...'cwd': PosixPath('/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-16c7z5wp/loop-codex-u27027nf/empty'), ...}
+
+    def run(command, **kwargs):
+        prompt = kwargs['input']
+>       assert len(prompt) <= 1_048_576, 'Planner dispatched oversized input instead of inspecting its full snapshot'
+E       AssertionError: Planner dispatched oversized input instead of inspecting its full snapshot
+E       assert 1064771 <= 1048576
+E        +  where 1064771 = len('You are a component inside a program. Do not run shell commands, read local files, or edit files. Reply with text onl...tory/0","/self_check/ok","/self_check/issues","/self_check/signals","/self_check/signals/0","/self_check/signals/1"]}}')
+
+tests/test_refine_context.py:39: AssertionError
+__ test_overflow_keeps_strict_proposal_validation_before_edits[bad_evidence] ___
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-16c7z5wp/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+large_observation = {'trajectory': [{'type': 'tool', 'result': 'nJJSjlhlMgBlpwRFaohTQPQMXPnSzNDwswqgQPZJCMhJxjkBnxFugzmmktdHXuLWchPRHivTUP...[{'type': 'fixture_signal', 'detail': 'first occurrence'}, {'type': 'fixture_signal', 'detail': 'second occurrence'}]}}
+failure = 'bad_evidence'
+
+    @pytest.mark.parametrize('failure', ['missing_candidate', 'wrong_type', 'too_many_edits', 'bad_evidence'])
+    def test_overflow_keeps_strict_proposal_validation_before_edits(ctx, large_observation, failure):
+        proposal = declined_proposal()
+        if failure == 'missing_candidate':
+            proposal['decisions'] = []
+        elif failure == 'wrong_type':
+            proposal['decisions'][0]['reason'] = 42
+        elif failure == 'too_many_edits':
+            proposal['edits'] = [{'action': 'create', 'kind': 'memory', 'id': None, 'title': 'Fixture',
+                                  'content': 'Procedure', 'module': None}] * 3
+        else:
+            proposal['decisions'][0]['evidence_refs'] = ['/self_check/signals/99']
+        code = 'import json\nanswer["content"] = json.dumps(' + repr(proposal) + ')\nanswer["ready"] = True'
+        with pytest.raises((ValueError, RuntimeError)):
+>           execute(ctx, large_observation, lambda *_: '```repl\n' + code + '\n```')
+
+tests/test_refine_context.py:138: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_refine_context.py:57: in execute
+    refiner.boundary(wait=True)
+src/loop_research/refine.py:374: in boundary
+    job = future.result()
+          ^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:320: in _plan
+    return self._plan_job(job)
+           ^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:347: in _plan_job
+    text = self.backend.complete(prompt, purpose='refine', model=self.ctx.config.models.refine, schema=schema)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/codex_backend.py:277: in complete
+    proc = self.runner(cmd, input=full, text=True, capture_output=True,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = ['codex', 'exec', '--sandbox', 'read-only', '--skip-git-repo-check', '--cd', ...]
+kwargs = {'input': 'You are a component inside a program. Do not run shell commands, read local files, or edit files. Reply wit...'cwd': PosixPath('/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-16c7z5wp/loop-codex-7hiyfxah/empty'), ...}
+
+    def run(command, **kwargs):
+        prompt = kwargs['input']
+>       assert len(prompt) <= 1_048_576, 'Planner dispatched oversized input instead of inspecting its full snapshot'
+E       AssertionError: Planner dispatched oversized input instead of inspecting its full snapshot
+E       assert 1064771 <= 1048576
+E        +  where 1064771 = len('You are a component inside a program. Do not run shell commands, read local files, or edit files. Reply with text onl...tory/0","/self_check/ok","/self_check/issues","/self_check/signals","/self_check/signals/0","/self_check/signals/1"]}}')
+
+tests/test_refine_context.py:39: AssertionError
+_________ test_overflow_iteration_exhaustion_has_no_unlogged_fallback __________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-16c7z5wp/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+large_observation = {'trajectory': [{'type': 'tool', 'result': 'nJJSjlhlMgBlpwRFaohTQPQMXPnSzNDwswqgQPZJCMhJxjkBnxFugzmmktdHXuLWchPRHivTUP...[{'type': 'fixture_signal', 'detail': 'first occurrence'}, {'type': 'fixture_signal', 'detail': 'second occurrence'}]}}
+
+    def test_overflow_iteration_exhaustion_has_no_unlogged_fallback(ctx, large_observation):
+        ctx.config.rlm.max_iterations = 1
+        with pytest.raises(RuntimeError, match='iteration'):
+>           execute(ctx, large_observation, lambda *_: '```repl\nprint(len(context["trajectory"]))\n```')
+
+tests/test_refine_context.py:146: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_refine_context.py:57: in execute
+    refiner.boundary(wait=True)
+src/loop_research/refine.py:374: in boundary
+    job = future.result()
+          ^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:320: in _plan
+    return self._plan_job(job)
+           ^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:347: in _plan_job
+    text = self.backend.complete(prompt, purpose='refine', model=self.ctx.config.models.refine, schema=schema)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/codex_backend.py:277: in complete
+    proc = self.runner(cmd, input=full, text=True, capture_output=True,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = ['codex', 'exec', '--sandbox', 'read-only', '--skip-git-repo-check', '--cd', ...]
+kwargs = {'input': 'You are a component inside a program. Do not run shell commands, read local files, or edit files. Reply wit...'cwd': PosixPath('/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-16c7z5wp/loop-codex-s_ypgs7b/empty'), ...}
+
+    def run(command, **kwargs):
+        prompt = kwargs['input']
+>       assert len(prompt) <= 1_048_576, 'Planner dispatched oversized input instead of inspecting its full snapshot'
+E       AssertionError: Planner dispatched oversized input instead of inspecting its full snapshot
+E       assert 1064771 <= 1048576
+E        +  where 1064771 = len('You are a component inside a program. Do not run shell commands, read local files, or edit files. Reply with text onl...tory/0","/self_check/ok","/self_check/issues","/self_check/signals","/self_check/signals/0","/self_check/signals/1"]}}')
+
+tests/test_refine_context.py:39: AssertionError
+__________ test_overflow_python_deadline_is_visible_and_does_not_edit __________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-16c7z5wp/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+large_observation = {'trajectory': [{'type': 'tool', 'result': 'nJJSjlhlMgBlpwRFaohTQPQMXPnSzNDwswqgQPZJCMhJxjkBnxFugzmmktdHXuLWchPRHivTUP...[{'type': 'fixture_signal', 'detail': 'first occurrence'}, {'type': 'fixture_signal', 'detail': 'second occurrence'}]}}
+
+    def test_overflow_python_deadline_is_visible_and_does_not_edit(ctx, large_observation):
+        ctx.config.codex.timeout_s = 2
+        with pytest.raises((RuntimeError, TimeoutError)):
+>           execute(ctx, large_observation, lambda *_: '```repl\nwhile True:\n    pass\n```')
+
+tests/test_refine_context.py:154: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_refine_context.py:57: in execute
+    refiner.boundary(wait=True)
+src/loop_research/refine.py:374: in boundary
+    job = future.result()
+          ^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:320: in _plan
+    return self._plan_job(job)
+           ^^^^^^^^^^^^^^^^^^^
+src/loop_research/refine.py:347: in _plan_job
+    text = self.backend.complete(prompt, purpose='refine', model=self.ctx.config.models.refine, schema=schema)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/codex_backend.py:277: in complete
+    proc = self.runner(cmd, input=full, text=True, capture_output=True,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = ['codex', 'exec', '--sandbox', 'read-only', '--skip-git-repo-check', '--cd', ...]
+kwargs = {'input': 'You are a component inside a program. Do not run shell commands, read local files, or edit files. Reply wit...'cwd': PosixPath('/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-16c7z5wp/loop-codex-3fdnai7j/empty'), ...}
+
+    def run(command, **kwargs):
+        prompt = kwargs['input']
+>       assert len(prompt) <= 1_048_576, 'Planner dispatched oversized input instead of inspecting its full snapshot'
+E       AssertionError: Planner dispatched oversized input instead of inspecting its full snapshot
+E       assert 1064771 <= 1048576
+E        +  where 1064771 = len('You are a component inside a program. Do not run shell commands, read local files, or edit files. Reply with text onl...tory/0","/self_check/ok","/self_check/issues","/self_check/signals","/self_check/signals/0","/self_check/signals/1"]}}')
+
+tests/test_refine_context.py:39: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_refine_context.py::test_full_snapshot_code_subcall_and_untruncated_feedback
+FAILED tests/test_refine_context.py::test_overflow_keeps_strict_proposal_validation_before_edits[missing_candidate]
+FAILED tests/test_refine_context.py::test_overflow_keeps_strict_proposal_validation_before_edits[wrong_type]
+FAILED tests/test_refine_context.py::test_overflow_keeps_strict_proposal_validation_before_edits[too_many_edits]
+FAILED tests/test_refine_context.py::test_overflow_keeps_strict_proposal_validation_before_edits[bad_evidence]
+FAILED tests/test_refine_context.py::test_overflow_iteration_exhaustion_has_no_unlogged_fallback
+FAILED tests/test_refine_context.py::test_overflow_python_deadline_is_visible_and_does_not_edit
+7 failed in 1.07s

@@ -163,7 +163,7 @@ def validate_accounting(proposal, payload):
         raise ValueError('Every edit must be linked to an accepted candidate')
 
 
-INSTRUCTIONS = '''Refine supplemental harness state from this run's trajectory and deterministic self-check.
+PLANNING_INSTRUCTIONS = '''Refine supplemental harness state from this run's trajectory and deterministic self-check.
 The base system prompt, tool code, grader code and self-check code are immutable.
 Evaluate every candidate in candidate_inventory, including every occurrence in its evidence_refs.
 These are evidence groups to consider, not predetermined lessons. A passing self-check does not
@@ -189,6 +189,9 @@ No answer keys or grades are available. Preserve procedures and failure modes, n
 Skills may include a standalone Python module as source text; it will execute only in the isolated REPL.
 Use create/update/delete, the existing bare ids, and full title/content for create/update.
 For delete use null title/content/module. For create use null id. Return the requested JSON schema.
+'''
+
+INSTRUCTIONS = PLANNING_INSTRUCTIONS + '''\
 The input uses a lossless shared-text-v2 or shared-text-v3 representation, not a summary.
 The format field identifies the selected version. Its shared_texts array
 contains exact literal strings. In payload, {"$shared_text": N} means that complete string
@@ -275,7 +278,7 @@ class Refiner:
                 if 'planner_prompt' in job:
                     # A new model attempt must not overwrite the prior input or rejected response.
                     job = {key: value for key, value in job.items()
-                           if key not in {'planner_prompt', 'planner_schema', 'planner_representation', 'evidence_index',
+                           if key not in {'planner_prompt', 'planner_schema', 'planner_representation', 'planner_transport', 'evidence_index',
                                           'response_text', 'error', 'operations'}}
                     job.update(job_id=uuid4().hex, status='planning')
                     self._save_job(job)
@@ -344,13 +347,28 @@ class Refiner:
         self._save_job(job)
         text = None
         try:
-            text = self.backend.complete(prompt, purpose='refine', model=self.ctx.config.models.refine, schema=schema)
+            from .codex_backend import INSTRUCTION
+            from .refine_context import MAX_PROMPT_CHARS, plan_context
+            if len(INSTRUCTION + prompt) > MAX_PROMPT_CHARS:
+                job['planner_transport'] = {'kind': 'repl-context-v1', 'input_limit_chars': MAX_PROMPT_CHARS,
+                                            'complete_prompt_chars': len(INSTRUCTION + prompt)}
+                self._save_job(job)
+                text = plan_context(self.ctx, self.backend, job['job_id'], logical_text, schema,
+                                    PLANNING_INSTRUCTIONS)
+            else:
+                text = self.backend.complete(prompt, purpose='refine', model=self.ctx.config.models.refine, schema=schema)
             job['response_text'] = text
             self._save_job(job)
             proposal = Proposal.model_validate_json(text)
             if len(proposal.edits) > self.ctx.config.refine.max_edits:
                 raise ValueError('Proposal exceeds refine.max_edits')
             validate_accounting(proposal, payload)
+            if job.get('planner_transport', {}).get('kind') == 'repl-context-v1':
+                from jsonschema import Draft202012Validator, ValidationError
+                try:
+                    Draft202012Validator(schema).validate(json.loads(text))
+                except ValidationError as error:
+                    raise ValueError('Proposal does not satisfy planner schema: ' + str(error)) from error
             for edit in proposal.edits:
                 if edit.id is not None:
                     self.harness._key(edit.kind, edit.id)

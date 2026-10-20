@@ -1,0 +1,29 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+____ test_overflow_render_reports_actual_calls_separately_from_legacy_input ____
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-fz9giw9v/pytest-of-mukeshreddypochamreddy/pytest-0/test_overflow_render_reports_a0')
+
+    def test_overflow_render_reports_actual_calls_separately_from_legacy_input(tmp_path):
+        audit = fixture(tmp_path)
+        rendered = '\n'.join(renderer().refinement_details('fixture', audit))
+>       assert 'actual-call' in rendered and 'actual planner input' not in rendered
+E       AssertionError: assert ('actual-call' in '## fixture: every durable refinement planning job\n\n1 planning snapshots. Each link preserves its exact input, schem...end calls | none |\n\nFull presented candidate inventory:\n\n```json\n[]\n```\n\nNo validated proposal was recorded.\n')
+
+tests/test_refine_render.py:41: AssertionError
+_____________ test_overflow_render_rejects_missing_linked_attempt ______________
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-fz9giw9v/pytest-of-mukeshreddypochamreddy/pytest-0/test_overflow_render_rejects_m0')
+
+    def test_overflow_render_rejects_missing_linked_attempt(tmp_path):
+        audit = fixture(tmp_path)
+        (tmp_path / 'codex_calls.jsonl').write_text('')
+>       with pytest.raises(ValueError, match='attempt'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_refine_render.py:51: Failed
+=========================== short test summary info ============================
+FAILED tests/test_refine_render.py::test_overflow_render_reports_actual_calls_separately_from_legacy_input
+FAILED tests/test_refine_render.py::test_overflow_render_rejects_missing_linked_attempt
+2 failed in 0.03s

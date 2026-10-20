@@ -1,0 +1,58 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______ test_overflow_render_retains_dispatched_attempt_without_completion ______
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-q1qi_i67/pytest-of-mukeshreddypochamreddy/pytest-0/test_overflow_render_retains_d0')
+
+    def test_overflow_render_retains_dispatched_attempt_without_completion(tmp_path):
+        audit = fixture(tmp_path)
+        call = json.loads((tmp_path / 'codex_calls.jsonl').read_text())
+        (tmp_path / 'codex_calls.jsonl').write_text('')
+        receipt = {key: call[key] for key in ('call_id', 'purpose', 'attempt', 'prompt_chars', 'prompt_sha256')}
+        write_json(tmp_path / 'codex_attempts/actual-call.json', receipt)
+>       rendered = '\n'.join(renderer().refinement_details('fixture', audit))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_refine_render.py:63: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'fixture'
+audit = {'task_path': '/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-q1qi_i67/pytest-of-mukeshreddypochamreddy/pytest-0/test_overflow_render_retains_d0', 'refine': []}
+
+    def refinement_details(label, audit):
+        task = Path(audit['task_path'])
+        jobs = [(path, read(path)) for path in (task / 'refine_requests').glob('*/*.json')]
+        timestamps = {event['details']['job_id']: event['timestamp'] for event in reversed(audit['refine'])
+                      if event['details'].get('job_id')}
+        jobs.sort(key=lambda pair: (timestamps.get(pair[1]['job_id'], ''), pair[1]['job_id']))
+        result = [f'## {label}: every durable refinement planning job', '',
+                  f'{len(jobs)} planning snapshots. Each link preserves its exact input, schema, candidate inventory, '
+                  'raw response, proposal and edit identities. Failed retries and stale replans remain separate snapshots.', '']
+        calls = rows(task / 'codex_calls.jsonl')
+        for path, job in jobs:
+            result += [f'### Request `{job["request_id"]}`, job `{job["job_id"]}`', '',
+                       f'Status: **{job["status"]}**; focus: {json.dumps(job.get("focus"), ensure_ascii=False)}; '
+                       f'{link("full job snapshot and input", path)}.', '']
+            prompt = job.get('planner_prompt')
+            if job.get('planner_transport', {}).get('kind') == 'repl-context-v1':
+                directory = task / 'refine_planners' / job['job_id']
+                result += ['Transport: **complete snapshot through isolated REPL**. The saved `planner_prompt` '
+                    'is the prospective legacy representation, **not dispatched** as a model input. '
+                    f'{link("Complete logical context", directory / "context.json")}; '
+                    f'{link("strict schema", directory / "schema.json")}; '
+                    f'{link("full model inputs and action journal", directory / "actions.jsonl")}; '
+                    f'{link("transport manifest", directory / "manifest.json")}.', '']
+                if (directory / 'actions.jsonl').exists():
+                    actions = rows(directory / 'actions.jsonl')
+                    attempted = list(dict.fromkeys(action['call_id'] for action in actions
+                        if action['event'] == 'model.attempt' and action['status'] == 'dispatched'))
+                    by_id = {call['call_id']: call for call in calls}
+                    missing = set(attempted) - set(by_id)
+                    if missing:
+>                       raise ValueError('Refinement context attempt lacks a completion record: ' + ', '.join(sorted(missing)))
+E                       ValueError: Refinement context attempt lacks a completion record: actual-call
+
+runs/round2/render.py:287: ValueError
+=========================== short test summary info ============================
+FAILED tests/test_refine_render.py::test_overflow_render_retains_dispatched_attempt_without_completion
+1 failed in 0.03s

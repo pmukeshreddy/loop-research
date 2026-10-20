@@ -1,0 +1,136 @@
+FFFFFFF                                                                  [100%]
+=================================== FAILURES ===================================
+____ test_scope_rebinds_default_transport_and_cancels_only_child_processes _____
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-q5tuluem/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-q5tuluem/pytest-of-mukeshreddypochamreddy/pytest-0/test_scope_rebinds_default_tra0')
+local_provider = <loop_research.codex_backend.CodexBackend object at 0x107cff380>
+
+    def test_scope_rebinds_default_transport_and_cancels_only_child_processes(ctx, tmp_path, local_provider):
+        parent = local_provider
+        parent_started, parent_release = tmp_path / "parent-started", tmp_path / "parent-release"
+        child_started, child_release = tmp_path / "child-started", tmp_path / "child-release"
+>       manager = parent.scope(budget=CallBudget(10, 10))
+                  ^^^^^^^^^^^^
+E       AttributeError: 'CodexBackend' object has no attribute 'scope'
+
+tests/test_codex_scope.py:60: AttributeError
+_________ test_parent_cancellation_propagates_to_scoped_process[False] _________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-q5tuluem/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-q5tuluem/pytest-of-mukeshreddypochamreddy/pytest-0/test_parent_cancellation_propa0')
+local_provider = <loop_research.codex_backend.CodexBackend object at 0x107cff830>
+cancel_before_scope = False
+
+    @pytest.mark.parametrize("cancel_before_scope", [False, True])
+    def test_parent_cancellation_propagates_to_scoped_process(ctx, tmp_path, local_provider,
+                                                           cancel_before_scope):
+        parent = local_provider
+        if cancel_before_scope:
+            ctx.cancellation.cancel()
+>       with parent.scope(budget=CallBudget(10, 10)) as child:
+             ^^^^^^^^^^^^
+E       AttributeError: 'CodexBackend' object has no attribute 'scope'
+
+tests/test_codex_scope.py:97: AttributeError
+_________ test_parent_cancellation_propagates_to_scoped_process[True] __________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-q5tuluem/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-q5tuluem/pytest-of-mukeshreddypochamreddy/pytest-0/test_parent_cancellation_propa1')
+local_provider = <loop_research.codex_backend.CodexBackend object at 0x107cffc80>
+cancel_before_scope = True
+
+    @pytest.mark.parametrize("cancel_before_scope", [False, True])
+    def test_parent_cancellation_propagates_to_scoped_process(ctx, tmp_path, local_provider,
+                                                           cancel_before_scope):
+        parent = local_provider
+        if cancel_before_scope:
+            ctx.cancellation.cancel()
+>       with parent.scope(budget=CallBudget(10, 10)) as child:
+             ^^^^^^^^^^^^
+E       AttributeError: 'CodexBackend' object has no attribute 'scope'
+
+tests/test_codex_scope.py:97: AttributeError
+_ test_scope_preserves_injected_transport_retry_hooks_model_validation_and_usage _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-q5tuluem/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_scope_preserves_injected_transport_retry_hooks_model_validation_and_usage(ctx):
+        ctx.cancellation = Future()
+        ctx.config.codex.max_retries = 1
+        parent_budget, child_budget = CallBudget(10, 30), CallBudget(10, 30)
+        waits, jitters, attempts = [], [], []
+    
+        def runner(command, **kwargs):
+            attempts.append((command, kwargs))
+            assert command[command.index("--model") + 1] == ctx.config.models.refine
+            if len(attempts) == 1:
+                return SimpleNamespace(returncode=1, stdout="", stderr="temporary failure")
+            return completed(command)
+    
+        def jitter():
+            jitters.append(True)
+            return .25
+    
+        parent = CodexBackend(ctx, runner=runner, sleep=waits.append, jitter=jitter, budget=parent_budget)
+>       with parent.scope(budget=child_budget) as child:
+             ^^^^^^^^^^^^
+E       AttributeError: 'CodexBackend' object has no attribute 'scope'
+
+tests/test_codex_scope.py:136: AttributeError
+_______ test_scope_exit_closes_admission_and_drains_all_concurrent_calls _______
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-q5tuluem/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_scope_exit_closes_admission_and_drains_all_concurrent_calls(ctx):
+        ctx.cancellation = Future()
+        entered = threading.Barrier(3)
+        releases = [threading.Event(), threading.Event()]
+        child_budget = CallBudget(10, 30)
+    
+        def runner(command, **kwargs):
+            index = int(kwargs["input"].splitlines()[-1])
+            entered.wait(timeout=3)
+            assert releases[index].wait(3), "Test release did not arrive"
+            return completed(command)
+    
+        parent = CodexBackend(ctx, runner=runner)
+>       manager = parent.scope(budget=child_budget)
+                  ^^^^^^^^^^^^
+E       AttributeError: 'CodexBackend' object has no attribute 'scope'
+
+tests/test_codex_scope.py:166: AttributeError
+_ test_scope_without_parent_cancellation_closes_on_exception_and_keeps_parent_usable _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-q5tuluem/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_scope_without_parent_cancellation_closes_on_exception_and_keeps_parent_usable(ctx):
+        assert ctx.cancellation is None
+        parent = CodexBackend(ctx, runner=lambda command, **_: completed(command))
+        with pytest.raises(RuntimeError, match="planner failure"):
+>           with parent.scope(budget=CallBudget(10, 30)) as child:
+                 ^^^^^^^^^^^^
+E           AttributeError: 'CodexBackend' object has no attribute 'scope'
+
+tests/test_codex_scope.py:199: AttributeError
+__________ test_normal_parent_future_completion_does_not_cancel_child __________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-q5tuluem/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_normal_parent_future_completion_does_not_cancel_child(ctx):
+        ctx.cancellation = Future()
+        parent = CodexBackend(ctx, runner=lambda command, **_: completed(command))
+>       with parent.scope(budget=CallBudget(10, 30)) as child:
+             ^^^^^^^^^^^^
+E       AttributeError: 'CodexBackend' object has no attribute 'scope'
+
+tests/test_codex_scope.py:210: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_codex_scope.py::test_scope_rebinds_default_transport_and_cancels_only_child_processes
+FAILED tests/test_codex_scope.py::test_parent_cancellation_propagates_to_scoped_process[False]
+FAILED tests/test_codex_scope.py::test_parent_cancellation_propagates_to_scoped_process[True]
+FAILED tests/test_codex_scope.py::test_scope_preserves_injected_transport_retry_hooks_model_validation_and_usage
+FAILED tests/test_codex_scope.py::test_scope_exit_closes_admission_and_drains_all_concurrent_calls
+FAILED tests/test_codex_scope.py::test_scope_without_parent_cancellation_closes_on_exception_and_keeps_parent_usable
+FAILED tests/test_codex_scope.py::test_normal_parent_future_completion_does_not_cancel_child
+7 failed in 0.06s

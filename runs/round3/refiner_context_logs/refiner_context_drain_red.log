@@ -1,0 +1,51 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________ test_planner_server_exit_drains_post_dispatch_work ______________
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-xcukg8ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_planner_server_exit_drain0')
+
+    def test_planner_server_exit_drains_post_dispatch_work(tmp_path):
+        from loop_research.bridge import Client, Server
+        entered, release, exiting, exited, recorded = (threading.Event() for _ in range(5))
+        def dispatch(*_):
+            entered.set()
+            assert release.wait(5)
+            recorded.set()
+            return None
+        socket = tmp_path / 'host.sock'
+>       server = Server(socket, dispatch, socket_timeout_s=5)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_refine_context.py:170: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/loop_research/bridge.py:39: in __init__
+    self.server = _ThreadingUnixStreamServer(str(path), Handler)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/socketserver.py:457: in __init__
+    self.server_bind()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <loop_research.bridge._ThreadingUnixStreamServer object at 0x1096e0290>
+
+    def server_bind(self):
+        """Called by constructor to bind the socket.
+    
+        May be overridden.
+    
+        """
+        if self.allow_reuse_address and hasattr(socket, "SO_REUSEADDR"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Since Linux 6.12.9, SO_REUSEPORT is not allowed
+        # on other address families than AF_INET/AF_INET6.
+        if (
+            self.allow_reuse_port and hasattr(socket, "SO_REUSEPORT")
+            and self.address_family in (socket.AF_INET, socket.AF_INET6)
+        ):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+>       self.socket.bind(self.server_address)
+E       OSError: AF_UNIX path too long
+
+../../../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/socketserver.py:478: OSError
+=========================== short test summary info ============================
+FAILED tests/test_refine_context.py::test_planner_server_exit_drains_post_dispatch_work
+1 failed in 0.04s
