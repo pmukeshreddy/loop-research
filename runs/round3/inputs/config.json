@@ -1,0 +1,53 @@
+{
+  "models": {
+    "root": "gpt-6-astra",
+    "sub": "gpt-6-astra",
+    "refine": "gpt-6-astra",
+    "judge": "gpt-6-astra",
+    "reasoning_effort": null
+  },
+  "codex": {
+    "bin": "codex",
+    "max_concurrent": 4,
+    "timeout_s": 600.0,
+    "max_retries": 4,
+    "retry_delay_cap_s": 60.0,
+    "log_full_text": false
+  },
+  "rlm": {
+    "max_iterations": 30,
+    "max_depth": 2
+  },
+  "agent": {
+    "task_timeout_s": 3600.0,
+    "max_codex_calls": 300,
+    "as_of": "2026-10-18"
+  },
+  "data": {
+    "seed": 42,
+    "languages": [
+      "en",
+      "zh"
+    ]
+  },
+  "wandr": {
+    "final_n_tasks": 50,
+    "seed": 42
+  },
+  "harness": {
+    "retrieval_limit": 10
+  },
+  "stream": {
+    "rolling_window": 10
+  },
+  "refine": {
+    "max_edits": 2
+  },
+  "bridge": {
+    "socket_timeout_s": 5.0
+  },
+  "verify": {
+    "codex_timeout_s": 30.0,
+    "browser_timeout_s": 120.0
+  }
+}
