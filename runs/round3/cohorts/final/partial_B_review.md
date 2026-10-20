@@ -1,0 +1,10 @@
+# Incomplete B review preserved before cohort stop
+
+This is a partial observation record, not a final quality report or a valid final B comparison. The parent stopped B after a separate B0-1 backend queue-deadline failure, pending a generic FIFO fix and replay of the affected runs. I did not independently adjudicate that queue failure in this review.
+
+- **B1**, `research-e46effb7dc1f43c281ed5933d64fb5ce`: trajectory line 42 (completed iteration 4) contains 28 provisional rows and 26 explicitly observed missing-nationality cells; its full output contains no quote mismatches at that stage. Trajectory line 43 starts 26 directed nationality/citizenship searches and intends supplementary downloads followed by refinement. That block had not completed at review stop, so no successful supplementary-fetch count or refinement outcome is assigned.
+- **B1-frozen-1**, `research-8e4e92def8344c6a946a92d87097b2e3`: trajectory line 34 (completed iteration 4) likewise contains 28 provisional rows, 26 missing-nationality cells, and no printed quote mismatches at that stage. The external model-capacity error at trace line 89 and retry line 90 are preserved. Attempt 1 succeeds at trace line 106 with the same prompt SHA; this is one failed attempt, two error-bearing component events, and a verified retry recovery. Those counts remain even though the error recovered.
+
+Neither assigned run received a final identity, semantic, citation, or prediction score. Frozen repeats 2 and 3 had not started when this review was stopped. The old prediction commit `ac93f4788ac0c5374c16181150769ec0333b4a2e` remains historical: literal S1 names an unavailable `records.add` boundary and cannot be measured in this cohort. Any corrected definition belongs to a new preregistration.
+
+The companion JSON records exact archive paths, line numbers, and hashes of each cited immutable line prefix. Complete files may receive shutdown records after this note. Review used disk reads only; no tests, web, models, process actions, or product edits were performed.

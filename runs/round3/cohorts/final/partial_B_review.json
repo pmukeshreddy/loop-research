@@ -1,0 +1,96 @@
+{
+  "reviewed_at": "2026-10-20T03:12:10.756132+00:00",
+  "source_commit": "9585403c5b78bdac50d89818aba262ff89837fca",
+  "status": "stopped_incomplete_cohort_not_valid_for_final_comparisons",
+  "reason": "Parent reported a separate B0-1 backend queue-deadline failure and stopped the owned B phase pending a generic FIFO fix and full affected-run replay. This note preserves only evidence independently read before review was stopped; it does not independently adjudicate the new queue root cause.",
+  "prediction_commit": "ac93f4788ac0c5374c16181150769ec0333b4a2e",
+  "prediction_path": "runs/round3/predictions.md",
+  "literal_S1": "Preregistered records.add boundary is absent from exposed API; retain as unmeasurable for this cohort. No retrospective replacement or success score.",
+  "review_scope": "Read archived files only; no tests, models, web, live-process changes, or product edits. No final quality/metric review completed.",
+  "runs": [
+    {
+      "label": "B1",
+      "run_id": "research-e46effb7dc1f43c281ed5933d64fb5ce",
+      "trace": "runs/round3/cohorts/final/workspaces/B1/runs/research-e46effb7dc1f43c281ed5933d64fb5ce/trace.jsonl",
+      "trajectory": "runs/round3/cohorts/final/workspaces/B1/runs/research-e46effb7dc1f43c281ed5933d64fb5ce/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+      "observations": [
+        {
+          "kind": "completed_provisional_extraction",
+          "trajectory_line": 42,
+          "line_sha256": "1a8f50a6e2bd2baf8f984bb3998e71d0c2cac4e4af26c29939213361db557e52",
+          "rows": 28,
+          "missing_nationality_cells": 26,
+          "printed_quote_mismatches": 0,
+          "qualification": "Partial execution only; no final identity, semantic, citation, or metric verdict."
+        },
+        {
+          "kind": "in_flight_directed_supplementation",
+          "trajectory_line": 43,
+          "line_sha256": "b37643b6802c77e745c34a7a153c99415a347dbcedaa47f9c96892d7bf50b368",
+          "note": "Executed block begins 26 nationality/citizenship searches from observed gaps and intends to fetch up to three hits per row before refine.run. At review stop the block had not completed; no successful supplementary-fetch count assigned."
+        }
+      ]
+    },
+    {
+      "label": "B1-frozen-1",
+      "run_id": "research-8e4e92def8344c6a946a92d87097b2e3",
+      "trace": "runs/round3/cohorts/final/workspaces/B1-frozen-1/runs/research-8e4e92def8344c6a946a92d87097b2e3/trace.jsonl",
+      "trajectory": "runs/round3/cohorts/final/workspaces/B1-frozen-1/runs/research-8e4e92def8344c6a946a92d87097b2e3/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+      "observations": [
+        {
+          "kind": "completed_provisional_extraction",
+          "trajectory_line": 34,
+          "line_sha256": "06794223290738229c8d69aa0122782dc801b9ab7b37e158bd7cc4029c312714",
+          "rows": 28,
+          "missing_nationality_cells": 26,
+          "printed_quote_mismatches": 0,
+          "qualification": "Partial execution only; no final identity, semantic, citation, or metric verdict."
+        },
+        {
+          "kind": "external_capacity_attempt_or_recovery",
+          "trace_line": 89,
+          "line_sha256": "b2a347ef809846b82b171cc9a84ed0aa7bcaee814deb2e2f272fb56d6271d0a7",
+          "component": "Codex backend (search)",
+          "event": "exec.end",
+          "details": {
+            "call_id": "bf73173471dd49d1b3be9120225148c5",
+            "attempt": 0,
+            "prompt_sha256": "f5625c060896cc4218da8d654cfaee5b84852e88065afc874713032963e31527",
+            "exit_code": 1,
+            "error": "\nSelected model is at capacity. Please try a different model.\n{'message': 'Selected model is at capacity. Please try a different model.'}\nMissing or empty final message",
+            "response_chars": 0,
+            "retries": 0
+          }
+        },
+        {
+          "kind": "external_capacity_attempt_or_recovery",
+          "trace_line": 90,
+          "line_sha256": "a0b1c3a56a0c8388cebe40760dac550ffbd6a6d19d2ed3e4d1e7148ef4c80b9a",
+          "component": "Codex backend (search)",
+          "event": "retry",
+          "details": {
+            "attempt": 0,
+            "next_attempt": 1,
+            "error": "Codex failed (exit=1): \nSelected model is at capacity. Please try a different model.\n{'message': 'Selected model is at capacity. Please try a different model.'}\nMissing or empty final message"
+          }
+        },
+        {
+          "kind": "external_capacity_attempt_or_recovery",
+          "trace_line": 106,
+          "line_sha256": "38d51bed31a3c4ac02712201651f1f5802cdbf7976ccaf482d4375a86f53f52c",
+          "component": "Codex backend (search)",
+          "event": "exec.end",
+          "details": {
+            "call_id": "31e9b6d40d0948839fd16cf19142ef29",
+            "attempt": 1,
+            "prompt_sha256": "f5625c060896cc4218da8d654cfaee5b84852e88065afc874713032963e31527",
+            "exit_code": 0,
+            "error": null,
+            "response_chars": 1117,
+            "retries": 1
+          }
+        }
+      ]
+    }
+  ]
+}
