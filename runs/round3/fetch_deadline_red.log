@@ -1,0 +1,29 @@
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+_________________ test_name_resolution_obeys_download_deadline _________________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-66m6sfme/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b796540>
+
+    def test_name_resolution_obeys_download_deadline(ctx, monkeypatch):
+        from loop_research import page_fetch
+        from loop_research.page_fetch import FetchError
+        def slow_resolve(url):
+            time.sleep(.5)
+            return ('127.0.0.1', 1)
+        monkeypatch.setattr(page_fetch, 'resolve_public', slow_resolve)
+        ctx.config.codex.timeout_s = .05
+        fetcher = PageFetcher(ctx)
+        fetcher.request = lambda url, timeout: REAL_REQUEST(fetcher, url, timeout)
+        started = time.monotonic()
+        with pytest.raises(FetchError, match='download_error'):
+            fetcher.fetch('http://unlisted.example/')
+>       assert time.monotonic() - started < .3
+E       assert (247573.230762375 - 247572.719704125) < 0.3
+E        +  where 247573.230762375 = <built-in function monotonic>()
+E        +    where <built-in function monotonic> = time.monotonic
+
+tests/test_direct_fetch.py:349: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_direct_fetch.py::test_name_resolution_obeys_download_deadline
+1 failed, 1 passed, 28 deselected in 1.09s

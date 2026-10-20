@@ -1,0 +1,241 @@
+...................FFFFFFFFF                                             [100%]
+=================================== FAILURES ===================================
+_ test_legal_optional_html_end_tags_do_not_hide_following_content[<p hidden>secret<p>visible conclusion-visible conclusion] _
+
+html = '<p hidden>secret<p>visible conclusion', want = 'visible conclusion'
+
+    @pytest.mark.parametrize('html,want', [
+        ('<p hidden>secret<p>visible conclusion', 'visible conclusion'),
+        ('<ul><li hidden>secret<li>visible item</ul>', 'visible item'),
+        ('<table><tr><td hidden>secret<td>visible cell</table>', 'visible cell')])
+    def test_legal_optional_html_end_tags_do_not_hide_following_content(html, want):
+        from loop_research.page_fetch import ReadableHTML
+        parser = ReadableHTML()
+        parser.feed(html)
+>       assert parser.text() == want
+E       AssertionError: assert '' == 'visible conclusion'
+E         
+E         - visible conclusion
+
+tests/test_direct_fetch.py:264: AssertionError
+_ test_legal_optional_html_end_tags_do_not_hide_following_content[<ul><li hidden>secret<li>visible item</ul>-visible item] _
+
+html = '<ul><li hidden>secret<li>visible item</ul>', want = 'visible item'
+
+    @pytest.mark.parametrize('html,want', [
+        ('<p hidden>secret<p>visible conclusion', 'visible conclusion'),
+        ('<ul><li hidden>secret<li>visible item</ul>', 'visible item'),
+        ('<table><tr><td hidden>secret<td>visible cell</table>', 'visible cell')])
+    def test_legal_optional_html_end_tags_do_not_hide_following_content(html, want):
+        from loop_research.page_fetch import ReadableHTML
+        parser = ReadableHTML()
+        parser.feed(html)
+>       assert parser.text() == want
+E       AssertionError: assert '' == 'visible item'
+E         
+E         - visible item
+
+tests/test_direct_fetch.py:264: AssertionError
+_ test_legal_optional_html_end_tags_do_not_hide_following_content[<table><tr><td hidden>secret<td>visible cell</table>-visible cell] _
+
+html = '<table><tr><td hidden>secret<td>visible cell</table>'
+want = 'visible cell'
+
+    @pytest.mark.parametrize('html,want', [
+        ('<p hidden>secret<p>visible conclusion', 'visible conclusion'),
+        ('<ul><li hidden>secret<li>visible item</ul>', 'visible item'),
+        ('<table><tr><td hidden>secret<td>visible cell</table>', 'visible cell')])
+    def test_legal_optional_html_end_tags_do_not_hide_following_content(html, want):
+        from loop_research.page_fetch import ReadableHTML
+        parser = ReadableHTML()
+        parser.feed(html)
+>       assert parser.text() == want
+E       AssertionError: assert '' == 'visible cell'
+E         
+E         - visible cell
+
+tests/test_direct_fetch.py:264: AssertionError
+__________ test_direct_cache_never_returns_unverified_evidence[text] ___________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-_7xoltnb/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+damage = 'text'
+
+    @pytest.mark.parametrize('damage', ['text', 'raw', 'owner', 'telemetry'])
+    def test_direct_cache_never_returns_unverified_evidence(ctx, damage):
+        from loop_research.repl_tools import ResearchTools
+        calls = []
+        def request(url, timeout):
+            calls.append(url)
+            return response('Actual source evidence.', 'text/plain')
+        tools = ResearchTools(NoModel(), ctx, fetcher=PageFetcher(ctx, request=request))
+        tools.fetch('https://example.org/')
+        receipt = ctx.load('fetch_telemetry.json')[0]['receipt']
+        if damage == 'text':
+            tools.cache[json.dumps(['fetch', 'https://example.org/', 'direct-readable-v1'])] = 'Fabricated quotation!!'
+        elif damage == 'raw':
+            (ctx.path / receipt['raw_path']).write_bytes(b'corrupted source bytes')
+        elif damage == 'owner':
+            tools.evidence['fetches'].clear()
+        else:
+            tools.fetch_telemetry.clear()
+>       assert tools.fetch('https://example.org/') == 'FETCH_FAILED'
+E       AssertionError: assert 'Fabricated quotation!!' == 'FETCH_FAILED'
+E         
+E         - FETCH_FAILED
+E         + Fabricated quotation!!
+
+tests/test_direct_fetch.py:285: AssertionError
+___________ test_direct_cache_never_returns_unverified_evidence[raw] ___________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-_7xoltnb/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+damage = 'raw'
+
+    @pytest.mark.parametrize('damage', ['text', 'raw', 'owner', 'telemetry'])
+    def test_direct_cache_never_returns_unverified_evidence(ctx, damage):
+        from loop_research.repl_tools import ResearchTools
+        calls = []
+        def request(url, timeout):
+            calls.append(url)
+            return response('Actual source evidence.', 'text/plain')
+        tools = ResearchTools(NoModel(), ctx, fetcher=PageFetcher(ctx, request=request))
+        tools.fetch('https://example.org/')
+        receipt = ctx.load('fetch_telemetry.json')[0]['receipt']
+        if damage == 'text':
+            tools.cache[json.dumps(['fetch', 'https://example.org/', 'direct-readable-v1'])] = 'Fabricated quotation!!'
+        elif damage == 'raw':
+            (ctx.path / receipt['raw_path']).write_bytes(b'corrupted source bytes')
+        elif damage == 'owner':
+            tools.evidence['fetches'].clear()
+        else:
+            tools.fetch_telemetry.clear()
+>       assert tools.fetch('https://example.org/') == 'FETCH_FAILED'
+E       AssertionError: assert 'Actual source evidence.' == 'FETCH_FAILED'
+E         
+E         - FETCH_FAILED
+E         + Actual source evidence.
+
+tests/test_direct_fetch.py:285: AssertionError
+__________ test_direct_cache_never_returns_unverified_evidence[owner] __________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-_7xoltnb/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+damage = 'owner'
+
+    @pytest.mark.parametrize('damage', ['text', 'raw', 'owner', 'telemetry'])
+    def test_direct_cache_never_returns_unverified_evidence(ctx, damage):
+        from loop_research.repl_tools import ResearchTools
+        calls = []
+        def request(url, timeout):
+            calls.append(url)
+            return response('Actual source evidence.', 'text/plain')
+        tools = ResearchTools(NoModel(), ctx, fetcher=PageFetcher(ctx, request=request))
+        tools.fetch('https://example.org/')
+        receipt = ctx.load('fetch_telemetry.json')[0]['receipt']
+        if damage == 'text':
+            tools.cache[json.dumps(['fetch', 'https://example.org/', 'direct-readable-v1'])] = 'Fabricated quotation!!'
+        elif damage == 'raw':
+            (ctx.path / receipt['raw_path']).write_bytes(b'corrupted source bytes')
+        elif damage == 'owner':
+            tools.evidence['fetches'].clear()
+        else:
+            tools.fetch_telemetry.clear()
+>       assert tools.fetch('https://example.org/') == 'FETCH_FAILED'
+E       AssertionError: assert 'Actual source evidence.' == 'FETCH_FAILED'
+E         
+E         - FETCH_FAILED
+E         + Actual source evidence.
+
+tests/test_direct_fetch.py:285: AssertionError
+________ test_direct_cache_never_returns_unverified_evidence[telemetry] ________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-_7xoltnb/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+damage = 'telemetry'
+
+    @pytest.mark.parametrize('damage', ['text', 'raw', 'owner', 'telemetry'])
+    def test_direct_cache_never_returns_unverified_evidence(ctx, damage):
+        from loop_research.repl_tools import ResearchTools
+        calls = []
+        def request(url, timeout):
+            calls.append(url)
+            return response('Actual source evidence.', 'text/plain')
+        tools = ResearchTools(NoModel(), ctx, fetcher=PageFetcher(ctx, request=request))
+        tools.fetch('https://example.org/')
+        receipt = ctx.load('fetch_telemetry.json')[0]['receipt']
+        if damage == 'text':
+            tools.cache[json.dumps(['fetch', 'https://example.org/', 'direct-readable-v1'])] = 'Fabricated quotation!!'
+        elif damage == 'raw':
+            (ctx.path / receipt['raw_path']).write_bytes(b'corrupted source bytes')
+        elif damage == 'owner':
+            tools.evidence['fetches'].clear()
+        else:
+            tools.fetch_telemetry.clear()
+>       assert tools.fetch('https://example.org/') == 'FETCH_FAILED'
+E       AssertionError: assert 'Actual source evidence.' == 'FETCH_FAILED'
+E         
+E         - FETCH_FAILED
+E         + Actual source evidence.
+
+tests/test_direct_fetch.py:285: AssertionError
+______________ test_direct_archive_missing_telemetry_fails_closed ______________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-_7xoltnb/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_direct_archive_missing_telemetry_fails_closed(ctx):
+        from loop_research.repl_tools import ResearchTools
+        from loop_research.archive_audit import fetch_audit, ArchiveCorruptionError
+        tools = ResearchTools(NoModel(), ctx, fetcher=PageFetcher(ctx,
+            request=lambda *args: response('Full evidence', 'text/plain')))
+        tools.fetch('https://example.org/')
+        (ctx.path / 'fetch_telemetry.json').unlink()
+>       with pytest.raises(ArchiveCorruptionError, match='receipt|telemetry'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ArchiveCorruptionError
+
+tests/test_direct_fetch.py:297: Failed
+___________ test_http_trickle_cannot_extend_total_download_deadline ____________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-_7xoltnb/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10815f5c0>
+
+    def test_http_trickle_cannot_extend_total_download_deadline(ctx, monkeypatch):
+        from loop_research import page_fetch
+        from loop_research.page_fetch import FetchError
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/plain')
+                self.send_header('Content-Length', '15')
+                self.end_headers()
+                try:
+                    for _ in range(15):
+                        self.wfile.write(b'x')
+                        self.wfile.flush()
+                        time.sleep(.04)
+                except (BrokenPipeError, ConnectionResetError):
+                    pass
+            def log_message(self, *args):
+                pass
+        with ThreadingHTTPServer(('127.0.0.1', 0), Handler) as server:
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            monkeypatch.setattr(page_fetch, 'resolve_public', lambda url: ('127.0.0.1', server.server_port))
+            ctx.config.codex.timeout_s = .1
+            fetcher = PageFetcher(ctx)
+            fetcher.request = lambda url, timeout: REAL_REQUEST(fetcher, url, timeout)
+            started = time.monotonic()
+            try:
+>               with pytest.raises(FetchError, match='download_error'):
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE FetchError
+
+tests/test_direct_fetch.py:328: Failed
+=========================== short test summary info ============================
+FAILED tests/test_direct_fetch.py::test_legal_optional_html_end_tags_do_not_hide_following_content[<p hidden>secret<p>visible conclusion-visible conclusion]
+FAILED tests/test_direct_fetch.py::test_legal_optional_html_end_tags_do_not_hide_following_content[<ul><li hidden>secret<li>visible item</ul>-visible item]
+FAILED tests/test_direct_fetch.py::test_legal_optional_html_end_tags_do_not_hide_following_content[<table><tr><td hidden>secret<td>visible cell</table>-visible cell]
+FAILED tests/test_direct_fetch.py::test_direct_cache_never_returns_unverified_evidence[text]
+FAILED tests/test_direct_fetch.py::test_direct_cache_never_returns_unverified_evidence[raw]
+FAILED tests/test_direct_fetch.py::test_direct_cache_never_returns_unverified_evidence[owner]
+FAILED tests/test_direct_fetch.py::test_direct_cache_never_returns_unverified_evidence[telemetry]
+FAILED tests/test_direct_fetch.py::test_direct_archive_missing_telemetry_fails_closed
+FAILED tests/test_direct_fetch.py::test_http_trickle_cannot_extend_total_download_deadline
+9 failed, 19 passed in 1.79s

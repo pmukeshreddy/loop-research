@@ -6,6 +6,7 @@ from loop_research.archive import read_jsonl
 from loop_research.trace import Trace
 from test_refine import Planner, proposal
 from test_worker import code_reply, final_code, session_factory
+from test_agent_tools import install_fetch
 
 
 @pytest.mark.parametrize('learning', [True, False])
@@ -24,13 +25,12 @@ def test_root_and_context_describe_learning_policy(task, benchmark, output, ctx,
         assert 'Do not request refinement or edit the harness' in root
 
 
-def test_midtask_refine_commits_and_is_retrieved_on_later_root_turn(ctx, task, benchmark, output, session_factory):
+def test_midtask_refine_commits_and_is_retrieved_on_later_root_turn(ctx, task, benchmark, output, session_factory, monkeypatch):
+    install_fetch(monkeypatch, lambda url: 'fixture-a fixture-value')
     ctx.trace = Trace(ctx.run_dir)
     roots = 0
     def reply(prompt, options):
         nonlocal roots
-        if options['purpose'] == 'fetch':
-            return 'fixture-a fixture-value', [{'type': 'open_page', 'url': 'https://example.org/'}]
         if options['purpose'] == 'sub':
             session.refiner.pending.result(timeout=5)
             return 'fixture extraction complete'

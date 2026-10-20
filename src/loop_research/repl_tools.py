@@ -4,6 +4,7 @@ import threading
 from concurrent.futures import CancelledError, Future, ThreadPoolExecutor
 from urllib.parse import urlsplit, urlunsplit
 from .archive import read_json, write_json
+from .page_fetch import FETCH_PATH, FetchError, PageFetcher, verify_receipt
 from .trace import observed
 
 
@@ -20,8 +21,9 @@ def normalized_url(url):
 
 
 class ResearchTools:
-    def __init__(self, backend, ctx):
+    def __init__(self, backend, ctx, *, fetcher=None):
         self.backend, self.ctx = backend, ctx
+        self.fetcher = fetcher or PageFetcher(ctx)
         self.cache = {key: value for key, value in read_json(ctx.path / "tool_cache.json", {}).items()
                       if value != "FETCH_FAILED"}
         self.ledger = set(read_json(ctx.path / "url_ledger.json", []))
@@ -52,7 +54,7 @@ class ResearchTools:
 
     def _new_fetch(self, url, focus, source):
         request = {'id': len(self.evidence['fetches']) + 1, 'url': url, 'focus': focus,
-                   'source': source, 'status': 'pending'}
+                   'source': source, 'status': 'pending', 'fetch_path': FETCH_PATH}
         self.evidence['fetches'].append(request)
         self.active_fetches[request['id']] = request
         self.fetch_telemetry[request['id']] = {**request, 'returned_chars': None,
@@ -70,11 +72,14 @@ class ResearchTools:
             measurement['owner_id'] = request['owner_id']
             owner = self.fetch_telemetry.get(request['owner_id'])
             if owner is not None:
-                measurement['raw_page_chars_reason'] = owner['raw_page_chars_reason']
+                for key in ('raw_page_chars_reason', 'raw_page_chars', 'raw_page_bytes',
+                            'readable_chars', 'receipt'):
+                    if key in owner:
+                        measurement[key] = owner[key]
         if measurement['raw_page_chars_reason'] == 'fetch_not_completed':
             measurement['raw_page_chars_reason'] = (
-                'cached_fetch_has_no_archived_web_events' if request['source'] == 'cache'
-                else 'no_completed_backend_attempt')
+                'cached_fetch_has_no_archived_receipt' if request['source'] == 'cache'
+                else 'no_completed_download')
         if reason is not None:
             request['reason'] = reason
             failure = {'operation': 'fetch', 'url': request['url'], 'request_id': request['id'],
@@ -83,38 +88,18 @@ class ResearchTools:
                 request['error'] = failure['error'] = error
             self.evidence['failures'].append(failure)
 
-    def _record_fetch_attempt(self, key, event):
+    def _record_download(self, key, receipt):
         with self.lock:
             self.ctx.check_cancelled()
             request = self.pending_fetches[key]
-            attempts = request.setdefault('attempts', [])
-            attempt = next((item for item in attempts if item['call_id'] == event['call_id']), None)
-            if attempt is None:
-                attempt = {'request_id': request['id']}
-                attempts.append(attempt)
-            attempt.update(event)
+            if receipt is None:
+                raise ValueError('Direct fetch must supply a durable download receipt')
+            request['receipt_id'] = receipt['id']
             measurement = self.fetch_telemetry[request['id']]
-            measurements = measurement.setdefault('attempts', [])
-            measured = next((item for item in measurements if item['call_id'] == event['call_id']), None)
-            if measured is None:
-                measured = {'call_id': event['call_id'], 'attempt': event['attempt']}
-                measurements.append(measured)
-            measured['status'] = event['status']
-            if event['status'] != 'dispatched':
-                web_events = self.backend.last_web_events
-                measured.update(archive='codex_calls.jsonl', web_event_indexes=list(range(len(web_events))))
-                # The verified CLI events contain metadata and line-count snippets,
-                # not the opened page body or its character count. Do not use the
-                # rendered model response, snippet length, or line count as raw size.
-                opened = any(item['event'].get('type') == 'item.completed' and
-                    item['event']['item'].get('action', {}).get('type') == 'open_page'
-                    for item in web_events)
-                measurement['raw_page_chars_reason'] = ('not_exposed_by_codex_web_events' if opened
-                                                        else 'no_completed_open_page_event')
-            if event['status'] == 'failed':
-                self.evidence['failures'].append({'operation': 'fetch', 'url': request['url'],
-                    'request_id': request['id'], 'source': 'backend', 'reason': 'backend_attempt_failed',
-                    **event})
+            measurement.update(receipt=receipt, raw_page_bytes=receipt.get('raw_page_bytes'),
+                raw_page_chars=receipt.get('raw_page_chars'), readable_chars=receipt.get('readable_chars'),
+                raw_page_chars_reason=('decoded_download' if receipt.get('raw_page_chars') is not None
+                    else 'binary_document' if receipt.get('status') == 'succeeded' else 'download_failed'))
             self.persist()
 
     def _cancel_fetches(self, cancellation):
@@ -129,7 +114,7 @@ class ResearchTools:
             if pending:
                 self.persist()
 
-    def _cached(self, key, call):
+    def _cached(self, key, call, *, focus=''):
         operation, target, *options = json.loads(key)
         with self.lock:
             self.ctx.check_cancelled()
@@ -139,14 +124,25 @@ class ResearchTools:
             request = None
             if operation == 'fetch':
                 source = 'cache' if key in self.cache else 'shared' if pending is not None else 'backend'
-                request = self._new_fetch(target, options[0], source)
+                request = self._new_fetch(target, focus, source)
             if key in self.cache:
                 if request is not None:
                     owner = next((item for item in reversed(self.evidence['fetches'])
                         if item['source'] == 'backend' and item['status'] == 'succeeded'
-                        and item['url'] == target and item['focus'] == options[0]), None)
+                        and item['url'] == target and item.get('fetch_path') == FETCH_PATH), None)
                     if owner is not None:
                         request['owner_id'] = owner['id']
+                    try:
+                        receipt = self.fetch_telemetry.get(owner['id'], {}).get('receipt') if owner else None
+                        if receipt is None or receipt.get('requested_url') != target:
+                            raise FetchError('receipt_integrity', 'Direct cache has no matching owner receipt')
+                        verify_receipt(self.ctx.path, receipt, text=self.cache[key])
+                    except FetchError as error:
+                        self._finish_fetch(request, 'failed', reason=error.reason, error=error.error,
+                                           returned='FETCH_FAILED')
+                        self.cache.pop(key)
+                        self.persist()
+                        return 'FETCH_FAILED'
                     self._finish_fetch(request, 'succeeded', returned=self.cache[key])
                     self.persist()
                 return self.cache[key]
@@ -161,7 +157,7 @@ class ResearchTools:
                 self.persist()
         try:
             result, urls = (pending.result(), []) if pending is not None else call()
-            if pending is None and self.ctx.trace.enabled:
+            if pending is None and self.ctx.trace.enabled and operation == 'search':
                 self.ctx.trace.emit('tools.' + operation, 'web', target=target,
                     urls_opened=[a['url'] for a in self.backend.last_web_actions
                                  if a.get('type') == 'open_page' and a.get('url')])
@@ -174,12 +170,22 @@ class ResearchTools:
                     if request is not None:
                         self.evidence['fetched'].setdefault(target, []).append(result)
                 if request is not None:
+                    owner = self.evidence['fetches'][request['owner_id'] - 1] if 'owner_id' in request else {}
                     self._finish_fetch(request, 'failed' if failed else 'succeeded',
-                                       reason='fetch_failed' if failed else None, returned=result)
+                                       reason=owner.get('reason', 'fetch_failed') if failed else None,
+                                       error=owner.get('error') if failed else None, returned=result)
                 self.persist()
             if pending is None:
                 future.set_result(result)
             return result
+        except FetchError as exc:
+            with self.lock:
+                self.ctx.check_cancelled()
+                self._finish_fetch(request, 'failed', reason=exc.reason, error=exc.error, returned='FETCH_FAILED')
+                self.persist()
+            if pending is None:
+                future.set_result('FETCH_FAILED')
+            return 'FETCH_FAILED'
         except BaseException as exc:
             with self.lock:
                 try:
@@ -259,7 +265,7 @@ class ResearchTools:
 
     @observed('tools.fetch')
     def fetch(self, url: str, focus: str = "") -> str:
-        """Return model-rendered page text (not raw HTML), or FETCH_FAILED."""
+        """Directly download full readable page text; focus never filters it. Failures return FETCH_FAILED."""
         with self.lock:
             self.ctx.check_cancelled()
         try:
@@ -275,29 +281,18 @@ class ResearchTools:
                 self.persist()
             raise
         url = normalized
-        key = json.dumps(["fetch", url, " ".join(focus.split())])
+        key = json.dumps(["fetch", url, FETCH_PATH])
 
         def call():
-            result = self.backend.complete(f"Open this exact URL with the web tool: {url}\n"
-                f"Focus: {focus}\nCopy relevant page text as faithfully as possible in plain text. "
-                "Preserve wording, figures, context, qualifications and dates. Do not paraphrase, "
-                "infer missing text or invent quotations. If inaccessible, return exactly FETCH_FAILED.",
-                purpose="fetch", web=True, model=self.ctx.config.models.sub,
-                on_attempt=lambda event: self._record_fetch_attempt(key, event)).strip()
-            if not result:
-                result = "FETCH_FAILED"
-            opened = []
-            for action in self.backend.last_web_actions:
-                if action.get('type') == 'open_page' and action.get('url'):
-                    try:
-                        opened.append(normalized_url(action['url']))
-                    except ValueError:
-                        continue
-            if url not in opened:
-                result = 'FETCH_FAILED'
-            return result, [url] if result != "FETCH_FAILED" else []
+            try:
+                page = self.fetcher.fetch(url)
+            except FetchError as error:
+                self._record_download(key, error.receipt)
+                raise
+            self._record_download(key, page.receipt)
+            return page.text, [url]
 
-        return self._cached(key, call)
+        return self._cached(key, call, focus=focus)
 
     @observed('tools.fetch_many')
     def fetch_many(self, urls: list[str], focus: str = "") -> list[str]:

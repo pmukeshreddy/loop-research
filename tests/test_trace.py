@@ -31,13 +31,19 @@ def test_live_trace_is_flushed_and_counts_nested_calls_and_errors(tmp_path):
     assert summary == (tmp_path / 'trace_summary.md').read_text()
 
 
-def test_tracing_preserves_worker_prompts_tools_output_and_self_check(ctx, task, output):
+def test_tracing_preserves_worker_prompts_tools_output_and_self_check(ctx, task, output, monkeypatch):
     from loop_research.agent import run_task
     from loop_research.harness import Harness
     from loop_research.research import ResearchData
     from loop_research.session import Session
     from loop_research.trace import Trace
     from test_worker import OfflineBackend, code_reply, final_code
+    from test_agent_tools import install_fetch
+    from loop_research import page_fetch
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(page_fetch, 'uuid4', lambda: SimpleNamespace(hex='fixture-download'))
+    downloads = install_fetch(monkeypatch, 'fixture-a fixture-value')
 
     code = '''
 import json
@@ -59,8 +65,7 @@ print("fixture stdout")
             return 'fixture-value'
         if purpose == 'search':
             return json.dumps({'results': [{'title': 'fixture', 'url': 'https://example.org/', 'snippet': 'fixture'}]})
-        assert purpose == 'fetch'
-        return 'fixture-a fixture-value', [{'type': 'open_page', 'url': 'https://example.org/'}]
+        raise AssertionError('Unexpected model purpose: ' + purpose)
 
     results = []
     for enabled in (False, True):
@@ -75,6 +80,7 @@ print("fixture stdout")
             results.append((result, backend.calls, session.finish(), (run.path / 'prompt.txt').read_text()))
         finally:
             session.refiner.close()
+    assert downloads == ['https://example.org/', 'https://example.org/']
     for index in (0, 2, 3):
         assert results[0][index] == results[1][index]
     # Callbacks are different Python objects in separate sessions, but must be

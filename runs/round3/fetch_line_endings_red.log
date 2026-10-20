@@ -1,0 +1,25 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____ test_plain_text_line_endings_survive_cache_and_archive_verification ______
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-rrvlq6p1/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_plain_text_line_endings_survive_cache_and_archive_verification(ctx):
+        from loop_research.repl_tools import ResearchTools
+        from loop_research.archive_audit import fetch_audit
+        original = 'First line.\r\nSecond line.\rFinal line.\n'
+        tools = ResearchTools(NoModel(), ctx, fetcher=PageFetcher(ctx,
+            request=lambda *args: response(original, 'text/plain; charset=utf-8')))
+        assert tools.fetch('https://example.org/') == original
+>       assert tools.fetch('https://example.org/', focus='last line') == original
+E       AssertionError: assert 'FETCH_FAILED' == 'First line.\...Final line.\n'
+E         
+E         + FETCH_FAILED
+E         - First line.
+E         - Second line.
+E         - Final line.
+
+tests/test_direct_fetch.py:308: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_direct_fetch.py::test_plain_text_line_endings_survive_cache_and_archive_verification
+1 failed, 30 deselected in 0.07s

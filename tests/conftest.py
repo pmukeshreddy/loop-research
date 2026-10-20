@@ -32,6 +32,12 @@ def forbid_live_codex(request, monkeypatch, offline_process_temp):
             raise AssertionError('Live codex exec is forbidden in offline tests; inject a test backend')
         return popen(command, *args, **kwargs)
     monkeypatch.setattr(subprocess, 'Popen', offline_only)
+    # Direct fetches now bypass Codex. Offline tests must inject the HTTP
+    # transport too; an accidentally unmigrated fixture must never go online.
+    from loop_research.page_fetch import PageFetcher
+    def offline_download(self, url, timeout):
+        raise AssertionError('Live direct fetch is forbidden in offline tests; inject an HTTP transport')
+    monkeypatch.setattr(PageFetcher, '_request', offline_download)
 
 
 def load_config():

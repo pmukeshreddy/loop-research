@@ -13,6 +13,7 @@ from loop_research.archive import append_json, read_jsonl, write_json
 from loop_research.codex_backend import BudgetExceeded
 from loop_research.harness import Harness
 from loop_research.session import Session
+from test_agent_tools import install_fetch
 
 
 class OfflineBackend:
@@ -23,6 +24,7 @@ class OfflineBackend:
         self.budget = None
 
     def complete(self, prompt, **options):
+        assert options.get('purpose') != 'fetch', 'Page fetch must not dispatch a model'
         self.budget.reserve()
         self.calls.append((prompt, options))
         self.local.web_actions = []
@@ -93,7 +95,8 @@ def test_refinement_observation_preserves_actions_without_repeated_history(ctx, 
     assert read_jsonl(ctx.path / 'trajectory.jsonl') == events
 
 
-def test_worker_full_python_tools_subcalls_and_trusted_trajectory(ctx, task, benchmark, output, session_factory):
+def test_worker_full_python_tools_subcalls_and_trusted_trajectory(ctx, task, benchmark, output, session_factory, monkeypatch):
+    downloads = install_fetch(monkeypatch, 'fixture-a fixture-value')
     code = '''
 import asyncio, json, pathlib, subprocess, sys, threading
 class Number:
@@ -133,9 +136,6 @@ for constraint in ("question", "columns/0", "columns/1"):
             return prompt + " result"
         if purpose == "search":
             return json.dumps({"results": [{"title": "fixture", "url": "https://example.org/", "snippet": "fixture"}]})
-        if purpose == "fetch":
-            url = prompt.splitlines()[0].split(": ", 1)[1]
-            return "fixture-a fixture-value", [{"type": "open_page", "url": url}]
         raise AssertionError("Unexpected model purpose: " + purpose)
 
     session = session_factory(reply)
@@ -154,6 +154,7 @@ for constraint in ("question", "columns/0", "columns/1"):
     assert iterations[-1]["final_answer"] == json.dumps(output)
     root_calls = [options for _, options in session.backend.calls if options["purpose"] == "root"]
     sub_calls = [options for _, options in session.backend.calls if options["purpose"] == "sub"]
+    assert sorted(downloads) == ['https://example.org/', 'https://example.org/other']
     assert len(root_calls) == 1 and root_calls[0]["model"] == "offline-root"
     assert len(sub_calls) == 2 and all(options["model"] == "offline-sub" for options in sub_calls)
 
@@ -296,8 +297,9 @@ def test_call_limit_is_shared_with_output_repair(ctx, task, benchmark, session_f
     assert not (ctx.path / "output.json").exists()
 
 
-def test_caught_tool_budget_exhaustion_is_still_an_issue(ctx, task, benchmark, output, session_factory):
-    ctx.config.agent.max_codex_calls = 2
+def test_caught_tool_budget_exhaustion_is_still_an_issue(ctx, task, benchmark, output, session_factory, monkeypatch):
+    ctx.config.agent.max_codex_calls = 1
+    downloads = install_fetch(monkeypatch, 'fixture-a fixture-value')
     code = '''fetch("https://example.org/")
 for c in ("question", "columns/0", "columns/1"):
     check_constraint("/rows/0", c, True, "https://example.org/", "fixture-a")
@@ -310,12 +312,12 @@ except Exception:
     def reply(prompt, options):
         if options['purpose'] == 'root':
             return code_reply(code)
-        assert options['purpose'] == 'fetch'
-        return 'fixture-a fixture-value', [{'type': 'open_page', 'url': 'https://example.org/'}]
+        raise AssertionError('Search should exhaust the budget before dispatch')
 
     session = session_factory(reply)
     result = run_task(task, benchmark, session)
     assert result.status['call_limit']
+    assert downloads == ['https://example.org/']
     report = session.self_check()
     assert not report['ok']
     assert any(i['type'] == 'call_limit' for i in report['issues'])

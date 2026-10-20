@@ -6,7 +6,7 @@ The researcher runs full Python in an isolated process. A trusted host provides 
 
 ## Setup
 
-Use **macOS**, Python 3.12 or newer, Git, `uv`, and an installed Codex CLI authenticated with a ChatGPT subscription. The full-Python worker requires macOS Seatbelt (`sandbox-exec`); unsupported or unenforced isolation fails closed.
+Use **macOS**, Python 3.12 or newer, Git, `uv`, Poppler (`pdftotext`, e.g. `brew install poppler`), and an installed Codex CLI authenticated with a ChatGPT subscription. The full-Python worker requires macOS Seatbelt (`sandbox-exec`); unsupported or unenforced isolation fails closed.
 
 From this repository:
 
@@ -92,7 +92,7 @@ The commands are `init`, `prepare-data`, `verify`, `research`, `stream`, `baseli
 
 ## Evidence, grading and limits
 
-The research tools include single and batched search/fetch, plus evidence recording for discovery and constraint checks. Search and fetch use Codex web search; `fetch()` returns the model's rendering of a page, not raw HTML. Self-checks test whether quoted text appears in fetched material, source URLs were fetched, and each recorded task constraint has an evidence check. The report separates `issues` (missing/unbacked citations, bad quotes, missing or
+The research tools include single and batched search/fetch, plus evidence recording for discovery and constraint checks. Search uses Codex web search. `fetch()` downloads the selected public HTTP(S) URL directly and returns its complete static readable text (HTML, text, or PDF), with raw bytes and extraction receipts archived. The trusted host is the research tool process: any public URL selected by the agent, including search results, is eligible; there is no site allowlist, and downloaded content remains untrusted. Every redirect is checked against public addresses. Focus records intent but does not filter text. Downloads have no model fallback or automatic retries; failures record their reason and remain failed fetches. JavaScript-only content and scanned PDFs without readable text can fail extraction. Self-checks test whether quoted text appears in fetched material, source URLs were fetched, and each recorded task constraint has an evidence check. The report separates `issues` (missing/unbacked citations, bad quotes, missing or
 failed constraint checks, unrecorded discovery, and execution limits) from
 `signals` (empty/stalled searches, failed tool attempts, and dropped search hits).
 `ok` depends only on issues. Tool failures remain visible as signals even after
@@ -141,9 +141,12 @@ reports/summary.md              stream summaries and eligible comparisons
 ```
 
 The exact task archive also contains tool caches and evidence records. `fetch_telemetry.json`
-records returned character counts and links fetch attempts to the complete Codex web events in
-`codex_calls.jsonl`. Raw opened-page character counts remain unavailable when those events
-expose only result metadata; returned model text is not a raw-page size measurement.
+records returned character counts, the `direct-readable-v1` fetch path, and links to
+`downloads/` receipts, complete response bytes, and readable text with integrity hashes.
+Redirect hops and failed downloads retain their reasons and available bytes. A cache hit must
+match its original receipt and text. Historical model-mediated archives instead link to Codex
+web events in `codex_calls.jsonl`; those events may expose only metadata, so their raw-page
+sizes remain unavailable. Comparisons must label the changed fetch path.
 `codex.log_full_text` controls full prompt/response logging. Grader artifacts remain under
 reports, separate from research observations.
 

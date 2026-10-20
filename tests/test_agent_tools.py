@@ -19,8 +19,8 @@ class Replies:
 
     def record(self, prompt, kwargs):
         self.calls.append((prompt, kwargs))
-        self.local.web_actions = ([{"type": "open_page", "url": prompt.splitlines()[0].split(": ", 1)[1]}]
-                                  if kwargs.get("purpose") == "fetch" else [])
+        assert kwargs.get("purpose") != "fetch", "Page fetch must not dispatch a model"
+        self.local.web_actions = []
 
     @property
     def last_web_actions(self):
@@ -29,6 +29,25 @@ class Replies:
     def complete(self, prompt, **kwargs):
         self.record(prompt, kwargs)
         return next(self.replies)
+
+
+def install_fetch(monkeypatch, reply):
+    """Replace only direct HTTP transport; exercise real decoding and extraction."""
+    from loop_research.page_fetch import PageFetcher
+    calls = []
+
+    def request(self, url, timeout):
+        calls.append(url)
+        response = reply(url) if callable(reply) else reply
+        if isinstance(response, BaseException):
+            raise response
+        if isinstance(response, str):
+            response = {'status': 200, 'headers': {'content-type': 'text/plain; charset=utf-8'},
+                        'body': response.encode('utf-8'), 'peer_ip': '93.184.216.34'}
+        return response
+
+    monkeypatch.setattr(PageFetcher, '_request', request)
+    return calls
 
 
 def test_transcript_and_usage():
@@ -148,30 +167,37 @@ def test_rlm_handler_rejects_model_fallback_and_role_override(model, depth):
     assert backend.calls == []
 
 
-def test_search_fetch_cache_and_ledger(ctx):
+def test_search_fetch_cache_and_ledger(ctx, monkeypatch):
     hits = {"results": [{"title": "good", "url": "https://example.org/a", "snippet": "text"},
                         {"title": "bad", "url": "file:///tmp/secret", "snippet": "invalid"}]}
-    backend = Replies(json.dumps(hits), "faithful page text", "FETCH_FAILED")
+    from loop_research.page_fetch import FetchError
+    downloads = install_fetch(monkeypatch, lambda url: 'faithful page text' if url.endswith('/a')
+                              else FetchError('http_status', 'HTTP 503'))
+    backend = Replies(json.dumps(hits))
     tools = ResearchTools(backend, ctx)
     assert len(tools.search("Fixture query")) == 1
     assert tools.search(" fixture   QUERY ") == tools.search("Fixture query")
     assert tools.fetch("https://example.org/a#fragment") == "faithful page text"
     assert tools.fetch("https://EXAMPLE.org/a") == "faithful page text"
     assert tools.fetch("https://example.org/b") == "FETCH_FAILED"
-    assert len(backend.calls) == 3
+    assert len(backend.calls) == 1
+    assert downloads == ['https://example.org/a', 'https://example.org/b']
     assert ctx.load("url_ledger.json") == ["https://example.org/a"]
     assert ResearchTools(Replies(), ctx).fetch("https://example.org/a") == "faithful page text"
 
 
-def test_failed_fetch_is_retried_and_each_request_is_audited(ctx):
-    backend = Replies("FETCH_FAILED", "Recovered page")
+def test_failed_fetch_is_retried_and_each_request_is_audited(ctx, monkeypatch):
+    from loop_research.page_fetch import FetchError
+    responses = iter([FetchError('http_status', 'HTTP 503'), 'Recovered page'])
+    downloads = install_fetch(monkeypatch, lambda url: next(responses))
+    backend = Replies()
     tools = ResearchTools(backend, ctx)
     url = "https://example.org/retry"
     assert tools.fetch(url) == "FETCH_FAILED"
     assert tools.cache == {} and ctx.load("tool_cache.json") == {}
     assert tools.fetch(url) == "Recovered page"
     assert tools.fetch(url) == "Recovered page"
-    assert len(backend.calls) == 2
+    assert backend.calls == [] and downloads == [url, url]
     fetches = tools.snapshot()["fetches"]
     assert [(item["source"], item["status"]) for item in fetches] == [
         ("backend", "failed"), ("backend", "succeeded"), ("cache", "succeeded")]
@@ -180,86 +206,87 @@ def test_failed_fetch_is_retried_and_each_request_is_audited(ctx):
 
 
 @pytest.mark.parametrize('shared', [False, True])
-def test_fetch_backend_retries_keep_failure_evidence_after_success_and_cache(ctx, task, monkeypatch, shared):
+def test_direct_fetch_failure_is_not_retried_and_remains_evidence_after_recovery(ctx, task, monkeypatch, shared):
     from concurrent.futures import Future
-    from pathlib import Path
-    from types import SimpleNamespace
     from loop_research import repl_tools
-    from loop_research.codex_backend import CodexBackend
+    from loop_research.page_fetch import FetchError
     from loop_research.selfcheck import check
 
-    ctx.config.codex.max_retries = 1
-    ctx.config.models.sub = 'fixture-fetch-model'
+    ctx.config.codex.max_retries = 3
     waiting = threading.Event()
     class ObservedFuture(Future):
         def result(self, timeout=None):
             waiting.set()
             return super().result(timeout=timeout)
     monkeypatch.setattr(repl_tools, 'Future', ObservedFuture)
-    calls = []
-    def runner(command, **kwargs):
+    attempts = []
+    def download(url):
         with ThreadPoolExecutor(max_workers=1) as pool:
             def unlocked():
                 acquired = tools.lock.acquire(timeout=1)
                 if acquired:
                     tools.lock.release()
                 return acquired
-            assert pool.submit(unlocked).result(timeout=2), 'Tools lock held across a Codex attempt'
-        calls.append(command)
-        if len(calls) == 1:
+            assert pool.submit(unlocked).result(timeout=2), 'Tools lock held across a download'
+        attempts.append(url)
+        if len(attempts) == 1:
             if shared:
                 assert waiting.wait(2), 'Duplicate fetch did not wait for its owner'
-            return SimpleNamespace(returncode=1, stdout='', stderr='transient fetch failure')
-        Path(command[command.index('--output-last-message') + 1]).write_text('Recovered page')
-        return SimpleNamespace(returncode=0, stderr='', stdout=json.dumps({
-            'type': 'item.completed', 'item': {'type': 'web_search',
-                'action': {'type': 'open_page', 'url': 'https://example.org/'}}}))
+            raise FetchError('http_status', 'HTTP 503 transient fetch failure')
+        return 'Recovered page'
 
-    tools = ResearchTools(CodexBackend(ctx, runner=runner, sleep=lambda _: None), ctx)
+    install_fetch(monkeypatch, download)
+    backend = Replies()
+    tools = ResearchTools(backend, ctx)
     with ThreadPoolExecutor(max_workers=2) as pool:
         requests = [pool.submit(tools.fetch, 'https://example.org/') for _ in range(2 if shared else 1)]
-        assert [request.result(timeout=5) for request in requests] == ['Recovered page'] * len(requests)
+        assert [request.result(timeout=5) for request in requests] == ['FETCH_FAILED'] * len(requests)
+    assert len(attempts) == 1, 'A single explicit fetch must not retry internally'
+    assert tools.fetch('https://example.org/') == 'Recovered page'
     assert tools.fetch('https://example.org/') == 'Recovered page'
     evidence = tools.snapshot()
-    owner, *followers = evidence['fetches']
-    attempts = owner['attempts']
-    assert all(item['status'] == 'succeeded' for item in evidence['fetches'])
-    assert [(item['attempt'], item['status'], item['model']) for item in attempts] == [
-        (0, 'failed', 'fixture-fetch-model'), (1, 'succeeded', 'fixture-fetch-model')]
-    assert len({item['call_id'] for item in attempts}) == 2
-    assert {item['request_id'] for item in attempts} == {owner['id']}
-    assert [item['source'] for item in followers] == (['shared', 'cache'] if shared else ['cache'])
-    assert all(item['owner_id'] == owner['id'] and 'attempts' not in item for item in followers)
-    assert len(calls) == 2
-    assert len(evidence['failures']) == 1
-    failure = evidence['failures'][0]
-    assert failure['request_id'] == owner['id'] and failure['call_id'] == attempts[0]['call_id']
-    assert failure['reason'] == 'backend_attempt_failed' and 'transient fetch failure' in failure['error']
-    assert any(item['type'] == 'failed_fetch' and item['call_id'] == attempts[0]['call_id']
+    owner = evidence['fetches'][0]
+    recovered, cached = evidence['fetches'][-2:]
+    assert owner['status'] == 'failed' and owner['reason'] == 'http_status'
+    assert 'transient fetch failure' in owner['error']
+    if shared:
+        follower = evidence['fetches'][1]
+        assert follower['owner_id'] == owner['id'] and follower['source'] == 'shared'
+        assert follower['status'] == 'failed' and follower['reason'] == 'http_status'
+    assert recovered['source'] == 'backend' and recovered['status'] == 'succeeded'
+    assert cached['source'] == 'cache' and cached['owner_id'] == recovered['id']
+    assert all(item['fetch_path'] == 'direct-readable-v1' and 'attempts' not in item
+               for item in evidence['fetches'])
+    assert len(attempts) == 2 and backend.calls == []
+    assert len(evidence['failures']) == (2 if shared else 1)
+    assert evidence['failures'][0]['request_id'] == owner['id']
+    assert any(item['type'] == 'failed_fetch' and item['request_id'] == owner['id']
                for item in check(task, {'rows': []}, evidence, {})['signals'])
     assert ctx.load('evidence.json') == evidence
-    assert ctx.load("evidence.json") == tools.snapshot()
 
 
 @pytest.mark.parametrize("url, focus", [("file:///private", ""), (None, ""), ("https://example.org/", None)])
-def test_invalid_fetch_is_audited_without_backend_dispatch(ctx, url, focus):
+def test_invalid_fetch_is_audited_without_transport_dispatch(ctx, url, focus, monkeypatch):
+    downloads = install_fetch(monkeypatch, "Must not be downloaded")
     backend = Replies()
     tools = ResearchTools(backend, ctx)
     with pytest.raises(ValueError):
         tools.fetch(url, focus)
-    assert backend.calls == [] and tools.cache == {}
+    assert backend.calls == [] and downloads == [] and tools.cache == {}
     request = tools.snapshot()["fetches"][0]
     assert (request["source"], request["status"], request["reason"]) == ("validation", "failed", "validation_error")
     assert tools.snapshot()["failures"][0]["request_id"] == request["id"]
     assert ctx.load("evidence.json") == tools.snapshot()
 
 
-def test_legacy_failed_fetch_cache_does_not_prevent_retry(ctx):
+def test_legacy_failed_fetch_cache_does_not_prevent_retry(ctx, monkeypatch):
     ctx.save("tool_cache.json", {'["fetch", "https://example.org/", ""]': "FETCH_FAILED"})
-    tools = ResearchTools(Replies("Recovered page"), ctx)
+    downloads = install_fetch(monkeypatch, 'Recovered page')
+    tools = ResearchTools(Replies(), ctx)
     assert tools.fetch("https://example.org/") == "Recovered page"
     assert tools.snapshot()["fetches"][0]["source"] == "backend"
     assert "FETCH_FAILED" not in ctx.load("tool_cache.json").values()
+    assert downloads == ['https://example.org/']
 
 
 def test_search_audits_every_dropped_hit_including_after_limit(ctx):
@@ -303,14 +330,13 @@ def test_cancelled_fetch_is_audited_before_close_and_never_writes_late(ctx, monk
 
     monkeypatch.setattr(repl_tools, "Future", ObservedFuture)
 
-    class Backend(Replies):
-        def complete(self, prompt, **kwargs):
-            self.record(prompt, kwargs)
-            entered.set()
-            assert release.wait(5)
-            return "Late page"
+    def download(url):
+        entered.set()
+        assert release.wait(5)
+        return "Late page"
 
-    tools = ResearchTools(Backend(), ctx)
+    install_fetch(monkeypatch, download)
+    tools = ResearchTools(Replies(), ctx)
     with ThreadPoolExecutor(max_workers=requests) as pool:
         futures = [pool.submit(tools.fetch, "https://example.org/") for _ in range(requests)]
         try:
@@ -335,7 +361,7 @@ def test_cancelled_fetch_is_audited_before_close_and_never_writes_late(ctx, monk
 
 
 @pytest.mark.parametrize("kind", ["search", "fetch"])
-def test_batched_tools_overlap_preserve_order_cache_and_ledger(ctx, kind):
+def test_batched_tools_overlap_preserve_order_cache_and_ledger(ctx, kind, monkeypatch):
     ctx.config.codex.max_concurrent = 2
     barrier, second_done = threading.Barrier(2, timeout=5), threading.Event()
     counter_lock = threading.Lock()
@@ -349,35 +375,41 @@ def test_batched_tools_overlap_preserve_order_cache_and_ledger(ctx, kind):
             tools.lock.release()
         return acquired
 
+    def respond(target):
+        nonlocal active, peak
+        with ThreadPoolExecutor(max_workers=1) as probe:
+            assert probe.submit(cache_lock_available).result(timeout=5), "Cache lock held during transport call"
+        index = next(i for i in range(3) if f"fixture-{i}" in target)
+        with counter_lock:
+            calls.append(index)
+            active += 1
+            peak = max(peak, active)
+        try:
+            if index < 2:
+                barrier.wait()
+            if index == 0:
+                assert second_done.wait(5)
+            completed.append(index)
+            if kind == "search":
+                return json.dumps({"results": [{"title": f"fixture-{index}",
+                    "url": f"https://example.org/fixture-{index}", "snippet": "Fixture evidence"}]})
+            if index == 2:
+                from loop_research.page_fetch import FetchError
+                raise FetchError('http_status', 'HTTP 503')
+            return f"Fixture page {index}"
+        finally:
+            with counter_lock:
+                active -= 1
+            if index == 1:
+                second_done.set()
+
     class Backend(Replies):
         def complete(self, prompt, **kwargs):
             self.record(prompt, kwargs)
-            nonlocal active, peak
-            with ThreadPoolExecutor(max_workers=1) as probe:
-                assert probe.submit(cache_lock_available).result(timeout=5), "Cache lock held during backend call"
-            index = next(i for i in range(3) if f"fixture-{i}" in prompt)
-            with counter_lock:
-                calls.append(index)
-                active += 1
-                peak = max(peak, active)
-            try:
-                if index < 2:
-                    barrier.wait()
-                if index == 0:
-                    assert second_done.wait(5)
-                if kind == "search":
-                    result = json.dumps({"results": [{"title": f"fixture-{index}",
-                        "url": f"https://example.org/fixture-{index}", "snippet": "Fixture evidence"}]})
-                else:
-                    result = f"Fixture page {index}" if index < 2 else "FETCH_FAILED"
-                completed.append(index)
-                return result
-            finally:
-                with counter_lock:
-                    active -= 1
-                if index == 1:
-                    second_done.set()
+            return respond(prompt)
 
+    if kind == "fetch":
+        install_fetch(monkeypatch, respond)
     tools = ResearchTools(Backend(), ctx)
     batch = getattr(tools, kind + "_many")
     inputs = [f"fixture-{i}" if kind == "search" else f"https://example.org/fixture-{i}" for i in range(3)]
@@ -397,7 +429,10 @@ def test_batched_tools_overlap_preserve_order_cache_and_ledger(ctx, kind):
     assert ctx.load("url_ledger.json") == ledger and tools.ledger == set(ledger)
     for value, expected_value in zip(inputs, expected):
         assert getattr(tools, kind)(value, **options) == expected_value
-    restored = ResearchTools(Replies("FETCH_FAILED") if kind == "fetch" else Replies(), ctx)
+    if kind == "fetch":
+        from loop_research.page_fetch import FetchError
+        install_fetch(monkeypatch, FetchError('http_status', 'HTTP 503'))
+    restored = ResearchTools(Replies(), ctx)
     assert getattr(restored, kind + "_many")(inputs, **options) == expected
     assert batch([], **options) == [] and len(calls) == (3 if kind == "search" else 4)
     if kind == "fetch":
@@ -425,15 +460,20 @@ def test_duplicate_inflight_requests_share_cache_and_propagate_failure(ctx, kind
     monkeypatch.setattr(repl_tools, "Future", ObservedFuture, raising=False)
     calls = []
 
+    def respond(target):
+        calls.append(target)
+        if len(calls) == 1:
+            assert waiting.wait(5), "Duplicate request did not wait for its cache entry"
+            raise error("Fixture backend failure")
+        return '{"results": []}' if kind == "search" else "Fixture page"
+
     class Backend(Replies):
         def complete(self, prompt, **kwargs):
             self.record(prompt, kwargs)
-            calls.append(prompt)
-            if len(calls) == 1:
-                assert waiting.wait(5), "Duplicate request did not wait for its cache entry"
-                raise error("Fixture backend failure")
-            return '{"results": []}' if kind == "search" else "Fixture page"
+            return respond(prompt)
 
+    if kind == "fetch":
+        install_fetch(monkeypatch, respond)
     tools = ResearchTools(Backend(), ctx)
     value = "fixture" if kind == "search" else "https://example.org/"
     call = getattr(tools, kind)
@@ -458,21 +498,18 @@ def test_duplicate_inflight_requests_share_cache_and_propagate_failure(ctx, kind
             ("backend", "succeeded"), ("cache", "succeeded")]
 
 
-@pytest.mark.parametrize("actions", [[], [{"type": "open_page", "url": "https://example.org/wrong"}],
-                                     [{"type": "search", "query": "https://example.org/"}]])
-def test_fetch_rejects_text_without_matching_completed_open(ctx, actions):
-    class UnsupportedFetch(Replies):
-        def complete(self, prompt, **kwargs):
-            self.record(prompt, kwargs)
-            self.local.web_actions = actions
-            return "A fabricated page that the web tool never opened"
-
-    tools = ResearchTools(UnsupportedFetch(), ctx)
+@pytest.mark.parametrize('reason', ['http_status', 'download_error', 'no_readable_text'])
+def test_direct_download_failure_never_falls_back_to_model_text(ctx, monkeypatch, reason):
+    from loop_research.page_fetch import FetchError
+    downloads = install_fetch(monkeypatch, FetchError(reason, 'Fixture download failed'))
+    backend = Replies('A fabricated page that no HTTP transport downloaded')
+    tools = ResearchTools(backend, ctx)
     assert tools.fetch("https://example.org/") == "FETCH_FAILED"
+    assert downloads == ['https://example.org/'] and backend.calls == []
     assert tools.snapshot()["fetched"] == {}
     assert tools.ledger == set()
     assert tools.snapshot()["failures"] == [{"operation": "fetch", "url": "https://example.org/",
-        "request_id": 1, "source": "backend", "reason": "fetch_failed"}]
+        "request_id": 1, "source": "backend", "reason": reason, 'error': 'Fixture download failed'}]
     assert tools.cache == {}
 
 

@@ -28,6 +28,7 @@ The pinned reference is Prime Agent `7cbffa77b38facd7c87277fa3c82bcadbe816880` a
 - `agent.py`: task prompt, isolated worker, validation and one format-only repair attempt.
 - `rlm_codex_client.py`: subscription transport adaptation, stock LocalREPL and recursive calls.
 - `repl_tools.py`: cached search/fetch and parallel variants, evidence and discovery records.
+- `page_fetch.py`: direct public HTTP(S) downloads, complete readable-text extraction and durable byte/text receipts.
 - `stream.py`: research and seeded sequential measurement; grader contexts write under reports.
 - `report.py`: cited table rendering, ordered task scores and rolling-mean plots.
 - `config.py`: required, strictly typed configuration schema; all values originate in `config.yaml`.
@@ -81,13 +82,13 @@ discovery and execution failures. `signals` retains empty/stalled searches,
 recoverable tool failures and dropped hits. `ok` depends only on `issues`; both
 collections reach refinement and harness outcome history. Check:
 
-- Every cited URL has a successful cached fetch in this run, backed by a completed Codex `open_page` event for that URL.
+- Every cited URL has a successful cached fetch in this run, backed by a verified direct-download receipt and complete readable text for that URL. Historical model-mediated archives retain their original Codex `open_page` provenance.
 - Each supplied quotation appears verbatim in cached fetched text for its cited URL.
 - Every output row has an evidence-backed check for each task constraint id.
 - Failed fetch/search calls, empty searches, unrecorded discovery, and searches reported as yielding no new entity ids.
 - Iteration limits, call limits, worker failures and timeouts.
 
-`check_constraint(row, constraint, verdict, url, quote)` records per-row checks; `record_discovery(query, entities)` records entity discovery after every search. The host verifies quote provenance and coverage. Semantic truth of agent verdicts/entity labels is not mechanically proved. Fetch text is Codex's page rendering, not raw HTML. These limits must be visible in documentation; neither a passing check nor a fetch event proves external factual correctness.
+`check_constraint(row, constraint, verdict, url, quote)` records per-row checks; `record_discovery(query, entities)` records entity discovery after every search. The host verifies quote provenance and coverage. Semantic truth of agent verdicts/entity labels is not mechanically proved. Fetch returns complete static readable text extracted from downloaded HTML/text/PDF; it does not execute JavaScript or perform OCR. These limits must be visible in documentation; neither a passing check nor a fetch event proves external factual correctness.
 
 Evidence and reports are owned by the trusted host, outside the worker filesystem. Imported or monkeypatched code in the worker cannot alter the host's checker or evidence.
 
@@ -103,7 +104,7 @@ The worker can inspect its configured limits and read the current research call 
 
 ## 7. Tools and transport
 
-`search(query, k=8)` and `fetch(url, focus='')` use `codex exec` and one task cache/URL ledger. `search_many(queries, k=8)` and `fetch_many(urls, focus='')` run concurrently up to `codex.max_concurrent`, returning results in input order. Duplicate in-flight requests share results. Record each fetch attempt, including backend calls, cache hits, shared requests, validation failures, exceptions and cancellation. Failed fetches are retryable and do not become cached evidence. Keep dropped malformed, invalid-URL and excess search hits with their reasons. No cache/ledger lock is held during a Codex call or while waiting for another request.
+`search(query, k=8)` uses `codex exec`. `fetch(url, focus='')` downloads directly in the trusted research tool process: every public HTTP(S) URL selected by the agent is eligible without a site allowlist. Validate public addresses on every redirect and connect to the checked address with original-host TLS verification. Complete readable text is retained in REPL variables; focus is intent metadata, not a text filter or cache key. Archive raw response bytes and readable text with integrity receipts. No model fallback or automatic retry is permitted; failed downloads record reasons and count as failed fetches. Agent-requested retries remain possible. `search_many(queries, k=8)` and `fetch_many(urls, focus='')` run concurrently up to `codex.max_concurrent`, returning results in input order. Duplicate in-flight requests share results. Record each fetch attempt, including downloads, cache hits, shared requests, validation failures, exceptions and cancellation. Failed fetches do not become cached evidence. Keep dropped malformed, invalid-URL and excess search hits with their reasons. No cache/ledger lock is held during a Codex call, download or wait for another request.
 
 Codex runs with ChatGPT authentication forced, provider-key environment variables removed, shell tool disabled, user configuration ignored, ephemeral sessions, and read-only sandboxing. Retry limits, timeouts, call accounting and actual usage logs are explicit. All four model fields (`root`, `sub`, `refine`, `judge`) require explicit nonempty selections. All grading calls select `models.judge`; labels include `codex/<models.judge>`. Required YAML policy includes `agent.as_of` (`today` or `YYYY-MM-DD`), `codex.retry_delay_cap_s`, `refine.max_edits`, `bridge.socket_timeout_s`, and `verify.codex_timeout_s`/`verify.browser_timeout_s`. Resolve the as-of date once per task, preserving a structured task date when present, and archive it for reuse on resume. Streams freeze the `today` value at stream creation.
 

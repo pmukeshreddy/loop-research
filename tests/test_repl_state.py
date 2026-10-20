@@ -3,6 +3,7 @@ from loop_research.rlm_codex_client import CodexREPL
 from loop_research.agent import run_task
 from loop_research.archive import read_jsonl
 from test_worker import code_reply, final_code, session_factory
+from test_agent_tools import install_fetch
 
 
 def test_completed_bindings_survive_failure_without_repeating_tool_work():
@@ -71,12 +72,11 @@ def test_failure_preserves_an_answer_already_captured_by_the_callback():
 
 
 def test_worker_reuses_completed_fetch_and_subcall_after_failure(
-        ctx, task, benchmark, output, session_factory):
+        ctx, task, benchmark, output, session_factory, monkeypatch):
+    downloads = install_fetch(monkeypatch, 'fixture-a fixture-value')
     roots = 0
     def reply(prompt, options):
         nonlocal roots
-        if options['purpose'] == 'fetch':
-            return 'fixture-a fixture-value', [{'type': 'open_page', 'url': 'https://example.org/'}]
         if options['purpose'] == 'sub':
             return 'extracted'
         roots += 1
@@ -91,7 +91,8 @@ def test_worker_reuses_completed_fetch_and_subcall_after_failure(
     assert run_task(task, benchmark, session).output == output
     assert roots == 2
     purposes = [options['purpose'] for _, options in session.backend.calls]
-    assert purposes.count('fetch') == purposes.count('sub') == 1
+    assert downloads == ['https://example.org/']
+    assert purposes.count('sub') == 1 and 'fetch' not in purposes
     iterations = [item['event'] for item in read_jsonl(ctx.path / 'trajectory.jsonl')
                   if item['type'] == 'worker_iteration']
     first, second = [item['code_blocks'][0]['result'] for item in iterations]

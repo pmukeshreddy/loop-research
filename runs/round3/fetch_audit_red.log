@@ -1,0 +1,22 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_archive_audit_verifies_direct_receipts_and_rejects_changed_download ___
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-4a87h2ho/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_archive_audit_verifies_direct_receipts_and_rejects_changed_download(ctx):
+        from loop_research.archive_audit import fetch_audit, ArchiveCorruptionError
+        from loop_research.page_fetch import PageFetcher
+        from loop_research.repl_tools import ResearchTools
+        tools = ResearchTools(NoModel(), ctx, fetcher=PageFetcher(ctx,
+            request=lambda *args: response('Complete evidence', 'text/plain')))
+        assert tools.fetch('https://example.org/') == 'Complete evidence'
+        audit, = fetch_audit(ctx.path, [], [], [], tools.snapshot())
+>       assert audit['direct_receipt_verified'] is True
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'direct_receipt_verified'
+
+tests/test_direct_fetch.py:215: KeyError
+=========================== short test summary info ============================
+FAILED tests/test_direct_fetch.py::test_archive_audit_verifies_direct_receipts_and_rejects_changed_download
+1 failed in 0.11s

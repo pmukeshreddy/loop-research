@@ -1,0 +1,197 @@
+FFFFFFFFFFFFFFFFF                                                        [100%]
+=================================== FAILURES ===================================
+_ test_full_html_keeps_every_readable_section_without_padding_or_focus_filter __
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-9rrwcia4/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_full_html_keeps_every_readable_section_without_padding_or_focus_filter(ctx):
+>       from loop_research.page_fetch import PageFetcher
+E       ModuleNotFoundError: No module named 'loop_research.page_fetch'
+
+tests/test_direct_fetch.py:24: ModuleNotFoundError
+_ test_download_failures_count_once_and_never_fallback_to_a_model[403-Access denied-http_status] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-9rrwcia4/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+status = 403, body = 'Access denied', reason = 'http_status'
+
+    @pytest.mark.parametrize('status,body,reason', [
+        (403, 'Access denied', 'http_status'), (200, '', 'empty_body'),
+        (200, '<html><script>content()</script></html>', 'no_readable_text')])
+    def test_download_failures_count_once_and_never_fallback_to_a_model(ctx, status, body, reason):
+>       from loop_research.page_fetch import PageFetcher
+E       ModuleNotFoundError: No module named 'loop_research.page_fetch'
+
+tests/test_direct_fetch.py:63: ModuleNotFoundError
+_ test_download_failures_count_once_and_never_fallback_to_a_model[200--empty_body] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-9rrwcia4/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+status = 200, body = '', reason = 'empty_body'
+
+    @pytest.mark.parametrize('status,body,reason', [
+        (403, 'Access denied', 'http_status'), (200, '', 'empty_body'),
+        (200, '<html><script>content()</script></html>', 'no_readable_text')])
+    def test_download_failures_count_once_and_never_fallback_to_a_model(ctx, status, body, reason):
+>       from loop_research.page_fetch import PageFetcher
+E       ModuleNotFoundError: No module named 'loop_research.page_fetch'
+
+tests/test_direct_fetch.py:63: ModuleNotFoundError
+_ test_download_failures_count_once_and_never_fallback_to_a_model[200-<html><script>content()</script></html>-no_readable_text] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-9rrwcia4/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+status = 200, body = '<html><script>content()</script></html>'
+reason = 'no_readable_text'
+
+    @pytest.mark.parametrize('status,body,reason', [
+        (403, 'Access denied', 'http_status'), (200, '', 'empty_body'),
+        (200, '<html><script>content()</script></html>', 'no_readable_text')])
+    def test_download_failures_count_once_and_never_fallback_to_a_model(ctx, status, body, reason):
+>       from loop_research.page_fetch import PageFetcher
+E       ModuleNotFoundError: No module named 'loop_research.page_fetch'
+
+tests/test_direct_fetch.py:63: ModuleNotFoundError
+______ test_redirects_preserve_selected_url_actual_url_and_every_download ______
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-9rrwcia4/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_redirects_preserve_selected_url_actual_url_and_every_download(ctx):
+>       from loop_research.page_fetch import PageFetcher
+E       ModuleNotFoundError: No module named 'loop_research.page_fetch'
+
+tests/test_direct_fetch.py:82: ModuleNotFoundError
+________ test_redirect_loops_and_unsupported_media_are_failed_downloads ________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-9rrwcia4/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_redirect_loops_and_unsupported_media_are_failed_downloads(ctx):
+>       from loop_research.page_fetch import PageFetcher, FetchError
+E       ModuleNotFoundError: No module named 'loop_research.page_fetch'
+
+tests/test_direct_fetch.py:98: ModuleNotFoundError
+_ test_host_boundary_rejects_nonpublic_targets_without_site_allowlist[127.0.0.1] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b2a1400>
+address = '127.0.0.1'
+
+    @pytest.mark.parametrize('address', ['127.0.0.1', '10.0.0.1', '169.254.169.254', '::1', 'fd00::1'])
+    def test_host_boundary_rejects_nonpublic_targets_without_site_allowlist(monkeypatch, address):
+>       from loop_research.page_fetch import resolve_public, FetchError
+E       ModuleNotFoundError: No module named 'loop_research.page_fetch'
+
+tests/test_direct_fetch.py:108: ModuleNotFoundError
+_ test_host_boundary_rejects_nonpublic_targets_without_site_allowlist[10.0.0.1] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b2a07a0>
+address = '10.0.0.1'
+
+    @pytest.mark.parametrize('address', ['127.0.0.1', '10.0.0.1', '169.254.169.254', '::1', 'fd00::1'])
+    def test_host_boundary_rejects_nonpublic_targets_without_site_allowlist(monkeypatch, address):
+>       from loop_research.page_fetch import resolve_public, FetchError
+E       ModuleNotFoundError: No module named 'loop_research.page_fetch'
+
+tests/test_direct_fetch.py:108: ModuleNotFoundError
+_ test_host_boundary_rejects_nonpublic_targets_without_site_allowlist[169.254.169.254] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b2a1eb0>
+address = '169.254.169.254'
+
+    @pytest.mark.parametrize('address', ['127.0.0.1', '10.0.0.1', '169.254.169.254', '::1', 'fd00::1'])
+    def test_host_boundary_rejects_nonpublic_targets_without_site_allowlist(monkeypatch, address):
+>       from loop_research.page_fetch import resolve_public, FetchError
+E       ModuleNotFoundError: No module named 'loop_research.page_fetch'
+
+tests/test_direct_fetch.py:108: ModuleNotFoundError
+___ test_host_boundary_rejects_nonpublic_targets_without_site_allowlist[::1] ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b2a2ed0>
+address = '::1'
+
+    @pytest.mark.parametrize('address', ['127.0.0.1', '10.0.0.1', '169.254.169.254', '::1', 'fd00::1'])
+    def test_host_boundary_rejects_nonpublic_targets_without_site_allowlist(monkeypatch, address):
+>       from loop_research.page_fetch import resolve_public, FetchError
+E       ModuleNotFoundError: No module named 'loop_research.page_fetch'
+
+tests/test_direct_fetch.py:108: ModuleNotFoundError
+_ test_host_boundary_rejects_nonpublic_targets_without_site_allowlist[fd00::1] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b7241a0>
+address = 'fd00::1'
+
+    @pytest.mark.parametrize('address', ['127.0.0.1', '10.0.0.1', '169.254.169.254', '::1', 'fd00::1'])
+    def test_host_boundary_rejects_nonpublic_targets_without_site_allowlist(monkeypatch, address):
+>       from loop_research.page_fetch import resolve_public, FetchError
+E       ModuleNotFoundError: No module named 'loop_research.page_fetch'
+
+tests/test_direct_fetch.py:108: ModuleNotFoundError
+___ test_public_dns_resolution_accepts_any_domain_and_rejects_mixed_answers ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b2a38c0>
+
+    def test_public_dns_resolution_accepts_any_domain_and_rejects_mixed_answers(monkeypatch):
+>       from loop_research.page_fetch import resolve_public, FetchError
+E       ModuleNotFoundError: No module named 'loop_research.page_fetch'
+
+tests/test_direct_fetch.py:117: ModuleNotFoundError
+____________ test_legacy_model_cache_is_not_reused_by_direct_fetch _____________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-9rrwcia4/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_legacy_model_cache_is_not_reused_by_direct_fetch(ctx):
+>       from loop_research.page_fetch import PageFetcher
+E       ModuleNotFoundError: No module named 'loop_research.page_fetch'
+
+tests/test_direct_fetch.py:127: ModuleNotFoundError
+_________ test_concurrent_different_focus_requests_share_one_full_page _________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-9rrwcia4/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_concurrent_different_focus_requests_share_one_full_page(ctx):
+>       from loop_research.page_fetch import PageFetcher
+E       ModuleNotFoundError: No module named 'loop_research.page_fetch'
+
+tests/test_direct_fetch.py:140: ModuleNotFoundError
+____________ test_network_timeout_records_failed_fetch_with_reason _____________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-9rrwcia4/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_network_timeout_records_failed_fetch_with_reason(ctx):
+>       from loop_research.page_fetch import PageFetcher
+E       ModuleNotFoundError: No module named 'loop_research.page_fetch'
+
+tests/test_direct_fetch.py:161: ModuleNotFoundError
+_____ test_pdf_extraction_preserves_all_pages_and_archives_exact_download ______
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-9rrwcia4/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_pdf_extraction_preserves_all_pages_and_archives_exact_download(ctx):
+>       from loop_research.page_fetch import PageFetcher
+E       ModuleNotFoundError: No module named 'loop_research.page_fetch'
+
+tests/test_direct_fetch.py:171: ModuleNotFoundError
+_______ test_incomplete_body_and_invalid_decoding_do_not_become_success ________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-9rrwcia4/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_incomplete_body_and_invalid_decoding_do_not_become_success(ctx):
+>       from loop_research.page_fetch import PageFetcher, FetchError
+E       ModuleNotFoundError: No module named 'loop_research.page_fetch'
+
+tests/test_direct_fetch.py:199: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/test_direct_fetch.py::test_full_html_keeps_every_readable_section_without_padding_or_focus_filter
+FAILED tests/test_direct_fetch.py::test_download_failures_count_once_and_never_fallback_to_a_model[403-Access denied-http_status]
+FAILED tests/test_direct_fetch.py::test_download_failures_count_once_and_never_fallback_to_a_model[200--empty_body]
+FAILED tests/test_direct_fetch.py::test_download_failures_count_once_and_never_fallback_to_a_model[200-<html><script>content()</script></html>-no_readable_text]
+FAILED tests/test_direct_fetch.py::test_redirects_preserve_selected_url_actual_url_and_every_download
+FAILED tests/test_direct_fetch.py::test_redirect_loops_and_unsupported_media_are_failed_downloads
+FAILED tests/test_direct_fetch.py::test_host_boundary_rejects_nonpublic_targets_without_site_allowlist[127.0.0.1]
+FAILED tests/test_direct_fetch.py::test_host_boundary_rejects_nonpublic_targets_without_site_allowlist[10.0.0.1]
+FAILED tests/test_direct_fetch.py::test_host_boundary_rejects_nonpublic_targets_without_site_allowlist[169.254.169.254]
+FAILED tests/test_direct_fetch.py::test_host_boundary_rejects_nonpublic_targets_without_site_allowlist[::1]
+FAILED tests/test_direct_fetch.py::test_host_boundary_rejects_nonpublic_targets_without_site_allowlist[fd00::1]
+FAILED tests/test_direct_fetch.py::test_public_dns_resolution_accepts_any_domain_and_rejects_mixed_answers
+FAILED tests/test_direct_fetch.py::test_legacy_model_cache_is_not_reused_by_direct_fetch
+FAILED tests/test_direct_fetch.py::test_concurrent_different_focus_requests_share_one_full_page
+FAILED tests/test_direct_fetch.py::test_network_timeout_records_failed_fetch_with_reason
+FAILED tests/test_direct_fetch.py::test_pdf_extraction_preserves_all_pages_and_archives_exact_download
+FAILED tests/test_direct_fetch.py::test_incomplete_body_and_invalid_decoding_do_not_become_success
+17 failed in 0.10s

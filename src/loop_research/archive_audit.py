@@ -15,6 +15,7 @@ import re
 import sys
 
 from loop_research.codex_backend import INSTRUCTION
+from loop_research.page_fetch import FETCH_PATH, FetchError, verify_receipt
 from loop_research.repl_tools import normalized_url
 from loop_research.rlm_codex_client import transcript
 
@@ -194,6 +195,24 @@ def fetch_audit(task, trajectory, calls, trace, evidence):
             assert all(measured[key] == request[key] for key in ('id', 'url', 'focus', 'source', 'status'))
         row = {**measured, 'measurement_source': 'fetch_telemetry.json' if request['id'] in telemetry else 'legacy_evidence_and_cache',
                'attempts': [], 'trajectory_returns': returned.get(key, []), 'tool_trace_lines': []}
+        if request.get('fetch_path') == FETCH_PATH and request['status'] == 'succeeded' and 'receipt' not in measured:
+            raise ArchiveCorruptionError('Successful direct fetch is missing telemetry/receipt')
+        if request.get('fetch_path') == FETCH_PATH and 'receipt' in measured:
+            receipt = measured['receipt']
+            try:
+                verify_receipt(task, receipt)
+            except FetchError as error:
+                raise ArchiveCorruptionError('Direct download ' + error.error) from error
+            if request['status'] == 'succeeded':
+                text = (task / receipt['text_path']).read_bytes().decode('utf-8')
+                cached = cache.get(json.dumps(['fetch', request['url'], FETCH_PATH]))
+                if (receipt['status'] != 'succeeded' or receipt['requested_url'] != request['url'] or
+                    text not in evidence['fetched'].get(request['url'], []) or cached != text or
+                    any(value['sha256'] not in {receipt['text_sha256'], sha('FETCH_FAILED')}
+                        for value in row['trajectory_returns'])):
+                    raise ArchiveCorruptionError('Direct download readable text differs from evidence')
+            row['direct_receipt_verified'] = True
+            row['download_link'] = link(task / 'downloads' / (receipt['id'] + '.json'))
         for event in trace:
             details = event['details']
             if event['component'] == 'tools.fetch' and event['event'] == 'call.end' and details.get('url') == request['url'] and details.get('focus') == request['focus']:
@@ -246,7 +265,7 @@ def coverage_audit(evidence, roots, execs):
     covered = sum(item['covered_chars'] for item in rows)
     return dict(ngram_chars=n, total_chars=total, covered_chars=covered, fraction=covered/total if total else None,
         fully_present_texts=sum(item['full_text_in_root'] for item in rows), texts=rows,
-        limitation='Measures returned model-rendered fetch text in root prompts; does not measure unexposed raw page bodies.')
+        limitation='Measures exact returned fetched text in root prompts. Fetch-path labels distinguish direct readable text from historical model-rendered extracts; raw download sizes are separate.')
 
 
 def page_variable_excerpts(blocks, trace, evidence, states, selected_trace_lines=None):
@@ -610,7 +629,8 @@ def _audit_task(task, run, excerpt_trace_lines):
             rlm['linkage_unavailable_reason'] = 'legacy_trace_has_no_rlm_id'
     sources = [run / 'research.json', run / 'trace.jsonl', *[task / name for name in
         ('prompt.txt', 'root_prompt.txt', 'trajectory.jsonl', 'codex_calls.jsonl', 'evidence.json', 'tool_cache.json', 'fetch_telemetry.json')]]
-    result = dict(run_id=run.name, task_path=str(task), largest_prompt=prompt, fetches=fetches, overlap=overlap,
+    paths = sorted({request.get('fetch_path', 'model-mediated') for request in evidence.get('fetches', [])})
+    result = dict(run_id=run.name, task_path=str(task), fetch_paths=paths, largest_prompt=prompt, fetches=fetches, overlap=overlap,
         subcalls=subdetails, subcall_count=len(subdetails), subcall_input_chars=sum(item['input_chars'] for item in subdetails),
         subcall_backend_chars=sum(item['backend_chars'] for item in subdetails) if all(item['backend_chars'] is not None for item in subdetails) else None,
         subcall_prompt_chars=sum(item['prompt_input_chars'] for item in subdetails),
@@ -675,6 +695,7 @@ def measure_task(task, run, calls, attempts, trace, evidence):
     pages = [text for texts in evidence.get('fetched', {}).values() for text in texts]
     root_calls = [c for c in attempts if c.get('purpose') == 'root']
     metrics = dict(run_id=run.name, task_id=task.name, manifest=manifest,
+        fetch_paths=sorted({f.get('fetch_path', 'model-mediated') for f in evidence.get('fetches', [])}),
         wall_s=(datetime.fromisoformat(ends[-1]['timestamp']) - datetime.fromisoformat(start['timestamp'])).total_seconds() if ends and start else None,
         active_span_s=ends[-1].get('duration_s') if ends else None,
         codex_calls=len(calls), codex_attempts=len(attempts), calls_by_purpose=dict(Counter(c['purpose'] for c in calls)),

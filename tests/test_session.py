@@ -1,6 +1,6 @@
 from loop_research.harness import Harness
 from loop_research.session import Session
-from test_agent_tools import Replies
+from test_agent_tools import Replies, install_fetch
 from test_refine import Planner, proposal
 
 
@@ -40,18 +40,17 @@ def test_consistently_bad_outcomes_are_available_to_refine_for_deletion(ctx, tas
     assert planner.prompts[0].count('fabricated_quote') >= 3
 
 
-def test_completed_fetch_event_required_and_reports_prose_only_failure(ctx):
+def test_direct_download_failure_is_reported_without_model_fallback(ctx, monkeypatch):
+    from loop_research.page_fetch import FetchError
     from loop_research.repl_tools import ResearchTools
-    # A custom transport with no tool evidence cannot make prose count as a fetch.
-    class NoFetch:
-        last_web_actions = []
-        def complete(self, *args, **kwargs):
-            return 'claimed page'
-    tools = ResearchTools(NoFetch(), ctx)
+    downloads = install_fetch(monkeypatch, FetchError('http_status', 'HTTP 403'))
+    backend = Replies('claimed page')
+    tools = ResearchTools(backend, ctx)
     assert tools.fetch('https://example.org/') == 'FETCH_FAILED'
+    assert downloads == ['https://example.org/'] and backend.calls == []
     assert tools.snapshot()['fetched'] == {}
     assert tools.snapshot()['failures'] == [{'operation': 'fetch', 'url': 'https://example.org/',
-                                            'request_id': 1, 'source': 'backend', 'reason': 'fetch_failed'}]
+        'request_id': 1, 'source': 'backend', 'reason': 'http_status', 'error': 'HTTP 403'}]
 
 
 def test_rollback_requested_in_final_cell_applies_at_task_end(ctx, task):
@@ -64,19 +63,18 @@ def test_rollback_requested_in_final_cell_applies_at_task_end(ctx, task):
     assert h.list() == []
 
 
-def test_shutdown_prevents_delayed_tools_and_new_dispatch_from_mutating_state(ctx, task):
+def test_shutdown_prevents_delayed_tools_and_new_dispatch_from_mutating_state(ctx, task, monkeypatch):
     from concurrent.futures import CancelledError, ThreadPoolExecutor
     import threading
     import pytest
     entered, release = threading.Event(), threading.Event()
-    class Delayed:
-        last_web_actions = [{'type': 'open_page', 'url': 'https://example.org/'}]
-        def complete(self, *args, **kwargs):
-            entered.set()
-            assert release.wait(5)
-            return 'late evidence'
+    def download(url):
+        entered.set()
+        assert release.wait(5)
+        return 'late evidence'
+    install_fetch(monkeypatch, download)
     h = Harness(ctx.root / 'harness')
-    session = Session(task, ctx, h, backend=Delayed())
+    session = Session(task, ctx, h, backend=Replies())
     with ThreadPoolExecutor(max_workers=1) as pool:
         request = pool.submit(session.dispatch, 'tools.fetch', ['https://example.org/'], {})
         assert entered.wait(5)
