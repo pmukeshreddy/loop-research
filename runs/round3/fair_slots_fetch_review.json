@@ -1,0 +1,74 @@
+{
+  "reviewer": "fetch_review",
+  "restored_at": "2026-10-20T03:33:35.355931+00:00",
+  "original_review_timestamp": null,
+  "restoration_provenance": {
+    "reason": "The generic JSON filename was overwritten by the comparison reviewer. This JSON restores the fetch_review findings and test receipt under a reviewer-specific filename; no tests were rerun during restoration.",
+    "basis": [
+      "Retained original fetch_review Markdown, preserving its source hash, original worktree HEAD, follow-up diff description, and 14-pass result.",
+      "Saved functions.exec tool response with exec_command chunk_id 0cbadf: exit_code 0; stdout 14 passed in 1.87s.",
+      "Saved initial review tool response with exec_command chunk_id 287ecc: exit_code 0; stdout 13 passed in 1.33s, before the mutex-only follow-up.",
+      "Prior source/test hashes and source Git blobs recorded in this reviewer conversation."
+    ],
+    "original_markdown_sha256": "5ef4cdc006588b8e22db5c39ce7eea80ee7e38034bcaefb2f84f9cf075816b53",
+    "overwriting_json_sha256": "91479d7908bec641412f7ae4d8e1336a8f3e6013c6e469f9113ce1a875703131",
+    "overwriting_json_preserved_exactly_at": "runs/round3/fair_slots_comparison_review.json",
+    "original_review_timestamp_note": "Original JSON timestamp was not retained in the tool output; no timestamp is invented. restored_at is this reconstruction time."
+  },
+  "scope": "Independent review of final FIFO Codex slots and mutex-only 1 ms follow-up. Offline isolated-worktree checks; no model/web calls, installation, live-process changes, or main product edits.",
+  "worktree": "runs/round3/worktrees/fair-slots",
+  "worktree_head_at_review": "9de64148a8b4bde40015d3001bc79d1c43b0a8ba",
+  "source_files": [
+    {
+      "path": "runs/round3/worktrees/fair-slots/src/loop_research/codex_backend.py",
+      "sha256": "b8f46de7dd14ee64143adbc4683cf6752233a1d3a81205116873537ee38106ac",
+      "bytes": 17651
+    },
+    {
+      "path": "runs/round3/worktrees/fair-slots/tests/test_codex_slot_fairness.py",
+      "sha256": "5024c91e5e9ebc435bcca04d7d9aa9ceca8529744eefc145b95f79848c39040d",
+      "bytes": 12593
+    },
+    {
+      "path": "runs/round3/worktrees/fair-slots/tests/test_baseline.py",
+      "sha256": "eb45b9f88cfc92590678240ef062188cd14438740dad28c4fc3ff973596ac376",
+      "bytes": 19699
+    }
+  ],
+  "source_git_blob": "445c613d55e2e09ef679a369f5e5cd61ccc09214",
+  "previous_reviewed_source_git_blob": "c7c93acb01dcde4de44660909559363b53450fa3",
+  "followup_diff": "Exactly three explanatory comments and queue.lock contention sleep changed from min(.05, remaining()) to min(.001, remaining()). Reversing that delta reproduced the previously reviewed Git blob.",
+  "unchanged_controls": [
+    "Capacity/head waiting still polls at 50 ms.",
+    "Call/task deadlines, concurrency limits, retry counts and delays, configured models, and refinement behavior are unchanged by the follow-up.",
+    "Existing parallelism regression test was verified byte-identical to worktree HEAD during the original review."
+  ],
+  "review_findings": [],
+  "review_conclusion": "No significant remaining issue found. The shorter polling interval is confined to the brief queue-metadata mutex, retains cancellation/deadline checks, and does not alter FIFO ordering, active slot ownership, or cleanup.",
+  "verified_properties": [
+    "One persistent queue.lock serializes ticket registration and admission; tickets are ordered by registration.",
+    "Ticket liveness uses OS flock ownership; killed queued/admitted processes and crash between ticket creation and locking permit successor progress.",
+    "Cancellation/deadline paths release selected capacity and remove owned tickets, including cancellation immediately after registration or claim.",
+    "Only admission is serialized; independent processes can occupy all four configured slots.",
+    "Cross-thread and cross-process late arrivals cannot overtake a registered older waiter."
+  ],
+  "verification": {
+    "command": "PYTHONPATH=src /Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/python -m pytest -q tests/test_codex_slot_fairness.py tests/test_baseline.py::test_parallel_completion_keeps_sequential_results_archives_and_report_order",
+    "cwd": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/fair-slots",
+    "tool_output_chunk_id": "0cbadf",
+    "exit_code": 0,
+    "passed": 14,
+    "duration_seconds": 1.87,
+    "result": "14 passed in 1.87s",
+    "scope": "13 real OS-lock fairness/lifecycle cases plus unchanged existing parallel-completion regression.",
+    "provenance": "Copied from the retained original tool response. No contemporaneous redirected raw log is claimed. No test rerun during this restoration.",
+    "broad_suite_run_by_this_reviewer": false
+  },
+  "limitations": [
+    "FIFO means successful ticket registration order, not exact simultaneous call-start order.",
+    "The short mutex itself is not proven starvation-free.",
+    "All replay processes must use the new implementation and the same configured concurrency limit.",
+    "Passing offline checks does not establish live cohort success or prevent legitimate deadline exhaustion.",
+    "The earlier 50 ms version passed 13 fairness cases but failed the broader existing parallelism regression; that failure remains preserved."
+  ]
+}
