@@ -103,11 +103,13 @@ def resource_policy(config):
               'max_iterations_per_rlm': config.rlm.max_iterations, 'max_depth': config.rlm.max_depth,
               'max_concurrent_codex_calls': config.codex.max_concurrent}
     return ('RESOURCE LIMITS\n' + json.dumps(limits) + '\n'
-            'budget() returns the current call limit, reserved and remaining counts without consuming a call. '
+            'budget() returns the current call limit, reserved and remaining counts, plus seconds_remaining '
+            'until the task deadline on its monotonic clock, without consuming a call. '
             'Reserved counts all research backend attempts, including in-flight calls and retries: root, sub, '
             'search and output repair. Direct page downloads use no model calls. Refinement and grading use separate calls. '
-            'The snapshot is not a reservation; concurrent work can consume remaining calls. '
-            'Check budget() before costly batches. Plan capacity across discovery, fetching, extraction, '
+            'The snapshot is not a reservation; concurrent work can consume remaining calls and time continues '
+            'to pass. Call allowance can remain when seconds_remaining reaches zero. '
+            'Check budget() before costly batches. Plan calls and time across discovery, fetching, extraction, '
             'validation and final submission; leave room for remaining root turns and any output repair. '
             'Inspect simple hit lists with Python and group related evidence extraction instead of spending '
             'one subcall per simple hit list. Reuse collected evidence when recovering from code errors.\n')

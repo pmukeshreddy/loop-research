@@ -1,0 +1,215 @@
+{
+  "scope": "Requested budget snapshot observability; no change to deadline, limits, scheduling, retry, root history or automatic input metadata.",
+  "baseline_commit": "6dad1de3938ca4775fd8fb084cb1e73107fd89c6",
+  "failure_source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d",
+  "failure_run": "runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-2/runs/research-d34b080d45ab4d4da1a026a2ecc21e39",
+  "finding": "CallBudget owns a monotonic deadline but budget() exposed only call counts. The researcher explicitly requested and printed 17 snapshots. This is a visibility gap, not proof that visibility alone would have prevented the timeout.",
+  "snapshot_count": 17,
+  "final_snapshot": {
+    "trajectory_line": 279,
+    "trace_start_line": 3017,
+    "trace_end_line": 3018,
+    "started_at": "2026-10-20T16:36:46.285677+00:00",
+    "ended_at": "2026-10-20T16:36:46.285951+00:00",
+    "result": {
+      "limit": 300,
+      "reserved": 222,
+      "remaining": 78
+    },
+    "elapsed_since_worker_start_s": 3587.827586,
+    "time_until_observed_worker_timeout_s": 12.161948
+  },
+  "worker_timing": {
+    "worker_observed_wall_s": 3599.989534,
+    "root_model_span_sum_s": 495.196324,
+    "depth0_repl_span_sum_s": 3103.148874,
+    "worker_residual_s": 1.6443359999998393,
+    "root_model_span_note": "Final root model cleanup ends shortly after worker timeout; these un-clipped sums therefore include ~10ms post-worker cleanup.",
+    "repl_top_level_operation_sums": {
+      "tools.search_many": {
+        "count": 12,
+        "sum_s": 873.883739
+      },
+      "tools.fetch_many": {
+        "count": 12,
+        "sum_s": 1395.4736990000001
+      },
+      "RLM sub top-level queries": {
+        "count": 17,
+        "sum_s": 723.425966
+      }
+    },
+    "repl_other_s": 110.36546999999973,
+    "worker_clipped_nonoverlapping_account": {
+      "root_model_s": 495.186707,
+      "repl_s": 3103.148874,
+      "other_s": 1.6539530000000013,
+      "total_s": 3599.989534,
+      "method": "Pair timestamped root-model/REPL start-end spans, clip to worker start-end, verify no overlap; residual is unclassified inter-span time."
+    },
+    "repl_top_level_operations_nonoverlap_verified": true
+  },
+  "terminal_root_span": {
+    "component": "RLM root",
+    "event": "model.end",
+    "start_line": 3051,
+    "end_line": 3057,
+    "started_at": "2026-10-20T16:36:58.217198+00:00",
+    "ended_at": "2026-10-20T16:36:58.457516+00:00",
+    "wall_s": 0.240318,
+    "duration_s": 0.24023291701450944,
+    "details": {
+      "span_id": "e60dbdf5f31a4258820560ba27abe15a",
+      "model": "gpt-6-astra",
+      "structured": false,
+      "error": "BudgetExceeded: Task deadline exceeded"
+    }
+  },
+  "other_errors": {
+    "invalid_subcalls": [
+      {
+        "index": 2,
+        "logical_prompt_chars": 1456186,
+        "logical_prompt_sha256": "494f57f8c8de8c4cfc416721eb0129bd8c31f032730cd988fa562a1e183c954b",
+        "backend_prompt_chars": 1456368,
+        "backend_prompt_sha256": "20c58f5b73ce4a6a4a6e3436cd0628e7c0e49159f438bb8acaa95391ccc7f5ba",
+        "codex_calls_line": 224,
+        "call_id": "7916960b6e614dc3acc73a7e91bd9911",
+        "attempt": 0,
+        "error": "Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1456368}\n\nMissing or empty final message",
+        "status": "attempted"
+      },
+      {
+        "index": 3,
+        "logical_prompt_chars": 2127144,
+        "logical_prompt_sha256": "d226f3a0ef574eb23ad3d46bd09e1f29c1f3d49470e0f8bbf493b50aeb600c50",
+        "backend_prompt_chars": 2127326,
+        "backend_prompt_sha256": "65963e7bc45d7218c2bb4bd12d496d4ee32306db0d925ef1b2752caee0c28c74",
+        "codex_calls_line": 223,
+        "call_id": "649743a09806478397998c3a31d07d3e",
+        "attempt": 0,
+        "error": "Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":2127326}\n\nMissing or empty final message",
+        "status": "attempted"
+      }
+    ],
+    "downloads": [
+      {
+        "start_line": 1679,
+        "end_line": 1691,
+        "wall_s": 600.017433,
+        "url": "https://www.washingtonpost.com/technology/2023/05/02/geoffrey-hinton-leaves-google-ai/",
+        "error": "FetchError: download_error: [Errno 32] Broken pipe"
+      },
+      {
+        "start_line": 2057,
+        "end_line": 2090,
+        "wall_s": 600.007138,
+        "url": "https://www.washingtonpost.com/local/obituaries/david-thouless-nobel-winning-physicist-who-explored-strange-states-of-matter-dies-at-84/2019/04/13/e49a72b6-5b25-11e9-a00e-050dc7b82693_story.html",
+        "error": "FetchError: download_error: [Errno 32] Broken pipe"
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "path": "runs/round3/cohorts/context_outputs_v1/B1-frozen-2.budget_timeline.json",
+      "bytes": 73033,
+      "sha256": "771b117535314f3c79cd4f61ea0cf1c9ade5643d130633967f7a5e15453facd9"
+    },
+    {
+      "path": "runs/round3/cohorts/context_outputs_v1/B1-frozen-2.final_subcalls.json",
+      "bytes": 3561,
+      "sha256": "019b803483161625bfa859e8b1dc12ccc328505ce7e4b66638d64a13074797db"
+    },
+    {
+      "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-2/runs/research-d34b080d45ab4d4da1a026a2ecc21e39/trace.jsonl",
+      "bytes": 2740984,
+      "sha256": "b806ae42a7c140e9e0369c1bbddb0f16ce42395aea0f05a78df77d4d1a04c6ab"
+    },
+    {
+      "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B1-frozen-2/runs/research-d34b080d45ab4d4da1a026a2ecc21e39/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+      "bytes": 164110522,
+      "sha256": "afc90a03742519535d412be425b500411f4a9c88b229d23d16f4d9ada6bad95b"
+    }
+  ],
+  "implementation": {
+    "field": "seconds_remaining",
+    "formula": "max(0.0, self.deadline - time.monotonic())",
+    "snapshot_lock": "existing CallBudget.lock",
+    "initial_input": "stable explanatory text only; no snapshot invoked or value injected automatically",
+    "clock": "same existing monotonic task clock; no guarantee of civil elapsed time across system suspension"
+  },
+  "source_and_test_hashes": {
+    "src/loop_research/codex_backend.py": "19aeb063f8a097881b224b5798cb364220d2d8bf6d8907ed2fbce671c4cb26df",
+    "src/loop_research/agent.py": "285d70518ef9cf1e4320722ba71c220b2e8248e365338d9f13e68fd08b69d7c5",
+    "tests/test_budget_visibility.py": "d3ec6e3f7aeffe2f4eb3510e981b6b12b0102071216e496adda2ccd9465fe35e",
+    "tests/test_comparison_inputs.py": "04c549411c8533797622264066cd2613ea3dba212fb20f4578f2a0948c58bb8e"
+  },
+  "tests": {
+    "first_red": {
+      "log": "runs/round3/budget_visibility_evidence/red.log",
+      "failed": 8,
+      "passed": 10,
+      "note": "Six expected missing-field failures; two additional parity-fixture failures from a budget-less refinement backend. Fixture guarded without product changes."
+    },
+    "corrected_red": {
+      "log": "runs/round3/budget_visibility_evidence/red_corrected_fixture.log",
+      "failed": 6,
+      "passed": 12,
+      "note": "Actual worker missing-field failure entered existing output repair; fixture backend then raised IndexError. Other five failures directly assert the absent field; full original traceback retained."
+    },
+    "green": {
+      "log": "runs/round3/budget_visibility_evidence/green.log",
+      "passed": 18,
+      "elapsed_s": 15.22
+    },
+    "whole_suite": {
+      "status": "passed",
+      "log": "runs/round3/budget_visibility_evidence/whole_suite.log",
+      "exit_code": 0,
+      "passed": 1110,
+      "deselected": 1,
+      "elapsed_s": 138.59,
+      "command": "PYTHONPATH=src /Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/python -m pytest -q"
+    }
+  },
+  "limitations": [
+    "Snapshot is a momentary observation, not a reservation or latency prediction.",
+    "No automatic forced finalization or smaller batch policy.",
+    "Time visibility does not guarantee completion, evidence completeness, or quality.",
+    "Invalid oversized ordinary subcalls remain visible permanent failures; no truncation or automatic splitting introduced.",
+    "The later host clamshell interval 16:40:55 to 17:25:31 UTC began after this run had already timed out at 16:36:58 UTC. Existing monotonic suspension semantics are unchanged."
+  ],
+  "source_test_hashes_unchanged_after_suite": true,
+  "test_log_hashes": {
+    "runs/round3/budget_visibility_evidence/green.log": "66429f8000f8c264d31d77f163805e940c96134878f1318810151b9e0991ce52",
+    "runs/round3/budget_visibility_evidence/red.log": "33349f256b217bdfebc677aaba6c16f1d0825aa675e22b8bce445635059f348c",
+    "runs/round3/budget_visibility_evidence/red_corrected_fixture.log": "ad54930183ef32ed3e068ebfdc748213212a0dde485988229afc018720b6ab70",
+    "runs/round3/budget_visibility_evidence/whole_suite.log": "7f5205354675a1575a8e66ab914ee6d34c60120ace229a9e019be3c5d8e27a7c"
+  },
+  "independent_review": {
+    "path": "runs/round3/budget_time_review.json",
+    "sha256": "57dc0cd99a3a40f84e0ddcecf953f49c816c8916944c57d0a1fe12bbcec5abb9",
+    "status": "complete_no_blocking_findings",
+    "tests": {
+      "command": "PYTHONPATH=src /Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/python -m pytest -q tests/test_budget_visibility.py tests/test_comparison_inputs.py tests/test_worker.py tests/test_codex_backend.py",
+      "cwd": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/readable-controls",
+      "result": "62 passed in30.38s",
+      "exit_code": 0,
+      "tool_receipts": [
+        "104ff8",
+        "d635d1"
+      ],
+      "log_note": "Actual result retained in tool output; no separate original raw-log file claimed."
+    },
+    "static_contract_char_delta": 168
+  },
+  "parent_whole_suite": {
+    "path": "runs/round3/budget_time/whole_suite.result.json",
+    "sha256": "47c6be5c1b74613e9965e9853b248a571c11dba465bd9140c6e57f6671ddaa88",
+    "passed": 1110,
+    "deselected": 1,
+    "elapsed_s": 144.12,
+    "exit_code": 0,
+    "all_32_module_hashes_unchanged": true
+  }
+}

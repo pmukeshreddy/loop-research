@@ -116,6 +116,14 @@ def test_explicit_base_runs_change_only_complete_entries_in_actual_worker_inputs
     backends = []
 
     def backend(ctx, *, budget=None):
+        # Different real remaining times must not leak into initial model inputs.
+        if budget is not None:  # Refinement backends have their own allowance.
+            budget.deadline -= len(backends) * 5
+
+            def no_implicit_snapshot():
+                raise AssertionError('The researcher did not request a budget snapshot')
+
+            monkeypatch.setattr(budget, 'snapshot', no_implicit_snapshot)
         def reply(prompt, options):
             original_context = (ctx.path / 'prompt.txt').read_text()
             return code_reply('assert context == ' + repr(original_context) + '\n' + final_code({'rows': []}))
@@ -156,6 +164,7 @@ def test_explicit_base_runs_change_only_complete_entries_in_actual_worker_inputs
         events = read_jsonl(ctx.run_dir / 'trace.jsonl')
         assert any(event['component'] == 'RLM' and event['event'] == 'context_metadata'
                    and event['details']['context_total_length'] == len(prompt) for event in events)
+        assert not [row for row in read_jsonl(ctx.path / 'trajectory.jsonl') if row.get('tool') == 'budget']
     if not different_entries:
         assert roots[0] == roots[1]
 

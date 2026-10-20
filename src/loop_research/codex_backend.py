@@ -107,9 +107,10 @@ class CallBudget:
             self.count += 1
 
     def snapshot(self):
-        """Read cumulative reservations, including in-flight attempts, without spending a call."""
+        """Read call reservations and the existing monotonic deadline without spending a call."""
         with self.lock:
-            return {'limit': self.limit, 'reserved': self.count, 'remaining': max(0, self.limit - self.count)}
+            return {'limit': self.limit, 'reserved': self.count, 'remaining': max(0, self.limit - self.count),
+                    'seconds_remaining': max(0.0, self.deadline - time.monotonic())}
 
 
 class _ScopedBackend:
