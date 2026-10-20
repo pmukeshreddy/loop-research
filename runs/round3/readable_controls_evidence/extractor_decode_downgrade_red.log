@@ -1,0 +1,26 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_invalid_extractor_utf8_cannot_be_downgraded_to_entity_decode_failure ___
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-znu5cwtq/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10c08e210>
+
+    def test_invalid_extractor_utf8_cannot_be_downgraded_to_entity_decode_failure(ctx, monkeypatch):
+        tools, _ = fetch_tools(ctx, b'%PDF-1.4\nfixture', 'application/pdf',
+                              extracted=b'prefix\xffsuffix', monkeypatch=monkeypatch)
+        assert tools.fetch(URL) == 'FETCH_FAILED'
+        telemetry = ctx.load('fetch_telemetry.json')
+        receipt = telemetry[0]['receipt']
+        for key in list(receipt):
+            if key.startswith('extraction_') or key == 'parser':
+                del receipt[key]
+        write_json(ctx.path / 'downloads' / (receipt['id'] + '.json'), receipt)
+        write_json(ctx.path / 'fetch_telemetry.json', telemetry)
+>       with pytest.raises(ArchiveCorruptionError, match='extraction'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ArchiveCorruptionError
+
+tests/test_readable_controls.py:279: Failed
+=========================== short test summary info ============================
+FAILED tests/test_readable_controls.py::test_invalid_extractor_utf8_cannot_be_downgraded_to_entity_decode_failure
+1 failed, 34 deselected in 0.09s

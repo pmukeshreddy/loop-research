@@ -1,0 +1,209 @@
+FFFFFFFF                                                                 [100%]
+=================================== FAILURES ===================================
+_ test_failed_download_with_durable_receipt_cannot_lose_audit_evidence[True-receipt] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-0xniwxi_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+damage = 'receipt', extracted = True
+
+    @pytest.mark.parametrize('damage', ['receipt', 'telemetry_record', 'telemetry_file'])
+    @pytest.mark.parametrize('extracted', [True, False])
+    def test_failed_download_with_durable_receipt_cannot_lose_audit_evidence(ctx, damage, extracted):
+        reply = response('Visible \x01 text.', 'text/plain') if extracted else response('Denied', status=403)
+        tools = ResearchTools(NoModel(), ctx, fetcher=PageFetcher(ctx, request=lambda *args: reply))
+        assert tools.fetch(URL) == 'FETCH_FAILED'
+        telemetry = ctx.load('fetch_telemetry.json')
+        receipt = telemetry[0]['receipt']
+        assert tools.snapshot()['fetches'][0]['receipt_id'] == receipt['id']
+        if extracted:
+            (ctx.path / receipt['extraction_path']).unlink()
+        if damage == 'receipt':
+            del telemetry[0]['receipt']
+            write_json(ctx.path / 'fetch_telemetry.json', telemetry)
+        elif damage == 'telemetry_record':
+            write_json(ctx.path / 'fetch_telemetry.json', [])
+        else:
+            (ctx.path / 'fetch_telemetry.json').unlink()
+>       with pytest.raises(ArchiveCorruptionError, match='receipt|telemetry'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ArchiveCorruptionError
+
+tests/test_readable_controls.py:301: Failed
+_ test_failed_download_with_durable_receipt_cannot_lose_audit_evidence[True-telemetry_record] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-0xniwxi_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+damage = 'telemetry_record', extracted = True
+
+    @pytest.mark.parametrize('damage', ['receipt', 'telemetry_record', 'telemetry_file'])
+    @pytest.mark.parametrize('extracted', [True, False])
+    def test_failed_download_with_durable_receipt_cannot_lose_audit_evidence(ctx, damage, extracted):
+        reply = response('Visible \x01 text.', 'text/plain') if extracted else response('Denied', status=403)
+        tools = ResearchTools(NoModel(), ctx, fetcher=PageFetcher(ctx, request=lambda *args: reply))
+        assert tools.fetch(URL) == 'FETCH_FAILED'
+        telemetry = ctx.load('fetch_telemetry.json')
+        receipt = telemetry[0]['receipt']
+        assert tools.snapshot()['fetches'][0]['receipt_id'] == receipt['id']
+        if extracted:
+            (ctx.path / receipt['extraction_path']).unlink()
+        if damage == 'receipt':
+            del telemetry[0]['receipt']
+            write_json(ctx.path / 'fetch_telemetry.json', telemetry)
+        elif damage == 'telemetry_record':
+            write_json(ctx.path / 'fetch_telemetry.json', [])
+        else:
+            (ctx.path / 'fetch_telemetry.json').unlink()
+>       with pytest.raises(ArchiveCorruptionError, match='receipt|telemetry'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ArchiveCorruptionError
+
+tests/test_readable_controls.py:301: Failed
+_ test_failed_download_with_durable_receipt_cannot_lose_audit_evidence[True-telemetry_file] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-0xniwxi_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+damage = 'telemetry_file', extracted = True
+
+    @pytest.mark.parametrize('damage', ['receipt', 'telemetry_record', 'telemetry_file'])
+    @pytest.mark.parametrize('extracted', [True, False])
+    def test_failed_download_with_durable_receipt_cannot_lose_audit_evidence(ctx, damage, extracted):
+        reply = response('Visible \x01 text.', 'text/plain') if extracted else response('Denied', status=403)
+        tools = ResearchTools(NoModel(), ctx, fetcher=PageFetcher(ctx, request=lambda *args: reply))
+        assert tools.fetch(URL) == 'FETCH_FAILED'
+        telemetry = ctx.load('fetch_telemetry.json')
+        receipt = telemetry[0]['receipt']
+        assert tools.snapshot()['fetches'][0]['receipt_id'] == receipt['id']
+        if extracted:
+            (ctx.path / receipt['extraction_path']).unlink()
+        if damage == 'receipt':
+            del telemetry[0]['receipt']
+            write_json(ctx.path / 'fetch_telemetry.json', telemetry)
+        elif damage == 'telemetry_record':
+            write_json(ctx.path / 'fetch_telemetry.json', [])
+        else:
+            (ctx.path / 'fetch_telemetry.json').unlink()
+>       with pytest.raises(ArchiveCorruptionError, match='receipt|telemetry'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ArchiveCorruptionError
+
+tests/test_readable_controls.py:301: Failed
+_ test_failed_download_with_durable_receipt_cannot_lose_audit_evidence[False-receipt] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-0xniwxi_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+damage = 'receipt', extracted = False
+
+    @pytest.mark.parametrize('damage', ['receipt', 'telemetry_record', 'telemetry_file'])
+    @pytest.mark.parametrize('extracted', [True, False])
+    def test_failed_download_with_durable_receipt_cannot_lose_audit_evidence(ctx, damage, extracted):
+        reply = response('Visible \x01 text.', 'text/plain') if extracted else response('Denied', status=403)
+        tools = ResearchTools(NoModel(), ctx, fetcher=PageFetcher(ctx, request=lambda *args: reply))
+        assert tools.fetch(URL) == 'FETCH_FAILED'
+        telemetry = ctx.load('fetch_telemetry.json')
+        receipt = telemetry[0]['receipt']
+        assert tools.snapshot()['fetches'][0]['receipt_id'] == receipt['id']
+        if extracted:
+            (ctx.path / receipt['extraction_path']).unlink()
+        if damage == 'receipt':
+            del telemetry[0]['receipt']
+            write_json(ctx.path / 'fetch_telemetry.json', telemetry)
+        elif damage == 'telemetry_record':
+            write_json(ctx.path / 'fetch_telemetry.json', [])
+        else:
+            (ctx.path / 'fetch_telemetry.json').unlink()
+>       with pytest.raises(ArchiveCorruptionError, match='receipt|telemetry'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ArchiveCorruptionError
+
+tests/test_readable_controls.py:301: Failed
+_ test_failed_download_with_durable_receipt_cannot_lose_audit_evidence[False-telemetry_record] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-0xniwxi_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+damage = 'telemetry_record', extracted = False
+
+    @pytest.mark.parametrize('damage', ['receipt', 'telemetry_record', 'telemetry_file'])
+    @pytest.mark.parametrize('extracted', [True, False])
+    def test_failed_download_with_durable_receipt_cannot_lose_audit_evidence(ctx, damage, extracted):
+        reply = response('Visible \x01 text.', 'text/plain') if extracted else response('Denied', status=403)
+        tools = ResearchTools(NoModel(), ctx, fetcher=PageFetcher(ctx, request=lambda *args: reply))
+        assert tools.fetch(URL) == 'FETCH_FAILED'
+        telemetry = ctx.load('fetch_telemetry.json')
+        receipt = telemetry[0]['receipt']
+        assert tools.snapshot()['fetches'][0]['receipt_id'] == receipt['id']
+        if extracted:
+            (ctx.path / receipt['extraction_path']).unlink()
+        if damage == 'receipt':
+            del telemetry[0]['receipt']
+            write_json(ctx.path / 'fetch_telemetry.json', telemetry)
+        elif damage == 'telemetry_record':
+            write_json(ctx.path / 'fetch_telemetry.json', [])
+        else:
+            (ctx.path / 'fetch_telemetry.json').unlink()
+>       with pytest.raises(ArchiveCorruptionError, match='receipt|telemetry'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ArchiveCorruptionError
+
+tests/test_readable_controls.py:301: Failed
+_ test_failed_download_with_durable_receipt_cannot_lose_audit_evidence[False-telemetry_file] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-0xniwxi_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+damage = 'telemetry_file', extracted = False
+
+    @pytest.mark.parametrize('damage', ['receipt', 'telemetry_record', 'telemetry_file'])
+    @pytest.mark.parametrize('extracted', [True, False])
+    def test_failed_download_with_durable_receipt_cannot_lose_audit_evidence(ctx, damage, extracted):
+        reply = response('Visible \x01 text.', 'text/plain') if extracted else response('Denied', status=403)
+        tools = ResearchTools(NoModel(), ctx, fetcher=PageFetcher(ctx, request=lambda *args: reply))
+        assert tools.fetch(URL) == 'FETCH_FAILED'
+        telemetry = ctx.load('fetch_telemetry.json')
+        receipt = telemetry[0]['receipt']
+        assert tools.snapshot()['fetches'][0]['receipt_id'] == receipt['id']
+        if extracted:
+            (ctx.path / receipt['extraction_path']).unlink()
+        if damage == 'receipt':
+            del telemetry[0]['receipt']
+            write_json(ctx.path / 'fetch_telemetry.json', telemetry)
+        elif damage == 'telemetry_record':
+            write_json(ctx.path / 'fetch_telemetry.json', [])
+        else:
+            (ctx.path / 'fetch_telemetry.json').unlink()
+>       with pytest.raises(ArchiveCorruptionError, match='receipt|telemetry'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ArchiveCorruptionError
+
+tests/test_readable_controls.py:301: Failed
+__________ test_failed_receipt_cannot_be_swapped_from_another_request __________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-0xniwxi_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_failed_receipt_cannot_be_swapped_from_another_request(ctx):
+        tools, _ = fetch_tools(ctx, 'Visible \x01 text.', 'text/plain')
+        assert tools.fetch(URL) == tools.fetch(URL + '/other') == 'FETCH_FAILED'
+        telemetry = ctx.load('fetch_telemetry.json')
+        telemetry[0]['receipt'] = telemetry[1]['receipt']
+        write_json(ctx.path / 'fetch_telemetry.json', telemetry)
+>       with pytest.raises(ArchiveCorruptionError, match='Direct download'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ArchiveCorruptionError
+
+tests/test_readable_controls.py:311: Failed
+___ test_fetch_validation_failure_before_download_needs_no_download_receipt ____
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-0xniwxi_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_fetch_validation_failure_before_download_needs_no_download_receipt(ctx):
+        tools, requests = fetch_tools(ctx, 'Never requested.', 'text/plain')
+        with pytest.raises(ValueError):
+            tools.fetch('file:///unavailable')
+        row, = fetch_audit(ctx.path, [], [], [], tools.snapshot())
+>       assert row['status'] == 'failed' and row['reason'] == 'validation_error'
+                                             ^^^^^^^^^^^^^
+E       KeyError: 'reason'
+
+tests/test_readable_controls.py:320: KeyError
+=========================== short test summary info ============================
+FAILED tests/test_readable_controls.py::test_failed_download_with_durable_receipt_cannot_lose_audit_evidence[True-receipt]
+FAILED tests/test_readable_controls.py::test_failed_download_with_durable_receipt_cannot_lose_audit_evidence[True-telemetry_record]
+FAILED tests/test_readable_controls.py::test_failed_download_with_durable_receipt_cannot_lose_audit_evidence[True-telemetry_file]
+FAILED tests/test_readable_controls.py::test_failed_download_with_durable_receipt_cannot_lose_audit_evidence[False-receipt]
+FAILED tests/test_readable_controls.py::test_failed_download_with_durable_receipt_cannot_lose_audit_evidence[False-telemetry_record]
+FAILED tests/test_readable_controls.py::test_failed_download_with_durable_receipt_cannot_lose_audit_evidence[False-telemetry_file]
+FAILED tests/test_readable_controls.py::test_failed_receipt_cannot_be_swapped_from_another_request
+FAILED tests/test_readable_controls.py::test_fetch_validation_failure_before_download_needs_no_download_receipt
+8 failed, 35 deselected in 0.16s

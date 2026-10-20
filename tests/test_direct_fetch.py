@@ -275,7 +275,7 @@ def test_direct_cache_never_returns_unverified_evidence(ctx, damage):
     tools.fetch('https://example.org/')
     receipt = ctx.load('fetch_telemetry.json')[0]['receipt']
     if damage == 'text':
-        tools.cache[json.dumps(['fetch', 'https://example.org/', 'direct-readable-v1'])] = 'Fabricated quotation!!'
+        tools.cache[next(iter(tools.cache))] = 'Fabricated quotation!!'
     elif damage == 'raw':
         (ctx.path / receipt['raw_path']).write_bytes(b'corrupted source bytes')
     elif damage == 'owner':

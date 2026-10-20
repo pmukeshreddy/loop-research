@@ -1,0 +1,29 @@
+..F                                                                      [100%]
+=================================== FAILURES ===================================
+_ test_direct_download_failure_never_falls_back_to_model_text[no_readable_text] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-k5lj2ywm/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10baac080>
+reason = 'no_readable_text'
+
+    @pytest.mark.parametrize('reason', ['http_status', 'download_error', 'no_readable_text'])
+    def test_direct_download_failure_never_falls_back_to_model_text(ctx, monkeypatch, reason):
+        from loop_research.page_fetch import FetchError
+        downloads = install_fetch(monkeypatch, FetchError(reason, 'Fixture download failed'))
+        backend = Replies('A fabricated page that no HTTP transport downloaded')
+        tools = ResearchTools(backend, ctx)
+        assert tools.fetch("https://example.org/") == "FETCH_FAILED"
+        assert downloads == ['https://example.org/'] and backend.calls == []
+        assert tools.snapshot()["fetched"] == {}
+        assert tools.ledger == set()
+>       assert tools.snapshot()["failures"] == [{"operation": "fetch", "url": "https://example.org/",
+            "request_id": 1, "source": "backend", "reason": reason, 'error': 'Fixture download failed'}]
+E       AssertionError: assert [{'operation'...ackend', ...}] == [{'operation'...ackend', ...}]
+E         
+E         At index 0 diff: {'operation': 'fetch', 'url': 'https://example.org/', 'request_id': 1, 'source': 'backend', 'reason': 'receipt_integrity', 'error': 'Download extraction validation is missing'} != {'operation': 'fetch', 'url': 'https://example.org/', 'request_id': 1, 'source': 'backend', 'reason': 'no_readable_text', 'error': 'Fixture download failed'}
+E         Use -v to get more diff
+
+tests/test_agent_tools.py:511: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_agent_tools.py::test_direct_download_failure_never_falls_back_to_model_text[no_readable_text]
+1 failed, 2 passed, 44 deselected in 0.08s

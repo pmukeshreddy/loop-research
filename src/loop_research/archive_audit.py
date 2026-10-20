@@ -15,7 +15,7 @@ import re
 import sys
 
 from loop_research.codex_backend import INSTRUCTION
-from loop_research.page_fetch import FETCH_PATH, FetchError, verify_receipt
+from loop_research.page_fetch import FETCH_PATH, TEXT_POLICY, FetchError, verify_receipt
 from loop_research.repl_tools import normalized_url
 from loop_research.rlm_codex_client import transcript
 
@@ -200,25 +200,43 @@ def fetch_audit(task, trajectory, calls, trace, evidence):
                 'raw_page_chars_reason': 'archive_predates_complete_web_event_telemetry'}
         else:
             assert all(measured[key] == request[key] for key in ('id', 'url', 'focus', 'source', 'status'))
+            if measured.get('text_policy') != request.get('text_policy'):
+                raise ArchiveCorruptionError('Direct download request and telemetry validation policy differ')
         row = {**measured, 'measurement_source': 'fetch_telemetry.json' if request['id'] in telemetry else 'legacy_evidence_and_cache',
                'attempts': [], 'trajectory_returns': returned.get(key, []), 'tool_trace_lines': []}
-        if request.get('fetch_path') == FETCH_PATH and request['status'] == 'succeeded' and 'receipt' not in measured:
-            raise ArchiveCorruptionError('Successful direct fetch is missing telemetry/receipt')
+        extraction_rejection = (request.get('text_policy') == TEXT_POLICY and
+            request.get('reason') in ('forbidden_control_characters', 'extraction_decode_error', 'no_readable_text'))
+        if (request.get('fetch_path') == FETCH_PATH and
+            (request['status'] == 'succeeded' or request.get('receipt_id') or extraction_rejection) and
+            'receipt' not in measured):
+            raise ArchiveCorruptionError('Direct download is missing required telemetry/receipt')
         if request.get('fetch_path') == FETCH_PATH and 'receipt' in measured:
             receipt = measured['receipt']
             try:
-                verify_receipt(task, receipt)
+                verify_receipt(task, receipt, expected_policy=request.get('text_policy'))
             except FetchError as error:
                 raise ArchiveCorruptionError('Direct download ' + error.error) from error
+            receipt_id = request.get('receipt_id', owner.get('receipt_id'))
+            if (receipt.get('requested_url') != request['url'] or
+                (receipt_id is not None and receipt['id'] != receipt_id)):
+                raise ArchiveCorruptionError('Direct download receipt identity differs from request/owner')
             if request['status'] == 'succeeded':
                 text = (task / receipt['text_path']).read_bytes().decode('utf-8')
-                cached = cache.get(json.dumps(['fetch', request['url'], FETCH_PATH]))
+                cache_parts = ['fetch', request['url'], FETCH_PATH]
+                if receipt.get('text_policy') is not None:
+                    cache_parts.append(receipt['text_policy'])
+                cached = cache.get(json.dumps(cache_parts))
                 if (receipt['status'] != 'succeeded' or receipt['requested_url'] != request['url'] or
                     text not in evidence['fetched'].get(request['url'], []) or cached != text or
                     any(value['sha256'] not in {receipt['text_sha256'], sha('FETCH_FAILED')}
                         for value in row['trajectory_returns'])):
                     raise ArchiveCorruptionError('Direct download readable text differs from evidence')
             row['direct_receipt_verified'] = True
+            row['text_validation_policy'] = receipt.get('text_policy')
+            row['readability_validation'] = (
+                'not_recorded_by_legacy_policy' if receipt.get('text_policy') is None else
+                'not_extracted' if 'extraction_path' not in receipt else
+                'rejected' if receipt['extraction_validation']['reason'] is not None else 'passed')
             row['download_link'] = link(task / 'downloads' / (receipt['id'] + '.json'))
         for event in trace:
             details = event['details']

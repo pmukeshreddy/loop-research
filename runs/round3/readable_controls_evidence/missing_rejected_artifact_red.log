@@ -1,0 +1,34 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_rejected_extraction_artifact_and_diagnostics_are_bound_by_audit[extraction_removed] _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-ckvlf4_f/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+damage = 'extraction_removed'
+
+    @pytest.mark.parametrize('damage', ['artifact', 'diagnostic', 'policy', 'extraction_removed'])
+    def test_rejected_extraction_artifact_and_diagnostics_are_bound_by_audit(ctx, damage):
+        tools, _ = fetch_tools(ctx, 'Visible \x01 text.', 'text/plain')
+        assert tools.fetch(URL) == 'FETCH_FAILED'
+        telemetry = ctx.load('fetch_telemetry.json')
+        receipt = telemetry[0]['receipt']
+        if damage == 'artifact':
+            (ctx.path / receipt['extraction_path']).write_bytes(b'changed rejected extraction')
+        else:
+            if damage == 'diagnostic':
+                receipt['extraction_validation']['forbidden_control_count'] = 0
+            elif damage == 'policy':
+                receipt['text_policy'] = 'unknown-policy'
+            else:
+                for key in list(receipt):
+                    if key.startswith('extraction_'):
+                        del receipt[key]
+            write_json(ctx.path / 'downloads' / (receipt['id'] + '.json'), receipt)
+            write_json(ctx.path / 'fetch_telemetry.json', telemetry)
+>       with pytest.raises(ArchiveCorruptionError, match='Direct download'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ArchiveCorruptionError
+
+tests/test_readable_controls.py:217: Failed
+=========================== short test summary info ============================
+FAILED tests/test_readable_controls.py::test_rejected_extraction_artifact_and_diagnostics_are_bound_by_audit[extraction_removed]
+1 failed, 33 deselected in 0.09s

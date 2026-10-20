@@ -4,7 +4,7 @@ import threading
 from concurrent.futures import CancelledError, Future, ThreadPoolExecutor
 from urllib.parse import urlsplit, urlunsplit
 from .archive import read_json, write_json
-from .page_fetch import FETCH_PATH, FetchError, PageFetcher, verify_receipt
+from .page_fetch import FETCH_PATH, TEXT_POLICY, FetchError, PageFetcher, verify_receipt
 from .trace import observed
 
 
@@ -54,7 +54,8 @@ class ResearchTools:
 
     def _new_fetch(self, url, focus, source):
         request = {'id': len(self.evidence['fetches']) + 1, 'url': url, 'focus': focus,
-                   'source': source, 'status': 'pending', 'fetch_path': FETCH_PATH}
+                   'source': source, 'status': 'pending', 'fetch_path': FETCH_PATH,
+                   'text_policy': TEXT_POLICY}
         self.evidence['fetches'].append(request)
         self.active_fetches[request['id']] = request
         self.fetch_telemetry[request['id']] = {**request, 'returned_chars': None,
@@ -88,12 +89,13 @@ class ResearchTools:
                 request['error'] = failure['error'] = error
             self.evidence['failures'].append(failure)
 
-    def _record_download(self, key, receipt):
+    def _record_download(self, key, receipt, *, text=None):
         with self.lock:
             self.ctx.check_cancelled()
             request = self.pending_fetches[key]
             if receipt is None:
                 raise ValueError('Direct fetch must supply a durable download receipt')
+            verify_receipt(self.ctx.path, receipt, text=text, expected_policy=TEXT_POLICY)
             request['receipt_id'] = receipt['id']
             measurement = self.fetch_telemetry[request['id']]
             measurement.update(receipt=receipt, raw_page_bytes=receipt.get('raw_page_bytes'),
@@ -129,14 +131,15 @@ class ResearchTools:
                 if request is not None:
                     owner = next((item for item in reversed(self.evidence['fetches'])
                         if item['source'] == 'backend' and item['status'] == 'succeeded'
-                        and item['url'] == target and item.get('fetch_path') == FETCH_PATH), None)
+                        and item['url'] == target and item.get('fetch_path') == FETCH_PATH
+                        and item.get('text_policy') == TEXT_POLICY), None)
                     if owner is not None:
                         request['owner_id'] = owner['id']
                     try:
                         receipt = self.fetch_telemetry.get(owner['id'], {}).get('receipt') if owner else None
                         if receipt is None or receipt.get('requested_url') != target:
                             raise FetchError('receipt_integrity', 'Direct cache has no matching owner receipt')
-                        verify_receipt(self.ctx.path, receipt, text=self.cache[key])
+                        verify_receipt(self.ctx.path, receipt, text=self.cache[key], expected_policy=TEXT_POLICY)
                     except FetchError as error:
                         self._finish_fetch(request, 'failed', reason=error.reason, error=error.error,
                                            returned='FETCH_FAILED')
@@ -281,7 +284,7 @@ class ResearchTools:
                 self.persist()
             raise
         url = normalized
-        key = json.dumps(["fetch", url, FETCH_PATH])
+        key = json.dumps(["fetch", url, FETCH_PATH, TEXT_POLICY])
 
         def call():
             try:
@@ -289,7 +292,7 @@ class ResearchTools:
             except FetchError as error:
                 self._record_download(key, error.receipt)
                 raise
-            self._record_download(key, page.receipt)
+            self._record_download(key, page.receipt, text=page.text)
             return page.text, [url]
 
         return self._cached(key, call, focus=focus)

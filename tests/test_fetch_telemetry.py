@@ -98,7 +98,8 @@ def test_fetch_sizes_link_shared_and_resumed_cache_to_exact_owner_receipt(ctx, m
     assert shared['receipt'] == cached['receipt'] == owner['receipt']
     assert downloads == ['https://example.org/'] and backend.calls == []
     assert not (ctx.path / 'codex_calls.jsonl').exists()
-    assert list(restored.cache) == ['["fetch", "https://example.org/", "direct-readable-v1"]']
+    assert list(restored.cache) == [
+        '["fetch", "https://example.org/", "direct-readable-v1", "unicode-layout-controls-v1"]']
     assert all('returned_chars' not in request for request in restored.snapshot()['fetches'])
 
 

@@ -500,8 +500,15 @@ def test_duplicate_inflight_requests_share_cache_and_propagate_failure(ctx, kind
 
 @pytest.mark.parametrize('reason', ['http_status', 'download_error', 'no_readable_text'])
 def test_direct_download_failure_never_falls_back_to_model_text(ctx, monkeypatch, reason):
-    from loop_research.page_fetch import FetchError
-    downloads = install_fetch(monkeypatch, FetchError(reason, 'Fixture download failed'))
+    from loop_research.page_fetch import FetchError, TEXT_POLICY, verify_receipt
+    error = 'Fixture download failed'
+    reply = FetchError(reason, error)
+    if reason == 'no_readable_text':
+        # A failed extraction follows a real downloaded body, not an HTTP exception.
+        body = b'<html><script>Not rendered.</script><p hidden>Hidden text.</p></html>'
+        reply = {'status': 200, 'headers': {'content-type': 'text/html; charset=utf-8'}, 'body': body}
+        error = 'No static readable text; no model or browser fallback'
+    downloads = install_fetch(monkeypatch, reply)
     backend = Replies('A fabricated page that no HTTP transport downloaded')
     tools = ResearchTools(backend, ctx)
     assert tools.fetch("https://example.org/") == "FETCH_FAILED"
@@ -509,8 +516,16 @@ def test_direct_download_failure_never_falls_back_to_model_text(ctx, monkeypatch
     assert tools.snapshot()["fetched"] == {}
     assert tools.ledger == set()
     assert tools.snapshot()["failures"] == [{"operation": "fetch", "url": "https://example.org/",
-        "request_id": 1, "source": "backend", "reason": reason, 'error': 'Fixture download failed'}]
+        "request_id": 1, "source": "backend", "reason": reason, 'error': error}]
     assert tools.cache == {}
+    if reason == 'no_readable_text':
+        receipt = ctx.load('fetch_telemetry.json')[0]['receipt']
+        assert receipt['status'] == 'failed' and receipt['reason'] == reason
+        assert receipt['parser'] == 'stdlib-html-readable-v1'
+        assert (ctx.path / receipt['raw_path']).read_bytes() == body
+        assert (ctx.path / receipt['extraction_path']).read_bytes() == b''
+        assert receipt['extraction_bytes'] == receipt['extraction_chars'] == 0
+        verify_receipt(ctx.path, receipt, expected_policy=TEXT_POLICY)
 
 
 @pytest.mark.parametrize("depth", [1, 2, 3])
