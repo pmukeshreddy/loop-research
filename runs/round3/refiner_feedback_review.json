@@ -1,0 +1,121 @@
+{
+  "reviewer": "fetch_review",
+  "reviewed_at": "2026-10-20T14:39:01.333114+00:00",
+  "base_commit": "5cd8fcbc3065a49717fd534ab3a804bd99d8090a",
+  "product_commit": "17022a2c2653ae2ee842061915b8a3a57fa911b5",
+  "verdict": "No blocking findings; offline source/test review only, no live preflight success claim.",
+  "scope": "Read-only source/test inspection, isolated-worker tests with injected model transport, pure reconstruction of preserved failed history. No live model/web, installation, source/harness modifications or commits.",
+  "source_and_test_hashes": {
+    "runs/round3/worktrees/refiner-outputs/src/loop_research/refine_feedback.py": "0c5e0688d10d7d7d775122c996cfdda03105e515aa54eb4617f3e47ff2fb8cb7",
+    "runs/round3/worktrees/refiner-outputs/src/loop_research/refine_context.py": "72226e864b91922f78d269e4c2be0494823eb31b4ab71ff5dd8fe6fa2f0574db",
+    "runs/round3/worktrees/refiner-outputs/tests/test_refine_feedback_transport.py": "6170156d16b6aa57db1c92bc24f9a00298ee79967bf76f9e180105f8dcb83aaa",
+    "runs/round3/worktrees/refiner-outputs/tests/test_refine_context.py": "43585036b9f3eaa31d32c7b0055b175075fa489791f02335e306d7981cea33bf",
+    "runs/round3/worktrees/refiner-output-audit/src/loop_research/archive_audit.py": "49053d88d2812d12865b4655e45d9e2ee9c3ef15019f528c08d14406927b3128",
+    "runs/round3/worktrees/refiner-output-audit/tests/test_refinement_transport_audit.py": "f38e2e95fbc97e595f07f3c2ea18f95eef5af405b66be2f67d2bb9573b1cc25f",
+    "runs/round3/worktrees/refiner-output-audit/tests/test_refine_context.py": "174946fd1fb6af9f0f0dd67c2a57fa2cc0a5beae185b7dcd903820e392e31268"
+  },
+  "audit_product_copies_equal": true,
+  "test_results": [
+    {
+      "suite": "Product feedback and isolated planner worker",
+      "worktree": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/refiner-outputs",
+      "targets": [
+        "tests/test_refine_feedback_transport.py",
+        "tests/test_refine_context.py"
+      ],
+      "passed": 21,
+      "duration_s": 12.33,
+      "context_test_hash_at_run": "26f0a72a40213b2026cc2d06717e5d5449c3cc3a21a6b9363487d176294c4403",
+      "tool_receipts": [
+        "61e65e",
+        "98b522"
+      ]
+    },
+    {
+      "suite": "Audit integration",
+      "worktree": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/refiner-output-audit",
+      "targets": [
+        "tests/test_refinement_transport_audit.py"
+      ],
+      "passed": 36,
+      "duration_s": 9.56,
+      "tool_receipts": [
+        "1793b9",
+        "25196a"
+      ]
+    },
+    {
+      "suite": "Subsequently added product regression",
+      "worktree": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/refiner-outputs",
+      "targets": [
+        "tests/test_refine_context.py::test_oversized_control_response_fails_locally_without_another_model_dispatch"
+      ],
+      "passed": 1,
+      "duration_s": 0.88,
+      "tool_receipts": [
+        "6b4600",
+        "36e96d"
+      ]
+    }
+  ],
+  "total_independent_passes": 58,
+  "test_provenance": "All tests used main .venv Python with PYTHONPATH=src in the named worktree; import paths and product/audit hashes asserted. Tool output is the reviewer receipt; no separate raw reviewer log. Final product bytes unchanged after test-only addition.",
+  "saved_failure_projection": {
+    "cohort": "context_refiner_awake_v1",
+    "run_id": "refine-replay-02154493d8d847b58f3e787aceef79aa",
+    "job_id": "29ed2c2a399d40839eece9bb00b2aab1",
+    "old_backend_chars": 3039692,
+    "original_instructions_backend_chars": 58655,
+    "updated_instructions_backend_chars": 59335,
+    "instruction_delta_chars": 680,
+    "updated_instruction_sha256": "c4dd413bd5a751d98e2e74bed3748e9efd298a509f3f19013bfc00a51fe23aef",
+    "externalized_iterations": [
+      2
+    ],
+    "original_stdout_chars": 2981867,
+    "original_stdout_sha256": "cec30bcf71eb99e8618559d3299e16c1e080696cfa0f8e6c468d69ccd0c1d825",
+    "original_formatted_feedback_chars": 2981892,
+    "receipt_chars": 855,
+    "retrieved_output_equal": true,
+    "copy_mutation_preserves_original": true,
+    "prior_inline_feedback_and_assistant_bytes_preserved": true,
+    "tool_receipts": [
+      "d32a6e",
+      "16fe06"
+    ],
+    "scope": "Deterministic replay of recorded responses/outputs only; no new model behavior or semantic success claimed."
+  },
+  "findings": [],
+  "assessments": {
+    "constraints": "Overflow-planner feedback representation changes explicitly. No stdout/stderr excerpts, fact/field selection, summarization, padding, or discarded output. Complete host originals remain accessible; research root and direct small-input path are byte-identical.",
+    "cost_and_cumulative_history": "Exact backend size includes prefix/wrappers; only positive whole-iteration savings qualify; descending net saving with iteration tie-break. Prior references persist, new small observations inline when possible. Unfit control history fails locally and atomically.",
+    "immutability_and_errors": "Only sealed complete iterations are exposed, as fresh deep copies with code/stdout/stderr/execution/final status. Receipts visibly flag stderr; failed final-ready block behavior remains. Multi-block and >1MB stderr recovery tested.",
+    "audit": "Policy and initial conversation checked before replay dispatch. Each actual planner prompt is reconstructed from preceding model responses, complete executed blocks and exact prior externalizations. Read identities/ordering checked; model attempts remain distinct from workers. Existing partial/missing-completion behavior and old-policy compatibility remain.",
+    "generality": "No task/site names, model/deadline/retry changes, automatic subcalls, supplied-candidate filtering or strict proposal/accounting relaxation."
+  },
+  "unchanged_from_base": {
+    "src/loop_research/agent.py": "ccccf9b577c3d8ba6b167478d1dfd452ed30fff33ad6fd664015927f21579a81",
+    "src/loop_research/rlm_codex_client.py": "618267b7ea63cbd1690d560fe419a1ba66cf7322733bba4d4a81df2112abb436",
+    "src/loop_research/refine.py": "f897d48529053151404da1b1edc2701e461d7864c91cdde08d05098ae092f50e",
+    "src/loop_research/codex_backend.py": "87ee41940e031dad9d0e9fbdf7c22c61e91a713ad936ec8a8a52624c7393eaba",
+    "src/loop_research/page_fetch.py": "33d89952a1b6381633776faff7202690fcece4eefde4745a0902cd43172ce56d",
+    "src/loop_research/benchmarks/wandr/grader.py": "91756527ba0dc219a51a64c0937aac609bd6ef506ed889d565278d83fa7f8fbf",
+    "src/loop_research/evaluation.py": "22007396b461efa736519959c63a043ee85afb5b65365f5d5f0f5c50d8cf144c",
+    "pyproject.toml": "5b92bfb1897cf499a5019f5362968f3ee68ea1e95222a3fbc0e242e5882f53a0",
+    "config.yaml": "513b05fad9dac040f86012aa0574ca4681c72cb2303223d7b665b5fbf04fb0bc"
+  },
+  "limitations": [
+    "Controls/model responses can still become too large after all profitable references; visible failure remains.",
+    "Model-selected oversized subcalls can still fail; no automatic decomposition or extra retries introduced.",
+    "Full output availability is not proof of semantic inspection or future proposal quality.",
+    "Audit verifies consistent provenance and representation, not every semantic claim.",
+    "Fresh live saved replays and parent-owned integrated verification remain necessary."
+  ],
+  "audit_commit": "6f1905aada061bd99b6f7e05bc930b28e84dfe30",
+  "integrated_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d",
+  "integrated_source_hashes_verified": {
+    "src/loop_research/refine_feedback.py": "0c5e0688d10d7d7d775122c996cfdda03105e515aa54eb4617f3e47ff2fb8cb7",
+    "src/loop_research/refine_context.py": "72226e864b91922f78d269e4c2be0494823eb31b4ab71ff5dd8fe6fa2f0574db",
+    "src/loop_research/archive_audit.py": "49053d88d2812d12865b4655e45d9e2ee9c3ef15019f528c08d14406927b3128"
+  }
+}
