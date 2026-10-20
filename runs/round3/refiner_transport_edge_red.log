@@ -1,0 +1,99 @@
+FF.F.                                                                    [100%]
+=================================== FAILURES ===================================
+___ test_replay_rejects_changed_full_schema_even_when_reference_enum_matches ___
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-5vwbomdd/pytest-of-mukeshreddypochamreddy/pytest-0/test_replay_rejects_changed_fu0')
+
+    def test_replay_rejects_changed_full_schema_even_when_reference_enum_matches(tmp_path):
+        expected = logical()
+        prompt, schema = direct(expected)
+>       ctx, state = recorder(tmp_path, expected, schema=copy.deepcopy(schema))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_saved_refine_transport.py:134: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-5vwbomdd/pytest-of-mukeshreddypochamreddy/pytest-0/test_replay_rejects_changed_fu0')
+expected = {'focus': None, 'candidate_inventory': [], 'entries': [], 'trajectory': [], ...}
+response = '{"fixture":"response"}'
+schema = {'$defs': {'Candidate': {'additionalProperties': False, 'properties': {'id': {'minLength': 1, 'title': 'Id', 'type': '..., 'title': 'Decisions', 'type': 'array'}}, 'required': ['summary', 'edits', 'additional_candidates', 'decisions'], ...}
+
+    def recorder(tmp_path, expected, response='{"fixture":"response"}', schema=None):
+        executable = tmp_path / 'offline-codex'
+        executable.write_text(f'#!{sys.executable}\nimport pathlib,sys\n'
+                              'sys.stdin.read()\n'
+                              f'pathlib.Path(sys.argv[sys.argv.index("--output-last-message")+1]).write_text({response!r})\n')
+        executable.chmod(0o755)
+        config = Config.load(Path(__file__).resolve().parents[1] / 'config.yaml')
+        config.codex.bin = str(executable)
+        config.codex.max_retries = 0
+>       context_type, state = helper().recording_context(RunContext, expected, expected_schema=schema)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: recording_context() got an unexpected keyword argument 'expected_schema'
+
+tests/test_saved_refine_transport.py:32: TypeError
+_ test_actual_attempt_identity_is_strict_even_for_identical_inputs[completion_prompt_missing] _
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-5vwbomdd/pytest-of-mukeshreddypochamreddy/pytest-0/test_actual_attempt_identity_i0')
+damage = 'completion_prompt_missing'
+
+    @pytest.mark.parametrize('damage', ['completion_prompt_missing', 'terminal_owner', 'retry_sequence'])
+    def test_actual_attempt_identity_is_strict_even_for_identical_inputs(tmp_path, damage):
+        _, job, directory, actions, calls = transport(tmp_path, retry=True)
+        if damage == 'completion_prompt_missing':
+            calls[0].pop('prompt')
+        elif damage == 'terminal_owner':
+            second = {**actions[1], 'action_id': 'another-action'}
+            actions.insert(2, second)
+            actions[4]['action_id'] = 'another-action'  # failed terminal for the original action
+        else:
+            calls[1]['attempt'] = 0
+            receipt_path = tmp_path/'codex_attempts/call-1.json'
+            receipt = json.loads(receipt_path.read_text())
+            receipt['attempt'] = 0
+            save(receipt_path, receipt)
+            for event in actions:
+                if event.get('call_id') == 'call-1':
+                    event['attempt'] = 0
+        save_lines(directory/'actions.jsonl', actions)
+        save_lines(tmp_path/'codex_calls.jsonl', calls)
+>       with pytest.raises(audit.ArchiveCorruptionError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ArchiveCorruptionError
+
+tests/test_refinement_transport_audit.py:211: Failed
+_ test_actual_attempt_identity_is_strict_even_for_identical_inputs[retry_sequence] _
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-5vwbomdd/pytest-of-mukeshreddypochamreddy/pytest-0/test_actual_attempt_identity_i2')
+damage = 'retry_sequence'
+
+    @pytest.mark.parametrize('damage', ['completion_prompt_missing', 'terminal_owner', 'retry_sequence'])
+    def test_actual_attempt_identity_is_strict_even_for_identical_inputs(tmp_path, damage):
+        _, job, directory, actions, calls = transport(tmp_path, retry=True)
+        if damage == 'completion_prompt_missing':
+            calls[0].pop('prompt')
+        elif damage == 'terminal_owner':
+            second = {**actions[1], 'action_id': 'another-action'}
+            actions.insert(2, second)
+            actions[4]['action_id'] = 'another-action'  # failed terminal for the original action
+        else:
+            calls[1]['attempt'] = 0
+            receipt_path = tmp_path/'codex_attempts/call-1.json'
+            receipt = json.loads(receipt_path.read_text())
+            receipt['attempt'] = 0
+            save(receipt_path, receipt)
+            for event in actions:
+                if event.get('call_id') == 'call-1':
+                    event['attempt'] = 0
+        save_lines(directory/'actions.jsonl', actions)
+        save_lines(tmp_path/'codex_calls.jsonl', calls)
+>       with pytest.raises(audit.ArchiveCorruptionError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ArchiveCorruptionError
+
+tests/test_refinement_transport_audit.py:211: Failed
+=========================== short test summary info ============================
+FAILED tests/test_saved_refine_transport.py::test_replay_rejects_changed_full_schema_even_when_reference_enum_matches
+FAILED tests/test_refinement_transport_audit.py::test_actual_attempt_identity_is_strict_even_for_identical_inputs[completion_prompt_missing]
+FAILED tests/test_refinement_transport_audit.py::test_actual_attempt_identity_is_strict_even_for_identical_inputs[retry_sequence]
+3 failed, 2 passed in 0.09s

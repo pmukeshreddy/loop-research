@@ -400,6 +400,276 @@ def archived_calls(task, calls):
     return list(attempts.values())
 
 
+def _source_file(path):
+    data = path.read_bytes()
+    return dict(path=str(path.resolve()), bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+
+
+def _require(condition, message):
+    if not condition:
+        raise ArchiveCorruptionError(message)
+
+
+def verify_refinement_context(task, job, expected=None):
+    """Verify the complete overflow snapshot before dispatch or during an audit.
+
+    ``planner_prompt`` is preserved pre-routing evidence, never an actual
+    overflow call. The context is its exact decoded logical payload, including
+    every supplied observation, entry, candidate and evidence anchor.
+    """
+    from .refine import evidence_anchors
+    from .shared_text import decode_shared_text
+    task = Path(task)
+    job_id = job['job_id']
+    _require(isinstance(job_id, str) and Path(job_id).name == job_id
+             and job_id not in ('', '.', '..'), 'Invalid refinement job identity')
+    directory = task / 'refine_planners' / job_id
+    metadata = job['planner_representation']
+    prompt = job['planner_prompt']
+    size = metadata['wire_payload_chars']
+    _require(type(size) is int and 0 < size <= len(prompt), 'Invalid refinement wire length')
+    wire_text = prompt[-size:]
+    wire = json.loads(wire_text)
+    _require(sha(wire_text) == metadata['wire_payload_sha256']
+             and wire['format'] == metadata['format'], 'Refinement wire identity differs')
+    payload = decode_shared_text(wire)
+    logical_text = json.dumps(payload, ensure_ascii=False)
+    _require(len(logical_text) == metadata['logical_payload_chars']
+             and sha(logical_text) == metadata['logical_payload_sha256'],
+             'Refinement logical identity differs')
+    schema = job['planner_schema']
+    saved = dict(focus=job['focus'], candidate_inventory=job['candidate_inventory'],
+                 entries=list(job['snapshot']['entries'].values()), **job['observed'],
+                 max_edits=schema['properties']['edits']['maxItems'])
+    if expected is not None:
+        _require(json.dumps(saved, ensure_ascii=False) == json.dumps(expected, ensure_ascii=False),
+                 'Refinement source input differs from replay input')
+    anchors = evidence_anchors(saved)
+    saved['evidence_index'] = anchors
+    _require(json.dumps(saved, ensure_ascii=False) == logical_text
+             and job['evidence_index'] == anchors, 'Refinement logical fields or evidence anchors differ')
+    _require(schema['$defs']['EvidenceRef']['enum'] == anchors,
+             'Refinement schema enum differs from complete evidence anchors')
+    context_path = directory / 'context.json'
+    _require(context_path.is_file() and context_path.read_text() == logical_text,
+             'Refinement context differs from complete decoded input')
+    _require(read(directory / 'schema.json') == schema, 'Refinement context schema differs')
+    manifest = read(directory / 'manifest.json', {})
+    routing = job['planner_transport']
+    _require(routing['kind'] == 'repl-context-v1'
+             and manifest.get('transport') == routing['kind']
+             and manifest.get('job_id') == job_id
+             and manifest.get('logical_payload_chars') == len(logical_text)
+             and manifest.get('logical_payload_sha256') == sha(logical_text),
+             'Refinement manifest identity differs')
+    _require(routing['complete_prompt_chars'] == len(INSTRUCTION + prompt)
+             and routing['complete_prompt_chars'] > routing['input_limit_chars']
+             and manifest['limits']['backend_prompt_chars'] == routing['input_limit_chars'],
+             'Refinement routing metadata differs')
+    request = read(directory / 'request.json')
+    if request is not None:
+        _require(request['schema'] == schema and request['limits'] == manifest['limits'],
+                 'Refinement worker contract differs from authoritative schema/limits')
+    return dict(job_id=job_id, transport=routing['kind'], logical_input_equal=True,
+                schema_enum_exact=True, pre_routing_input_dispatched=False,
+                logical_payload_chars=len(logical_text), logical_payload_sha256=sha(logical_text),
+                pre_routing_prompt_chars=routing['complete_prompt_chars'],
+                schema_sha256=sha(json.dumps(schema)), payload=payload, schema=schema,
+                manifest=manifest, directory=directory)
+
+
+def audit_refinement_transports(task):
+    """Bind overflow actions to backend receipts without conflating worker roles.
+
+    A dispatch receipt without a completion is valid interrupted evidence. Its
+    full input is verified against the action; response/outcome/usage stay null.
+    """
+    task = Path(task).resolve()
+    try:
+        return _audit_refinement_transports(task)
+    except (AssertionError, KeyError, TypeError, ValueError, OSError) as error:
+        if isinstance(error, ArchiveCorruptionError):
+            raise
+        raise ArchiveCorruptionError(f'{task}: invalid refinement transport: {error}') from error
+
+
+def _audit_refinement_transports(task):
+    from jsonschema import Draft202012Validator
+    from .refine import Proposal, validate_accounting
+    jobs, job_paths = {}, defaultdict(list)
+    for path in [*sorted((task / 'refine_requests').glob('*/*.json')), task / 'refine_state.json']:
+        job = read(path)
+        if not isinstance(job, dict) or 'job_id' not in job:
+            continue
+        job_id = job['job_id']
+        if path.name != 'refine_state.json':
+            _require(path.stem == job_id, f'{path}: refinement job identity differs')
+        if job_id in jobs:
+            for key in ('planner_prompt', 'planner_schema', 'planner_representation', 'planner_transport'):
+                _require(jobs[job_id].get(key) == job.get(key), f'{path}: conflicting refinement {key}')
+        jobs[job_id] = job
+        job_paths[job_id].append(path)
+    overflow = [job for job in jobs.values() if job.get('planner_transport', {}).get('kind') == 'repl-context-v1']
+    if not overflow:
+        return []
+    completions = {}
+    for call in lines(task / 'codex_calls.jsonl'):
+        if call.get('purpose') == 'refine':
+            _require(call['call_id'] not in completions, 'Duplicate refinement completion identity')
+            completions[call['call_id']] = call
+    receipts = {}
+    receipt_paths = {}
+    for path in sorted((task / 'codex_attempts').glob('*.json')):
+        call = read(path)
+        if call.get('purpose') == 'refine':
+            _require(call['call_id'] == path.stem and call['call_id'] not in receipts,
+                     'Duplicate or mismatched refinement dispatch identity')
+            receipts[call['call_id']] = call
+            receipt_paths[call['call_id']] = path
+    all_bound, reports = set(), []
+    for job in overflow:
+        checked = verify_refinement_context(task, job)
+        directory, payload, schema = (checked.pop(key) for key in ('directory', 'payload', 'schema'))
+        manifest = checked.pop('manifest')
+        events = lines(directory / 'actions.jsonl')
+        starts, terminals, bound, attempts, blocks, code = {}, {}, {}, [], {}, []
+        missing, returned = [], []
+        for event in events:
+            kind = event['event']
+            if kind == 'snapshot.read':
+                _require(event['logical_payload_sha256'] == checked['logical_payload_sha256'],
+                         'Refinement snapshot read hash differs')
+            elif kind == 'model.start':
+                action = event['action_id']
+                _require(action not in starts and event['role'] in ('planner', 'sub'),
+                         'Duplicate or invalid refinement model action')
+                _require(isinstance(event['prompt'], str)
+                         and event['backend_prompt'] == INSTRUCTION + event['prompt'],
+                         'Refinement action backend prompt differs')
+                starts[action] = dict(event)
+            elif kind == 'model.attempt':
+                action, call_id = event['action_id'], event['call_id']
+                _require(action in starts and event['role'] == starts[action]['role'],
+                         'Refinement attempt lacks its model action')
+                start = starts[action]
+                _require('_terminal' not in start, 'Refinement attempt follows its model terminal')
+                _require(call_id in receipts or call_id in completions,
+                         'Refinement action has neither dispatch receipt nor completion')
+                full, output_schema = start['backend_prompt'], start.get('schema')
+                schema_text = json.dumps(output_schema) if output_schema is not None else None
+                for call in (receipts.get(call_id), completions.get(call_id)):
+                    if call is None:
+                        continue
+                    _require(call['purpose'] == 'refine' and call['model'] == event['model']
+                             and call['attempt'] == event['attempt']
+                             and call['prompt_chars'] == len(full) and call['prompt_sha256'] == sha(full)
+                             and call.get('prompt', full) == full,
+                             'Refinement attempt input or identity differs')
+                    _require(call.get('schema_chars') == (len(schema_text) if schema_text is not None else None)
+                             and call.get('schema_sha256') == (sha(schema_text) if schema_text is not None else None),
+                             'Refinement attempt schema differs')
+                if event['status'] == 'dispatched':
+                    _require(call_id not in all_bound, 'Refinement attempt bound more than once')
+                    all_bound.add(call_id)
+                    prior = [row for row in attempts if row['action_id'] == action]
+                    _require(event['attempt'] == len(prior) and (not prior or
+                             terminals.get(prior[-1]['call_id'], {}).get('status') == 'failed'),
+                             'Refinement retry sequence differs')
+                    bound[call_id] = action
+                    completion = completions.get(call_id)
+                    response = completion.get('response') if completion is not None else None
+                    if completion is not None:
+                        _require(completion.get('prompt') == full and isinstance(response, str)
+                                 and completion['response_chars'] == len(response),
+                                 'Refinement completion full response missing or inconsistent')
+                    else:
+                        missing.append(call_id)
+                    attempts.append(dict(call_id=call_id, action_id=action, role=event['role'],
+                        model=event['model'], attempt=event['attempt'], prompt=full, schema=output_schema,
+                        prompt_chars=len(full), prompt_sha256=sha(full), response=response,
+                        outcome=('failed' if completion.get('error') else 'succeeded') if completion is not None else None,
+                        error=completion.get('error') if completion is not None else None,
+                        usage=completion.get('usage') if completion is not None else None,
+                        completion_available=completion is not None,
+                        unavailable_reason=None if completion is not None else 'completion_not_archived'))
+                else:
+                    _require(event['status'] in ('failed', 'succeeded') and bound.get(call_id) == action
+                             and call_id not in terminals, 'Invalid refinement attempt transition')
+                    terminals[call_id] = event
+                    if call_id in completions:
+                        _require(bool(completions[call_id].get('error')) == (event['status'] == 'failed'),
+                                 'Refinement completion outcome differs')
+            elif kind in ('model.end', 'model.error'):
+                action = event['action_id']
+                _require(action in starts and '_terminal' not in starts[action]
+                         and event['role'] == starts[action]['role'],
+                         'Refinement model terminal lacks a unique start')
+                starts[action]['_terminal'] = event
+                if kind == 'model.end':
+                    candidates = [row for row in attempts if row['action_id'] == action]
+                    _require(bool(candidates) and candidates[-1]['outcome'] == 'succeeded'
+                             and event['response'] == candidates[-1]['response'],
+                             'Refinement model response differs from actual completion')
+            elif kind in ('code.start', 'code.end'):
+                key = (event['iteration'], event['block'])
+                if kind == 'code.start':
+                    _require(key not in blocks and isinstance(event['code'], str), 'Duplicate refinement code block')
+                    blocks[key] = dict(event)
+                else:
+                    _require(key in blocks and '_end' not in blocks[key], 'Refinement code end lacks a unique start')
+                    blocks[key]['_end'] = event
+                    code.append(dict(iteration=key[0], block=key[1], code=blocks[key]['code'],
+                                     **{k: v for k, v in event.items() if k not in ('iteration', 'block')}))
+            elif kind == 'proposal.returned':
+                returned.append(event['text'])
+            elif kind != 'iteration.end':
+                raise ArchiveCorruptionError('Unknown refinement action: ' + kind)
+        valid, accounting, validation_error = None, None, None
+        if returned:
+            _require(len(returned) == 1, 'Duplicate refinement proposal return')
+            ready = [block for block in code if block.get('answer_ready')]
+            _require(bool(ready) and not ready[-1]['stderr']
+                     and ready[-1]['final_answer'] == returned[0], 'Refinement readiness differs from returned proposal')
+            if job.get('response_text') is not None:
+                _require(job['response_text'] == returned[0], 'Refinement returned proposal differs from job')
+            try:
+                raw = json.loads(returned[0])
+                Draft202012Validator(schema).validate(raw)
+                proposal = Proposal.model_validate(raw)
+                valid = True
+                validate_accounting(proposal, payload)
+                accounting = True
+                if job.get('proposal') is not None:
+                    _require(job['proposal'] == proposal.model_dump(), 'Refinement saved proposal differs')
+            except Exception as error:
+                if job.get('status') in ('planned', 'applied') or isinstance(error, ArchiveCorruptionError):
+                    raise ArchiveCorruptionError('Invalid completed refinement proposal: ' + str(error)) from error
+                validation_error = f'{type(error).__name__}: {error}'
+                if valid is None:
+                    valid = False
+                accounting = False
+        partial = bool(missing or any('_terminal' not in item for item in starts.values())
+                       or any('_end' not in item for item in blocks.values()) or not returned)
+        _require(not (job.get('status') in ('planned', 'applied') and partial),
+                 'Completed refinement job lacks complete action evidence')
+        sources = [*job_paths[job['job_id']], *directory.rglob('*'), task / 'codex_calls.jsonl',
+                   *[receipt_paths[key] for key in bound if key in receipt_paths]]
+        reports.append(dict(**checked, status='partial' if partial else 'available',
+            job_status=job.get('status'), manifest_status=manifest.get('status'),
+            model_action_count=len(starts), backend_attempt_count=len(attempts),
+            attempts=attempts, actions=events, code_blocks=code,
+            missing_completion_call_ids=missing, proposal_schema_valid=valid,
+            accounting_valid=accounting, proposal_validation_error=validation_error,
+            source_files=[_source_file(path) for path in sorted(set(sources)) if path.is_file()]))
+    # Direct jobs can coexist with context jobs; retain their monolithic identity.
+    direct_hashes = {sha(INSTRUCTION + job['planner_prompt']) for job in jobs.values()
+                     if 'planner_prompt' in job and not job.get('planner_transport')}
+    for call_id, call in {**receipts, **completions}.items():
+        _require(call_id in all_bound or call.get('prompt_sha256') in direct_hashes,
+                 'Unbound refinement backend attempt: ' + call_id)
+    return reports
+
+
 def attach_models(models, attempts, task):
     by_hash = defaultdict(deque)
     for call in attempts:
@@ -655,6 +925,10 @@ def _audit_task(task, run, excerpt_trace_lines):
         source_files=[dict(path=str(path), sha256=hashlib.sha256(path.read_bytes()).hexdigest(), bytes=path.stat().st_size)
             for path in sources if path.exists()], _largest_prompt_text=full)
     result['metrics'] = measure_task(task, run, calls, attempts, trace, evidence)
+    result['refinement_transports'] = audit_refinement_transports(task)
+    result['source_files'] = list({item['path']: item for item in [
+        *result['source_files'], *[source for transport in result['refinement_transports']
+                                 for source in transport['source_files']]]}.values())
     if multi_task:
         result['run_trace'] = dict(scope='run', path=str(run / 'trace.jsonl'), events=run_trace)
     if trace_reason:

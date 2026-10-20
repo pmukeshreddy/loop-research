@@ -1,0 +1,512 @@
+FFFFFFFF                                                                 [100%]
+=================================== FAILURES ===================================
+________ test_direct_guard_and_recorder_survive_dataclass_context_copy _________
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-wseopii8/pytest-of-mukeshreddypochamreddy/pytest-0/test_direct_guard_and_recorder0')
+
+    def test_direct_guard_and_recorder_survive_dataclass_context_copy(tmp_path):
+        expected = logical()
+>       ctx, state = recorder(tmp_path, expected)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_saved_refine_transport.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-wseopii8/pytest-of-mukeshreddypochamreddy/pytest-0/test_direct_guard_and_recorder0')
+expected = {'focus': None, 'candidate_inventory': [], 'entries': [], 'trajectory': [], ...}
+response = '{"fixture":"response"}'
+
+    def recorder(tmp_path, expected, response='{"fixture":"response"}'):
+        executable = tmp_path / 'offline-codex'
+        executable.write_text(f'#!{sys.executable}\nimport pathlib,sys\n'
+                              'sys.stdin.read()\n'
+                              f'pathlib.Path(sys.argv[sys.argv.index("--output-last-message")+1]).write_text({response!r})\n')
+        executable.chmod(0o755)
+>       config = Config()
+                 ^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 11 validation errors for Config
+E       models
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       codex
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       rlm
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       agent
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       data
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       wandr
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       harness
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       stream
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       refine
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       bridge
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       verify
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+
+tests/test_saved_refine_transport.py:28: ValidationError
+_ test_copied_context_rejects_research_or_changed_direct_input_before_process[purpose] _
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-wseopii8/pytest-of-mukeshreddypochamreddy/pytest-0/test_copied_context_rejects_re0')
+damage = 'purpose'
+
+    @pytest.mark.parametrize('damage', ['purpose', 'web', 'payload', 'schema', 'missing_schema'])
+    def test_copied_context_rejects_research_or_changed_direct_input_before_process(tmp_path, damage):
+        expected = logical()
+>       ctx, state = recorder(tmp_path, expected)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_saved_refine_transport.py:64: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-wseopii8/pytest-of-mukeshreddypochamreddy/pytest-0/test_copied_context_rejects_re0')
+expected = {'focus': None, 'candidate_inventory': [], 'entries': [], 'trajectory': [], ...}
+response = '{"fixture":"response"}'
+
+    def recorder(tmp_path, expected, response='{"fixture":"response"}'):
+        executable = tmp_path / 'offline-codex'
+        executable.write_text(f'#!{sys.executable}\nimport pathlib,sys\n'
+                              'sys.stdin.read()\n'
+                              f'pathlib.Path(sys.argv[sys.argv.index("--output-last-message")+1]).write_text({response!r})\n')
+        executable.chmod(0o755)
+>       config = Config()
+                 ^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 11 validation errors for Config
+E       models
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       codex
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       rlm
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       agent
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       data
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       wandr
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       harness
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       stream
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       refine
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       bridge
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       verify
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+
+tests/test_saved_refine_transport.py:28: ValidationError
+_ test_copied_context_rejects_research_or_changed_direct_input_before_process[web] _
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-wseopii8/pytest-of-mukeshreddypochamreddy/pytest-0/test_copied_context_rejects_re1')
+damage = 'web'
+
+    @pytest.mark.parametrize('damage', ['purpose', 'web', 'payload', 'schema', 'missing_schema'])
+    def test_copied_context_rejects_research_or_changed_direct_input_before_process(tmp_path, damage):
+        expected = logical()
+>       ctx, state = recorder(tmp_path, expected)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_saved_refine_transport.py:64: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-wseopii8/pytest-of-mukeshreddypochamreddy/pytest-0/test_copied_context_rejects_re1')
+expected = {'focus': None, 'candidate_inventory': [], 'entries': [], 'trajectory': [], ...}
+response = '{"fixture":"response"}'
+
+    def recorder(tmp_path, expected, response='{"fixture":"response"}'):
+        executable = tmp_path / 'offline-codex'
+        executable.write_text(f'#!{sys.executable}\nimport pathlib,sys\n'
+                              'sys.stdin.read()\n'
+                              f'pathlib.Path(sys.argv[sys.argv.index("--output-last-message")+1]).write_text({response!r})\n')
+        executable.chmod(0o755)
+>       config = Config()
+                 ^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 11 validation errors for Config
+E       models
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       codex
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       rlm
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       agent
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       data
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       wandr
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       harness
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       stream
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       refine
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       bridge
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       verify
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+
+tests/test_saved_refine_transport.py:28: ValidationError
+_ test_copied_context_rejects_research_or_changed_direct_input_before_process[payload] _
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-wseopii8/pytest-of-mukeshreddypochamreddy/pytest-0/test_copied_context_rejects_re2')
+damage = 'payload'
+
+    @pytest.mark.parametrize('damage', ['purpose', 'web', 'payload', 'schema', 'missing_schema'])
+    def test_copied_context_rejects_research_or_changed_direct_input_before_process(tmp_path, damage):
+        expected = logical()
+>       ctx, state = recorder(tmp_path, expected)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_saved_refine_transport.py:64: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-wseopii8/pytest-of-mukeshreddypochamreddy/pytest-0/test_copied_context_rejects_re2')
+expected = {'focus': None, 'candidate_inventory': [], 'entries': [], 'trajectory': [], ...}
+response = '{"fixture":"response"}'
+
+    def recorder(tmp_path, expected, response='{"fixture":"response"}'):
+        executable = tmp_path / 'offline-codex'
+        executable.write_text(f'#!{sys.executable}\nimport pathlib,sys\n'
+                              'sys.stdin.read()\n'
+                              f'pathlib.Path(sys.argv[sys.argv.index("--output-last-message")+1]).write_text({response!r})\n')
+        executable.chmod(0o755)
+>       config = Config()
+                 ^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 11 validation errors for Config
+E       models
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       codex
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       rlm
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       agent
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       data
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       wandr
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       harness
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       stream
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       refine
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       bridge
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       verify
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+
+tests/test_saved_refine_transport.py:28: ValidationError
+_ test_copied_context_rejects_research_or_changed_direct_input_before_process[schema] _
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-wseopii8/pytest-of-mukeshreddypochamreddy/pytest-0/test_copied_context_rejects_re3')
+damage = 'schema'
+
+    @pytest.mark.parametrize('damage', ['purpose', 'web', 'payload', 'schema', 'missing_schema'])
+    def test_copied_context_rejects_research_or_changed_direct_input_before_process(tmp_path, damage):
+        expected = logical()
+>       ctx, state = recorder(tmp_path, expected)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_saved_refine_transport.py:64: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-wseopii8/pytest-of-mukeshreddypochamreddy/pytest-0/test_copied_context_rejects_re3')
+expected = {'focus': None, 'candidate_inventory': [], 'entries': [], 'trajectory': [], ...}
+response = '{"fixture":"response"}'
+
+    def recorder(tmp_path, expected, response='{"fixture":"response"}'):
+        executable = tmp_path / 'offline-codex'
+        executable.write_text(f'#!{sys.executable}\nimport pathlib,sys\n'
+                              'sys.stdin.read()\n'
+                              f'pathlib.Path(sys.argv[sys.argv.index("--output-last-message")+1]).write_text({response!r})\n')
+        executable.chmod(0o755)
+>       config = Config()
+                 ^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 11 validation errors for Config
+E       models
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       codex
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       rlm
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       agent
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       data
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       wandr
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       harness
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       stream
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       refine
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       bridge
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       verify
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+
+tests/test_saved_refine_transport.py:28: ValidationError
+_ test_copied_context_rejects_research_or_changed_direct_input_before_process[missing_schema] _
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-wseopii8/pytest-of-mukeshreddypochamreddy/pytest-0/test_copied_context_rejects_re4')
+damage = 'missing_schema'
+
+    @pytest.mark.parametrize('damage', ['purpose', 'web', 'payload', 'schema', 'missing_schema'])
+    def test_copied_context_rejects_research_or_changed_direct_input_before_process(tmp_path, damage):
+        expected = logical()
+>       ctx, state = recorder(tmp_path, expected)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_saved_refine_transport.py:64: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-wseopii8/pytest-of-mukeshreddypochamreddy/pytest-0/test_copied_context_rejects_re4')
+expected = {'focus': None, 'candidate_inventory': [], 'entries': [], 'trajectory': [], ...}
+response = '{"fixture":"response"}'
+
+    def recorder(tmp_path, expected, response='{"fixture":"response"}'):
+        executable = tmp_path / 'offline-codex'
+        executable.write_text(f'#!{sys.executable}\nimport pathlib,sys\n'
+                              'sys.stdin.read()\n'
+                              f'pathlib.Path(sys.argv[sys.argv.index("--output-last-message")+1]).write_text({response!r})\n')
+        executable.chmod(0o755)
+>       config = Config()
+                 ^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 11 validation errors for Config
+E       models
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       codex
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       rlm
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       agent
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       data
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       wandr
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       harness
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       stream
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       refine
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       bridge
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       verify
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+
+tests/test_saved_refine_transport.py:28: ValidationError
+_ test_real_isolated_overflow_replay_counts_worker_separately_and_audits_actual_calls _
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-wseopii8/pytest-of-mukeshreddypochamreddy/pytest-0/test_real_isolated_overflow_re0')
+
+    def test_real_isolated_overflow_replay_counts_worker_separately_and_audits_actual_calls(tmp_path):
+        from loop_research.archive_audit import audit_refinement_transports
+        observed = {'trajectory': [{'result': ''.join(random.Random(5).choices(string.ascii_letters, k=1_060_000))}],
+                    'self_check': {'issues': [], 'signals': []}}
+        expected = {**logical(), **observed}
+        proposal = {'summary': 'No supported edit.', 'edits': [], 'additional_candidates': [], 'decisions': []}
+        source_hash = hashlib.sha256(observed['trajectory'][0]['result'].encode()).hexdigest()
+        code = f'''import json, hashlib
+    assert hashlib.sha256(context["trajectory"][0]["result"].encode()).hexdigest() == {source_hash!r}
+    assert context == snapshot()
+    assert llm_query("Review fixture evidence") == "Reviewed complete fixture evidence."
+    answer["content"] = json.dumps({proposal!r})
+    answer["ready"] = True'''
+>       ctx, state = recorder(tmp_path, expected, '```repl\n' + code + '\n```')
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_saved_refine_transport.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-wseopii8/pytest-of-mukeshreddypochamreddy/pytest-0/test_real_isolated_overflow_re0')
+expected = {'focus': None, 'candidate_inventory': [], 'entries': [], 'trajectory': [{'result': 'GMPXMVbyXHUfymCDaloVNiPhGgaTklZTp...zSNrGVGVmGfvBxLVIjYngQKOiFcFGNWTqwJkDWhuwlaGuRPKlfFhoatliSTqxhpVaNNUPLvMEOuYXwKhKBvVYEvWmAkjxaHtTRioPokCsStNwO'}], ...}
+response = '```repl\nimport json, hashlib\nassert hashlib.sha256(context["trajectory"][0]["result"].encode()).hexdigest() == \'29...\'No supported edit.\', \'edits\': [], \'additional_candidates\': [], \'decisions\': []})\nanswer["ready"] = True\n```'
+
+    def recorder(tmp_path, expected, response='{"fixture":"response"}'):
+        executable = tmp_path / 'offline-codex'
+        executable.write_text(f'#!{sys.executable}\nimport pathlib,sys\n'
+                              'sys.stdin.read()\n'
+                              f'pathlib.Path(sys.argv[sys.argv.index("--output-last-message")+1]).write_text({response!r})\n')
+        executable.chmod(0o755)
+>       config = Config()
+                 ^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 11 validation errors for Config
+E       models
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       codex
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       rlm
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       agent
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       data
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       wandr
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       harness
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       stream
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       refine
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       bridge
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       verify
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+
+tests/test_saved_refine_transport.py:28: ValidationError
+___________________ test_unknown_python_process_is_rejected ____________________
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-wseopii8/pytest-of-mukeshreddypochamreddy/pytest-0/test_unknown_python_process_is0')
+
+    def test_unknown_python_process_is_rejected(tmp_path):
+>       ctx, state = recorder(tmp_path, logical())
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_saved_refine_transport.py:124: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-wseopii8/pytest-of-mukeshreddypochamreddy/pytest-0/test_unknown_python_process_is0')
+expected = {'focus': None, 'candidate_inventory': [], 'entries': [], 'trajectory': [], ...}
+response = '{"fixture":"response"}'
+
+    def recorder(tmp_path, expected, response='{"fixture":"response"}'):
+        executable = tmp_path / 'offline-codex'
+        executable.write_text(f'#!{sys.executable}\nimport pathlib,sys\n'
+                              'sys.stdin.read()\n'
+                              f'pathlib.Path(sys.argv[sys.argv.index("--output-last-message")+1]).write_text({response!r})\n')
+        executable.chmod(0o755)
+>       config = Config()
+                 ^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 11 validation errors for Config
+E       models
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       codex
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       rlm
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       agent
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       data
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       wandr
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       harness
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       stream
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       refine
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       bridge
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+E       verify
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.14/v/missing
+
+tests/test_saved_refine_transport.py:28: ValidationError
+=========================== short test summary info ============================
+FAILED tests/test_saved_refine_transport.py::test_direct_guard_and_recorder_survive_dataclass_context_copy
+FAILED tests/test_saved_refine_transport.py::test_copied_context_rejects_research_or_changed_direct_input_before_process[purpose]
+FAILED tests/test_saved_refine_transport.py::test_copied_context_rejects_research_or_changed_direct_input_before_process[web]
+FAILED tests/test_saved_refine_transport.py::test_copied_context_rejects_research_or_changed_direct_input_before_process[payload]
+FAILED tests/test_saved_refine_transport.py::test_copied_context_rejects_research_or_changed_direct_input_before_process[schema]
+FAILED tests/test_saved_refine_transport.py::test_copied_context_rejects_research_or_changed_direct_input_before_process[missing_schema]
+FAILED tests/test_saved_refine_transport.py::test_real_isolated_overflow_replay_counts_worker_separately_and_audits_actual_calls
+FAILED tests/test_saved_refine_transport.py::test_unknown_python_process_is_rejected
+8 failed in 0.12s

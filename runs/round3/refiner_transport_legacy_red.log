@@ -1,0 +1,101 @@
+FFFFF                                                                    [100%]
+=================================== FAILURES ===================================
+____ test_legacy_schema_upgrade_is_exact_and_preserves_original_constraints ____
+
+    def test_legacy_schema_upgrade_is_exact_and_preserves_original_constraints():
+        expected = logical()
+        original = Proposal.model_json_schema()
+        original['properties']['edits']['maxItems'] = expected['max_edits']
+>       contract = helper().replay_schema_contract({'planner_schema': original}, expected)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'saved_refine_input_test' has no attribute 'replay_schema_contract'
+
+tests/test_saved_refine_transport.py:145: AttributeError
+_______ test_legacy_schema_upgrade_rejects_unrecognized_history[schema] ________
+
+change = 'schema'
+
+    @pytest.mark.parametrize('change', ['schema', 'representation', 'index'])
+    def test_legacy_schema_upgrade_rejects_unrecognized_history(change):
+        expected = logical()
+        original = Proposal.model_json_schema()
+        original['properties']['edits']['maxItems'] = expected['max_edits']
+        job = {'planner_schema': original}
+        if change == 'schema':
+            original['properties']['edits']['maxItems'] += 1
+        elif change == 'representation':
+            job['planner_representation'] = {}
+        else:
+            job['evidence_index'] = []
+        with pytest.raises(ValueError, match='schema'):
+>           helper().replay_schema_contract(job, expected)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'saved_refine_input_test' has no attribute 'replay_schema_contract'
+
+tests/test_saved_refine_transport.py:170: AttributeError
+___ test_legacy_schema_upgrade_rejects_unrecognized_history[representation] ____
+
+change = 'representation'
+
+    @pytest.mark.parametrize('change', ['schema', 'representation', 'index'])
+    def test_legacy_schema_upgrade_rejects_unrecognized_history(change):
+        expected = logical()
+        original = Proposal.model_json_schema()
+        original['properties']['edits']['maxItems'] = expected['max_edits']
+        job = {'planner_schema': original}
+        if change == 'schema':
+            original['properties']['edits']['maxItems'] += 1
+        elif change == 'representation':
+            job['planner_representation'] = {}
+        else:
+            job['evidence_index'] = []
+        with pytest.raises(ValueError, match='schema'):
+>           helper().replay_schema_contract(job, expected)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'saved_refine_input_test' has no attribute 'replay_schema_contract'
+
+tests/test_saved_refine_transport.py:170: AttributeError
+________ test_legacy_schema_upgrade_rejects_unrecognized_history[index] ________
+
+change = 'index'
+
+    @pytest.mark.parametrize('change', ['schema', 'representation', 'index'])
+    def test_legacy_schema_upgrade_rejects_unrecognized_history(change):
+        expected = logical()
+        original = Proposal.model_json_schema()
+        original['properties']['edits']['maxItems'] = expected['max_edits']
+        job = {'planner_schema': original}
+        if change == 'schema':
+            original['properties']['edits']['maxItems'] += 1
+        elif change == 'representation':
+            job['planner_representation'] = {}
+        else:
+            job['evidence_index'] = []
+        with pytest.raises(ValueError, match='schema'):
+>           helper().replay_schema_contract(job, expected)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'saved_refine_input_test' has no attribute 'replay_schema_contract'
+
+tests/test_saved_refine_transport.py:170: AttributeError
+______________ test_all_refine_attempt_count_includes_direct_jobs ______________
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-qfcrh0qs/pytest-of-mukeshreddypochamreddy/pytest-0/test_all_refine_attempt_count_0')
+
+    def test_all_refine_attempt_count_includes_direct_jobs(tmp_path):
+        from test_refinement_transport_audit import save, save_lines
+        save(tmp_path/'codex_attempts/direct.json', {'call_id': 'direct', 'purpose': 'refine'})
+        save(tmp_path/'codex_attempts/context.json', {'call_id': 'context', 'purpose': 'refine'})
+        save_lines(tmp_path/'codex_calls.jsonl', [{'call_id': 'direct', 'purpose': 'refine'},
+                                               {'call_id': 'context', 'purpose': 'refine'}])
+>       counts = helper().replay_attempt_counts(tmp_path, [{'backend_attempt_count': 1}])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'saved_refine_input_test' has no attribute 'replay_attempt_counts'
+
+tests/test_saved_refine_transport.py:179: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_saved_refine_transport.py::test_legacy_schema_upgrade_is_exact_and_preserves_original_constraints
+FAILED tests/test_saved_refine_transport.py::test_legacy_schema_upgrade_rejects_unrecognized_history[schema]
+FAILED tests/test_saved_refine_transport.py::test_legacy_schema_upgrade_rejects_unrecognized_history[representation]
+FAILED tests/test_saved_refine_transport.py::test_legacy_schema_upgrade_rejects_unrecognized_history[index]
+FAILED tests/test_saved_refine_transport.py::test_all_refine_attempt_count_includes_direct_jobs
+5 failed, 9 deselected in 0.09s

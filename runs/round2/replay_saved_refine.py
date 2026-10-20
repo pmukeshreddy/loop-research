@@ -251,6 +251,200 @@ def verify_scheduled(scheduled, request_id, job):
         raise ValueError(f"Unexpected replay scheduling result: {scheduled}")
 
 
+def replay_schema_contract(job, expected):
+    """Accept exact current schemas or the sole historical anchor restriction.
+
+    The recognized old schema is byte-for-byte the current base schema with the
+    original edit cap. Replacing its string items with a finite enum only
+    restricts accepted values. Arbitrary historical schema changes fail closed.
+    """
+    from loop_research.refine import Proposal
+    original = job["planner_schema"]
+    base = Proposal.model_json_schema()
+    base["properties"]["edits"]["maxItems"] = expected["max_edits"]
+    current = copy.deepcopy(base)
+    anchors = expected_anchors(expected)
+    current["$defs"]["EvidenceRef"] = {"type": "string", "enum": anchors}
+    changes = [{"path": "/$defs/EvidenceRef", "before": None, "after": current["$defs"]["EvidenceRef"]}]
+    for name in ("Candidate", "Decision"):
+        items = current["$defs"][name]["properties"]["evidence_refs"]
+        previous = items["items"]
+        items["items"] = {"$ref": "#/$defs/EvidenceRef"}
+        changes.append({"path": f"/$defs/{name}/properties/evidence_refs/items",
+                        "before": previous, "after": items["items"]})
+    if encoded(original) == encoded(current):
+        mode, changes = "exact", []
+    elif (encoded(original) == encoded(base) and "planner_representation" not in job
+          and "evidence_index" not in job):
+        mode = "legacy_anchor_restriction"
+    else:
+        raise ValueError("Original planner schema differs from the recognized replay schema contracts")
+    return {"mode": mode, "original_schema": original, "current_schema": current, "changes": changes,
+            "original_schema_sha256": sha(encoded(original)), "current_schema_sha256": sha(encoded(current)),
+            "current_evidence_index": anchors, "original_constraints_preserved": True,
+            "final_validation_required": ["original_schema", "current_schema", "complete_candidate_accounting"]}
+
+
+def replay_attempt_counts(task, transport_audit):
+    from loop_research.archive_audit import archived_calls, lines
+    calls = archived_calls(task, lines(task / "codex_calls.jsonl"))
+    return {"actual_refinement_attempts": sum(call.get("purpose") == "refine" for call in calls),
+            "context_refinement_attempts": sum(row["backend_attempt_count"] for row in transport_audit)}
+
+
+def recording_context(base_context, expected, *, expected_schema=None):
+    """Keep replay guards/counters across scoped dataclass context copies.
+
+    The guard runs at the process boundary: backend.scope intentionally creates
+    a base CodexBackend, so a complete() override alone cannot guard its calls.
+    Python workers and real Codex executions have separate counters.
+    """
+    from loop_research.archive import append_json, read_jsonl
+    from loop_research.archive_audit import verify_refinement_context
+    from loop_research.codex_backend import CodexBackend, INSTRUCTION
+    from loop_research.isolation import isolated_command, worker_env
+    from loop_research import refine
+    from loop_research.shared_text import decode_shared_text
+
+    state = {"codex_calls": 0, "worker_processes": 0, "processes": 0}
+    lock = threading.Lock()
+
+    def verify_context(ctx, job):
+        checked = verify_refinement_context(ctx.path, job, expected)
+        if expected_schema is not None and encoded(checked["schema"]) != encoded(expected_schema):
+            raise ValueError("Overflow planner schema differs from original saved schema")
+        anchors = expected_anchors(expected)
+        if checked["payload"]["evidence_index"] != anchors:
+            raise ValueError("Context evidence_index differs from independently computed anchors")
+        checked = {key: value for key, value in checked.items()
+                   if key not in ("payload", "schema", "manifest", "directory")}
+        ctx.save("input_verification.json", {
+            **checked, "verified_at": stamp(), "original_logical_input_equal": True,
+            "original_logical_input_sha256": sha(encoded(expected)),
+            "evidence_index_exact": True, "evidence_index": anchors,
+            "removed_for_comparison_only": ["evidence_index"],
+        })
+        return ctx.path / "refine_planners" / job["job_id"]
+
+    def verify_direct(ctx, stdin, schema):
+        prefix = INSTRUCTION + refine.INSTRUCTIONS
+        if not stdin.startswith(prefix):
+            raise ValueError("Planner prefix differs from current Refiner instructions")
+        wire_text = stdin[len(prefix):]
+        decoded = decode_shared_text(json.loads(wire_text))
+        supplied_index = decoded.pop("evidence_index")
+        if decoded != expected or encoded(decoded) != encoded(expected):
+            raise ValueError("Decoded logical input differs from original saved planner input")
+        anchors = expected_anchors(expected)
+        if supplied_index != anchors:
+            raise ValueError("Presentation evidence_index differs from independently computed anchors")
+        if schema is None or schema.get("$defs", {}).get("EvidenceRef", {}).get("enum") != anchors:
+            raise ValueError("Output schema reference enum differs from visible evidence_index")
+        if expected_schema is not None and encoded(schema) != encoded(expected_schema):
+            raise ValueError("Direct planner schema differs from original saved schema")
+        ctx.save("input_verification.json", {
+            "verified_at": stamp(), "original_logical_input_equal": True,
+            "original_logical_input_sha256": sha(encoded(decoded)),
+            "evidence_index_exact": True, "evidence_index": supplied_index, "schema_enum_exact": True,
+            "wire_chars": len(wire_text), "wire_sha256": sha(wire_text.encode()),
+            "planner_prompt_chars": len(stdin) - len(INSTRUCTION),
+            "planner_prompt_sha256": sha(stdin[len(INSTRUCTION):].encode()),
+            "removed_for_comparison_only": ["evidence_index"],
+        })
+
+    class RecordingContext(base_context):
+        def run_process(self, command, **kwargs):
+            command = list(map(str, command))
+            stdin = kwargs.get("input")
+            schema_path, schema = None, None
+            job = self.load("refine_state.json", {})
+            overflow = job.get("planner_transport", {}).get("kind") == "repl-context-v1"
+            if command[:2] == [self.config.codex.bin, "exec"]:
+                if not isinstance(stdin, str):
+                    raise ValueError("Replay expects text Codex stdin")
+                if "--output-schema" in command:
+                    schema_path = Path(command[command.index("--output-schema") + 1])
+                    schema = json.loads(schema_path.read_text())
+                try:
+                    output = Path(command[command.index("--output-last-message") + 1])
+                    expected_command = CodexBackend(self).command(
+                        Path(kwargs["cwd"]), output, model=self.config.models.refine, schema_file=schema_path)
+                except (ValueError, KeyError) as error:
+                    raise ValueError("Invalid saved replay Codex process") from error
+                if command != expected_command:
+                    raise ValueError("Saved refinement replay cannot make research/web calls")
+                schema_text = json.dumps(schema) if schema is not None else None
+                receipts = [self.load(str(path.relative_to(self.path)))
+                            for path in (self.path / "codex_attempts").glob("*.json")]
+                matching = [row for row in receipts if row.get("prompt_sha256") == sha(stdin.encode())
+                            and row.get("prompt_chars") == len(stdin)
+                            and row.get("schema_sha256") == (sha(schema_text.encode()) if schema_text is not None else None)
+                            and row.get("schema_chars") == (len(schema_text) if schema_text is not None else None)]
+                if not matching or any(row["purpose"] != "refine" or row["model"] != self.config.models.refine
+                                       for row in matching):
+                    raise ValueError("Saved replay process lacks an exclusively refine dispatch receipt")
+                if overflow:
+                    directory = verify_context(self, job)
+                    actions = read_jsonl(directory / "actions.jsonl")
+                    action_ids = {row["action_id"] for row in actions if row["event"] == "model.start"
+                                  and row["backend_prompt"] == stdin and row.get("schema") == schema}
+                    bound = {row["call_id"] for row in actions if row["event"] == "model.attempt"
+                             and row["status"] == "dispatched" and row["action_id"] in action_ids}
+                    if not bound.intersection(row["call_id"] for row in matching):
+                        raise ValueError("Saved replay call lacks its actual overflow model action")
+                else:
+                    verify_direct(self, stdin, schema)
+                kind, counter = "codex", "codex_calls"
+            else:
+                if not overflow or kwargs.get("trace_component") != "Refiner context worker" or stdin is not None:
+                    raise ValueError("Saved replay refuses an unrelated worker process")
+                directory = verify_context(self, job)
+                work = Path(kwargs["cwd"]).resolve()
+                request_path = work / "request.json"
+                intended = isolated_command(work, [sys.executable, "-m", "loop_research.refine_context", str(request_path)])
+                request = json.loads(request_path.read_text())
+                stable = {key: value for key, value in request.items() if key not in ("socket", "result_path")}
+                if (command != intended or kwargs.get("env") != worker_env(work)
+                        or stable != json.loads((directory / "request.json").read_text())
+                        or request.get("socket") != str(work / "host.sock")
+                        or request.get("result_path") != str(work / "result.json")):
+                    raise ValueError("Saved replay worker process differs from the isolated refinement contract")
+                kind, counter = "refiner_worker", "worker_processes"
+            with lock:
+                number = state["processes"]
+                state["processes"] += 1
+                state[counter] += 1
+            directory = self.path / "transport" / f"{number:03d}"
+            directory.mkdir(parents=True, exist_ok=False)
+            if stdin is not None:
+                (directory / "stdin.txt").write_text(stdin)
+            if schema_path is not None:
+                shutil.copyfile(schema_path, directory / "schema.json")
+            metadata = {"timestamp": stamp(), "process_kind": kind, "command": command,
+                        "cwd": str(kwargs.get("cwd")), "stdin_chars": len(stdin) if stdin is not None else None,
+                        "stdin_sha256": sha(stdin.encode()) if stdin is not None else None,
+                        "schema_sha256": sha(schema_path.read_bytes()) if schema_path is not None else None,
+                        "archive": str(directory)}
+            if kind == "refiner_worker":
+                shutil.copyfile(request_path, directory / "request.json")
+                metadata["worker_log"] = str(self.path / "refine_planners" / job["job_id"] / "worker.log")
+            save(directory / "command.json", metadata)
+            append_json(self.path / "commands.jsonl", metadata)
+            try:
+                completed = super().run_process(command, **kwargs)
+            except BaseException as exc:
+                save(directory / "transport_result.json", {"error": f"{type(exc).__name__}: {exc}"})
+                raise
+            if completed.stdout is not None:
+                (directory / "stdout.jsonl").write_text(completed.stdout)
+            if completed.stderr is not None:
+                (directory / "stderr.txt").write_text(completed.stderr)
+            save(directory / "transport_result.json", {"returncode": completed.returncode, "ended_at": stamp()})
+            return completed
+
+    return RecordingContext, state
+
+
 def replay_case(case, cancellation):
     from loop_research.archive import RunContext, append_json
     from loop_research.codex_backend import CodexBackend
@@ -280,62 +474,11 @@ def replay_case(case, cancellation):
     save(result_path, result)
     refiner = None
 
-    class RecordingContext(RunContext):
-        def run_process(self, command, **kwargs):
-            with self.command_lock:
-                number = self.command_counter
-                self.command_counter += 1
-            directory = self.path / "transport" / f"{number:03d}"
-            directory.mkdir(parents=True, exist_ok=False)
-            stdin = kwargs.get("input")
-            if not isinstance(stdin, str):
-                raise ValueError("Replay expects text Codex stdin")
-            (directory / "stdin.txt").write_text(stdin)
-            schema_index = command.index("--output-schema") + 1
-            schema_path = Path(command[schema_index])
-            shutil.copyfile(schema_path, directory / "schema.json")
-            metadata = {"timestamp": stamp(), "command": list(command), "cwd": str(kwargs.get("cwd")),
-                        "stdin_chars": len(stdin), "stdin_sha256": sha(stdin.encode()),
-                        "schema_sha256": sha(schema_path.read_bytes()), "archive": str(directory)}
-            save(directory / "command.json", metadata)
-            append_json(self.path / "commands.jsonl", metadata)
-            try:
-                completed = super().run_process(command, **kwargs)
-            except BaseException as exc:
-                save(directory / "transport_result.json", {"error": f"{type(exc).__name__}: {exc}"})
-                raise
-            (directory / "stdout.jsonl").write_text(completed.stdout or "")
-            (directory / "stderr.txt").write_text(completed.stderr or "")
-            save(directory / "transport_result.json", {"returncode": completed.returncode, "ended_at": stamp()})
-            return completed
-
-    class CheckedBackend(CodexBackend):
-        def complete(self, prompt, **kwargs):
-            if kwargs.get("purpose") != "refine" or kwargs.get("web", False):
-                raise ValueError("Saved refinement replay cannot make research/web calls")
-            if not prompt.startswith(refine.INSTRUCTIONS):
-                raise ValueError("Planner prefix differs from current Refiner instructions")
-            wire_text = prompt[len(refine.INSTRUCTIONS):]
-            decoded = decode_shared_text(json.loads(wire_text))
-            supplied_index = decoded.pop("evidence_index")
-            if decoded != expected or encoded(decoded) != encoded(expected):
-                raise ValueError("Decoded logical input differs from original saved planner input")
-            anchors = expected_anchors(expected)
-            if supplied_index != anchors:
-                raise ValueError("Presentation evidence_index differs from independently computed anchors")
-            enum = kwargs["schema"]["$defs"]["EvidenceRef"]["enum"]
-            if enum != anchors:
-                raise ValueError("Output schema reference enum differs from visible evidence_index")
-            self.ctx.save("input_verification.json", {
-                "verified_at": stamp(), "original_logical_input_equal": True,
-                "original_logical_input_sha256": sha(encoded(decoded)),
-                "evidence_index_exact": True, "evidence_index": supplied_index,
-                "schema_enum_exact": True, "wire_chars": len(wire_text),
-                "wire_sha256": sha(wire_text.encode()), "planner_prompt_chars": len(prompt),
-                "planner_prompt_sha256": sha(prompt.encode()),
-                "removed_for_comparison_only": ["evidence_index"],
-            })
-            return super().complete(prompt, **kwargs)
+    schema_contract = replay_schema_contract(job, expected)
+    save(case_root / "schema_contract.json", schema_contract)
+    result["schema_contract"] = str(case_root / "schema_contract.json")
+    RecordingContext, recorder_state = recording_context(
+        RunContext, expected, expected_schema=schema_contract["current_schema"])
 
     try:
         verify_originals(case)
@@ -345,13 +488,12 @@ def replay_case(case, cancellation):
         run_id = "refine-replay-" + uuid4().hex
         ctx = RecordingContext(Path(case["harness"]).parent, run_id, config, case["task_id"], cancellation)
         ctx.trace = Trace(ctx.run_dir)
-        ctx.command_counter, ctx.command_lock = 0, threading.Lock()
         ctx.initialize(harness.head, kind="saved-refine-replay", original_run_id=case["original_run_id"],
                        original_job_id=job["job_id"], original_request_id=job["request_id"])
         ctx.save("original_job_provenance.json", case)
         result.update(status="running", run_id=run_id, run_dir=str(ctx.run_dir), task_dir=str(ctx.path))
         save(result_path, result)
-        backend = CheckedBackend(ctx)
+        backend = CodexBackend(ctx)
         refiner = refine.Refiner(harness, ctx, backend, lambda: copy.deepcopy(job["observed"]))
         request_id = "saved-replay-" + uuid4().hex
         with ctx.trace.span("Saved refinement replay", "run", parent="Replay CLI",
@@ -364,6 +506,7 @@ def replay_case(case, cancellation):
                 raise ValueError("Replay did not durably apply its strict proposal")
             proposal = refine.Proposal.model_validate(saved["proposal"])
             jsonschema.Draft202012Validator(saved["planner_schema"]).validate(proposal.model_dump())
+            jsonschema.Draft202012Validator(schema_contract["original_schema"]).validate(proposal.model_dump())
             refine.validate_accounting(proposal, expected)
             if len(proposal.edits) > config.refine.max_edits:
                 raise ValueError("Replay exceeded original max_edits")
@@ -372,15 +515,15 @@ def replay_case(case, cancellation):
                                 "files": harness.git("show", "--format=", "--name-only", commit)}
                                for commit in commits]
             verify_originals(case)
-            result.update(status="complete", strict_proposal_valid=True, accounting_valid=True,
+            result.update(status="complete", strict_proposal_valid=True, original_schema_valid=True, accounting_valid=True,
                           original_inputs_unchanged=True, original_harness_unchanged=True,
                           proposal=proposal.model_dump(), job_id=saved["job_id"], request_id=request_id,
                           head_after=harness.head, commits=applied_commits,
-                          live_calls=ctx.command_counter, input_verification=str(ctx.path / "input_verification.json"))
+                          live_calls=recorder_state["codex_calls"], input_verification=str(ctx.path / "input_verification.json"))
     except BaseException as exc:
         result.update(status="failed", error=f"{type(exc).__name__}: {exc}", traceback=traceback.format_exc())
         if "ctx" in locals():
-            result["live_calls"] = ctx.command_counter
+            result["live_calls"] = recorder_state["codex_calls"]
         try:
             verify_originals(case)
             result.update(original_inputs_unchanged=True, original_harness_unchanged=True)
@@ -392,7 +535,16 @@ def replay_case(case, cancellation):
         if "ctx" in locals():
             # A failed helper assertion may still have a background planner.
             # Count after shutdown settles it, not before its process starts.
-            result["live_calls"] = ctx.command_counter
+            result["live_calls"] = recorder_state["codex_calls"]
+            result["worker_processes"] = recorder_state["worker_processes"]
+            try:
+                from loop_research.archive_audit import audit_refinement_transports
+                transport_audit = audit_refinement_transports(ctx.path)
+                save(ctx.path / "refinement_transport_audit.json", transport_audit)
+                result["refinement_transport_audit"] = str(ctx.path / "refinement_transport_audit.json")
+                result.update(replay_attempt_counts(ctx.path, transport_audit))
+            except BaseException as audit_error:
+                result.update(status="failed", transport_audit_error=f"{type(audit_error).__name__}: {audit_error}")
         result["ended_at"] = stamp()
         save(result_path, result)
     return result

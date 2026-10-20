@@ -1,0 +1,828 @@
+FFFFFFFFFFFFFFFFF                                                        [100%]
+=================================== FAILURES ===================================
+_ test_actual_calls_and_retries_are_verified_without_inventing_monolithic_dispatch _
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-hgle73ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_actual_calls_and_retries_0')
+
+    def test_actual_calls_and_retries_are_verified_without_inventing_monolithic_dispatch(tmp_path):
+        expected, job, directory, actions, calls = transport(tmp_path, retry=True)
+        original = {p: p.read_bytes() for p in tmp_path.rglob('*') if p.is_file()}
+>       result = audit.audit_refinement_transports(tmp_path)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'loop_research.archive_audit' has no attribute 'audit_refinement_transports'
+
+tests/test_refinement_transport_audit.py:98: AttributeError
+______ test_transport_audit_rejects_tampered_or_unbound_evidence[context] ______
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-hgle73ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_transport_audit_rejects_t0')
+damage = 'context'
+
+    @pytest.mark.parametrize('damage', ['context', 'schema', 'manifest', 'snapshot_hash',
+                                      'action_prompt', 'action_schema', 'action_call_id',
+                                      'completion_response', 'completion_schema', 'missing_action',
+                                      'unbound_attempt', 'proposal', 'readiness', 'job_identity'])
+    def test_transport_audit_rejects_tampered_or_unbound_evidence(tmp_path, damage):
+        _, job, directory, actions, calls = transport(tmp_path)
+        if damage in ('context', 'schema', 'manifest'):
+            path = directory / (damage + '.json')
+            value = json.loads(path.read_text())
+            if damage == 'context':
+                value['trajectory'][0]['result'] += 'changed'
+            elif damage == 'schema':
+                value['properties']['edits']['maxItems'] = 3
+            else:
+                value['logical_payload_sha256'] = 'wrong'
+            save(path, value)
+        elif damage == 'completion_response':
+            calls[0]['response'] = 'same length altered response'.ljust(calls[0]['response_chars'])[:calls[0]['response_chars']]
+        elif damage == 'completion_schema':
+            calls[0]['schema_chars'] = 12
+            calls[0]['schema_sha256'] = 'unexpected'
+        elif damage == 'unbound_attempt':
+            save(tmp_path / 'codex_attempts/stray.json', {**calls[0], 'call_id': 'stray'})
+        elif damage == 'job_identity':
+            job['job_id'] = 'wrong'
+            save(tmp_path / 'refine_requests/request-one/job-one.json', job)
+        else:
+            if damage == 'snapshot_hash':
+                actions[0]['logical_payload_sha256'] = 'wrong'
+            elif damage == 'action_prompt':
+                actions[1]['backend_prompt'] += 'changed'
+            elif damage == 'action_schema':
+                actions[1]['schema'] = {'type': 'string'}
+            elif damage == 'action_call_id':
+                actions[2]['call_id'] = 'unknown'
+            elif damage == 'missing_action':
+                actions = [x for x in actions if x['event'] != 'model.start']
+            elif damage == 'proposal':
+                actions[-1]['text'] = '{}'
+            else:
+                actions[-2]['final_answer'] = 'different'
+        save_lines(directory / 'actions.jsonl', actions)
+        save_lines(tmp_path / 'codex_calls.jsonl', calls)
+        with pytest.raises(audit.ArchiveCorruptionError):
+>           audit.audit_refinement_transports(tmp_path)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'loop_research.archive_audit' has no attribute 'audit_refinement_transports'
+
+tests/test_refinement_transport_audit.py:156: AttributeError
+______ test_transport_audit_rejects_tampered_or_unbound_evidence[schema] _______
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-hgle73ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_transport_audit_rejects_t1')
+damage = 'schema'
+
+    @pytest.mark.parametrize('damage', ['context', 'schema', 'manifest', 'snapshot_hash',
+                                      'action_prompt', 'action_schema', 'action_call_id',
+                                      'completion_response', 'completion_schema', 'missing_action',
+                                      'unbound_attempt', 'proposal', 'readiness', 'job_identity'])
+    def test_transport_audit_rejects_tampered_or_unbound_evidence(tmp_path, damage):
+        _, job, directory, actions, calls = transport(tmp_path)
+        if damage in ('context', 'schema', 'manifest'):
+            path = directory / (damage + '.json')
+            value = json.loads(path.read_text())
+            if damage == 'context':
+                value['trajectory'][0]['result'] += 'changed'
+            elif damage == 'schema':
+                value['properties']['edits']['maxItems'] = 3
+            else:
+                value['logical_payload_sha256'] = 'wrong'
+            save(path, value)
+        elif damage == 'completion_response':
+            calls[0]['response'] = 'same length altered response'.ljust(calls[0]['response_chars'])[:calls[0]['response_chars']]
+        elif damage == 'completion_schema':
+            calls[0]['schema_chars'] = 12
+            calls[0]['schema_sha256'] = 'unexpected'
+        elif damage == 'unbound_attempt':
+            save(tmp_path / 'codex_attempts/stray.json', {**calls[0], 'call_id': 'stray'})
+        elif damage == 'job_identity':
+            job['job_id'] = 'wrong'
+            save(tmp_path / 'refine_requests/request-one/job-one.json', job)
+        else:
+            if damage == 'snapshot_hash':
+                actions[0]['logical_payload_sha256'] = 'wrong'
+            elif damage == 'action_prompt':
+                actions[1]['backend_prompt'] += 'changed'
+            elif damage == 'action_schema':
+                actions[1]['schema'] = {'type': 'string'}
+            elif damage == 'action_call_id':
+                actions[2]['call_id'] = 'unknown'
+            elif damage == 'missing_action':
+                actions = [x for x in actions if x['event'] != 'model.start']
+            elif damage == 'proposal':
+                actions[-1]['text'] = '{}'
+            else:
+                actions[-2]['final_answer'] = 'different'
+        save_lines(directory / 'actions.jsonl', actions)
+        save_lines(tmp_path / 'codex_calls.jsonl', calls)
+        with pytest.raises(audit.ArchiveCorruptionError):
+>           audit.audit_refinement_transports(tmp_path)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'loop_research.archive_audit' has no attribute 'audit_refinement_transports'
+
+tests/test_refinement_transport_audit.py:156: AttributeError
+_____ test_transport_audit_rejects_tampered_or_unbound_evidence[manifest] ______
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-hgle73ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_transport_audit_rejects_t2')
+damage = 'manifest'
+
+    @pytest.mark.parametrize('damage', ['context', 'schema', 'manifest', 'snapshot_hash',
+                                      'action_prompt', 'action_schema', 'action_call_id',
+                                      'completion_response', 'completion_schema', 'missing_action',
+                                      'unbound_attempt', 'proposal', 'readiness', 'job_identity'])
+    def test_transport_audit_rejects_tampered_or_unbound_evidence(tmp_path, damage):
+        _, job, directory, actions, calls = transport(tmp_path)
+        if damage in ('context', 'schema', 'manifest'):
+            path = directory / (damage + '.json')
+            value = json.loads(path.read_text())
+            if damage == 'context':
+                value['trajectory'][0]['result'] += 'changed'
+            elif damage == 'schema':
+                value['properties']['edits']['maxItems'] = 3
+            else:
+                value['logical_payload_sha256'] = 'wrong'
+            save(path, value)
+        elif damage == 'completion_response':
+            calls[0]['response'] = 'same length altered response'.ljust(calls[0]['response_chars'])[:calls[0]['response_chars']]
+        elif damage == 'completion_schema':
+            calls[0]['schema_chars'] = 12
+            calls[0]['schema_sha256'] = 'unexpected'
+        elif damage == 'unbound_attempt':
+            save(tmp_path / 'codex_attempts/stray.json', {**calls[0], 'call_id': 'stray'})
+        elif damage == 'job_identity':
+            job['job_id'] = 'wrong'
+            save(tmp_path / 'refine_requests/request-one/job-one.json', job)
+        else:
+            if damage == 'snapshot_hash':
+                actions[0]['logical_payload_sha256'] = 'wrong'
+            elif damage == 'action_prompt':
+                actions[1]['backend_prompt'] += 'changed'
+            elif damage == 'action_schema':
+                actions[1]['schema'] = {'type': 'string'}
+            elif damage == 'action_call_id':
+                actions[2]['call_id'] = 'unknown'
+            elif damage == 'missing_action':
+                actions = [x for x in actions if x['event'] != 'model.start']
+            elif damage == 'proposal':
+                actions[-1]['text'] = '{}'
+            else:
+                actions[-2]['final_answer'] = 'different'
+        save_lines(directory / 'actions.jsonl', actions)
+        save_lines(tmp_path / 'codex_calls.jsonl', calls)
+        with pytest.raises(audit.ArchiveCorruptionError):
+>           audit.audit_refinement_transports(tmp_path)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'loop_research.archive_audit' has no attribute 'audit_refinement_transports'
+
+tests/test_refinement_transport_audit.py:156: AttributeError
+___ test_transport_audit_rejects_tampered_or_unbound_evidence[snapshot_hash] ___
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-hgle73ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_transport_audit_rejects_t3')
+damage = 'snapshot_hash'
+
+    @pytest.mark.parametrize('damage', ['context', 'schema', 'manifest', 'snapshot_hash',
+                                      'action_prompt', 'action_schema', 'action_call_id',
+                                      'completion_response', 'completion_schema', 'missing_action',
+                                      'unbound_attempt', 'proposal', 'readiness', 'job_identity'])
+    def test_transport_audit_rejects_tampered_or_unbound_evidence(tmp_path, damage):
+        _, job, directory, actions, calls = transport(tmp_path)
+        if damage in ('context', 'schema', 'manifest'):
+            path = directory / (damage + '.json')
+            value = json.loads(path.read_text())
+            if damage == 'context':
+                value['trajectory'][0]['result'] += 'changed'
+            elif damage == 'schema':
+                value['properties']['edits']['maxItems'] = 3
+            else:
+                value['logical_payload_sha256'] = 'wrong'
+            save(path, value)
+        elif damage == 'completion_response':
+            calls[0]['response'] = 'same length altered response'.ljust(calls[0]['response_chars'])[:calls[0]['response_chars']]
+        elif damage == 'completion_schema':
+            calls[0]['schema_chars'] = 12
+            calls[0]['schema_sha256'] = 'unexpected'
+        elif damage == 'unbound_attempt':
+            save(tmp_path / 'codex_attempts/stray.json', {**calls[0], 'call_id': 'stray'})
+        elif damage == 'job_identity':
+            job['job_id'] = 'wrong'
+            save(tmp_path / 'refine_requests/request-one/job-one.json', job)
+        else:
+            if damage == 'snapshot_hash':
+                actions[0]['logical_payload_sha256'] = 'wrong'
+            elif damage == 'action_prompt':
+                actions[1]['backend_prompt'] += 'changed'
+            elif damage == 'action_schema':
+                actions[1]['schema'] = {'type': 'string'}
+            elif damage == 'action_call_id':
+                actions[2]['call_id'] = 'unknown'
+            elif damage == 'missing_action':
+                actions = [x for x in actions if x['event'] != 'model.start']
+            elif damage == 'proposal':
+                actions[-1]['text'] = '{}'
+            else:
+                actions[-2]['final_answer'] = 'different'
+        save_lines(directory / 'actions.jsonl', actions)
+        save_lines(tmp_path / 'codex_calls.jsonl', calls)
+        with pytest.raises(audit.ArchiveCorruptionError):
+>           audit.audit_refinement_transports(tmp_path)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'loop_research.archive_audit' has no attribute 'audit_refinement_transports'
+
+tests/test_refinement_transport_audit.py:156: AttributeError
+___ test_transport_audit_rejects_tampered_or_unbound_evidence[action_prompt] ___
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-hgle73ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_transport_audit_rejects_t4')
+damage = 'action_prompt'
+
+    @pytest.mark.parametrize('damage', ['context', 'schema', 'manifest', 'snapshot_hash',
+                                      'action_prompt', 'action_schema', 'action_call_id',
+                                      'completion_response', 'completion_schema', 'missing_action',
+                                      'unbound_attempt', 'proposal', 'readiness', 'job_identity'])
+    def test_transport_audit_rejects_tampered_or_unbound_evidence(tmp_path, damage):
+        _, job, directory, actions, calls = transport(tmp_path)
+        if damage in ('context', 'schema', 'manifest'):
+            path = directory / (damage + '.json')
+            value = json.loads(path.read_text())
+            if damage == 'context':
+                value['trajectory'][0]['result'] += 'changed'
+            elif damage == 'schema':
+                value['properties']['edits']['maxItems'] = 3
+            else:
+                value['logical_payload_sha256'] = 'wrong'
+            save(path, value)
+        elif damage == 'completion_response':
+            calls[0]['response'] = 'same length altered response'.ljust(calls[0]['response_chars'])[:calls[0]['response_chars']]
+        elif damage == 'completion_schema':
+            calls[0]['schema_chars'] = 12
+            calls[0]['schema_sha256'] = 'unexpected'
+        elif damage == 'unbound_attempt':
+            save(tmp_path / 'codex_attempts/stray.json', {**calls[0], 'call_id': 'stray'})
+        elif damage == 'job_identity':
+            job['job_id'] = 'wrong'
+            save(tmp_path / 'refine_requests/request-one/job-one.json', job)
+        else:
+            if damage == 'snapshot_hash':
+                actions[0]['logical_payload_sha256'] = 'wrong'
+            elif damage == 'action_prompt':
+                actions[1]['backend_prompt'] += 'changed'
+            elif damage == 'action_schema':
+                actions[1]['schema'] = {'type': 'string'}
+            elif damage == 'action_call_id':
+                actions[2]['call_id'] = 'unknown'
+            elif damage == 'missing_action':
+                actions = [x for x in actions if x['event'] != 'model.start']
+            elif damage == 'proposal':
+                actions[-1]['text'] = '{}'
+            else:
+                actions[-2]['final_answer'] = 'different'
+        save_lines(directory / 'actions.jsonl', actions)
+        save_lines(tmp_path / 'codex_calls.jsonl', calls)
+        with pytest.raises(audit.ArchiveCorruptionError):
+>           audit.audit_refinement_transports(tmp_path)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'loop_research.archive_audit' has no attribute 'audit_refinement_transports'
+
+tests/test_refinement_transport_audit.py:156: AttributeError
+___ test_transport_audit_rejects_tampered_or_unbound_evidence[action_schema] ___
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-hgle73ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_transport_audit_rejects_t5')
+damage = 'action_schema'
+
+    @pytest.mark.parametrize('damage', ['context', 'schema', 'manifest', 'snapshot_hash',
+                                      'action_prompt', 'action_schema', 'action_call_id',
+                                      'completion_response', 'completion_schema', 'missing_action',
+                                      'unbound_attempt', 'proposal', 'readiness', 'job_identity'])
+    def test_transport_audit_rejects_tampered_or_unbound_evidence(tmp_path, damage):
+        _, job, directory, actions, calls = transport(tmp_path)
+        if damage in ('context', 'schema', 'manifest'):
+            path = directory / (damage + '.json')
+            value = json.loads(path.read_text())
+            if damage == 'context':
+                value['trajectory'][0]['result'] += 'changed'
+            elif damage == 'schema':
+                value['properties']['edits']['maxItems'] = 3
+            else:
+                value['logical_payload_sha256'] = 'wrong'
+            save(path, value)
+        elif damage == 'completion_response':
+            calls[0]['response'] = 'same length altered response'.ljust(calls[0]['response_chars'])[:calls[0]['response_chars']]
+        elif damage == 'completion_schema':
+            calls[0]['schema_chars'] = 12
+            calls[0]['schema_sha256'] = 'unexpected'
+        elif damage == 'unbound_attempt':
+            save(tmp_path / 'codex_attempts/stray.json', {**calls[0], 'call_id': 'stray'})
+        elif damage == 'job_identity':
+            job['job_id'] = 'wrong'
+            save(tmp_path / 'refine_requests/request-one/job-one.json', job)
+        else:
+            if damage == 'snapshot_hash':
+                actions[0]['logical_payload_sha256'] = 'wrong'
+            elif damage == 'action_prompt':
+                actions[1]['backend_prompt'] += 'changed'
+            elif damage == 'action_schema':
+                actions[1]['schema'] = {'type': 'string'}
+            elif damage == 'action_call_id':
+                actions[2]['call_id'] = 'unknown'
+            elif damage == 'missing_action':
+                actions = [x for x in actions if x['event'] != 'model.start']
+            elif damage == 'proposal':
+                actions[-1]['text'] = '{}'
+            else:
+                actions[-2]['final_answer'] = 'different'
+        save_lines(directory / 'actions.jsonl', actions)
+        save_lines(tmp_path / 'codex_calls.jsonl', calls)
+        with pytest.raises(audit.ArchiveCorruptionError):
+>           audit.audit_refinement_transports(tmp_path)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'loop_research.archive_audit' has no attribute 'audit_refinement_transports'
+
+tests/test_refinement_transport_audit.py:156: AttributeError
+__ test_transport_audit_rejects_tampered_or_unbound_evidence[action_call_id] ___
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-hgle73ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_transport_audit_rejects_t6')
+damage = 'action_call_id'
+
+    @pytest.mark.parametrize('damage', ['context', 'schema', 'manifest', 'snapshot_hash',
+                                      'action_prompt', 'action_schema', 'action_call_id',
+                                      'completion_response', 'completion_schema', 'missing_action',
+                                      'unbound_attempt', 'proposal', 'readiness', 'job_identity'])
+    def test_transport_audit_rejects_tampered_or_unbound_evidence(tmp_path, damage):
+        _, job, directory, actions, calls = transport(tmp_path)
+        if damage in ('context', 'schema', 'manifest'):
+            path = directory / (damage + '.json')
+            value = json.loads(path.read_text())
+            if damage == 'context':
+                value['trajectory'][0]['result'] += 'changed'
+            elif damage == 'schema':
+                value['properties']['edits']['maxItems'] = 3
+            else:
+                value['logical_payload_sha256'] = 'wrong'
+            save(path, value)
+        elif damage == 'completion_response':
+            calls[0]['response'] = 'same length altered response'.ljust(calls[0]['response_chars'])[:calls[0]['response_chars']]
+        elif damage == 'completion_schema':
+            calls[0]['schema_chars'] = 12
+            calls[0]['schema_sha256'] = 'unexpected'
+        elif damage == 'unbound_attempt':
+            save(tmp_path / 'codex_attempts/stray.json', {**calls[0], 'call_id': 'stray'})
+        elif damage == 'job_identity':
+            job['job_id'] = 'wrong'
+            save(tmp_path / 'refine_requests/request-one/job-one.json', job)
+        else:
+            if damage == 'snapshot_hash':
+                actions[0]['logical_payload_sha256'] = 'wrong'
+            elif damage == 'action_prompt':
+                actions[1]['backend_prompt'] += 'changed'
+            elif damage == 'action_schema':
+                actions[1]['schema'] = {'type': 'string'}
+            elif damage == 'action_call_id':
+                actions[2]['call_id'] = 'unknown'
+            elif damage == 'missing_action':
+                actions = [x for x in actions if x['event'] != 'model.start']
+            elif damage == 'proposal':
+                actions[-1]['text'] = '{}'
+            else:
+                actions[-2]['final_answer'] = 'different'
+        save_lines(directory / 'actions.jsonl', actions)
+        save_lines(tmp_path / 'codex_calls.jsonl', calls)
+        with pytest.raises(audit.ArchiveCorruptionError):
+>           audit.audit_refinement_transports(tmp_path)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'loop_research.archive_audit' has no attribute 'audit_refinement_transports'
+
+tests/test_refinement_transport_audit.py:156: AttributeError
+_ test_transport_audit_rejects_tampered_or_unbound_evidence[completion_response] _
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-hgle73ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_transport_audit_rejects_t7')
+damage = 'completion_response'
+
+    @pytest.mark.parametrize('damage', ['context', 'schema', 'manifest', 'snapshot_hash',
+                                      'action_prompt', 'action_schema', 'action_call_id',
+                                      'completion_response', 'completion_schema', 'missing_action',
+                                      'unbound_attempt', 'proposal', 'readiness', 'job_identity'])
+    def test_transport_audit_rejects_tampered_or_unbound_evidence(tmp_path, damage):
+        _, job, directory, actions, calls = transport(tmp_path)
+        if damage in ('context', 'schema', 'manifest'):
+            path = directory / (damage + '.json')
+            value = json.loads(path.read_text())
+            if damage == 'context':
+                value['trajectory'][0]['result'] += 'changed'
+            elif damage == 'schema':
+                value['properties']['edits']['maxItems'] = 3
+            else:
+                value['logical_payload_sha256'] = 'wrong'
+            save(path, value)
+        elif damage == 'completion_response':
+            calls[0]['response'] = 'same length altered response'.ljust(calls[0]['response_chars'])[:calls[0]['response_chars']]
+        elif damage == 'completion_schema':
+            calls[0]['schema_chars'] = 12
+            calls[0]['schema_sha256'] = 'unexpected'
+        elif damage == 'unbound_attempt':
+            save(tmp_path / 'codex_attempts/stray.json', {**calls[0], 'call_id': 'stray'})
+        elif damage == 'job_identity':
+            job['job_id'] = 'wrong'
+            save(tmp_path / 'refine_requests/request-one/job-one.json', job)
+        else:
+            if damage == 'snapshot_hash':
+                actions[0]['logical_payload_sha256'] = 'wrong'
+            elif damage == 'action_prompt':
+                actions[1]['backend_prompt'] += 'changed'
+            elif damage == 'action_schema':
+                actions[1]['schema'] = {'type': 'string'}
+            elif damage == 'action_call_id':
+                actions[2]['call_id'] = 'unknown'
+            elif damage == 'missing_action':
+                actions = [x for x in actions if x['event'] != 'model.start']
+            elif damage == 'proposal':
+                actions[-1]['text'] = '{}'
+            else:
+                actions[-2]['final_answer'] = 'different'
+        save_lines(directory / 'actions.jsonl', actions)
+        save_lines(tmp_path / 'codex_calls.jsonl', calls)
+        with pytest.raises(audit.ArchiveCorruptionError):
+>           audit.audit_refinement_transports(tmp_path)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'loop_research.archive_audit' has no attribute 'audit_refinement_transports'
+
+tests/test_refinement_transport_audit.py:156: AttributeError
+_ test_transport_audit_rejects_tampered_or_unbound_evidence[completion_schema] _
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-hgle73ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_transport_audit_rejects_t8')
+damage = 'completion_schema'
+
+    @pytest.mark.parametrize('damage', ['context', 'schema', 'manifest', 'snapshot_hash',
+                                      'action_prompt', 'action_schema', 'action_call_id',
+                                      'completion_response', 'completion_schema', 'missing_action',
+                                      'unbound_attempt', 'proposal', 'readiness', 'job_identity'])
+    def test_transport_audit_rejects_tampered_or_unbound_evidence(tmp_path, damage):
+        _, job, directory, actions, calls = transport(tmp_path)
+        if damage in ('context', 'schema', 'manifest'):
+            path = directory / (damage + '.json')
+            value = json.loads(path.read_text())
+            if damage == 'context':
+                value['trajectory'][0]['result'] += 'changed'
+            elif damage == 'schema':
+                value['properties']['edits']['maxItems'] = 3
+            else:
+                value['logical_payload_sha256'] = 'wrong'
+            save(path, value)
+        elif damage == 'completion_response':
+            calls[0]['response'] = 'same length altered response'.ljust(calls[0]['response_chars'])[:calls[0]['response_chars']]
+        elif damage == 'completion_schema':
+            calls[0]['schema_chars'] = 12
+            calls[0]['schema_sha256'] = 'unexpected'
+        elif damage == 'unbound_attempt':
+            save(tmp_path / 'codex_attempts/stray.json', {**calls[0], 'call_id': 'stray'})
+        elif damage == 'job_identity':
+            job['job_id'] = 'wrong'
+            save(tmp_path / 'refine_requests/request-one/job-one.json', job)
+        else:
+            if damage == 'snapshot_hash':
+                actions[0]['logical_payload_sha256'] = 'wrong'
+            elif damage == 'action_prompt':
+                actions[1]['backend_prompt'] += 'changed'
+            elif damage == 'action_schema':
+                actions[1]['schema'] = {'type': 'string'}
+            elif damage == 'action_call_id':
+                actions[2]['call_id'] = 'unknown'
+            elif damage == 'missing_action':
+                actions = [x for x in actions if x['event'] != 'model.start']
+            elif damage == 'proposal':
+                actions[-1]['text'] = '{}'
+            else:
+                actions[-2]['final_answer'] = 'different'
+        save_lines(directory / 'actions.jsonl', actions)
+        save_lines(tmp_path / 'codex_calls.jsonl', calls)
+        with pytest.raises(audit.ArchiveCorruptionError):
+>           audit.audit_refinement_transports(tmp_path)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'loop_research.archive_audit' has no attribute 'audit_refinement_transports'
+
+tests/test_refinement_transport_audit.py:156: AttributeError
+__ test_transport_audit_rejects_tampered_or_unbound_evidence[missing_action] ___
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-hgle73ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_transport_audit_rejects_t9')
+damage = 'missing_action'
+
+    @pytest.mark.parametrize('damage', ['context', 'schema', 'manifest', 'snapshot_hash',
+                                      'action_prompt', 'action_schema', 'action_call_id',
+                                      'completion_response', 'completion_schema', 'missing_action',
+                                      'unbound_attempt', 'proposal', 'readiness', 'job_identity'])
+    def test_transport_audit_rejects_tampered_or_unbound_evidence(tmp_path, damage):
+        _, job, directory, actions, calls = transport(tmp_path)
+        if damage in ('context', 'schema', 'manifest'):
+            path = directory / (damage + '.json')
+            value = json.loads(path.read_text())
+            if damage == 'context':
+                value['trajectory'][0]['result'] += 'changed'
+            elif damage == 'schema':
+                value['properties']['edits']['maxItems'] = 3
+            else:
+                value['logical_payload_sha256'] = 'wrong'
+            save(path, value)
+        elif damage == 'completion_response':
+            calls[0]['response'] = 'same length altered response'.ljust(calls[0]['response_chars'])[:calls[0]['response_chars']]
+        elif damage == 'completion_schema':
+            calls[0]['schema_chars'] = 12
+            calls[0]['schema_sha256'] = 'unexpected'
+        elif damage == 'unbound_attempt':
+            save(tmp_path / 'codex_attempts/stray.json', {**calls[0], 'call_id': 'stray'})
+        elif damage == 'job_identity':
+            job['job_id'] = 'wrong'
+            save(tmp_path / 'refine_requests/request-one/job-one.json', job)
+        else:
+            if damage == 'snapshot_hash':
+                actions[0]['logical_payload_sha256'] = 'wrong'
+            elif damage == 'action_prompt':
+                actions[1]['backend_prompt'] += 'changed'
+            elif damage == 'action_schema':
+                actions[1]['schema'] = {'type': 'string'}
+            elif damage == 'action_call_id':
+                actions[2]['call_id'] = 'unknown'
+            elif damage == 'missing_action':
+                actions = [x for x in actions if x['event'] != 'model.start']
+            elif damage == 'proposal':
+                actions[-1]['text'] = '{}'
+            else:
+                actions[-2]['final_answer'] = 'different'
+        save_lines(directory / 'actions.jsonl', actions)
+        save_lines(tmp_path / 'codex_calls.jsonl', calls)
+        with pytest.raises(audit.ArchiveCorruptionError):
+>           audit.audit_refinement_transports(tmp_path)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'loop_research.archive_audit' has no attribute 'audit_refinement_transports'
+
+tests/test_refinement_transport_audit.py:156: AttributeError
+__ test_transport_audit_rejects_tampered_or_unbound_evidence[unbound_attempt] __
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-hgle73ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_transport_audit_rejects_t10')
+damage = 'unbound_attempt'
+
+    @pytest.mark.parametrize('damage', ['context', 'schema', 'manifest', 'snapshot_hash',
+                                      'action_prompt', 'action_schema', 'action_call_id',
+                                      'completion_response', 'completion_schema', 'missing_action',
+                                      'unbound_attempt', 'proposal', 'readiness', 'job_identity'])
+    def test_transport_audit_rejects_tampered_or_unbound_evidence(tmp_path, damage):
+        _, job, directory, actions, calls = transport(tmp_path)
+        if damage in ('context', 'schema', 'manifest'):
+            path = directory / (damage + '.json')
+            value = json.loads(path.read_text())
+            if damage == 'context':
+                value['trajectory'][0]['result'] += 'changed'
+            elif damage == 'schema':
+                value['properties']['edits']['maxItems'] = 3
+            else:
+                value['logical_payload_sha256'] = 'wrong'
+            save(path, value)
+        elif damage == 'completion_response':
+            calls[0]['response'] = 'same length altered response'.ljust(calls[0]['response_chars'])[:calls[0]['response_chars']]
+        elif damage == 'completion_schema':
+            calls[0]['schema_chars'] = 12
+            calls[0]['schema_sha256'] = 'unexpected'
+        elif damage == 'unbound_attempt':
+            save(tmp_path / 'codex_attempts/stray.json', {**calls[0], 'call_id': 'stray'})
+        elif damage == 'job_identity':
+            job['job_id'] = 'wrong'
+            save(tmp_path / 'refine_requests/request-one/job-one.json', job)
+        else:
+            if damage == 'snapshot_hash':
+                actions[0]['logical_payload_sha256'] = 'wrong'
+            elif damage == 'action_prompt':
+                actions[1]['backend_prompt'] += 'changed'
+            elif damage == 'action_schema':
+                actions[1]['schema'] = {'type': 'string'}
+            elif damage == 'action_call_id':
+                actions[2]['call_id'] = 'unknown'
+            elif damage == 'missing_action':
+                actions = [x for x in actions if x['event'] != 'model.start']
+            elif damage == 'proposal':
+                actions[-1]['text'] = '{}'
+            else:
+                actions[-2]['final_answer'] = 'different'
+        save_lines(directory / 'actions.jsonl', actions)
+        save_lines(tmp_path / 'codex_calls.jsonl', calls)
+        with pytest.raises(audit.ArchiveCorruptionError):
+>           audit.audit_refinement_transports(tmp_path)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'loop_research.archive_audit' has no attribute 'audit_refinement_transports'
+
+tests/test_refinement_transport_audit.py:156: AttributeError
+_____ test_transport_audit_rejects_tampered_or_unbound_evidence[proposal] ______
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-hgle73ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_transport_audit_rejects_t11')
+damage = 'proposal'
+
+    @pytest.mark.parametrize('damage', ['context', 'schema', 'manifest', 'snapshot_hash',
+                                      'action_prompt', 'action_schema', 'action_call_id',
+                                      'completion_response', 'completion_schema', 'missing_action',
+                                      'unbound_attempt', 'proposal', 'readiness', 'job_identity'])
+    def test_transport_audit_rejects_tampered_or_unbound_evidence(tmp_path, damage):
+        _, job, directory, actions, calls = transport(tmp_path)
+        if damage in ('context', 'schema', 'manifest'):
+            path = directory / (damage + '.json')
+            value = json.loads(path.read_text())
+            if damage == 'context':
+                value['trajectory'][0]['result'] += 'changed'
+            elif damage == 'schema':
+                value['properties']['edits']['maxItems'] = 3
+            else:
+                value['logical_payload_sha256'] = 'wrong'
+            save(path, value)
+        elif damage == 'completion_response':
+            calls[0]['response'] = 'same length altered response'.ljust(calls[0]['response_chars'])[:calls[0]['response_chars']]
+        elif damage == 'completion_schema':
+            calls[0]['schema_chars'] = 12
+            calls[0]['schema_sha256'] = 'unexpected'
+        elif damage == 'unbound_attempt':
+            save(tmp_path / 'codex_attempts/stray.json', {**calls[0], 'call_id': 'stray'})
+        elif damage == 'job_identity':
+            job['job_id'] = 'wrong'
+            save(tmp_path / 'refine_requests/request-one/job-one.json', job)
+        else:
+            if damage == 'snapshot_hash':
+                actions[0]['logical_payload_sha256'] = 'wrong'
+            elif damage == 'action_prompt':
+                actions[1]['backend_prompt'] += 'changed'
+            elif damage == 'action_schema':
+                actions[1]['schema'] = {'type': 'string'}
+            elif damage == 'action_call_id':
+                actions[2]['call_id'] = 'unknown'
+            elif damage == 'missing_action':
+                actions = [x for x in actions if x['event'] != 'model.start']
+            elif damage == 'proposal':
+                actions[-1]['text'] = '{}'
+            else:
+                actions[-2]['final_answer'] = 'different'
+        save_lines(directory / 'actions.jsonl', actions)
+        save_lines(tmp_path / 'codex_calls.jsonl', calls)
+        with pytest.raises(audit.ArchiveCorruptionError):
+>           audit.audit_refinement_transports(tmp_path)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'loop_research.archive_audit' has no attribute 'audit_refinement_transports'
+
+tests/test_refinement_transport_audit.py:156: AttributeError
+_____ test_transport_audit_rejects_tampered_or_unbound_evidence[readiness] _____
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-hgle73ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_transport_audit_rejects_t12')
+damage = 'readiness'
+
+    @pytest.mark.parametrize('damage', ['context', 'schema', 'manifest', 'snapshot_hash',
+                                      'action_prompt', 'action_schema', 'action_call_id',
+                                      'completion_response', 'completion_schema', 'missing_action',
+                                      'unbound_attempt', 'proposal', 'readiness', 'job_identity'])
+    def test_transport_audit_rejects_tampered_or_unbound_evidence(tmp_path, damage):
+        _, job, directory, actions, calls = transport(tmp_path)
+        if damage in ('context', 'schema', 'manifest'):
+            path = directory / (damage + '.json')
+            value = json.loads(path.read_text())
+            if damage == 'context':
+                value['trajectory'][0]['result'] += 'changed'
+            elif damage == 'schema':
+                value['properties']['edits']['maxItems'] = 3
+            else:
+                value['logical_payload_sha256'] = 'wrong'
+            save(path, value)
+        elif damage == 'completion_response':
+            calls[0]['response'] = 'same length altered response'.ljust(calls[0]['response_chars'])[:calls[0]['response_chars']]
+        elif damage == 'completion_schema':
+            calls[0]['schema_chars'] = 12
+            calls[0]['schema_sha256'] = 'unexpected'
+        elif damage == 'unbound_attempt':
+            save(tmp_path / 'codex_attempts/stray.json', {**calls[0], 'call_id': 'stray'})
+        elif damage == 'job_identity':
+            job['job_id'] = 'wrong'
+            save(tmp_path / 'refine_requests/request-one/job-one.json', job)
+        else:
+            if damage == 'snapshot_hash':
+                actions[0]['logical_payload_sha256'] = 'wrong'
+            elif damage == 'action_prompt':
+                actions[1]['backend_prompt'] += 'changed'
+            elif damage == 'action_schema':
+                actions[1]['schema'] = {'type': 'string'}
+            elif damage == 'action_call_id':
+                actions[2]['call_id'] = 'unknown'
+            elif damage == 'missing_action':
+                actions = [x for x in actions if x['event'] != 'model.start']
+            elif damage == 'proposal':
+                actions[-1]['text'] = '{}'
+            else:
+                actions[-2]['final_answer'] = 'different'
+        save_lines(directory / 'actions.jsonl', actions)
+        save_lines(tmp_path / 'codex_calls.jsonl', calls)
+        with pytest.raises(audit.ArchiveCorruptionError):
+>           audit.audit_refinement_transports(tmp_path)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'loop_research.archive_audit' has no attribute 'audit_refinement_transports'
+
+tests/test_refinement_transport_audit.py:156: AttributeError
+___ test_transport_audit_rejects_tampered_or_unbound_evidence[job_identity] ____
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-hgle73ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_transport_audit_rejects_t13')
+damage = 'job_identity'
+
+    @pytest.mark.parametrize('damage', ['context', 'schema', 'manifest', 'snapshot_hash',
+                                      'action_prompt', 'action_schema', 'action_call_id',
+                                      'completion_response', 'completion_schema', 'missing_action',
+                                      'unbound_attempt', 'proposal', 'readiness', 'job_identity'])
+    def test_transport_audit_rejects_tampered_or_unbound_evidence(tmp_path, damage):
+        _, job, directory, actions, calls = transport(tmp_path)
+        if damage in ('context', 'schema', 'manifest'):
+            path = directory / (damage + '.json')
+            value = json.loads(path.read_text())
+            if damage == 'context':
+                value['trajectory'][0]['result'] += 'changed'
+            elif damage == 'schema':
+                value['properties']['edits']['maxItems'] = 3
+            else:
+                value['logical_payload_sha256'] = 'wrong'
+            save(path, value)
+        elif damage == 'completion_response':
+            calls[0]['response'] = 'same length altered response'.ljust(calls[0]['response_chars'])[:calls[0]['response_chars']]
+        elif damage == 'completion_schema':
+            calls[0]['schema_chars'] = 12
+            calls[0]['schema_sha256'] = 'unexpected'
+        elif damage == 'unbound_attempt':
+            save(tmp_path / 'codex_attempts/stray.json', {**calls[0], 'call_id': 'stray'})
+        elif damage == 'job_identity':
+            job['job_id'] = 'wrong'
+            save(tmp_path / 'refine_requests/request-one/job-one.json', job)
+        else:
+            if damage == 'snapshot_hash':
+                actions[0]['logical_payload_sha256'] = 'wrong'
+            elif damage == 'action_prompt':
+                actions[1]['backend_prompt'] += 'changed'
+            elif damage == 'action_schema':
+                actions[1]['schema'] = {'type': 'string'}
+            elif damage == 'action_call_id':
+                actions[2]['call_id'] = 'unknown'
+            elif damage == 'missing_action':
+                actions = [x for x in actions if x['event'] != 'model.start']
+            elif damage == 'proposal':
+                actions[-1]['text'] = '{}'
+            else:
+                actions[-2]['final_answer'] = 'different'
+        save_lines(directory / 'actions.jsonl', actions)
+        save_lines(tmp_path / 'codex_calls.jsonl', calls)
+        with pytest.raises(audit.ArchiveCorruptionError):
+>           audit.audit_refinement_transports(tmp_path)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'loop_research.archive_audit' has no attribute 'audit_refinement_transports'
+
+tests/test_refinement_transport_audit.py:156: AttributeError
+____ test_incomplete_attempt_is_preserved_with_explicit_missing_completion _____
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-hgle73ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_incomplete_attempt_is_pre0')
+
+    def test_incomplete_attempt_is_preserved_with_explicit_missing_completion(tmp_path):
+        _, job, directory, actions, calls = transport(tmp_path)
+        job.update(status='failed', response_text=None, proposal=None)
+        for path in (tmp_path/'refine_state.json', tmp_path/'refine_requests/request-one/job-one.json'):
+            save(path, job)
+        manifest = json.loads((directory/'manifest.json').read_text())
+        manifest.update(status='failed', error='interrupted')
+        save(directory/'manifest.json', manifest)
+        save_lines(directory/'actions.jsonl', actions[:3])
+        save_lines(tmp_path/'codex_calls.jsonl', [])
+>       report = audit.audit_refinement_transports(tmp_path)[0]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'loop_research.archive_audit' has no attribute 'audit_refinement_transports'
+
+tests/test_refinement_transport_audit.py:169: AttributeError
+___ test_audit_keeps_refiner_worker_roles_out_of_research_subcall_statistics ___
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-hgle73ur/pytest-of-mukeshreddypochamreddy/pytest-0/test_audit_keeps_refiner_worke0')
+
+    def test_audit_keeps_refiner_worker_roles_out_of_research_subcall_statistics(tmp_path):
+        from test_archive_audit import archive
+        run, task, *_ = archive(tmp_path)
+        old_calls = audit.lines(task/'codex_calls.jsonl')
+        transport(task)
+        new_calls = audit.lines(task/'codex_calls.jsonl')
+        save_lines(task/'codex_calls.jsonl', [{k:v for k,v in x.items() if k != '_line'}
+                                            for x in old_calls + new_calls])
+        result = audit.audit_task(task, run)
+        assert result['subcall_count'] == 0
+        assert result['metrics']['calls_by_purpose'] == {'root': 1, 'refine': 1}
+>       assert result['refinement_transports'][0]['backend_attempt_count'] == 1
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'refinement_transports'
+
+tests/test_refinement_transport_audit.py:187: KeyError
+=========================== short test summary info ============================
+FAILED tests/test_refinement_transport_audit.py::test_actual_calls_and_retries_are_verified_without_inventing_monolithic_dispatch
+FAILED tests/test_refinement_transport_audit.py::test_transport_audit_rejects_tampered_or_unbound_evidence[context]
+FAILED tests/test_refinement_transport_audit.py::test_transport_audit_rejects_tampered_or_unbound_evidence[schema]
+FAILED tests/test_refinement_transport_audit.py::test_transport_audit_rejects_tampered_or_unbound_evidence[manifest]
+FAILED tests/test_refinement_transport_audit.py::test_transport_audit_rejects_tampered_or_unbound_evidence[snapshot_hash]
+FAILED tests/test_refinement_transport_audit.py::test_transport_audit_rejects_tampered_or_unbound_evidence[action_prompt]
+FAILED tests/test_refinement_transport_audit.py::test_transport_audit_rejects_tampered_or_unbound_evidence[action_schema]
+FAILED tests/test_refinement_transport_audit.py::test_transport_audit_rejects_tampered_or_unbound_evidence[action_call_id]
+FAILED tests/test_refinement_transport_audit.py::test_transport_audit_rejects_tampered_or_unbound_evidence[completion_response]
+FAILED tests/test_refinement_transport_audit.py::test_transport_audit_rejects_tampered_or_unbound_evidence[completion_schema]
+FAILED tests/test_refinement_transport_audit.py::test_transport_audit_rejects_tampered_or_unbound_evidence[missing_action]
+FAILED tests/test_refinement_transport_audit.py::test_transport_audit_rejects_tampered_or_unbound_evidence[unbound_attempt]
+FAILED tests/test_refinement_transport_audit.py::test_transport_audit_rejects_tampered_or_unbound_evidence[proposal]
+FAILED tests/test_refinement_transport_audit.py::test_transport_audit_rejects_tampered_or_unbound_evidence[readiness]
+FAILED tests/test_refinement_transport_audit.py::test_transport_audit_rejects_tampered_or_unbound_evidence[job_identity]
+FAILED tests/test_refinement_transport_audit.py::test_incomplete_attempt_is_preserved_with_explicit_missing_completion
+FAILED tests/test_refinement_transport_audit.py::test_audit_keeps_refiner_worker_roles_out_of_research_subcall_statistics
+17 failed in 0.19s
