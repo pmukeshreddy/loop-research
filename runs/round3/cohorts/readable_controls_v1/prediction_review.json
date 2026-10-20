@@ -1,0 +1,267 @@
+{
+  "review_type": "independent_read_only_preregistration_review",
+  "review_finalized_at": "2026-10-20T18:24:35.428226+00:00",
+  "status": "APPROVED_WITH_REPORTED_LIMITS",
+  "blockers": [],
+  "source_commit": "902abe33d06f64c426a65d55d5e600dd6d6a052a",
+  "cohort": "readable_controls_v1",
+  "A_run_id": "research-a685a2c37ca948fa9d7ab1a551451ff2",
+  "BASE": "2a423027212fe1c430dfd200bdd55f3a27b22d70",
+  "POST_A": "d63478eec4f3acd9a71662e79a44183008a364d9",
+  "predictions": {
+    "path": "runs/round3/predictions.md",
+    "bytes": 15055,
+    "sha256": "cec6bffde76d8a79aeac7c037dde65910e6fcac1927e899d63d8624582951f78",
+    "commit": "2ecab945810592a7b9e084c3d3c5dc8b00a4f20a",
+    "committed_bytes_equal_working_file": true,
+    "commit_time_utc": "2026-10-20T18:21:53+00:00"
+  },
+  "timing": {
+    "A_completed_at": "2026-10-20T18:13:03.833090+00:00",
+    "initial_predictions_written_at": "2026-10-20T18:18:26.938062+00:00",
+    "S4_clarification_finalized_at": "2026-10-20T18:20:41.901889+00:00",
+    "prediction_gate_verified_at": "2026-10-20T18:22:04.351455+00:00",
+    "B_phase_started_at": "2026-10-20T18:22:05.319633+00:00",
+    "initial_review_prelaunch_observation": "No B phase, b.processes.json, B console, or B launcher event was present when initial review checked; initial review was communicated to parent subject only to S4 wording clarification. Parent clarified and committed before launch. Final receipt postdates launch.",
+    "final_receipt_is_prelaunch": false
+  },
+  "full_entry_binding_verification": {
+    "exact_changed_set": [
+      "memory:6bc3c4962d6e4eafab63ed0189268ec3",
+      "memory:b98beb481e414d02952f80dbd258928e",
+      "memory:bf8ebe4929de4c4493017583193abedc",
+      "skill:f9d1625b7c1a49a7824cc94063b6be4c"
+    ],
+    "state_checks": {
+      "BASE": {
+        "commit": "2a423027212fe1c430dfd200bdd55f3a27b22d70",
+        "sha256": "5031ab862ddcc418480fe8c645d190f43f7cd80f5548ab1e48d16add719baf29",
+        "bytes": 1722,
+        "matches_binding": true
+      },
+      "POST_A": {
+        "commit": "d63478eec4f3acd9a71662e79a44183008a364d9",
+        "sha256": "0ee27a891a46c6e81763bc9cd86cf67aed38362e69a46ef1f7f0c4239ce347ac",
+        "bytes": 48584,
+        "matches_binding": true
+      }
+    },
+    "new_entries": 3,
+    "metadata_only_existing_entries": 1,
+    "entries": [
+      {
+        "key": "memory:6bc3c4962d6e4eafab63ed0189268ec3",
+        "title": "Validate exact source spans before accepting extracted cells",
+        "version": 2,
+        "change": "created",
+        "fields_changed": [
+          "body",
+          "created_at",
+          "evidence",
+          "id",
+          "kind",
+          "outcomes",
+          "refinement_id",
+          "title",
+          "trigger",
+          "updated_at",
+          "usage",
+          "version"
+        ],
+        "full_before_and_after_match_git": true,
+        "canonical_after_sha256": "198b4a40d9591d631f9c3f2ce49dabc14425797d77e63b701a0f22d9415a55f2",
+        "directions": [
+          "S1 increase toward 1",
+          "S3 decrease",
+          "S4 decrease or remain zero",
+          "V1 decrease, conditional N/A with no S3 exposure"
+        ],
+        "verdict": "coherent"
+      },
+      {
+        "key": "memory:b98beb481e414d02952f80dbd258928e",
+        "title": "Reconcile duplicate entity records before updating cells",
+        "version": 1,
+        "change": "created",
+        "fields_changed": [
+          "body",
+          "created_at",
+          "evidence",
+          "id",
+          "kind",
+          "outcomes",
+          "refinement_id",
+          "title",
+          "trigger",
+          "updated_at",
+          "usage",
+          "version"
+        ],
+        "full_before_and_after_match_git": true,
+        "canonical_after_sha256": "f4311a31fa345acc13a62338cd11cb799af9cb9d51d9b68aad76a6ed7bd213af",
+        "directions": [
+          "D1 increase conditional on D0 > 0",
+          "D2 and D3 decrease conditional on D0 > 0"
+        ],
+        "verdict": "coherent"
+      },
+      {
+        "key": "memory:bf8ebe4929de4c4493017583193abedc",
+        "title": "Inspect search results before recording discoveries",
+        "version": 1,
+        "change": "updated",
+        "fields_changed": [
+          "outcomes",
+          "usage"
+        ],
+        "full_before_and_after_match_git": true,
+        "canonical_after_sha256": "4123b4f2bbcd57c24d844f095e1a99e0082382de23dab84275a1fab42f9b06b0",
+        "directions": [
+          "M1/M2 and search repeats descriptive only; no new-procedure direction"
+        ],
+        "verdict": "coherent"
+      },
+      {
+        "key": "skill:f9d1625b7c1a49a7824cc94063b6be4c",
+        "title": "Recover evidence from partially failed fetch batches",
+        "version": 1,
+        "change": "created",
+        "fields_changed": [
+          "body",
+          "created_at",
+          "evidence",
+          "id",
+          "kind",
+          "outcomes",
+          "refinement_id",
+          "title",
+          "trigger",
+          "updated_at",
+          "usage",
+          "version"
+        ],
+        "full_before_and_after_match_git": true,
+        "canonical_after_sha256": "95ecea4f1c80387fcff8fccc982a0201bc278d84944b0a23aa76b475504129c4",
+        "directions": [
+          "F1 decrease conditional on failed-fetch exposure",
+          "R2 increase",
+          "S2 supplementary URLs increase conditional on a required-field gap",
+          "Failed-URL repeat count and ratio decrease"
+        ],
+        "verdict": "coherent"
+      }
+    ]
+  },
+  "resolved_finding": {
+    "id": "S4-wording",
+    "original_issue": "Absent from any retained text could mean a quote must occur in all retained versions, whereas existing evaluator accepts at least one text per cited URL.",
+    "resolution": "Final text: for any cited URL, a quote occurring in none of that URL's retained original texts. This matches the existing citation_metrics implementation; no scoring change.",
+    "resolved_before_commit": true
+  },
+  "measurement_checks": {
+    "standard_contract": "answer-ready-v2",
+    "manual_counts": "Existing manual_metrics accepts arbitrary nonnegative integer or null values and requires cited evidence; added conditional counts are compatible.",
+    "automatic_ratios": "Existing metric and aggregation paths accept finite numeric ratios.",
+    "aggregation": "All-metric union, per-arm defined counts/mean/min/max/range, frozen-minus-base delta, strict abs(delta)>spread, N/A retained.",
+    "new_tests_run": 0,
+    "B_outcomes_inspected": false
+  },
+  "qualifications": [
+    "Initial independent content/binding review and the S4 wording request occurred before prediction commit and B launch; this durable final receipt is written after B began. It is not a claim that this file existed before launch.",
+    "This is prospective for this new cohort, not blind: previous superseded outcomes were already known. No B outcomes from the new cohort were used for this review.",
+    "All three added entries have measurable directions; the BF8 discovery procedure is unchanged and only its usage/outcomes metadata differ. The treatment is the full entry objects, not isolated prose.",
+    "V1 is deliberately limited to identifying diagnostics in terminated quote-guard blocks. S1 tests final acceptance and does not establish every earlier mutation was staged.",
+    "D0-D3 require actual candidate and assignment evidence, not model allegations. Counts are once per entity-field group; D1 <= D0 and D3 <= D2 <= D0 follow from the definitions. Unknown evidence is N/A; zero exposure makes conditional counts N/A.",
+    "F1 requires an exact failed return in a research extraction/verification source payload, excludes failure diagnosis/refinement/instruction-only mentions, and counts each subcall once. It is not the failure count or proof of recovery.",
+    "R2 requires executed later-block evidence use, not same-block extraction or printing only a saved length; source completeness and block granularity affect opportunity.",
+    "Fetch requests, failure reasons, repeats, cache/shared states, raw HTTP-body artifacts, ordinary per-URL fetched characters and additional whole-text hash deduplication remain separately reportable. Root size uses the largest root; overlap uses the union of all roots.",
+    "Every automatic and additional manual metric is reported, with raw observations and explicit N/A reasons; arbitrary nonnegative integer manual counts fit the existing helper. Automatic ratios use the existing numeric path.",
+    "Strict absolute mean delta > maximum within-arm range is descriptive. Equality fails the criterion; N/A is not zero; fewer than three defined runs requires qualification. Three repeats are not statistical evidence.",
+    "Mechanical quote/identity checks and model audit allegations do not replace all-cell semantic review. Saved replay entries are not claimed to seed these arms. Cross-round fetch-path changes do not isolate learning."
+  ],
+  "evidence": [
+    {
+      "path": "runs/round3/cohorts/readable_controls_v1/A.prediction_entry_binding.json",
+      "bytes": 42391,
+      "sha256": "60325a3a8b42defb219147be3e4f6e329b85483cfea94fa466a7b9b4e10164ed"
+    },
+    {
+      "path": "runs/round3/cohorts/readable_controls_v1/prediction_write_receipt.json",
+      "bytes": 854,
+      "sha256": "ecbbe90ec2eb6a2ddb7124acad84fee64413d10fd538c8811e9f7c1ba90f564f"
+    },
+    {
+      "path": "runs/round3/cohorts/readable_controls_v1/execution.json",
+      "bytes": 40264,
+      "sha256": "b03287d5f85e92c479c9668fdcbe066b7f403dc9d6f7999795871d1330bd8da5"
+    },
+    {
+      "path": "runs/round3/cohorts/readable_controls_v1/launcher_events.jsonl",
+      "bytes": 988,
+      "sha256": "8ba387d03f313ebf62ade2f7e53f15dbbb43230881e78d43e283acb2ed01cb79"
+    },
+    {
+      "path": "runs/round3/cohorts/readable_controls_v1/b.processes.json",
+      "bytes": 26208,
+      "sha256": "fb38479856d79811481233758e897c1d400443daf3c2ed8c2879bcfc217bd94c"
+    },
+    {
+      "path": "runs/round3/metrics.py",
+      "bytes": 37399,
+      "sha256": "5cc694f72e2818a99b512cf7cfd681e2608cf595cf10a3dddfe980ee456fa332"
+    },
+    {
+      "path": "runs/round3/launch.py",
+      "bytes": 22680,
+      "sha256": "c38178caf019ce43e94f1d29eec4c30973b20c0c9e04c60aa0f9d7aa00e0f520"
+    }
+  ],
+  "evidence_snapshot_note": "Execution/process files are live coordinator records and may change after this timestamp; hashes bind the bytes read for this review, not their future state. Predictions and binding are fixed artifacts.",
+  "evidence_locations": [
+    {
+      "path": "runs/round3/predictions.md",
+      "line": 6,
+      "note": "A completion and B-launch sequencing; source and POST_A bindings above."
+    },
+    {
+      "path": "runs/round3/predictions.md",
+      "line": 30,
+      "note": "Exact corrected S4 rule and intentionally narrow V1."
+    },
+    {
+      "path": "runs/round3/predictions.md",
+      "line": 32,
+      "note": "D0-D3 candidate evidence, once-per-group rules and N/A."
+    },
+    {
+      "path": "runs/round3/predictions.md",
+      "line": 34,
+      "note": "Exact failed-return/source-payload F1 boundary."
+    },
+    {
+      "path": "runs/round3/predictions.md",
+      "line": 36,
+      "note": "R2 executed later-block reuse."
+    },
+    {
+      "path": "runs/round3/metrics.py",
+      "line": 171,
+      "note": "Existing per-cited-URL quote membership accepts any retained text for that URL."
+    },
+    {
+      "path": "runs/round3/metrics.py",
+      "line": 230,
+      "note": "Arbitrary manual counts and conditional S2 support."
+    },
+    {
+      "path": "runs/round3/metrics.py",
+      "line": 262,
+      "note": "All-key aggregation with strict spread comparison."
+    },
+    {
+      "path": "runs/round3/launch.py",
+      "line": 201,
+      "note": "Completed A, exact committed predictions, source and POST_A launch gate."
+    }
+  ]
+}
