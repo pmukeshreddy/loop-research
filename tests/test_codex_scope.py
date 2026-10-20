@@ -10,7 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from loop_research.archive import count_codex_calls, read_jsonl
-from loop_research.codex_backend import CallBudget, CodexBackend
+from loop_research.codex_backend import CallBudget, CodexBackend, INSTRUCTION
 
 
 def completed(command, text="done"):
@@ -244,3 +244,65 @@ def test_normal_parent_future_completion_does_not_cancel_child(ctx):
         ctx.cancellation.set_result(None)
         assert not child.ctx.cancellation.cancelled()
         assert child.complete("fixture", purpose="refine") == "done"
+
+
+def test_scope_logging_override_preserves_failed_reply_and_parent_archive_policy(ctx):
+    ctx.config.codex.log_full_text = False
+    ctx.config.codex.max_retries = 1
+    original_config = ctx.config.model_dump()
+    parent_budget, child_budget = CallBudget(10, 30), CallBudget(10, 30)
+    failed_reply = "failed attempt reply that must remain visible"
+    attempts, waits = [], []
+
+    def runner(command, **kwargs):
+        assert ctx.config.model_dump() == original_config
+        attempts.append(command)
+        if len(attempts) == 1:
+            result = completed(command, failed_reply)
+            result.returncode, result.stderr = 1, "temporary failure after a partial reply"
+            return result
+        return completed(command, "success")
+
+    parent = CodexBackend(ctx, runner=runner, sleep=waits.append, jitter=lambda: 0,
+                          budget=parent_budget)
+    with parent.scope(budget=child_budget, log_full_text=True) as child:
+        assert child.ctx.config is not ctx.config
+        assert child.ctx.config.models is not ctx.config.models
+        expected_config = ctx.config.model_dump()
+        expected_config["codex"]["log_full_text"] = True
+        assert child.ctx.config.model_dump() == expected_config
+        assert child.complete("retain exact evidence", purpose="refine") == "success"
+        failed, succeeded = read_jsonl(ctx.path / "codex_calls.jsonl")
+        assert failed["response"] == failed_reply
+        assert failed["response_chars"] == len(failed_reply) == 45
+        assert failed["exit_code"] == 1 and failed["error"]
+        assert succeeded["response"] == "success"
+        assert succeeded["exit_code"] == 0 and succeeded["error"] is None
+        assert failed["prompt"] == succeeded["prompt"] == INSTRUCTION + "retain exact evidence"
+    assert ctx.config.model_dump() == original_config
+    assert waits == [1] and child_budget.count == 2 and parent_budget.count == 0
+    assert parent.complete("parent prompt", purpose="root") == "success"
+    parent_record = read_jsonl(ctx.path / "codex_calls.jsonl")[-1]
+    assert "prompt" not in parent_record and "response" not in parent_record
+    assert parent_record["response_chars"] == 7 and parent_budget.count == 1
+    assert ctx.config.model_dump() == original_config
+
+
+@pytest.mark.parametrize("parent_flag,override,expected", [
+    (False, None, False), (True, None, True), (True, False, False),
+])
+def test_scope_logging_none_inherits_and_false_overrides_only_child(ctx, parent_flag,
+                                                                 override, expected):
+    ctx.config.codex.log_full_text = parent_flag
+    original_config = ctx.config.model_dump()
+    parent = CodexBackend(ctx, runner=lambda command, **_: completed(command, "kept reply"))
+    with parent.scope(budget=CallBudget(10, 30), log_full_text=override) as child:
+        assert child.complete("child", purpose="refine") == "kept reply"
+        child_record, = read_jsonl(ctx.path / "codex_calls.jsonl")
+        assert ("prompt" in child_record) is expected
+        assert ("response" in child_record) is expected
+    assert ctx.config.model_dump() == original_config
+    assert parent.complete("parent", purpose="root") == "kept reply"
+    parent_record = read_jsonl(ctx.path / "codex_calls.jsonl")[-1]
+    assert ("prompt" in parent_record) is parent_flag
+    assert ("response" in parent_record) is parent_flag

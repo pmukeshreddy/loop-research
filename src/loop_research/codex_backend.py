@@ -158,9 +158,13 @@ class CodexBackend:
         self.local = threading.local()
 
     @contextmanager
-    def scope(self, *, budget):
-        """A cancellable child transport sharing configuration and archive state."""
-        child_ctx = replace(self.ctx, cancellation=Future())
+    def scope(self, *, budget, log_full_text=None):
+        """A cancellable child transport with an optional isolated archive policy."""
+        child_config = self.config
+        if log_full_text is not None:
+            child_config = self.config.model_copy(deep=True)
+            child_config.codex.log_full_text = log_full_text
+        child_ctx = replace(self.ctx, config=child_config, cancellation=Future())
         if self.ctx.cancellation is not None:
             # Parent futures can outlive many completed scopes; keep no strong
             # reference to their child contexts/process cancellation callbacks.
