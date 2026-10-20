@@ -1,0 +1,53 @@
+{
+  "status": "verified",
+  "commit": "7cc1e59",
+  "note": "The unrestricted whitespace check flagged preserved patch contents (including nested raw test logs and context lines). These are exact git-show artifacts and were retained byte-for-byte, not normalized. The non-artifact diff check passed.",
+  "patches_verified": [
+    {
+      "commit": "cfe361f5db124622a7bbf2d470fa23794e3b0774",
+      "root_cause": "FIFO slot admission after observed starvation",
+      "patch": "runs/round3/fix_diffs/cfe361f5db124622a7bbf2d470fa23794e3b0774.patch",
+      "bytes": 57568,
+      "sha256": "86fc99d9e6d6273ad4a35fcc425f6d72701e52ac2ed7ea42c6c69a3f5ac2fb2c",
+      "product_files": [
+        "src/loop_research/codex_backend.py"
+      ]
+    },
+    {
+      "commit": "af3a4576ea18fd6e799ddfdd8def73b3b32111d1",
+      "root_cause": "Permanent provider input rejection caused futile identical retries",
+      "patch": "runs/round3/fix_diffs/af3a4576ea18fd6e799ddfdd8def73b3b32111d1.patch",
+      "bytes": 41655,
+      "sha256": "c36bece43943c272d47b27fcf4b0e61246b74103c1d8e3d297bca6381379dca6",
+      "product_files": [
+        "src/loop_research/codex_backend.py"
+      ]
+    },
+    {
+      "commit": "dae5e2d3bc9c82f67cb9757945832917d2e89da2",
+      "root_cause": "Raw versus JSON-quoted duplicate planner text escaped v2 sharing",
+      "patch": "runs/round3/fix_diffs/dae5e2d3bc9c82f67cb9757945832917d2e89da2.patch",
+      "bytes": 131351,
+      "sha256": "50068d0da86b1cf6afd23d70f4b7a9a6e9086782cda14fef8e24d13e8a37b09b",
+      "product_files": [
+        "src/loop_research/refine.py",
+        "src/loop_research/shared_text.py"
+      ]
+    }
+  ],
+  "non_artifact_check": {
+    "command": [
+      "git",
+      "diff",
+      "7cc1e59^",
+      "7cc1e59",
+      "--check",
+      "--",
+      ".",
+      ":!runs/round3/fix_diffs/*.patch"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+}

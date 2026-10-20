@@ -1,0 +1,282 @@
+{
+  "source_commit": "09c77902babb879abe2b0dcc8cab7cf5209bf5ae",
+  "analysis_contract": "answer-ready-v2",
+  "runs": {
+    "SI": {
+      "run_id": "research-5b03d537f83e4a6caa8d24078d64379f",
+      "metrics": {
+        "S1_pre_answer_ready_validation": {
+          "value": 1,
+          "reason": "Before the first readiness assignment, jsonschema.validate enforces the actual five-row candidate and minItems=1 for each sources array; explicit asserts require each value and quote; every cited URL is checked against retained evidence for exact quote membership. The same unmodified extracted object is serialized into answer content. Trace285 confirms successful execution of the submitting block.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "02c7a0fb4ab4d60696db002fa5573a6a215ddc7193062db88cf3a70ed80169a0",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+                "bytes": 807765,
+                "sha256": "02c7a0fb4ab4d60696db002fa5573a6a215ddc7193062db88cf3a70ed80169a0"
+              },
+              "note": "Schema requires exactly five rows and a nonempty sources array for every required cell; executed quote check reports no failures.",
+              "line": 19
+            },
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "02c7a0fb4ab4d60696db002fa5573a6a215ddc7193062db88cf3a70ed80169a0",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+                "bytes": 807765,
+                "sha256": "02c7a0fb4ab4d60696db002fa5573a6a215ddc7193062db88cf3a70ed80169a0"
+              },
+              "note": "Executed final block validates actual extracted object, nonempty values/quotes, exact coverage, and every cited URL before serializing that same object and setting ready.",
+              "line": 41
+            },
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/trace.jsonl",
+              "sha256": "a7df7b38f1d9688a72b3a499bd87df09863dc5f830c1611bfba63ca35d280c5c",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/trace.jsonl",
+                "bytes": 171273,
+                "sha256": "a7df7b38f1d9688a72b3a499bd87df09863dc5f830c1611bfba63ca35d280c5c"
+              },
+              "note": "First and only depth-0 REPL code.end with answer_ready=true; no error, stdout confirms five validated rows and twenty checks.",
+              "line": 285
+            }
+          ]
+        },
+        "S2_gap_exposed": {
+          "value": 0,
+          "reason": "The initial extraction supplied all five complete rows and printed Validation failures: []; no required-field evidence gap or repair was exposed.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "02c7a0fb4ab4d60696db002fa5573a6a215ddc7193062db88cf3a70ed80169a0",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+                "bytes": 807765,
+                "sha256": "02c7a0fb4ab4d60696db002fa5573a6a215ddc7193062db88cf3a70ed80169a0"
+              },
+              "note": "Initial extraction and executed validation: five rows, no failures, complete values.",
+              "line": 19
+            },
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "02c7a0fb4ab4d60696db002fa5573a6a215ddc7193062db88cf3a70ed80169a0",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+                "bytes": 807765,
+                "sha256": "02c7a0fb4ab4d60696db002fa5573a6a215ddc7193062db88cf3a70ed80169a0"
+              },
+              "note": "Final checks succeed without repairs.",
+              "line": 41
+            }
+          ]
+        },
+        "S2_supplementary_unique_urls": {
+          "value": 0,
+          "reason": "No exposed gap, hence no directed supplementary fetch. All three distinct downloads and the differently focused cache reuse were completed before extraction as part of the explicitly requested SI demonstration. Conditional prediction is not exercised.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "02c7a0fb4ab4d60696db002fa5573a6a215ddc7193062db88cf3a70ed80169a0",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+                "bytes": 807765,
+                "sha256": "02c7a0fb4ab4d60696db002fa5573a6a215ddc7193062db88cf3a70ed80169a0"
+              },
+              "note": "Single and batched downloads, cached reuse and complete evidence lengths before extraction.",
+              "line": 16
+            },
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/trace.jsonl",
+              "sha256": "a7df7b38f1d9688a72b3a499bd87df09863dc5f830c1611bfba63ca35d280c5c",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/trace.jsonl",
+                "bytes": 171273,
+                "sha256": "a7df7b38f1d9688a72b3a499bd87df09863dc5f830c1611bfba63ca35d280c5c"
+              },
+              "note": "Last fetch completes before subcall/extraction validation.",
+              "line": 142
+            },
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/fetch_telemetry.json",
+              "sha256": "10d1e80da99012c0a20dcfc4206b5d8ef5284d131676c8448adfe2fbc437ca85",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/fetch_telemetry.json",
+                "bytes": 19641,
+                "sha256": "10d1e80da99012c0a20dcfc4206b5d8ef5284d131676c8448adfe2fbc437ca85"
+              },
+              "note": "All four requests: three successful direct owners and one successful cache request; none follows a gap."
+            }
+          ]
+        },
+        "S3_quote_exception_blocks": {
+          "value": 0,
+          "reason": "All five executed root REPL blocks have empty stderr and all 324 trace events have no nonempty error. No quotation-validation exception terminated a block.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/trace.jsonl",
+              "sha256": "a7df7b38f1d9688a72b3a499bd87df09863dc5f830c1611bfba63ca35d280c5c",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/trace.jsonl",
+                "bytes": 171273,
+                "sha256": "a7df7b38f1d9688a72b3a499bd87df09863dc5f830c1611bfba63ca35d280c5c"
+              },
+              "note": "Complete finished trace; zero error-bearing events."
+            },
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "02c7a0fb4ab4d60696db002fa5573a6a215ddc7193062db88cf3a70ed80169a0",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+                "bytes": 807765,
+                "sha256": "02c7a0fb4ab4d60696db002fa5573a6a215ddc7193062db88cf3a70ed80169a0"
+              },
+              "note": "Complete five executed blocks; validation and final submission complete without stderr."
+            }
+          ]
+        },
+        "S3_caught_printed_quote_failures": {
+          "value": 0,
+          "reason": "The executed checker printed Validation failures: []; no individual quote-failure record was caught or printed in any block.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "02c7a0fb4ab4d60696db002fa5573a6a215ddc7193062db88cf3a70ed80169a0",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+                "bytes": 807765,
+                "sha256": "02c7a0fb4ab4d60696db002fa5573a6a215ddc7193062db88cf3a70ed80169a0"
+              },
+              "note": "Executed checker prints an empty failure list.",
+              "line": 19
+            },
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+              "sha256": "02c7a0fb4ab4d60696db002fa5573a6a215ddc7193062db88cf3a70ed80169a0",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/trajectory.jsonl",
+                "bytes": 807765,
+                "sha256": "02c7a0fb4ab4d60696db002fa5573a6a215ddc7193062db88cf3a70ed80169a0"
+              },
+              "note": "Final block reports only validated rows and checks, with no caught failure.",
+              "line": 41
+            }
+          ]
+        }
+      },
+      "semantic_review": {
+        "summary": "All five exact requested identities and fifteen values match Round 2. Each full value is supported by the retained official NIST Table 1 row, with raw HTML columns independently confirming the quantity/name/symbol association. Every quote is exact; no unresolved semantic cell was found. The executed pre-submission full-cell guard meets answer-ready-v2 S1=1.",
+        "counts": {
+          "semantically_supported_required_cells": {
+            "value": 15,
+            "reason": "All fifteen cells independently verified against actual retained table headers and raw row associations.",
+            "evidence": [
+              {
+                "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/output.json",
+                "sha256": "3e70189e055b3c98e8147c9da51676fe83d15c4a330bcd6cb631c584dd22ccba",
+                "file": {
+                  "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/output.json",
+                  "bytes": 4327,
+                  "sha256": "3e70189e055b3c98e8147c9da51676fe83d15c4a330bcd6cb631c584dd22ccba"
+                },
+                "note": "All five final rows with three required cells each."
+              },
+              {
+                "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/downloads/20dc2495ff564e5797ce34684c87cf9b.txt",
+                "sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+                "file": {
+                  "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/downloads/20dc2495ff564e5797ce34684c87cf9b.txt",
+                  "bytes": 16864,
+                  "sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc"
+                },
+                "note": "NIST Table 1 headings and all five triples.",
+                "line": 145
+              },
+              {
+                "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/downloads/20dc2495ff564e5797ce34684c87cf9b-0.raw",
+                "sha256": "051b3409d88fb3c9344b4bba52bd01963f2f25211032d7d0e0737ea2ae791b93",
+                "file": {
+                  "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/downloads/20dc2495ff564e5797ce34684c87cf9b-0.raw",
+                  "bytes": 115696,
+                  "sha256": "051b3409d88fb3c9344b4bba52bd01963f2f25211032d7d0e0737ea2ae791b93"
+                },
+                "note": "Raw HTML Table 1 column headers and corresponding three-cell rows.",
+                "line": 758
+              }
+            ]
+          },
+          "unresolved_semantic_cells": {
+            "value": 0,
+            "reason": "No unsupported or ambiguous final value in these explicit base-unit table rows.",
+            "evidence": [
+              {
+                "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/output.json",
+                "sha256": "3e70189e055b3c98e8147c9da51676fe83d15c4a330bcd6cb631c584dd22ccba",
+                "file": {
+                  "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/output.json",
+                  "bytes": 4327,
+                  "sha256": "3e70189e055b3c98e8147c9da51676fe83d15c4a330bcd6cb631c584dd22ccba"
+                },
+                "note": "Complete final cited output."
+              },
+              {
+                "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/downloads/20dc2495ff564e5797ce34684c87cf9b-0.raw",
+                "sha256": "051b3409d88fb3c9344b4bba52bd01963f2f25211032d7d0e0737ea2ae791b93",
+                "file": {
+                  "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/downloads/20dc2495ff564e5797ce34684c87cf9b-0.raw",
+                  "bytes": 115696,
+                  "sha256": "051b3409d88fb3c9344b4bba52bd01963f2f25211032d7d0e0737ea2ae791b93"
+                },
+                "note": "Raw source establishes the associations, rather than substring membership alone.",
+                "line": 758
+              }
+            ]
+          }
+        },
+        "evidence": [
+          {
+            "path": "runs/research-0bd4c80fa24c4fd99cfc8d2f6876762d/1109eb057f25ad2429b6e77e/output.json",
+            "sha256": "812bd0c7d47208e1b59a21f8765e1cd2be3ccc7713ee339525a620dffcd00f44",
+            "file": {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/research-0bd4c80fa24c4fd99cfc8d2f6876762d/1109eb057f25ad2429b6e77e/output.json",
+              "bytes": 4609,
+              "sha256": "812bd0c7d47208e1b59a21f8765e1cd2be3ccc7713ee339525a620dffcd00f44"
+            },
+            "note": "Round 2 reference has the same five identities and fifteen values."
+          },
+          {
+            "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/output.json",
+            "sha256": "3e70189e055b3c98e8147c9da51676fe83d15c4a330bcd6cb631c584dd22ccba",
+            "file": {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/output.json",
+              "bytes": 4327,
+              "sha256": "3e70189e055b3c98e8147c9da51676fe83d15c4a330bcd6cb631c584dd22ccba"
+            },
+            "note": "Final output."
+          },
+          {
+            "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/downloads/20dc2495ff564e5797ce34684c87cf9b.txt",
+            "sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc",
+            "file": {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/downloads/20dc2495ff564e5797ce34684c87cf9b.txt",
+              "bytes": 16864,
+              "sha256": "aa6e643be7600627b826b8ffa9e5178c0468089c5a01c6f45af7d3ec2a926ecc"
+            },
+            "note": "Retained official NIST table."
+          },
+          {
+            "path": "runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/downloads/20dc2495ff564e5797ce34684c87cf9b-0.raw",
+            "sha256": "051b3409d88fb3c9344b4bba52bd01963f2f25211032d7d0e0737ea2ae791b93",
+            "file": {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/SI/runs/research-5b03d537f83e4a6caa8d24078d64379f/1109eb057f25ad2429b6e77e/downloads/20dc2495ff564e5797ce34684c87cf9b-0.raw",
+              "bytes": 115696,
+              "sha256": "051b3409d88fb3c9344b4bba52bd01963f2f25211032d7d0e0737ea2ae791b93"
+            },
+            "note": "Actual raw official HTML table columns."
+          }
+        ]
+      }
+    }
+  }
+}

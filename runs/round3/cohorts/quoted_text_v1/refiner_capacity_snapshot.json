@@ -1,0 +1,1076 @@
+{
+  "kind": "incomplete_runtime_capacity_diagnostic",
+  "source_commit": "09c77902babb879abe2b0dcc8cab7cf5209bf5ae",
+  "run_id": "research-f43c96b33c5d43b299e491341eb65216",
+  "snapshot_started_at": "2026-10-20T04:39:53.351277+00:00",
+  "snapshot_finished_at": "2026-10-20T04:39:53.355680+00:00",
+  "latest_captured_trace_timestamp": "2026-10-20T04:34:17.957669+00:00",
+  "manifest_status": "running",
+  "no_actual_planner_request_available": true,
+  "scope": "Read-only capture and pure in-memory codec/self-check calculations. No Session/Harness/Refiner instantiated; no calls into the running Session, writes, locks, scheduling, cancellation, model/web calls, installation or commit. Only this separate md/json report written outside the live workspace.",
+  "captured_inputs": [
+    {
+      "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/research.json",
+      "captured_bytes": 1347,
+      "captured_sha256": "f003330d2268b85b887953c2e54d5a8a5081dbc2136d600610a0108e27bd93d3",
+      "unchanged_at_capture_end": true
+    },
+    {
+      "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/trace.jsonl",
+      "captured_bytes": 1061620,
+      "captured_sha256": "798fdba23d9513e37810dbbeef9f1b5e680d9709c851ccb92fd29e7074e3b650",
+      "unchanged_at_capture_end": true
+    },
+    {
+      "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+      "captured_bytes": 2510904,
+      "captured_sha256": "19f9a489dbcf65f287142b2f462d569da6cbbfbc8841c305f3a7ddb3102d001e",
+      "unchanged_at_capture_end": true
+    },
+    {
+      "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/evidence.json",
+      "captured_bytes": 1493079,
+      "captured_sha256": "0a4b3b6a64d69f9d124a178697421c70f66f18ce0a717452fdbcf4809a779156",
+      "unchanged_at_capture_end": true
+    },
+    {
+      "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/task_state.json",
+      "captured_bytes": 149,
+      "captured_sha256": "a7631c2a7600ee32c4b9bb36b62bf9c5464f0c36a37287140dbb13ffb89cd4d7",
+      "unchanged_at_capture_end": true
+    },
+    {
+      "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/task.json",
+      "captured_bytes": 388,
+      "captured_sha256": "898a36ca23c6c2e232d66adb1cd8c17f3ae37e0ecf265747a2dfc3ac04ef84ab",
+      "unchanged_at_capture_end": true
+    },
+    {
+      "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/config.json",
+      "captured_bytes": 884,
+      "captured_sha256": "7b8116f9ee4ed168667c1f9ed5d399dbfc720799ea7b46bc8c9eba6cbef2f4fe",
+      "unchanged_at_capture_end": true
+    },
+    {
+      "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/fetch_telemetry.json",
+      "captured_bytes": 423334,
+      "captured_sha256": "0712d2ba769271d9c8f508cd21e7f3835d1e14c47a19243814e8a2ac85565bcb",
+      "unchanged_at_capture_end": true
+    },
+    {
+      "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/codex_calls.jsonl",
+      "captured_bytes": 406399,
+      "captured_sha256": "8dacecc93654bfdb1acb0b38d373eb2149fbbece32a16c4d8418e8a304c69a9a",
+      "unchanged_at_capture_end": true
+    },
+    {
+      "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/harness/harness_state.json",
+      "captured_bytes": 1973,
+      "captured_sha256": "8bb9e1fedae2727da5036046518e35dd1023ed1ea4ab4cddb235cf25262f3114",
+      "unchanged_at_capture_end": true
+    }
+  ],
+  "source_rules": [
+    {
+      "path": "src/loop_research/session.py",
+      "line": 124,
+      "note": "Existing observation removes repeated later-root prompt fields, worker prompt/response duplicates and repeated locals/rlm_calls. Diagnostic reproduces these existing rules, adds no truncation or new projection."
+    },
+    {
+      "path": "src/loop_research/session.py",
+      "line": 198,
+      "note": "Tool result enters trajectory only after function returns. The pending large batch has not returned."
+    },
+    {
+      "path": "src/loop_research/selfcheck.py",
+      "line": 85,
+      "note": "Self-check carries fetch request metadata, not the full fetched-text map; raw text enters planner through completed tool returns/subcall records."
+    },
+    {
+      "path": "src/loop_research/refine.py",
+      "line": 322,
+      "note": "Planner forms candidate inventory, complete observation/entries, max_edits and evidence_index, then losslessly encodes."
+    }
+  ],
+  "capture": {
+    "trajectory_records": 68,
+    "trace_events": 1089,
+    "task_phase": "research",
+    "archived_output_rows": 0,
+    "archived_status": {},
+    "harness_entries": 1,
+    "candidate_groups": 3,
+    "candidate_inventory": [
+      {
+        "id": "self_check:issues:empty_output",
+        "source": "self_check.issues",
+        "type": "empty_output",
+        "count": 1,
+        "evidence_refs": [
+          "/self_check/issues/0"
+        ]
+      },
+      {
+        "id": "self_check:signals:stalled_search",
+        "source": "self_check.signals",
+        "type": "stalled_search",
+        "count": 35,
+        "evidence_refs": [
+          "/self_check/signals/0",
+          "/self_check/signals/1",
+          "/self_check/signals/2",
+          "/self_check/signals/3",
+          "/self_check/signals/4",
+          "/self_check/signals/5",
+          "/self_check/signals/6",
+          "/self_check/signals/7",
+          "/self_check/signals/8",
+          "/self_check/signals/9",
+          "/self_check/signals/10",
+          "/self_check/signals/11",
+          "/self_check/signals/12",
+          "/self_check/signals/13",
+          "/self_check/signals/14",
+          "/self_check/signals/15",
+          "/self_check/signals/16",
+          "/self_check/signals/17",
+          "/self_check/signals/18",
+          "/self_check/signals/19",
+          "/self_check/signals/20",
+          "/self_check/signals/21",
+          "/self_check/signals/22",
+          "/self_check/signals/23",
+          "/self_check/signals/24",
+          "/self_check/signals/25",
+          "/self_check/signals/26",
+          "/self_check/signals/27",
+          "/self_check/signals/28",
+          "/self_check/signals/29",
+          "/self_check/signals/30",
+          "/self_check/signals/31",
+          "/self_check/signals/32",
+          "/self_check/signals/33",
+          "/self_check/signals/34"
+        ]
+      },
+      {
+        "id": "self_check:signals:failed_fetch",
+        "source": "self_check.signals",
+        "type": "failed_fetch",
+        "count": 9,
+        "evidence_refs": [
+          "/self_check/signals/35",
+          "/self_check/signals/36",
+          "/self_check/signals/37",
+          "/self_check/signals/38",
+          "/self_check/signals/39",
+          "/self_check/signals/40",
+          "/self_check/signals/41",
+          "/self_check/signals/42",
+          "/self_check/signals/43"
+        ]
+      }
+    ],
+    "evidence_anchors": 127,
+    "max_completed_root_backend_chars": 50406,
+    "fetch_request_status_counts": {
+      "succeeded": 84,
+      "failed": 9,
+      "pending": 1
+    }
+  },
+  "active_batch": {
+    "start_trace_line": 716,
+    "start_timestamp": "2026-10-20T04:33:36.570088+00:00",
+    "span_id": "d5234051cb53448da06b45d678179d2b",
+    "requested_urls": 75,
+    "known_successful_full_texts": 66,
+    "known_text_chars": 1245775,
+    "known_urls": [
+      "https://isis.unistra.fr/en/research-teams/sauvage-inorganic-chemistry/",
+      "https://www.wikidata.org/wiki/Q3169751",
+      "https://rector.upv.es/en/honoris-causa/jean-pierre-sauvage/",
+      "https://www.nobelprize.org/prizes/chemistry/2016/stoddart/biographical/",
+      "https://en.wikipedia.org/wiki/Fraser_Stoddart",
+      "https://en.wikipedia.org/wiki/Ben_Feringa",
+      "https://faculty.ecust.edu.cn/chem/Bernard/main.htm",
+      "https://www.nobelprize.org/prizes/chemistry/2016/feringa/biographical/",
+      "https://en.wikipedia.org/wiki/Jacques_Dubochet",
+      "https://elitessuisses.unil.ch/p/79409",
+      "https://www.wikidata.org/wiki/Q96199317",
+      "https://www.mediatheque.lindau-nobel.org/laureates/frank-joachim",
+      "https://en.wikipedia.org/wiki/Joachim_Frank",
+      "https://www.nobelprize.org/prizes/chemistry/2017/frank/biographical/",
+      "https://www.nobelprize.org/prizes/chemistry/2017/henderson/biographical/",
+      "https://www.mediatheque.lindau-nobel.org/laureates/henderson",
+      "https://www.nobelprize.org/prizes/chemistry/2018/arnold/biographical/",
+      "https://mediatheque.lindau-nobel.org/laureates/arnold",
+      "https://en.wikipedia.org/wiki/Frances_Arnold",
+      "https://en.wikipedia.org/wiki/George_Smith_%28chemist%29",
+      "https://www.nobelprize.org/prizes/chemistry/2018/smith/biographical/",
+      "https://www.nobelprize.org/prizes/chemistry/2018/winter/biographical/",
+      "https://en.wikipedia.org/wiki/Gregory_Winter",
+      "https://www.nobelprize.org/prizes/chemistry/2019/goodenough/biographical/",
+      "https://en.wikipedia.org/wiki/John_B._Goodenough",
+      "https://www.wikidata.org/wiki/Q906529",
+      "https://en.wikipedia.org/wiki/M._Stanley_Whittingham",
+      "https://carnegie.org/great-immigrants/m-stanley-whittingham/",
+      "https://www.japanprize.jp/en/prize_prof_2018_yoshino.html",
+      "https://www.oist.jp/person/akira-yoshino",
+      "https://www.wikidata.org/wiki/Q4701206",
+      "https://commons.wikimedia.org/wiki/Category%3AEmmanuelle_Charpentier",
+      "https://www.japanprize.jp/en/prize_prof_2017_doudna.html",
+      "https://www.kavliprize.org/bio/jennifer-a-doudna",
+      "https://www.invent.org/inductees/jennifer-doudna",
+      "https://en.wikipedia.org/wiki/Benjamin_List",
+      "https://www.wikidata.org/wiki/Q88219802",
+      "https://en.wikipedia.org/wiki/David_MacMillan",
+      "https://mediatheque.lindau-nobel.org/laureates/macmillan/cv",
+      "https://en.wikipedia.org/wiki/Carolyn_Bertozzi",
+      "https://commons.wikimedia.org/wiki/Category%3ACarolyn_Bertozzi",
+      "https://www.nobelprize.org/prizes/chemistry/2022/bertozzi/224792-interview-transcript/",
+      "https://www.nobelprize.org/prizes/chemistry/2022/meldal/biographical/",
+      "https://en.wikipedia.org/wiki/Morten_P._Meldal",
+      "https://researchprofiles.ku.dk/en/persons/morten-peter-meldal/",
+      "https://www.wikidata.org/wiki/Q93178339",
+      "https://www.nobelprize.org/prizes/chemistry/2001/sharpless/facts/",
+      "https://www.encyclopedia.com/reference/encyclopedias-almanacs-transcripts-and-maps/sharpless-karl-barry",
+      "https://carnegie.org/great-immigrants/moungi-bawendi/",
+      "https://en.wikipedia.org/wiki/Moungi_Bawendi",
+      "https://fr.wikipedia.org/wiki/Moungi_G._Bawendi",
+      "https://en.wikipedia.org/wiki/Louis_E._Brus",
+      "https://www.nobelprize.org/prizes/chemistry/2023/brus/biographical/",
+      "https://commons.wikimedia.org/wiki/Category%3ALouis_E._Brus",
+      "https://mediatheque.lindau-nobel.org/laureates/yekimov",
+      "https://www.optica.org/history/biographies/bios/aleksey_ekimov/",
+      "https://en.wikipedia.org/wiki/Alexey_Ekimov",
+      "https://en.wikipedia.org/wiki/David_Baker_%28biochemist%29",
+      "https://www.wikidata.org/wiki/Q3814528",
+      "https://www.munzinger.de/register/portrait/biographien/David%2BBaker/00/33630",
+      "https://www.pas.va/en/academicians/ordinary/hassabis.html",
+      "https://www.wikidata.org/wiki/Q3022141",
+      "https://www.nobelprize.org/laureate/1040",
+      "https://en.wikipedia.org/wiki/John_M._Jumper",
+      "https://mediatheque.lindau-nobel.org/laureates/jumper",
+      "https://commons.wikimedia.org/wiki/Category%3AJohn_M._Jumper"
+    ],
+    "pending_requests": [
+      {
+        "id": 25,
+        "url": "https://www.washingtonpost.com/obituaries/2025/01/02/faser-stoddart-molecular-nobel-dies/"
+      }
+    ],
+    "not_in_trajectory_yet": true
+  },
+  "global_full_text_hashes": {
+    "retained_urls": 84,
+    "text_occurrences": 84,
+    "total_chars": 1395914,
+    "distinct_fulltext_hashes": 84,
+    "distinct_fulltext_chars": 1395914,
+    "duplicate_groups": [],
+    "per_url": [
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2016/press-release/_/",
+        "chars": 7419,
+        "sha256": "62fc079e56e0421b4e156cb66c3f3c45cd4f06bad20abb7b47d31d5a4da08f1e"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2019/press-release/%26lang%3Den/",
+        "chars": 7595,
+        "sha256": "27c3da5f94e62cbad5fc9e6629ab3bdd5bed1ad60f704fbec195e73e39ad4a5e"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2018/press-release/%29/",
+        "chars": 7491,
+        "sha256": "61020cda978a14ee16fa57ae41af1d398840ebb50437d00a588383c2e3ec1183"
+      },
+      {
+        "url": "https://www.nobelprize.org/nobel_prizes/chemistry/laureates/2017/press.html?wpmobileexternal=true",
+        "chars": 7712,
+        "sha256": "78eba2f0581d0c227833d3de976fa4df03bcc14e049b54afa1cc883e25115ac1"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2020/press-release/?stream=top",
+        "chars": 7372,
+        "sha256": "7671f832534bf86f26a8d42b52a7cbff3a5816931d418fa839cd99fb9da7e125"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2021/press-release/?es_id=7cbfc07b0c",
+        "chars": 7190,
+        "sha256": "07a91b9dcbf4ad378d83860e540da97238d0ffe921151ed5c99050bfe13e35fc"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2022/press-release/?hss_channel=lcp-11130292",
+        "chars": 7280,
+        "sha256": "be2d4ac31e6ce6025908428ae14ad9c1e7b8bbd93e78ca467c546b4dbefac7d3"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2023/press-release/%3A/",
+        "chars": 7339,
+        "sha256": "d7ba080cbb573c4d20fa9761cfb593dcff80f1845324168d38b9c007e8e5551b"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2024/press-release/?trk=news_storyline_guest-text",
+        "chars": 7943,
+        "sha256": "d628c142f016f4d9d234b96e61546ab7521986c0e172d6705f69b6dd60cd7bab"
+      },
+      {
+        "url": "https://www.nobelprize.org/uploads/2019/10/press-chemistryprize2019.pdf",
+        "chars": 9109,
+        "sha256": "5c599561592a294617a33d98e575ea3f6f02ce82e29a85de7abe52b88ee8ca04"
+      },
+      {
+        "url": "https://www.nobelprize.org/uploads/2018/06/press-31.pdf",
+        "chars": 9633,
+        "sha256": "3b85e8a4df2c3488ca152a51cfde560695b83ff061dec490eca688768ef0b073"
+      },
+      {
+        "url": "https://www.nobelprize.org/uploads/2018/10/press-chemistry2018.pdf",
+        "chars": 10129,
+        "sha256": "ebc434b0a32a65ecfe7ae1afd79624a2fc2993e72667dba851692956ed9b7e05"
+      },
+      {
+        "url": "https://www.nobelprize.org/uploads/2018/06/press-36.pdf",
+        "chars": 8899,
+        "sha256": "ddf0b7f22ee406e13fc7124c805f4ad7b782d5c930912b702de9f6dda9e58a08"
+      },
+      {
+        "url": "https://www.nobelprize.org/uploads/2021/10/press-chemistryprize2021.pdf",
+        "chars": 8482,
+        "sha256": "f358d54ffcb9c8b6a0b288ddf0644afcbef4d8e6059e023d9c48b70d2775820b"
+      },
+      {
+        "url": "https://www.nobelprize.org/uploads/2020/10/press-chemistryprize2020.pdf",
+        "chars": 9059,
+        "sha256": "7e54e1be8a9695d400da2ea6d5ac6dbb73c3a6d41284fcc271c3917fe5c2efc2"
+      },
+      {
+        "url": "https://www.nobelprize.org/uploads/2022/10/press-chemistryprize2022-2.pdf",
+        "chars": 8657,
+        "sha256": "9a8cf6a7149aa984cec92196543837b86f3a59947e175cdfb6fb440b807ca644"
+      },
+      {
+        "url": "https://www.nobelprize.org/uploads/2023/11/press-chemistryprize2023-1.pdf",
+        "chars": 9192,
+        "sha256": "2ebd4e3f4e61cf11ac53cb3bf322bc1030b14817efd710e34bde2379c6dbf5d4"
+      },
+      {
+        "url": "https://www.nobelprize.org/uploads/2024/10/press-chemistryprize2024-3.pdf",
+        "chars": 9638,
+        "sha256": "0a65e53f3fc59ce0696d4f2e1eb412e6c736c40c12e6b359b4dbaa3c52be452d"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2016/stoddart/biographical/",
+        "chars": 90446,
+        "sha256": "e29598d7728d306a4ccb41ea684f389cc74d7fb549648082d7e628cc052c79d5"
+      },
+      {
+        "url": "https://isis.unistra.fr/en/research-teams/sauvage-inorganic-chemistry/",
+        "chars": 10687,
+        "sha256": "b40f835366d7a74d637a3ed5d8133c2495caee8c5eb43b206766415fe60c8f5e"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/Fraser_Stoddart",
+        "chars": 37706,
+        "sha256": "d287b1cc025d3303dbe5897e9883cffa4f9fc65fc11473213465fdee892429af"
+      },
+      {
+        "url": "https://rector.upv.es/en/honoris-causa/jean-pierre-sauvage/",
+        "chars": 3876,
+        "sha256": "e8115a8d455bd1de00f4bb6856798a15690280e2c9af19feb433b83510303f49"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/Ben_Feringa",
+        "chars": 34085,
+        "sha256": "a71d951be291149ae1943cee3cae8dec966b0187770e0d067e67b6e743832abb"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2016/feringa/biographical/",
+        "chars": 29226,
+        "sha256": "10d47c44dbe397402c106c4fc192b7e9a61d56d101cc75491620e4b37bbf8f99"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/Jacques_Dubochet",
+        "chars": 15857,
+        "sha256": "f338d0e1a1fec2254e9021112d4669f072d029846d89b2b83dacb05e15ea5743"
+      },
+      {
+        "url": "https://www.wikidata.org/wiki/Q3169751",
+        "chars": 15207,
+        "sha256": "454e953cd3ae206ffffa5d386a1b32df464e9f679a4f97671bb09465d0b50643"
+      },
+      {
+        "url": "https://elitessuisses.unil.ch/p/79409",
+        "chars": 2637,
+        "sha256": "6cf1b6b8ae7b1c396923978b8b814850a58076439e1c6512c474571efe90dac4"
+      },
+      {
+        "url": "https://www.mediatheque.lindau-nobel.org/laureates/frank-joachim",
+        "chars": 2177,
+        "sha256": "e491e9d021f47534d17939be5c74af629d41e2d0dc331fc09d38358251f1078c"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/Joachim_Frank",
+        "chars": 17341,
+        "sha256": "54e67d500ede5cdeac483d494d01a8ef2b757d135523be27d69e44fc6d36b8c9"
+      },
+      {
+        "url": "https://faculty.ecust.edu.cn/chem/Bernard/main.htm",
+        "chars": 1529,
+        "sha256": "97b85692bbaf2055cd9f8cdbb54a5efe7e7693dbb291c5171e2fea6a174437b2"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2017/frank/biographical/",
+        "chars": 38388,
+        "sha256": "5a9c6346a2b5a7d007b0ee5a85841fe80777ab263096953b806ffe846c37f45a"
+      },
+      {
+        "url": "https://www.wikidata.org/wiki/Q96199317",
+        "chars": 11033,
+        "sha256": "5ed2ef514319b64aa62f9a7904e4728ff97004cfb63c98a7b4e3da10ab8da88c"
+      },
+      {
+        "url": "https://www.mediatheque.lindau-nobel.org/laureates/henderson",
+        "chars": 2213,
+        "sha256": "88ef020983c893fa9c6920a9032f30152570463ba90560ef31b3b08345af7fa8"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2017/henderson/biographical/",
+        "chars": 46472,
+        "sha256": "fe05a84f3d0a14899d788d815df3ea3c911843b1657ea0715c84aa2dbdbd15e2"
+      },
+      {
+        "url": "https://mediatheque.lindau-nobel.org/laureates/arnold",
+        "chars": 2112,
+        "sha256": "74d5b05d7de494ee8ed711ab7804772d3c020561ecc03c2d8f24f47722efb978"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/Frances_Arnold",
+        "chars": 42553,
+        "sha256": "8acea6cdbcc1b2d6f1b7b1e1c5d28aef9fc6dd0abb1c18587287ff271894f18d"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2018/arnold/biographical/",
+        "chars": 45444,
+        "sha256": "ca49bfcf3fee3384491c7d6bf72f21e33f181b0e3100521d13828f58367c2f76"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/George_Smith_%28chemist%29",
+        "chars": 13204,
+        "sha256": "23677659ebf83dff0614526de1176a05adbe695518d856d0e7893594a19d0047"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2018/smith/biographical/",
+        "chars": 53644,
+        "sha256": "ec0c9a5996261f700d2d4646c9451b0c55d5c6c012bd1d47fc540e784c92f87f"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2018/winter/biographical/",
+        "chars": 30595,
+        "sha256": "cd01a2cde9271f94af54db437a557bd4c43db50328ddcbfa8177ec42ca70992a"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/Gregory_Winter",
+        "chars": 27390,
+        "sha256": "68698476a795714cf288ba6d58165cd18605ee5ed23a9ebead2ec420f6467210"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/John_B._Goodenough",
+        "chars": 49662,
+        "sha256": "ee7bb06de1ee0e6add83ca93426fa795cd683498ccff3e35adf51ea0d2703bf3"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2019/goodenough/biographical/",
+        "chars": 65716,
+        "sha256": "fe10662cece7709eaae0e62942e37355f0087480becdc4636cb8bab716ab1d13"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/M._Stanley_Whittingham",
+        "chars": 24383,
+        "sha256": "91b6cddd3f083d760692fdded1cbb346137b1efe88d3a28effec279b48cff065"
+      },
+      {
+        "url": "https://carnegie.org/great-immigrants/m-stanley-whittingham/",
+        "chars": 3886,
+        "sha256": "9ff85613a5307c3a9877bdf62e1cc4783a308e259c7b0f8f6a9439cc97bd77db"
+      },
+      {
+        "url": "https://www.wikidata.org/wiki/Q906529",
+        "chars": 19424,
+        "sha256": "92e959de74249cc8fa3615155d9f809b3e7093f7a3f407691b157641371099b5"
+      },
+      {
+        "url": "https://www.wikidata.org/wiki/Q4701206",
+        "chars": 10160,
+        "sha256": "cc3637ab501457f57157b7ec8ad6eb4078a303399e24a701b8a50809a69d7026"
+      },
+      {
+        "url": "https://www.japanprize.jp/en/prize_prof_2018_yoshino.html",
+        "chars": 5969,
+        "sha256": "d29495eb13b2d02235b78fc4103b6e7a9d31b9158579d0a547567bf0daa4d406"
+      },
+      {
+        "url": "https://www.oist.jp/person/akira-yoshino",
+        "chars": 15437,
+        "sha256": "002a66ca9d3389a4d266a1da18d6fb927431ab382f5c127d80a881309c376591"
+      },
+      {
+        "url": "https://commons.wikimedia.org/wiki/Category%3AEmmanuelle_Charpentier",
+        "chars": 8873,
+        "sha256": "2a69b5d4fe71bac77223d011ded948d785faf7505e3da8d9fe2286d3dd9d8c4b"
+      },
+      {
+        "url": "https://www.kavliprize.org/bio/jennifer-a-doudna",
+        "chars": 2944,
+        "sha256": "b69be5d855eeb3e0e33ccdbfeb13399f31c2c71cf217827c851fca12dc8cf2d5"
+      },
+      {
+        "url": "https://www.invent.org/inductees/jennifer-doudna",
+        "chars": 6082,
+        "sha256": "5e84fcd52e6cb545372cc2009e493286b8af9e20e13e53f72e3bc0178dac1994"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/Benjamin_List",
+        "chars": 23433,
+        "sha256": "40ba44a126073f68d63193e52221d52501c243703ccc39f1d96992a2fd0576fb"
+      },
+      {
+        "url": "https://www.japanprize.jp/en/prize_prof_2017_doudna.html",
+        "chars": 4116,
+        "sha256": "5e7bb002b8521367f6e812ac9bac1e2d9f1cf2ce126bb55d155b3d2a6129d2ea"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/David_MacMillan",
+        "chars": 22789,
+        "sha256": "ca6a4e0659c1d4f3fce64b27c38414407ea5983312b7ec50543c9290a9c16cdd"
+      },
+      {
+        "url": "https://mediatheque.lindau-nobel.org/laureates/macmillan/cv",
+        "chars": 5210,
+        "sha256": "6ad5b90425acd2c0db4284a09395705c073b3a5722252637a41231ffe14a971d"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/Carolyn_Bertozzi",
+        "chars": 39134,
+        "sha256": "9f338b807589993b30b5149c8ec76767fd23b175678dfe7d26413863e324f6dd"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2022/bertozzi/224792-interview-transcript/",
+        "chars": 30019,
+        "sha256": "656a1537925459fed76b8566f159a49490630426253e0ecffa04dc9369b5eb6a"
+      },
+      {
+        "url": "https://www.wikidata.org/wiki/Q88219802",
+        "chars": 11125,
+        "sha256": "57ae12571f07b3bb8a48bd081799259e6333561cc81aae7b193f183226ee8803"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/Morten_P._Meldal",
+        "chars": 13796,
+        "sha256": "79edb92461fde750f8cb47833e25eaed3c3ec128f0135d664e1264bbc04cd52a"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2022/meldal/biographical/",
+        "chars": 33238,
+        "sha256": "17cf413675e739da35a30e1f694d661e30b00356d2ce3809f30d39a7fa532852"
+      },
+      {
+        "url": "https://www.wikidata.org/wiki/Q93178339",
+        "chars": 20166,
+        "sha256": "63551660a262bcad655626e9260b00628c750920a878543781e74c34aa4d9aaa"
+      },
+      {
+        "url": "https://researchprofiles.ku.dk/en/persons/morten-peter-meldal/",
+        "chars": 10107,
+        "sha256": "bb825d97c5e71488dda842201e94459f1dee6c8f365c29bfa6b19ddc3197b5ab"
+      },
+      {
+        "url": "https://www.encyclopedia.com/reference/encyclopedias-almanacs-transcripts-and-maps/sharpless-karl-barry",
+        "chars": 2874,
+        "sha256": "dd5451b82da8f35bd5c18c63c7840ff96dd6bcf49c69161ca556d6fe67356e7c"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2001/sharpless/facts/",
+        "chars": 3892,
+        "sha256": "de9c88ef13019a7fc3cd5e64727e4b762707e46d6934e2ae8e1f6db6615e1ee0"
+      },
+      {
+        "url": "https://carnegie.org/great-immigrants/moungi-bawendi/",
+        "chars": 2806,
+        "sha256": "b27c4f75e7df4c31898bd809bdb01acbb9419d94590af6624da30c37bd7ecb1a"
+      },
+      {
+        "url": "https://commons.wikimedia.org/wiki/Category%3ACarolyn_Bertozzi",
+        "chars": 8825,
+        "sha256": "7c7ac78c6513d1d8fe3b7e77c0f09bcc4f4c48ff68fa803015373a2f25d37030"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/Moungi_Bawendi",
+        "chars": 20439,
+        "sha256": "c7a6e0eb00ac48de2a0f06595b922f9f98ba97c201c8cffc46ad6697135cb59c"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/Louis_E._Brus",
+        "chars": 21879,
+        "sha256": "4e2730fc45ced8b34be5a4bd649d9fa509561a54186bbc9deb67531717d28f01"
+      },
+      {
+        "url": "https://www.nobelprize.org/prizes/chemistry/2023/brus/biographical/",
+        "chars": 29018,
+        "sha256": "d8b83672c118ed4482f4dc61d1f8ef62f521dc4d6ff994119be62d6c8e3727fb"
+      },
+      {
+        "url": "https://mediatheque.lindau-nobel.org/laureates/yekimov",
+        "chars": 2050,
+        "sha256": "eb3e32a7b6b818e23f83bdb3c9b0ea2886eaedb20ed0d0ad405987e00ab70537"
+      },
+      {
+        "url": "https://fr.wikipedia.org/wiki/Moungi_G._Bawendi",
+        "chars": 21922,
+        "sha256": "6f51d1d31b323f482cd83b70509fb7df86fd9ea2fb649f5876ec44bf0da0cbd3"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/Alexey_Ekimov",
+        "chars": 14244,
+        "sha256": "1b47dd1264e6004b0bb330f57f85d2754fa68cebb6a8e7c2380befb9f07cd10b"
+      },
+      {
+        "url": "https://commons.wikimedia.org/wiki/Category%3ALouis_E._Brus",
+        "chars": 4234,
+        "sha256": "bf641b0042aa30841bbdcb2a808f102627e5194a4034f924eeb5938e9bf7b00d"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/David_Baker_%28biochemist%29",
+        "chars": 21273,
+        "sha256": "6cb6b27fd12b826c1eb46dfd41119e8aa69741307390f96d282d9748f07fd8db"
+      },
+      {
+        "url": "https://www.optica.org/history/biographies/bios/aleksey_ekimov/",
+        "chars": 2109,
+        "sha256": "1e0b1b39720fa54e4a69e5c47ff81075ef133dc96e708d69de6e6f229c2bb937"
+      },
+      {
+        "url": "https://www.wikidata.org/wiki/Q3814528",
+        "chars": 11752,
+        "sha256": "2cc220b5cce6090a5b4e2eaad6bc3506f899a76a1024a74815d00e8af4505a37"
+      },
+      {
+        "url": "https://www.munzinger.de/register/portrait/biographien/David%2BBaker/00/33630",
+        "chars": 1609,
+        "sha256": "57abdf37878f2a0c71744edf666eb98c70757fd2fac49bad3c5bd078956350a1"
+      },
+      {
+        "url": "https://www.nobelprize.org/laureate/1040",
+        "chars": 3470,
+        "sha256": "3bf372c04862c42d9c7c4ce82ba444dcedd9a4f03367cdef6790b91f65dcfd32"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/John_M._Jumper",
+        "chars": 20410,
+        "sha256": "bbaacc7451f30695fab47ce71211651543483e27544e3bf4add29a166e6e2cd3"
+      },
+      {
+        "url": "https://mediatheque.lindau-nobel.org/laureates/jumper",
+        "chars": 1725,
+        "sha256": "bcfa8bb495963d5022d9666aec7ae16d561be2068dd670bc80722bb2e1cac287"
+      },
+      {
+        "url": "https://www.wikidata.org/wiki/Q3022141",
+        "chars": 33662,
+        "sha256": "e11664e1c021e0e73b104a7d6ed953330982f53262639075c8de997582311d46"
+      },
+      {
+        "url": "https://www.pas.va/en/academicians/ordinary/hassabis.html",
+        "chars": 12400,
+        "sha256": "2f18e3d6ae892a857ebafaa990a334e0390f54ba1b622ef5c8d5591f2d81f8bb"
+      },
+      {
+        "url": "https://commons.wikimedia.org/wiki/Category%3AJohn_M._Jumper",
+        "chars": 5691,
+        "sha256": "2cd0c6f0e6bc4775ad62059b343075f9326d47ae4532f7678b778e52090fa0b9"
+      }
+    ]
+  },
+  "retained_planner_projection": {
+    "label": "A nonfinal candidate projection for the captured archived state, not an actual saved/planned/submitted request and not the future finalizer input.",
+    "assumptions": [
+      "focus=None follows current automatic-finalizer call shape; a midtask caller may choose a different focus.",
+      "Self-check is calculated purely from the captured task_state output/status and evidence. Current in-memory Session state is not directly observed. Captured output is still empty.",
+      "Future result rows, constraints, subcall prompts/responses, refinements, harness outcomes and the pending tool return are unavailable and not invented."
+    ],
+    "removed_duplicate_projection_fields_compact_chars": {
+      "worker_prompt": 201221,
+      "worker_response": 5020,
+      "worker_locals": 1664611,
+      "worker_rlm_calls": 14,
+      "later_root_prompts": 245679
+    },
+    "top_level_compact_costs": {
+      "focus": 4,
+      "candidate_inventory": 1480,
+      "entries": 968,
+      "trajectory": 374751,
+      "self_check": 38520,
+      "max_edits": 1,
+      "evidence_index": 2556
+    },
+    "measurement": {
+      "literal_compact_chars": 418383,
+      "literal_default_json_chars": 423595,
+      "logical_default_json_sha256": "e69dc3d45fc796f8f372db2ccbc8bf64e6f55431b7d98c4e97d16bddca0b51d6",
+      "v2": {
+        "format": "shared-text-v2",
+        "wire_chars": 366503,
+        "table_chars": 26871,
+        "encoded_payload_chars": 339578,
+        "table_entries": 279,
+        "wire_sha256": "255166295bf854174d9d022d03f5a4eafd4b9d2b7a447c3f2e54159a640a3297",
+        "exact_roundtrip": true,
+        "backend_chars_with_current_instructions": 370570
+      },
+      "v3": {
+        "format": "shared-text-v3",
+        "wire_chars": 308838,
+        "table_chars": 90895,
+        "encoded_payload_chars": 217889,
+        "table_entries": 197,
+        "wire_sha256": "582de1178bb2f3ac655292ff6ec2357f0b967530f1127fbe41b401aded53bde4",
+        "exact_roundtrip": true,
+        "backend_chars_with_current_instructions": 312905
+      },
+      "selected": {
+        "format": "shared-text-v3",
+        "wire_chars": 308838,
+        "table_chars": 90895,
+        "encoded_payload_chars": 217889,
+        "table_entries": 197,
+        "wire_sha256": "582de1178bb2f3ac655292ff6ec2357f0b967530f1127fbe41b401aded53bde4",
+        "exact_roundtrip": true,
+        "backend_chars_with_current_instructions": 312905
+      }
+    },
+    "global_string_statistics": {
+      "string_occurrences": 2154,
+      "distinct_exact_string_hashes": 709,
+      "all_occurrence_chars": 376704,
+      "distinct_string_chars": 344981,
+      "distinct_string_json_literal_chars": 353495,
+      "single_occurrence_distinct_strings": 482,
+      "repeated_distinct_strings": 227,
+      "duplicate_occurrence_chars": 31723,
+      "largest_repeated_strings": [
+        {
+          "sha256": "cb81d39ebc9d22ac1d5b00de8113601cae3700f771bc91feba12fa055a044f2d",
+          "chars": 51,
+          "occurrences": 75
+        },
+        {
+          "sha256": "4b7230e6fe75b26f36af17650f6ee6923abbf9e5210d59d863fd0237a46a1892",
+          "chars": 18,
+          "occurrences": 94
+        },
+        {
+          "sha256": "473287f8298dba7163a897908958f7c0eae733e25d2e027992ea2edc9bed2fa8",
+          "chars": 6,
+          "occurrences": 160
+        },
+        {
+          "sha256": "4f85fe3dcab6d354bbfb6c88f9d05e8aeda4db9125c520b7078bd604e68ccd3d",
+          "chars": 87,
+          "occurrences": 11
+        },
+        {
+          "sha256": "5dceaeceb6d8a49d3665594710ace68dfbc1800e2d663d7febb302b4dbee3d27",
+          "chars": 9,
+          "occurrences": 84
+        },
+        {
+          "sha256": "10e08a419e850eba1ebba18fdd28eb7ec1b7e8baa9bcc3b973e2b8891ec726be",
+          "chars": 7,
+          "occurrences": 103
+        },
+        {
+          "sha256": "18ebf3b7c37f8d57de573460be9bc195394abd6b8e5eee9a0bc73913fe1d4d1c",
+          "chars": 74,
+          "occurrences": 10
+        },
+        {
+          "sha256": "06846a4855a2c3ff3166495acf149cf5d6644ce7331c70c86b92d246cbe44e34",
+          "chars": 16,
+          "occurrences": 36
+        },
+        {
+          "sha256": "416e6e52728e9c708476a85dd5439c4455c26df0f1861288144e2738fe40837a",
+          "chars": 14,
+          "occurrences": 36
+        },
+        {
+          "sha256": "2958d416d08aa5a472d7b509036cb7eafd542add84527e66a145ea64cb4cdc75",
+          "chars": 6,
+          "occurrences": 80
+        },
+        {
+          "sha256": "878a52fc5ff6a57d50b7b870aa51637a3dfd38fc22352a39f95a3c292eb976d5",
+          "chars": 7,
+          "occurrences": 50
+        },
+        {
+          "sha256": "dbe42cc09c16704aa3d60127c60b4e1646fc6da1d4764aa517de053e65a663d7",
+          "chars": 5,
+          "occurrences": 60
+        },
+        {
+          "sha256": "b3cf0df52ffab057161e82b7608aec4f1802113f813321482302b245d0cb200c",
+          "chars": 71,
+          "occurrences": 5
+        },
+        {
+          "sha256": "b20390decb70d0315379bd133fb5317412f2dc8e2fcfe0eabfa5d432442d7488",
+          "chars": 68,
+          "occurrences": 5
+        },
+        {
+          "sha256": "f32e1baffb3b9e3577d94fa40cc504f340c793118163c78f4617a62e57ddb003",
+          "chars": 64,
+          "occurrences": 5
+        }
+      ]
+    },
+    "schema_chars_separate": 4939,
+    "schema_sha256": "16270a292c87ea82013e6cf710cc6ef380df9255cbe0c0b0df1a9a233fe474ff"
+  },
+  "component_measurements": {
+    "known_unreturned_full_texts": {
+      "label": "URL-to-complete-text component only. Not a valid planner input. No pending text or failed result is fabricated.",
+      "measurement": {
+        "literal_compact_chars": 1276886,
+        "literal_default_json_chars": 1277017,
+        "logical_default_json_sha256": "f6edf0957d6c882924c6bdf2741a3f9b12f971ef6a922f58f187a04c23c7a741",
+        "v2": {
+          "format": "shared-text-v2",
+          "wire_chars": 1234166,
+          "table_chars": 26321,
+          "encoded_payload_chars": 1207791,
+          "table_entries": 417,
+          "wire_sha256": "d03f60e802bd3dd3bc0d80f619729fb48cbf5e486188dd61898403bdf5b37f79",
+          "exact_roundtrip": true
+        },
+        "v3": {
+          "format": "shared-text-v3",
+          "wire_chars": 1276258,
+          "table_chars": 2920,
+          "encoded_payload_chars": 1273284,
+          "table_entries": 48,
+          "wire_sha256": "d76c71831ca5967801a20d5a8390e743997f804f7c3d7b29a3603b10daf8445f",
+          "exact_roundtrip": true
+        },
+        "selected": {
+          "format": "shared-text-v2",
+          "wire_chars": 1234166,
+          "table_chars": 26321,
+          "encoded_payload_chars": 1207791,
+          "table_entries": 417,
+          "wire_sha256": "d03f60e802bd3dd3bc0d80f619729fb48cbf5e486188dd61898403bdf5b37f79",
+          "exact_roundtrip": true
+        }
+      },
+      "global_string_statistics": {
+        "string_occurrences": 66,
+        "distinct_exact_string_hashes": 66,
+        "all_occurrence_chars": 1245775,
+        "distinct_string_chars": 1245775,
+        "distinct_string_json_literal_chars": 1273018,
+        "single_occurrence_distinct_strings": 66,
+        "repeated_distinct_strings": 0,
+        "duplicate_occurrence_chars": 0,
+        "largest_repeated_strings": []
+      }
+    },
+    "all_retained_full_texts": {
+      "label": "All retained URL-to-full-text values only, including already logged pages. Not a planner input.",
+      "measurement": {
+        "literal_compact_chars": 1430375,
+        "literal_default_json_chars": 1430542,
+        "logical_default_json_sha256": "efebfee5925a9e79341d4d4e6172f1bc63aac9abe7a54ca8ec2be3f0a8341192",
+        "v2": {
+          "format": "shared-text-v2",
+          "wire_chars": 1366235,
+          "table_chars": 30102,
+          "encoded_payload_chars": 1336079,
+          "table_entries": 451,
+          "wire_sha256": "111cf701660ad2b9ac39a3922bc2a07c6f52e6f94d636e5f11c1bb68116ce101",
+          "exact_roundtrip": true
+        },
+        "v3": {
+          "format": "shared-text-v3",
+          "wire_chars": 1429747,
+          "table_chars": 2920,
+          "encoded_payload_chars": 1426773,
+          "table_entries": 48,
+          "wire_sha256": "423686baab2bb0c6c649b5dc32c550bba14d1a743f52f38c1a3f610cee9e47a2",
+          "exact_roundtrip": true
+        },
+        "selected": {
+          "format": "shared-text-v2",
+          "wire_chars": 1366235,
+          "table_chars": 30102,
+          "encoded_payload_chars": 1336079,
+          "table_entries": 451,
+          "wire_sha256": "111cf701660ad2b9ac39a3922bc2a07c6f52e6f94d636e5f11c1bb68116ce101",
+          "exact_roundtrip": true
+        }
+      },
+      "global_string_statistics": {
+        "string_occurrences": 84,
+        "distinct_exact_string_hashes": 84,
+        "all_occurrence_chars": 1395914,
+        "distinct_string_chars": 1395914,
+        "distinct_string_json_literal_chars": 1425120,
+        "single_occurrence_distinct_strings": 84,
+        "repeated_distinct_strings": 0,
+        "duplicate_occurrence_chars": 0,
+        "largest_repeated_strings": []
+      }
+    },
+    "combined_diagnostic_envelope": {
+      "label": "Synthetic measurement envelope containing captured nonfinal projection and known unreturned full texts. NOT a fabricated final trajectory or product planner payload; structural/cross-string sharing can differ in the eventual real input.",
+      "measurement": {
+        "literal_compact_chars": 1695332,
+        "literal_default_json_chars": 1700678,
+        "logical_default_json_sha256": "cbd20138a17cfa2d59efad2e7005b8e6e52084291f8b1df04cd785f7cbabc7e4",
+        "v2": {
+          "format": "shared-text-v2",
+          "wire_chars": 1599167,
+          "table_chars": 51327,
+          "encoded_payload_chars": 1547786,
+          "table_entries": 668,
+          "wire_sha256": "71b78fc8c1427d9c0c78937c90eb636f78781b42910cba6838333d2b959ffe00",
+          "exact_roundtrip": true
+        },
+        "v3": {
+          "format": "shared-text-v3",
+          "wire_chars": 1584864,
+          "table_chars": 93570,
+          "encoded_payload_chars": 1491240,
+          "table_entries": 240,
+          "wire_sha256": "2b0ddc51a231770c8634e198a147583cdf901ddbb92489bb5406d2c7d9c8582a",
+          "exact_roundtrip": true
+        },
+        "selected": {
+          "format": "shared-text-v3",
+          "wire_chars": 1584864,
+          "table_chars": 93570,
+          "encoded_payload_chars": 1491240,
+          "table_entries": 240,
+          "wire_sha256": "2b0ddc51a231770c8634e198a147583cdf901ddbb92489bb5406d2c7d9c8582a",
+          "exact_roundtrip": true
+        }
+      },
+      "global_string_statistics": {
+        "string_occurrences": 2220,
+        "distinct_exact_string_hashes": 775,
+        "all_occurrence_chars": 1622479,
+        "distinct_string_chars": 1590756,
+        "distinct_string_json_literal_chars": 1626513,
+        "single_occurrence_distinct_strings": 548,
+        "repeated_distinct_strings": 227,
+        "duplicate_occurrence_chars": 31723,
+        "largest_repeated_strings": [
+          {
+            "sha256": "cb81d39ebc9d22ac1d5b00de8113601cae3700f771bc91feba12fa055a044f2d",
+            "chars": 51,
+            "occurrences": 75
+          },
+          {
+            "sha256": "4b7230e6fe75b26f36af17650f6ee6923abbf9e5210d59d863fd0237a46a1892",
+            "chars": 18,
+            "occurrences": 94
+          },
+          {
+            "sha256": "473287f8298dba7163a897908958f7c0eae733e25d2e027992ea2edc9bed2fa8",
+            "chars": 6,
+            "occurrences": 160
+          },
+          {
+            "sha256": "4f85fe3dcab6d354bbfb6c88f9d05e8aeda4db9125c520b7078bd604e68ccd3d",
+            "chars": 87,
+            "occurrences": 11
+          },
+          {
+            "sha256": "5dceaeceb6d8a49d3665594710ace68dfbc1800e2d663d7febb302b4dbee3d27",
+            "chars": 9,
+            "occurrences": 84
+          },
+          {
+            "sha256": "10e08a419e850eba1ebba18fdd28eb7ec1b7e8baa9bcc3b973e2b8891ec726be",
+            "chars": 7,
+            "occurrences": 103
+          },
+          {
+            "sha256": "18ebf3b7c37f8d57de573460be9bc195394abd6b8e5eee9a0bc73913fe1d4d1c",
+            "chars": 74,
+            "occurrences": 10
+          },
+          {
+            "sha256": "06846a4855a2c3ff3166495acf149cf5d6644ce7331c70c86b92d246cbe44e34",
+            "chars": 16,
+            "occurrences": 36
+          },
+          {
+            "sha256": "416e6e52728e9c708476a85dd5439c4455c26df0f1861288144e2738fe40837a",
+            "chars": 14,
+            "occurrences": 36
+          },
+          {
+            "sha256": "2958d416d08aa5a472d7b509036cb7eafd542add84527e66a145ea64cb4cdc75",
+            "chars": 6,
+            "occurrences": 80
+          },
+          {
+            "sha256": "878a52fc5ff6a57d50b7b870aa51637a3dfd38fc22352a39f95a3c292eb976d5",
+            "chars": 7,
+            "occurrences": 50
+          },
+          {
+            "sha256": "dbe42cc09c16704aa3d60127c60b4e1646fc6da1d4764aa517de053e65a663d7",
+            "chars": 5,
+            "occurrences": 60
+          },
+          {
+            "sha256": "b3cf0df52ffab057161e82b7608aec4f1802113f813321482302b245d0cb200c",
+            "chars": 71,
+            "occurrences": 5
+          },
+          {
+            "sha256": "b20390decb70d0315379bd133fb5317412f2dc8e2fcfe0eabfa5d432442d7488",
+            "chars": 68,
+            "occurrences": 5
+          },
+          {
+            "sha256": "f32e1baffb3b9e3577d94fa40cc504f340c793118163c78f4617a62e57ddb003",
+            "chars": 64,
+            "occurrences": 5
+          }
+        ]
+      }
+    }
+  },
+  "observed_provider_limit_chars": 1048576,
+  "conclusion": "The current retained projection fits, but omits a large pending batch. The known unreturned full-text component alone exceeds the observed limit under the current best v2/v3 codec. This is a concrete capacity risk, not an existing planner failure, a measurement of the actual final request, or a proof that every possible lossless monolithic representation must fail.",
+  "general_design_options_if_confirmed": [
+    "Keep the full immutable logical planner snapshot in an isolated read-only refiner REPL variable/file. Give the same model code/query tools and subcalls to inspect full values by stable JSON pointers; preserve every original field/text occurrence in the accessible snapshot. Keep complete candidate inventory/occurrence references, require every candidate decision and use the unchanged Proposal schema/max_edits and host validation before commit. Preserve existing background scheduling, boundary application and finalization wait semantics; do not insert investigator prompts or extra research fetches. This is a future transport design option only, not authorized work or a change to the active run.",
+    "Further generic inspectable lossless factoring could be measured offline on actual saved input, but it cannot guarantee arbitrary unique data fits a finite input cap. No threshold-tuned field choice, summarization, truncation, answer-specific projection or opaque compression presented as readable evidence is justified by this snapshot."
+  ],
+  "limits": [
+    "Exact future finalizer input is unavailable: no actual planner job exists at capture, active batch result is incomplete, final answer/self-check and future subcalls are unknown.",
+    "Unique full-text hash counts are equality statistics, not an information-theoretic bound; pages may share internal substrings. Candidate serialization cost is not necessarily monotone as more records arrive.",
+    "Input files were read without locking or interrupting the active run; each captured byte sequence was rechecked unchanged at capture end. They may change after this report, so captured hashes are snapshot provenance, not final archive inventory claims.",
+    "The observed provider limit is measured in prompt characters, not a claim about tokens/context semantics. Schema remains separate."
+  ],
+  "review_execution_receipt": {
+    "tool_chunk_id": "0962ad",
+    "exit_code": 0,
+    "kind": "pure offline in-memory capture and encoding analysis; no tests or live calls"
+  }
+}
