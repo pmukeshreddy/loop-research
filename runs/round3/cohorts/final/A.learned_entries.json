@@ -1,0 +1,249 @@
+[
+  {
+    "key": "memory:bf8ebe4929de4c4493017583193abedc",
+    "new": false,
+    "entry": {
+      "id": "bf8ebe4929de4c4493017583193abedc",
+      "kind": "memory",
+      "created_at": "2026-10-19T00:28:28.058432+00:00",
+      "usage": [
+        {
+          "run_id": "research-02b638fc28e84730973a253e28af1b30/289901ce021c28d56fdac993",
+          "version": 1,
+          "refinement_id": "refine_bf8ebe4929de4c4493017583193abedc"
+        },
+        {
+          "run_id": "research-02b638fc28e84730973a253e28af1b30/289901ce021c28d56fdac993",
+          "version": 2,
+          "refinement_id": "refine_a8eb3e7343df4952bd5f7ad61929f7f4"
+        }
+      ],
+      "outcomes": [
+        {
+          "run_id": "research-02b638fc28e84730973a253e28af1b30/289901ce021c28d56fdac993",
+          "ok": true,
+          "issues": [],
+          "signals": [
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2016 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2017 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2018 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2019 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2020 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2021 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2022 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2023 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2024 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel chemistry 2015 press release Swedish British American Turkish citizens Lindahl Modrich Sancar"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2016 laureates citizenship nationality"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2017 laureates citizenship nationality"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2018 laureates citizenship nationality"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2019 laureates citizenship nationality"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2020 laureates citizenship nationality"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2021 laureates citizenship nationality"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2022 laureates citizenship nationality"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2023 laureates citizenship nationality"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2024 laureates citizenship nationality"
+            },
+            {
+              "type": "failed_fetch",
+              "operation": "fetch",
+              "url": "https://unvis.it/www.nobelprize.org/prizes/chemistry/2015/press-release",
+              "request_id": 1,
+              "source": "backend",
+              "reason": "http_status",
+              "error": "HTTP 403 for https://unvis.it/www.nobelprize.org/prizes/chemistry/2015/press-release"
+            }
+          ],
+          "recorded_at": "2026-10-20T02:38:18.568871+00:00"
+        }
+      ],
+      "version": 2,
+      "module": null,
+      "title": "Inspect and record every search batch before moving on",
+      "body": "Empty discovery placeholders can produce stalled_search signals even when later calls record entities for the same queries. After each search, inspect its results and record actual newly discovered entity names once. For search_many, pair each exact input query with its corresponding result list in input order and finish recording the whole batch before starting unrelated extraction or refinement. Track pending queries so a completed search batch is not left unrecorded at a turn boundary. Use [] honestly when no new entities were found, including redundant verification searches; do not invent discoveries to suppress warnings or assume a later record erases an earlier empty event.",
+      "trigger": "Exact quote-membership validation caught two affiliation extraction mismatches and missing citizenship evidence in 25 rows before accumulated records were finalized. Preserve this validation and targeted source supplementation procedure.",
+      "evidence": [
+        "research-02b638fc28e84730973a253e28af1b30/289901ce021c28d56fdac993"
+      ],
+      "updated_at": "2026-10-20T02:37:40.301355+00:00",
+      "refinement_id": "refine_a8eb3e7343df4952bd5f7ad61929f7f4"
+    }
+  },
+  {
+    "key": "skill:46b11032e5214e4c9f9da2582ce98d44",
+    "new": true,
+    "entry": {
+      "id": "46b11032e5214e4c9f9da2582ce98d44",
+      "kind": "skill",
+      "created_at": "2026-10-20T02:37:40.357667+00:00",
+      "usage": [
+        {
+          "run_id": "research-02b638fc28e84730973a253e28af1b30/289901ce021c28d56fdac993",
+          "version": 1,
+          "refinement_id": "refine_46b11032e5214e4c9f9da2582ce98d44"
+        }
+      ],
+      "outcomes": [
+        {
+          "run_id": "research-02b638fc28e84730973a253e28af1b30/289901ce021c28d56fdac993",
+          "ok": true,
+          "issues": [],
+          "signals": [
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2016 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2017 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2018 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2019 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2020 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2021 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2022 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2023 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "site.nobelprize.org prizes chemistry 2024 press release"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel chemistry 2015 press release Swedish British American Turkish citizens Lindahl Modrich Sancar"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2016 laureates citizenship nationality"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2017 laureates citizenship nationality"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2018 laureates citizenship nationality"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2019 laureates citizenship nationality"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2020 laureates citizenship nationality"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2021 laureates citizenship nationality"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2022 laureates citizenship nationality"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2023 laureates citizenship nationality"
+            },
+            {
+              "type": "stalled_search",
+              "query": "Nobel Prize chemistry 2024 laureates citizenship nationality"
+            },
+            {
+              "type": "failed_fetch",
+              "operation": "fetch",
+              "url": "https://unvis.it/www.nobelprize.org/prizes/chemistry/2015/press-release",
+              "request_id": 1,
+              "source": "backend",
+              "reason": "http_status",
+              "error": "HTTP 403 for https://unvis.it/www.nobelprize.org/prizes/chemistry/2015/press-release"
+            }
+          ],
+          "recorded_at": "2026-10-20T02:38:18.568871+00:00"
+        }
+      ],
+      "version": 1,
+      "module": null,
+      "title": "Validate extracted citations and route evidence gaps",
+      "body": "After structured extraction, keep rows provisional and build a URL-to-original-fetched-text map. For every required cell, first check that value, sources, and quote are nonempty; then require the quote to occur exactly in every cited source's fetched text. Report row, field, and failure type, plus coverage counts. Separate quote mismatches from missing evidence. For PDF mismatches, inspect the original text around the supporting passage: column interleaving, whitespace, and line breaks must remain intact in a contiguous quote. Do not stitch separated passages or silently normalize quotation text. Verify that the passage supports the entire value and its association with the entity; substring membership alone does not establish this. For missing attributes, review representative sources to determine whether the attribute is actually stated. Birthplace and institutional location do not establish nationality or citizenship. Search specifically for the missing attribute, fetch the supplementary sources, repair only affected cells, and rerun validation before finalizing. Detection and search hits alone do not establish that repairs succeeded.",
+      "trigger": "Exact quote-membership validation caught two affiliation extraction mismatches and missing citizenship evidence in 25 rows before accumulated records were finalized. Preserve this validation and targeted source supplementation procedure.",
+      "evidence": [
+        "research-02b638fc28e84730973a253e28af1b30/289901ce021c28d56fdac993"
+      ],
+      "updated_at": "2026-10-20T02:37:40.357671+00:00",
+      "refinement_id": "refine_46b11032e5214e4c9f9da2582ce98d44"
+    }
+  }
+]
