@@ -1,0 +1,27 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_feedback_history_must_match_actual_prompts_even_when_receipts_agree ___
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-uxugtlkn/pytest-of-mukeshreddypochamreddy/pytest-0/test_feedback_history_must_mat0')
+
+    def test_feedback_history_must_match_actual_prompts_even_when_receipts_agree(tmp_path):
+        _, _, directory, _, _ = transport(tmp_path)
+        manifest_path, request_path = directory / 'manifest.json', directory / 'request.json'
+        manifest, request = json.loads(manifest_path.read_text()), json.loads(request_path.read_text())
+        manifest['output_transport'] = request['output_transport'] = 'whole-iteration-reference-v1'
+        request['initial_messages'] = [
+            {'role': 'system', 'content': request['instructions']},
+            {'role': 'user', 'content': 'Inspect the complete context and proposal_schema variables, evaluate every supplied candidate '
+             'and occurrence, and produce the evidence-backed proposal.\nLimits: ' + json.dumps(request['limits'])}]
+        save(manifest_path, manifest)
+        save(request_path, request)
+        # The fixture's model action and actual CLI receipts agree with each other,
+        # but none contains this declared complete initial conversation.
+>       with pytest.raises(audit.ArchiveCorruptionError, match='prompt|history|conversation'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ArchiveCorruptionError
+
+tests/test_refinement_transport_audit.py:264: Failed
+=========================== short test summary info ============================
+FAILED tests/test_refinement_transport_audit.py::test_feedback_history_must_match_actual_prompts_even_when_receipts_agree
+1 failed, 24 deselected in 0.08s

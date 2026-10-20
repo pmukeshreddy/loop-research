@@ -1,0 +1,82 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+_____ test_feedback_transport_policy_must_be_known_and_consistent[unknown] _____
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-i_clmbid/pytest-of-mukeshreddypochamreddy/pytest-0/test_feedback_transport_policy0')
+damage = 'unknown'
+
+    @pytest.mark.parametrize('damage', ['unknown', 'missing_request', 'mismatch'])
+    def test_feedback_transport_policy_must_be_known_and_consistent(tmp_path, damage):
+        _, _, directory, _, _ = transport(tmp_path)
+        manifest_path, request_path = directory / 'manifest.json', directory / 'request.json'
+        manifest, request = json.loads(manifest_path.read_text()), json.loads(request_path.read_text())
+        manifest['output_transport'] = 'whole-iteration-reference-v1'
+        request['output_transport'] = manifest['output_transport']
+        if damage == 'unknown':
+            manifest['output_transport'] = request['output_transport'] = 'unknown-transport'
+        elif damage == 'missing_request':
+            request.pop('output_transport')
+        else:
+            request['output_transport'] = 'different-transport'
+        save(manifest_path, manifest)
+        save(request_path, request)
+>       with pytest.raises(audit.ArchiveCorruptionError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ArchiveCorruptionError
+
+tests/test_refinement_transport_audit.py:247: Failed
+_ test_feedback_transport_policy_must_be_known_and_consistent[missing_request] _
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-i_clmbid/pytest-of-mukeshreddypochamreddy/pytest-0/test_feedback_transport_policy1')
+damage = 'missing_request'
+
+    @pytest.mark.parametrize('damage', ['unknown', 'missing_request', 'mismatch'])
+    def test_feedback_transport_policy_must_be_known_and_consistent(tmp_path, damage):
+        _, _, directory, _, _ = transport(tmp_path)
+        manifest_path, request_path = directory / 'manifest.json', directory / 'request.json'
+        manifest, request = json.loads(manifest_path.read_text()), json.loads(request_path.read_text())
+        manifest['output_transport'] = 'whole-iteration-reference-v1'
+        request['output_transport'] = manifest['output_transport']
+        if damage == 'unknown':
+            manifest['output_transport'] = request['output_transport'] = 'unknown-transport'
+        elif damage == 'missing_request':
+            request.pop('output_transport')
+        else:
+            request['output_transport'] = 'different-transport'
+        save(manifest_path, manifest)
+        save(request_path, request)
+>       with pytest.raises(audit.ArchiveCorruptionError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ArchiveCorruptionError
+
+tests/test_refinement_transport_audit.py:247: Failed
+____ test_feedback_transport_policy_must_be_known_and_consistent[mismatch] _____
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-i_clmbid/pytest-of-mukeshreddypochamreddy/pytest-0/test_feedback_transport_policy2')
+damage = 'mismatch'
+
+    @pytest.mark.parametrize('damage', ['unknown', 'missing_request', 'mismatch'])
+    def test_feedback_transport_policy_must_be_known_and_consistent(tmp_path, damage):
+        _, _, directory, _, _ = transport(tmp_path)
+        manifest_path, request_path = directory / 'manifest.json', directory / 'request.json'
+        manifest, request = json.loads(manifest_path.read_text()), json.loads(request_path.read_text())
+        manifest['output_transport'] = 'whole-iteration-reference-v1'
+        request['output_transport'] = manifest['output_transport']
+        if damage == 'unknown':
+            manifest['output_transport'] = request['output_transport'] = 'unknown-transport'
+        elif damage == 'missing_request':
+            request.pop('output_transport')
+        else:
+            request['output_transport'] = 'different-transport'
+        save(manifest_path, manifest)
+        save(request_path, request)
+>       with pytest.raises(audit.ArchiveCorruptionError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ArchiveCorruptionError
+
+tests/test_refinement_transport_audit.py:247: Failed
+=========================== short test summary info ============================
+FAILED tests/test_refinement_transport_audit.py::test_feedback_transport_policy_must_be_known_and_consistent[unknown]
+FAILED tests/test_refinement_transport_audit.py::test_feedback_transport_policy_must_be_known_and_consistent[missing_request]
+FAILED tests/test_refinement_transport_audit.py::test_feedback_transport_policy_must_be_known_and_consistent[mismatch]
+3 failed, 21 deselected in 0.10s

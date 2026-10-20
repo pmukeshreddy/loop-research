@@ -470,6 +470,14 @@ def verify_refinement_context(task, job, expected=None):
     if request is not None:
         _require(request['schema'] == schema and request['limits'] == manifest['limits'],
                  'Refinement worker contract differs from authoritative schema/limits')
+    if 'output_transport' in manifest or request is not None and 'output_transport' in request:
+        _require(manifest.get('output_transport') == 'whole-iteration-reference-v1'
+                 and request is not None
+                 and request.get('output_transport') == manifest['output_transport'],
+                 'Refinement output transport is unknown or inconsistent')
+        from .refine_feedback import initial_messages
+        _require(request.get('initial_messages') == initial_messages(request['instructions'], request['limits']),
+                 'Refinement initial conversation differs from worker contract')
     return dict(job_id=job_id, transport=routing['kind'], logical_input_equal=True,
                 schema_enum_exact=True, pre_routing_input_dispatched=False,
                 logical_payload_chars=len(logical_text), logical_payload_sha256=sha(logical_text),
@@ -491,6 +499,97 @@ def audit_refinement_transports(task):
         if isinstance(error, ArchiveCorruptionError):
             raise
         raise ArchiveCorruptionError(f'{task}: invalid refinement transport: {error}') from error
+
+
+def _audit_refinement_feedback(directory, manifest, events):
+    """Reconstruct new-policy planner inputs from preceding execution only.
+
+    Old archives retain their original unbounded stream contract. New archives
+    must account for every whole-output representation change before dispatch.
+    """
+    if 'output_transport' not in manifest:
+        return None
+    from rlm.utils.parsing import find_code_blocks
+    from .refine_feedback import FeedbackHistory, feedback_record, initial_messages, output_identity
+    request = read(directory / 'request.json')
+    initial = initial_messages(request['instructions'], request['limits'])
+    _require(request.get('initial_messages') == initial,
+             'Refinement initial conversation differs from worker contract')
+    history = FeedbackHistory(initial, manifest['limits']['backend_prompt_chars'])
+    records, blocks = {}, {}
+    iteration, expected_code, active_iteration = 0, [], False
+    prepared_prompt, pending_changes = None, []
+    references, reads, prompts = [], [], []
+
+    def clean(event):
+        return {key: value for key, value in event.items() if key not in ('timestamp', '_line')}
+
+    def prepare():
+        nonlocal prepared_prompt, pending_changes
+        if prepared_prompt is None:
+            prepared_prompt, pending_changes = history.prepare()
+
+    for event in events:
+        kind = event['event']
+        if kind == 'output.externalized':
+            _require(not active_iteration, 'Refinement output changed during an unfinished iteration')
+            prepare()
+            _require(bool(pending_changes) and clean(event) == pending_changes.pop(0),
+                     'Refinement output externalization differs from complete preceding history')
+            references.append(clean(event))
+        elif kind == 'output.read':
+            value = event['iteration']
+            _require(type(value) is int and value in records,
+                     'Refinement output read precedes its complete iteration')
+            _require(clean(event) == {'event': 'output.read', **output_identity(records[value])},
+                     'Refinement output read identity differs from original streams')
+            reads.append(clean(event))
+        elif kind == 'model.start' and event['role'] == 'planner':
+            _require(not active_iteration, 'Refinement planner call precedes iteration completion')
+            prepare()
+            _require(not pending_changes, 'Refinement prompt lacks preceding output externalization events')
+            _require(event['prompt'] == prepared_prompt,
+                     'Refinement planner prompt differs from complete preceding history')
+            prompts.append({'action_id': event['action_id'], 'prompt_chars': len(prepared_prompt),
+                            'prompt_sha256': sha(prepared_prompt)})
+            prepared_prompt = None
+        elif kind == 'model.end' and event['role'] == 'planner':
+            _require(not active_iteration, 'Duplicate refinement planner response within iteration')
+            history.append_response(event['response'])
+            iteration += 1
+            active_iteration = True
+            expected_code = find_code_blocks(event['response'])
+            blocks = {}
+        elif kind == 'code.start':
+            index = event['block']
+            _require(active_iteration and event['iteration'] == iteration
+                     and type(index) is int and index == len(blocks) and index < len(expected_code)
+                     and event['code'] == expected_code[index],
+                     'Refinement code differs from its actual planner response')
+            blocks[index] = {'block': index, 'code': event['code']}
+        elif kind == 'code.end':
+            index = event['block']
+            _require(active_iteration and event['iteration'] == iteration and index in blocks
+                     and 'stdout' not in blocks[index], 'Refinement output lacks a unique active code block')
+            block = blocks[index]
+            block.update({key: event[key] for key in ('stdout', 'stderr', 'execution_time',
+                                                    'answer_ready', 'final_answer')})
+            _require(isinstance(block['stdout'], str) and isinstance(block['stderr'], str),
+                     'Refinement output streams must be complete strings')
+            block['derived_stream_failure'] = bool(block['stderr'])
+        elif kind == 'iteration.end':
+            _require(active_iteration and event['iteration'] == iteration
+                     and len(blocks) == len(expected_code)
+                     and all('stdout' in block and not block['answer_ready'] for block in blocks.values()),
+                     'Refinement feedback iteration lacks all completed nonfinal blocks')
+            ordered = list(blocks.values())
+            history.append_output(iteration, ordered)
+            records[iteration] = feedback_record(iteration, ordered)
+            active_iteration = False
+    return {'policy': manifest['output_transport'], 'prompt_reconstruction': 'exact',
+            'planner_prompts': prompts, 'externalizations': references, 'output_reads': reads,
+            'complete_output_iterations': len(records),
+            'pending_externalization_count': len(pending_changes)}
 
 
 def _audit_refinement_transports(task):
@@ -532,6 +631,7 @@ def _audit_refinement_transports(task):
         directory, payload, schema = (checked.pop(key) for key in ('directory', 'payload', 'schema'))
         manifest = checked.pop('manifest')
         events = lines(directory / 'actions.jsonl')
+        feedback = _audit_refinement_feedback(directory, manifest, events)
         starts, terminals, bound, attempts, blocks, code = {}, {}, {}, [], {}, []
         missing, returned = [], []
         for event in events:
@@ -622,6 +722,8 @@ def _audit_refinement_transports(task):
                                      **{k: v for k, v in event.items() if k not in ('iteration', 'block')}))
             elif kind == 'proposal.returned':
                 returned.append(event['text'])
+            elif kind in ('output.externalized', 'output.read'):
+                _require(feedback is not None, 'Output reference event lacks a declared transport policy')
             elif kind != 'iteration.end':
                 raise ArchiveCorruptionError('Unknown refinement action: ' + kind)
         valid, accounting, validation_error = None, None, None
@@ -658,6 +760,7 @@ def _audit_refinement_transports(task):
             job_status=job.get('status'), manifest_status=manifest.get('status'),
             model_action_count=len(starts), backend_attempt_count=len(attempts),
             attempts=attempts, actions=events, code_blocks=code,
+            feedback_transport=feedback,
             missing_completion_call_ids=missing, proposal_schema_valid=valid,
             accounting_valid=accounting, proposal_validation_error=validation_error,
             source_files=[_source_file(path) for path in sorted(set(sources)) if path.is_file()]))

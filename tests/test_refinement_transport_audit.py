@@ -9,6 +9,7 @@ from loop_research import archive_audit as audit
 from loop_research.codex_backend import INSTRUCTION
 from loop_research.refine import INSTRUCTIONS, Proposal, evidence_anchors
 from loop_research.shared_text import encode_shared_text
+from test_refine_context import declined_proposal, execute, large_observation
 
 
 def text(value):
@@ -227,3 +228,117 @@ def test_failed_proposal_validation_is_preserved_without_claiming_archive_corrup
     assert report['accounting_valid'] is False
     assert 'ValidationError' in report['proposal_validation_error']
     assert report['job_status'] == 'failed'
+
+
+@pytest.mark.parametrize('damage', ['unknown', 'missing_request', 'mismatch'])
+def test_feedback_transport_policy_must_be_known_and_consistent(tmp_path, damage):
+    _, _, directory, _, _ = transport(tmp_path)
+    manifest_path, request_path = directory / 'manifest.json', directory / 'request.json'
+    manifest, request = json.loads(manifest_path.read_text()), json.loads(request_path.read_text())
+    manifest['output_transport'] = 'whole-iteration-reference-v1'
+    request['output_transport'] = manifest['output_transport']
+    if damage == 'unknown':
+        manifest['output_transport'] = request['output_transport'] = 'unknown-transport'
+    elif damage == 'missing_request':
+        request.pop('output_transport')
+    else:
+        request['output_transport'] = 'different-transport'
+    save(manifest_path, manifest)
+    save(request_path, request)
+    with pytest.raises(audit.ArchiveCorruptionError):
+        audit.audit_refinement_transports(tmp_path)
+
+
+def test_feedback_history_must_match_actual_prompts_even_when_receipts_agree(tmp_path):
+    _, _, directory, _, _ = transport(tmp_path)
+    manifest_path, request_path = directory / 'manifest.json', directory / 'request.json'
+    manifest, request = json.loads(manifest_path.read_text()), json.loads(request_path.read_text())
+    manifest['output_transport'] = request['output_transport'] = 'whole-iteration-reference-v1'
+    request['initial_messages'] = [
+        {'role': 'system', 'content': request['instructions']},
+        {'role': 'user', 'content': 'Inspect the complete context and proposal_schema variables, evaluate every supplied candidate '
+         'and occurrence, and produce the evidence-backed proposal.\nLimits: ' + json.dumps(request['limits'])}]
+    save(manifest_path, manifest)
+    save(request_path, request)
+    # The fixture's model action and actual CLI receipts agree with each other,
+    # but none contains this declared complete initial conversation.
+    with pytest.raises(audit.ArchiveCorruptionError, match='prompt|history|conversation'):
+        audit.audit_refinement_transports(tmp_path)
+
+
+@pytest.fixture
+def feedback_archive(ctx, large_observation):
+    calls = 0
+    original_stdout = large_observation['trajectory'][0]['result'] + '\n'
+    def respond(prompt, schema):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return '```repl\nimport sys\nprint(context["trajectory"][0]["result"])\nsys.stderr.write("diagnostic\\n")\n```'
+        if calls == 2:
+            assert len(prompt) < 1_048_576
+            return '```repl\nimport hashlib\noutput = repl_output(1)\nassert hashlib.sha256(output["blocks"][0]["stdout"].encode()).hexdigest() == ' + repr(digest(original_stdout)) + '\nassert output["blocks"][0]["stderr"] == "diagnostic\\n"\nprint("feedback inspected")\n```'
+        assert calls == 3 and 'feedback inspected' in prompt
+        return '```repl\nimport json\nanswer["content"] = json.dumps(' + repr(declined_proposal()) + ')\nanswer["ready"] = True\n```'
+    state, _, _ = execute(ctx, large_observation, respond)
+    assert calls == 3
+    directory = ctx.path / 'refine_planners' / state['job_id']
+    return ctx.path, directory
+
+
+def test_feedback_audit_reconstructs_real_isolated_worker_prompts_and_reads(feedback_archive):
+    task, directory = feedback_archive
+    original = {p: p.read_bytes() for p in directory.rglob('*') if p.is_file()}
+    report = audit.audit_refinement_transports(task)[0]
+    feedback = report['feedback_transport']
+    assert feedback['policy'] == 'whole-iteration-reference-v1'
+    assert feedback['prompt_reconstruction'] == 'exact'
+    assert len(feedback['planner_prompts']) == 3
+    assert len(feedback['externalizations']) == 1
+    assert len(feedback['output_reads']) == 1
+    assert feedback['complete_output_iterations'] == 2
+    assert feedback['pending_externalization_count'] == 0
+    assert report['proposal_schema_valid'] and report['accounting_valid']
+    assert {p: p.read_bytes() for p in directory.rglob('*') if p.is_file()} == original
+
+
+@pytest.mark.parametrize('damage', ['stdout', 'stderr', 'code', 'receipt', 'read_hash',
+                                   'early_read', 'missing_reference', 'late_reference',
+                                   'duplicate_reference', 'initial_messages'])
+def test_feedback_audit_rejects_history_or_reference_corruption(feedback_archive, damage):
+    task, directory = feedback_archive
+    actions_path = directory / 'actions.jsonl'
+    events = [json.loads(line) for line in actions_path.read_text().splitlines()]
+    if damage == 'initial_messages':
+        request = json.loads((directory / 'request.json').read_text())
+        request['initial_messages'][1]['content'] += 'altered'
+        save(directory / 'request.json', request)
+    else:
+        if damage in ('stdout', 'stderr'):
+            event = next(e for e in events if e['event'] == 'code.end' and e['iteration'] == 1)
+            event[damage] += 'altered'
+        elif damage == 'code':
+            next(e for e in events if e['event'] == 'code.start')['code'] += '\nprint("injected")'
+        elif damage == 'read_hash':
+            next(e for e in events if e['event'] == 'output.read')['feedback_sha256'] = 'altered'
+        elif damage == 'early_read':
+            event = next(e for e in events if e['event'] == 'output.read')
+            events.remove(event)
+            events.insert(1, event)
+        else:
+            index = next(i for i,e in enumerate(events) if e['event'] == 'output.externalized')
+            event = events[index]
+            if damage == 'receipt':
+                event['receipt'] += 'altered'
+                event['receipt_chars'] = len(event['receipt'])
+                event['receipt_sha256'] = digest(event['receipt'])
+            elif damage == 'missing_reference':
+                events.pop(index)
+            elif damage == 'late_reference':
+                events.pop(index)
+                events.append(event)
+            else:
+                events.insert(index, copy.deepcopy(event))
+        save_lines(actions_path, events)
+    with pytest.raises(audit.ArchiveCorruptionError):
+        audit.audit_refinement_transports(task)
