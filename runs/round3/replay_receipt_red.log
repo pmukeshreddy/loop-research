@@ -1,0 +1,183 @@
+...........FFFFFFF                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_replay_scheduling_receipt_is_bound_to_the_durable_job __________
+
+    def test_replay_scheduling_receipt_is_bound_to_the_durable_job():
+        job = {'request_id': 'requested', 'job_id': 'durable-job'}
+        scheduled = {'scheduled': True, **job}
+>       helper().verify_scheduled(scheduled, 'requested', job)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'saved_refine_input_test' has no attribute 'verify_scheduled'
+
+tests/test_saved_refine_input.py:85: AttributeError
+______ test_replay_rejects_unbound_or_unexpected_scheduling[unscheduled] _______
+
+damage = 'unscheduled'
+
+    @pytest.mark.parametrize('damage', ['unscheduled', 'missing_id', 'different_request',
+                                      'different_job', 'different_durable_request', 'resumed'])
+    def test_replay_rejects_unbound_or_unexpected_scheduling(damage):
+        job = {'request_id': 'requested', 'job_id': 'durable-job'}
+        scheduled = {'scheduled': True, **job}
+        if damage == 'unscheduled':
+            scheduled['scheduled'] = False
+        elif damage == 'missing_id':
+            scheduled.pop('job_id')
+        elif damage == 'different_request':
+            scheduled['request_id'] = 'unrelated'
+        elif damage == 'different_job':
+            scheduled['job_id'] = 'other-job'
+        elif damage == 'different_durable_request':
+            job['request_id'] = 'other-request'
+        else:
+            scheduled['resumed'] = True
+        with pytest.raises(ValueError, match='scheduling'):
+>           helper().verify_scheduled(scheduled, 'requested', job)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'saved_refine_input_test' has no attribute 'verify_scheduled'
+
+tests/test_saved_refine_input.py:106: AttributeError
+_______ test_replay_rejects_unbound_or_unexpected_scheduling[missing_id] _______
+
+damage = 'missing_id'
+
+    @pytest.mark.parametrize('damage', ['unscheduled', 'missing_id', 'different_request',
+                                      'different_job', 'different_durable_request', 'resumed'])
+    def test_replay_rejects_unbound_or_unexpected_scheduling(damage):
+        job = {'request_id': 'requested', 'job_id': 'durable-job'}
+        scheduled = {'scheduled': True, **job}
+        if damage == 'unscheduled':
+            scheduled['scheduled'] = False
+        elif damage == 'missing_id':
+            scheduled.pop('job_id')
+        elif damage == 'different_request':
+            scheduled['request_id'] = 'unrelated'
+        elif damage == 'different_job':
+            scheduled['job_id'] = 'other-job'
+        elif damage == 'different_durable_request':
+            job['request_id'] = 'other-request'
+        else:
+            scheduled['resumed'] = True
+        with pytest.raises(ValueError, match='scheduling'):
+>           helper().verify_scheduled(scheduled, 'requested', job)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'saved_refine_input_test' has no attribute 'verify_scheduled'
+
+tests/test_saved_refine_input.py:106: AttributeError
+___ test_replay_rejects_unbound_or_unexpected_scheduling[different_request] ____
+
+damage = 'different_request'
+
+    @pytest.mark.parametrize('damage', ['unscheduled', 'missing_id', 'different_request',
+                                      'different_job', 'different_durable_request', 'resumed'])
+    def test_replay_rejects_unbound_or_unexpected_scheduling(damage):
+        job = {'request_id': 'requested', 'job_id': 'durable-job'}
+        scheduled = {'scheduled': True, **job}
+        if damage == 'unscheduled':
+            scheduled['scheduled'] = False
+        elif damage == 'missing_id':
+            scheduled.pop('job_id')
+        elif damage == 'different_request':
+            scheduled['request_id'] = 'unrelated'
+        elif damage == 'different_job':
+            scheduled['job_id'] = 'other-job'
+        elif damage == 'different_durable_request':
+            job['request_id'] = 'other-request'
+        else:
+            scheduled['resumed'] = True
+        with pytest.raises(ValueError, match='scheduling'):
+>           helper().verify_scheduled(scheduled, 'requested', job)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'saved_refine_input_test' has no attribute 'verify_scheduled'
+
+tests/test_saved_refine_input.py:106: AttributeError
+_____ test_replay_rejects_unbound_or_unexpected_scheduling[different_job] ______
+
+damage = 'different_job'
+
+    @pytest.mark.parametrize('damage', ['unscheduled', 'missing_id', 'different_request',
+                                      'different_job', 'different_durable_request', 'resumed'])
+    def test_replay_rejects_unbound_or_unexpected_scheduling(damage):
+        job = {'request_id': 'requested', 'job_id': 'durable-job'}
+        scheduled = {'scheduled': True, **job}
+        if damage == 'unscheduled':
+            scheduled['scheduled'] = False
+        elif damage == 'missing_id':
+            scheduled.pop('job_id')
+        elif damage == 'different_request':
+            scheduled['request_id'] = 'unrelated'
+        elif damage == 'different_job':
+            scheduled['job_id'] = 'other-job'
+        elif damage == 'different_durable_request':
+            job['request_id'] = 'other-request'
+        else:
+            scheduled['resumed'] = True
+        with pytest.raises(ValueError, match='scheduling'):
+>           helper().verify_scheduled(scheduled, 'requested', job)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'saved_refine_input_test' has no attribute 'verify_scheduled'
+
+tests/test_saved_refine_input.py:106: AttributeError
+_ test_replay_rejects_unbound_or_unexpected_scheduling[different_durable_request] _
+
+damage = 'different_durable_request'
+
+    @pytest.mark.parametrize('damage', ['unscheduled', 'missing_id', 'different_request',
+                                      'different_job', 'different_durable_request', 'resumed'])
+    def test_replay_rejects_unbound_or_unexpected_scheduling(damage):
+        job = {'request_id': 'requested', 'job_id': 'durable-job'}
+        scheduled = {'scheduled': True, **job}
+        if damage == 'unscheduled':
+            scheduled['scheduled'] = False
+        elif damage == 'missing_id':
+            scheduled.pop('job_id')
+        elif damage == 'different_request':
+            scheduled['request_id'] = 'unrelated'
+        elif damage == 'different_job':
+            scheduled['job_id'] = 'other-job'
+        elif damage == 'different_durable_request':
+            job['request_id'] = 'other-request'
+        else:
+            scheduled['resumed'] = True
+        with pytest.raises(ValueError, match='scheduling'):
+>           helper().verify_scheduled(scheduled, 'requested', job)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'saved_refine_input_test' has no attribute 'verify_scheduled'
+
+tests/test_saved_refine_input.py:106: AttributeError
+________ test_replay_rejects_unbound_or_unexpected_scheduling[resumed] _________
+
+damage = 'resumed'
+
+    @pytest.mark.parametrize('damage', ['unscheduled', 'missing_id', 'different_request',
+                                      'different_job', 'different_durable_request', 'resumed'])
+    def test_replay_rejects_unbound_or_unexpected_scheduling(damage):
+        job = {'request_id': 'requested', 'job_id': 'durable-job'}
+        scheduled = {'scheduled': True, **job}
+        if damage == 'unscheduled':
+            scheduled['scheduled'] = False
+        elif damage == 'missing_id':
+            scheduled.pop('job_id')
+        elif damage == 'different_request':
+            scheduled['request_id'] = 'unrelated'
+        elif damage == 'different_job':
+            scheduled['job_id'] = 'other-job'
+        elif damage == 'different_durable_request':
+            job['request_id'] = 'other-request'
+        else:
+            scheduled['resumed'] = True
+        with pytest.raises(ValueError, match='scheduling'):
+>           helper().verify_scheduled(scheduled, 'requested', job)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'saved_refine_input_test' has no attribute 'verify_scheduled'
+
+tests/test_saved_refine_input.py:106: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_saved_refine_input.py::test_replay_scheduling_receipt_is_bound_to_the_durable_job
+FAILED tests/test_saved_refine_input.py::test_replay_rejects_unbound_or_unexpected_scheduling[unscheduled]
+FAILED tests/test_saved_refine_input.py::test_replay_rejects_unbound_or_unexpected_scheduling[missing_id]
+FAILED tests/test_saved_refine_input.py::test_replay_rejects_unbound_or_unexpected_scheduling[different_request]
+FAILED tests/test_saved_refine_input.py::test_replay_rejects_unbound_or_unexpected_scheduling[different_job]
+FAILED tests/test_saved_refine_input.py::test_replay_rejects_unbound_or_unexpected_scheduling[different_durable_request]
+FAILED tests/test_saved_refine_input.py::test_replay_rejects_unbound_or_unexpected_scheduling[resumed]
+7 failed, 11 passed in 0.04s

@@ -242,6 +242,15 @@ def verify_originals(case):
         raise ValueError("Original source harness changed")
 
 
+def verify_scheduled(scheduled, request_id, job):
+    """Require a fresh scheduling acknowledgement bound to the durable job."""
+    if (not isinstance(scheduled, dict) or set(scheduled) != {'scheduled', 'request_id', 'job_id'}
+            or scheduled['scheduled'] is not True or scheduled['request_id'] != request_id
+            or job.get('request_id') != request_id or not job.get('job_id')
+            or scheduled['job_id'] != job['job_id']):
+        raise ValueError(f"Unexpected replay scheduling result: {scheduled}")
+
+
 def replay_case(case, cancellation):
     from loop_research.archive import RunContext, append_json
     from loop_research.codex_backend import CodexBackend
@@ -348,8 +357,7 @@ def replay_case(case, cancellation):
         with ctx.trace.span("Saved refinement replay", "run", parent="Replay CLI",
                             original_job_id=job["job_id"], snapshot_head=harness.head):
             scheduled = refiner.run(job["focus"], request_id=request_id)
-            if scheduled != {"scheduled": True}:
-                raise ValueError(f"Unexpected replay scheduling result: {scheduled}")
+            verify_scheduled(scheduled, request_id, ctx.load('refine_state.json'))
             commits = refiner.boundary(wait=True)
             saved = ctx.load("refine_state.json")
             if saved["status"] != "applied" or refiner.pending is not None:
@@ -381,6 +389,10 @@ def replay_case(case, cancellation):
     finally:
         if refiner is not None:
             refiner.close()
+        if "ctx" in locals():
+            # A failed helper assertion may still have a background planner.
+            # Count after shutdown settles it, not before its process starts.
+            result["live_calls"] = ctx.command_counter
         result["ended_at"] = stamp()
         save(result_path, result)
     return result

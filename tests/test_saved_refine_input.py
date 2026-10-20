@@ -77,3 +77,30 @@ def test_encoded_saved_input_rejects_tampered_provenance_or_logical_values(chang
         job['planner_prompt'] += '\n'
     with pytest.raises(ValueError):
         helper().verify_saved_input(job, expected)
+
+
+def test_replay_scheduling_receipt_is_bound_to_the_durable_job():
+    job = {'request_id': 'requested', 'job_id': 'durable-job'}
+    scheduled = {'scheduled': True, **job}
+    helper().verify_scheduled(scheduled, 'requested', job)
+
+
+@pytest.mark.parametrize('damage', ['unscheduled', 'missing_id', 'different_request',
+                                  'different_job', 'different_durable_request', 'resumed'])
+def test_replay_rejects_unbound_or_unexpected_scheduling(damage):
+    job = {'request_id': 'requested', 'job_id': 'durable-job'}
+    scheduled = {'scheduled': True, **job}
+    if damage == 'unscheduled':
+        scheduled['scheduled'] = False
+    elif damage == 'missing_id':
+        scheduled.pop('job_id')
+    elif damage == 'different_request':
+        scheduled['request_id'] = 'unrelated'
+    elif damage == 'different_job':
+        scheduled['job_id'] = 'other-job'
+    elif damage == 'different_durable_request':
+        job['request_id'] = 'other-request'
+    else:
+        scheduled['resumed'] = True
+    with pytest.raises(ValueError, match='scheduling'):
+        helper().verify_scheduled(scheduled, 'requested', job)
