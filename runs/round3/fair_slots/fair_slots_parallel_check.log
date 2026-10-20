@@ -1,0 +1,67 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_parallel_completion_keeps_sequential_results_archives_and_report_order __
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-885xcyz7/pytest-of-mukeshreddypochamreddy/pytest-0/test_parallel_completion_keeps0')
+config = Config(models=Models(root='gpt-6-astra', sub='gpt-6-astra', refine='gpt-6-astra', judge='gpt-6-astra', reasoning_effor...Refine(max_edits=2), bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0))
+offline = namespace(tasks=[Task(task_id='t0', benchmark='wandr', question='Find the fixture.', spec={'nodes': [{'task_id': 'node...rocess=<function RunContext.run_process at 0x10b4d67a0>, harness=<loop_research.harness.Harness object at 0x10ca4f4d0>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ca4c110>
+
+    def test_parallel_completion_keeps_sequential_results_archives_and_report_order(tmp_path, config, offline, monkeypatch):
+        import csv
+        import threading
+        from concurrent.futures import ThreadPoolExecutor
+        from loop_research import baseline
+    
+        sequential = baseline.baseline(tmp_path, config, 'wandr')
+        config.codex.max_concurrent = 2
+        original = baseline.RunContext.run_process
+        started = {task_id: threading.Event() for task_id in ['t2', 't1', 't3']}
+        release = threading.Event()
+        lock = threading.Lock()
+        active = peak = 0
+        def runner(ctx, command, **kwargs):
+            nonlocal active, peak
+            with lock:
+                active += 1
+                peak = max(peak, active)
+            started[ctx.task_id].set()
+            try:
+                if ctx.task_id == 't2':
+                    assert release.wait(5)
+                return original(ctx, command, **kwargs)
+            finally:
+                with lock:
+                    active -= 1
+        monkeypatch.setattr(baseline.RunContext, 'run_process', runner)
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(baseline.baseline, tmp_path, config, 'wandr')
+            try:
+                assert started['t2'].wait(5)
+                assert started['t1'].wait(2), 'Second task must run while the first is blocked'
+                assert started['t3'].wait(2), 'A completed task must free a slot before the first finishes'
+            finally:
+                release.set()
+            parallel = future.result(timeout=5)
+>       assert peak == 2
+E       assert 1 == 2
+
+tests/test_baseline.py:271: AssertionError
+----------------------------- Captured stdout call -----------------------------
+Archive: baseline-wandr-8f6e664a673f4a648cc1084c14bb684c; planned tasks: 3
+[1/3] t2: started
+[1/3] t2: succeeded; soft_f1_full=0.75
+[2/3] t1: started
+[2/3] t1: succeeded; soft_f1_full=0.75
+[3/3] t3: started
+[3/3] t3: succeeded; soft_f1_full=0.75
+Archive: baseline-wandr-2ebb059fd6ba470c9289ae6f525db81b; planned tasks: 3
+[1/3] t2: started
+[2/3] t1: started
+[2/3] t1: succeeded; soft_f1_full=0.75
+[3/3] t3: started
+[3/3] t3: succeeded; soft_f1_full=0.75
+[1/3] t2: succeeded; soft_f1_full=0.75
+=========================== short test summary info ============================
+FAILED tests/test_baseline.py::test_parallel_completion_keeps_sequential_results_archives_and_report_order
+1 failed in 0.72s

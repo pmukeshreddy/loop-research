@@ -20,6 +20,33 @@ MODEL_ROLES = {"root": "root", "baseline": "root", "sub": "sub", "search": "sub"
                "refine": "refine", "grade": "judge", "repair": "root"}
 PURPOSES = set(MODEL_ROLES)
 _LIMIT = re.compile(r"rate.?limit|usage.limit|exceeded retry limit|exhausted.*credit|spend.cap|slow_down", re.I)
+_SLOT_TICKET = re.compile(r"wait-(\d+)-[0-9a-f]{32}")
+
+
+def _live_slot_tickets(directory, own_ticket):
+    """Called under queue.lock; an owner holds its ticket lock until admission."""
+    live = []
+    for path in directory.glob("wait-*"):
+        match = _SLOT_TICKET.fullmatch(path.name)
+        if match is None:
+            raise ValueError(f"Invalid Codex slot queue ticket: {path}")
+        if path == own_ticket:
+            live.append((int(match[1]), path))
+            continue
+        try:
+            probe = path.open("r+")
+        except FileNotFoundError:
+            continue  # A canceled owner may unregister without taking queue.lock.
+        with probe:
+            try:
+                fcntl.flock(probe, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                live.append((int(match[1]), path))
+            else:
+                # No live owner. OS locks, not PIDs or wall-clock ages, establish
+                # this after a crash (including a crash during registration).
+                path.unlink(missing_ok=True)
+    return sorted(live)
 
 
 class CodexError(RuntimeError):
@@ -65,24 +92,83 @@ class CodexBackend:
         self.local = threading.local()
 
     def _acquire_slot(self, timeout):
-        # File locks coordinate root processes, research workers, and their threads.
-        # Locks are released by the OS if a worker is interrupted or killed.
+        # FIFO is the order of registration under queue.lock, across processes
+        # and threads. Only admission is serialized; admitted calls run in all
+        # configured slots concurrently. All participants should use the same
+        # limit: a smaller-limit head still waits for one of its eligible slots.
         directory = Path(tempfile.gettempdir()) / f"loop-codex-slots-{os.getuid()}"
         directory.mkdir(exist_ok=True)
         deadline = time.monotonic() + timeout
-        while True:
+
+        def remaining():
             self.ctx.check_cancelled()
-            for number in range(self.config.codex.max_concurrent):
-                slot = (directory / str(number)).open("a")
-                try:
-                    fcntl.flock(slot, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                    return slot
-                except BlockingIOError:
-                    slot.close()
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
+            value = deadline - time.monotonic()
+            if value <= 0:
                 raise BudgetExceeded("Deadline while waiting for Codex concurrency slot")
-            time.sleep(min(.05, remaining))
+            return value
+
+        ticket = ticket_path = selected = None
+        try:
+            # Never unlink this mutex: replacing its inode can split the queue.
+            with (directory / "queue.lock").open("a") as guard:
+                while selected is None:
+                    remaining()
+                    try:
+                        fcntl.flock(guard, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    except BlockingIOError:
+                        # The guard protects only metadata, not running calls.
+                        # A capacity-sized sleep here leaves free slots idle
+                        # while a registering caller waits behind a brief scan.
+                        time.sleep(min(.001, remaining()))
+                        continue
+                    try:
+                        remaining()
+                        live = _live_slot_tickets(directory, ticket_path)
+                        if ticket is None:
+                            # No mutable counter or partially written manifest.
+                            # Registration is atomic under the mutex; a unique
+                            # suffix makes concurrent owner cleanup safe.
+                            number = live[-1][0] + 1 if live else 0
+                            ticket_path = directory / f"wait-{number:020d}-{uuid4().hex}"
+                            ticket = ticket_path.open("x")
+                            fcntl.flock(ticket, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                            live.append((number, ticket_path))
+                        if live[0][1] == ticket_path:
+                            for number in range(self.config.codex.max_concurrent):
+                                remaining()
+                                slot = (directory / str(number)).open("a")
+                                try:
+                                    fcntl.flock(slot, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                                except BlockingIOError:
+                                    slot.close()
+                                except BaseException:
+                                    slot.close()
+                                    raise
+                                else:
+                                    selected = slot
+                                    remaining()  # Cancellation may race the claim.
+                                    ticket_path.unlink()
+                                    ticket.close()
+                                    ticket = None
+                                    break
+                    finally:
+                        fcntl.flock(guard, fcntl.LOCK_UN)
+                    if selected is None:
+                        time.sleep(min(.05, remaining()))
+            remaining()
+            result, selected = selected, None
+            return result
+        finally:
+            if selected is not None:
+                selected.close()
+            if ticket is not None:
+                # Unique owner paths may be removed without waiting for the
+                # mutex, even after cancellation/deadline. Readers tolerate the
+                # disappearance; the liveness lock stays held until unlink.
+                try:
+                    ticket_path.unlink(missing_ok=True)
+                finally:
+                    ticket.close()
 
     @property
     def last_usage(self):

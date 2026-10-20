@@ -1,0 +1,99 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_queued_thread_precedes_late_arrival_even_when_late_arrival_polls_first __
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-kt17t1q3/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x107902360>
+
+    def test_queued_thread_precedes_late_arrival_even_when_late_arrival_polls_first(ctx, monkeypatch):
+        """Removing queue-order enforcement lets the late caller take the freed slot."""
+        ctx.config.codex.max_concurrent = 1
+        backend = CodexBackend(ctx)
+        occupied = backend._acquire_slot(5)
+        older_sleeping, resume_older, late_attempted = (threading.Event() for _ in range(3))
+        releases = {label: threading.Event() for label in ("older", "late")}
+        admitted = queue.Queue()
+        real_sleep = time.sleep
+        first_old_sleep = True
+        labels = threading.local()
+    
+        def scheduled_sleep(delay):
+            nonlocal first_old_sleep
+            if labels.value == "older" and first_old_sleep:
+                first_old_sleep = False
+                older_sleeping.set()
+                assert resume_older.wait(5)
+            if labels.value == "late":
+                late_attempted.set()
+            real_sleep(min(delay, .005))
+    
+        def acquire(label):
+            labels.value = label
+            with backend._acquire_slot(5):
+                if label == "late":
+                    late_attempted.set()
+                admitted.put(label)
+                assert releases[label].wait(5)
+    
+        monkeypatch.setattr(codex_backend, "time", SimpleNamespace(
+            monotonic=time.monotonic, sleep=scheduled_sleep))
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            older = pool.submit(acquire, "older")
+            late = None
+            try:
+                assert older_sleeping.wait(5)
+                occupied.close()
+                late = pool.submit(acquire, "late")
+                assert late_attempted.wait(5)
+                resume_older.set()
+                first = admitted.get(timeout=5)
+                releases[first].set()
+                second = admitted.get(timeout=5)
+                releases[second].set()
+                older.result(timeout=5)
+                late.result(timeout=5)
+>               assert [first, second] == ["older", "late"]
+E               AssertionError: assert ['late', 'older'] == ['older', 'late']
+E                 
+E                 At index 0 diff: 'late' != 'older'
+E                 Use -v to get more diff
+
+tests/test_codex_slot_fairness.py:91: AssertionError
+_ test_queued_process_precedes_late_process_even_when_late_process_polls_first _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-kt17t1q3/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_queued_process_precedes_late_process_even_when_late_process_polls_first(ctx):
+        """A process-local queue cannot protect an older request in another process."""
+        ctx.config.codex.max_concurrent = 1
+        occupied = CodexBackend(ctx)._acquire_slot(5)
+        mp = multiprocessing.get_context("spawn")
+        admitted = mp.Queue()
+        old_sleeping, resume_old, old_attempted, late_attempted = (mp.Event() for _ in range(4))
+        releases = {label: mp.Event() for label in ("older", "late")}
+        old = mp.Process(target=_slot_process, args=(
+            ctx, "older", admitted, releases["older"], old_attempted, old_sleeping, resume_old))
+        late = mp.Process(target=_slot_process, args=(
+            ctx, "late", admitted, releases["late"], late_attempted))
+        old.start()
+        try:
+            assert old_sleeping.wait(5)
+            occupied.close()
+            late.start()
+            assert late_attempted.wait(5)
+            resume_old.set()
+            first = admitted.get(timeout=5)
+            releases[first].set()
+            second = admitted.get(timeout=5)
+            releases[second].set()
+>           assert [first, second] == ["older", "late"]
+E           AssertionError: assert ['late', 'older'] == ['older', 'late']
+E             
+E             At index 0 diff: 'late' != 'older'
+E             Use -v to get more diff
+
+tests/test_codex_slot_fairness.py:123: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_codex_slot_fairness.py::test_queued_thread_precedes_late_arrival_even_when_late_arrival_polls_first
+FAILED tests/test_codex_slot_fairness.py::test_queued_process_precedes_late_process_even_when_late_process_polls_first
+2 failed, 5 deselected in 0.28s
