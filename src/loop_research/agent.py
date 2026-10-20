@@ -89,8 +89,13 @@ def learning_policy(enabled):
     return ('LEARNING ENABLED\nWhen current research reveals a repeated tool failure, a recovered execution '
             'error, or a successful reusable procedure, request refine.run(focus="the observed procedure or problem") '
             'during the task, grounded in evidence already collected. The planner may decline unsupported edits. '
-            'Do not repeat a pending request. Continue research while planning runs in the background; completed '
-            'edits apply before later root calls and appear in CURRENT RELEVANT HARNESS ENTRIES.\n')
+            'Do not repeat a pending request. Continue useful research while planning runs in the background. '
+            'CURRENT REFINEMENT STATUS reports the latest job at later root boundaries, including complete '
+            'candidate decisions and committed edit receipts. Applied with empty edits/commits is a completed '
+            'decline; planned is not yet settled. Current-run committed entries appear alongside relevant prior '
+            'entries in CURRENT RELEVANT HARNESS ENTRIES. Evaluate and use applicable procedures. '
+            'Finish when research is complete; do not spend turns sleeping or polling for a new entry. '
+            'Pending work is settled by finalization.\n')
 
 
 def resource_policy(config):
@@ -157,6 +162,10 @@ def make_prompt(task, contract, entries, *, as_of, config, date_archive=None, le
         "Use the bare entry id returned by the harness; kind may be None for list/search. "
         "Edits may specify trigger and module (Python source string for skills, or None).\n"
         "refine.run(focus=None): focus: str or None; plan a small edit in the background; applies at a turn boundary. "
+        "Returns scheduling status and request/job IDs. "
+        "refine.status(): read-only latest-job lifecycle, complete proposal/decisions and committed operation receipts; "
+        "never waits, schedules or applies. States idle/planning/planned/applied/failed/discarded are distinct; "
+        "applied with no edits/commits is completed without an edit. fatal reports a host failure separately. "
         "refine.rollback(id): id: nonempty str identifying an edit or its commit SHA; "
         "queue an inverse edit at the next turn boundary.\n"
         "record_discovery(query: str, entities: list[str]): use the exact previously searched query; "
@@ -257,7 +266,7 @@ def worker(request_path):
     tools['llm_query_json_batched'] = models.query_json_batched
     tools['budget'] = lambda: client.call('budget')
     tools['harness'] = Remote(client, 'harness.', ('create', 'get', 'read', 'update', 'delete', 'list', 'search'))
-    tools['refine'] = Remote(client, 'refine.', ('run', 'rollback'))
+    tools['refine'] = Remote(client, 'refine.', ('run', 'status', 'rollback'))
     rlm = CodexRLM(client, root_model=config.models.root, sub_model=config.models.sub,
         max_depth=config.rlm.max_depth, max_iterations=config.rlm.max_iterations,
         max_timeout=request['timeout'], max_concurrent_subcalls=config.codex.max_concurrent,

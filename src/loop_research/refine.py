@@ -4,6 +4,7 @@ from contextvars import copy_context
 import copy
 import hashlib
 import json
+import re
 import threading
 from typing import Annotated, Literal
 from uuid import uuid4
@@ -221,6 +222,36 @@ class Refiner:
         self.ctx.save(f"refine_requests/{digest(job['request_id'])}/{job['job_id']}.json", job)
         self.ctx.save('refine_state.json', job)
 
+    def status(self):
+        """Read one durable job and prove its operations against one immutable Git HEAD.
+
+        This never waits for planning, resumes a job, or applies a proposal. In
+        particular, a planned job may already have receipts after an interrupted
+        apply; receipts and durable lifecycle state remain separate facts.
+        """
+        with self.lock, self.harness.lock:
+            job = self.ctx.load('refine_state.json')
+            result = {'enabled': self.enabled, 'state': 'idle', 'request_id': None, 'job_id': None,
+                      'focus': None, 'proposal': None, 'error': None, 'commits': []}
+            if job is None:
+                return result
+            result.update(state=job['status'], request_id=job['request_id'], job_id=job.get('job_id'),
+                          focus=job['focus'], proposal=job['proposal'], error=job.get('error'))
+            head = self.harness.head
+            for operation in job.get('operations', []):
+                if not isinstance(operation, str) or not re.fullmatch(r'refine_[a-f0-9]+', operation):
+                    raise ValueError('Invalid refinement identity')
+                path = 'edits/' + operation + '.json'
+                if not self.harness.git('ls-tree', '--name-only', head, '--', path):
+                    continue
+                record = json.loads(self.harness.git('show', head + ':' + path))
+                if record['id'] != operation:
+                    raise ValueError('Committed refinement identity mismatch')
+                result['commits'].append({'operation_id': operation,
+                    'commit': self.harness.git('log', '-1', '--format=%H', head, '--', path),
+                    'key': record['key'], 'action': record['action']})
+            return result
+
     def resume(self):
         with self.lock:
             job = self.ctx.load('refine_state.json')
@@ -253,12 +284,16 @@ class Refiner:
                 return {'scheduled': False, 'reason': 'no-learning comparison'}
             previous = self.ctx.load('refine_state.json')
             if request_id and previous and previous.get('request_id') == request_id and previous['status'] == 'applied':
-                return {'scheduled': False, 'reason': 'already_applied'}
+                return {'scheduled': False, 'reason': 'already_applied',
+                        'request_id': previous['request_id'], 'job_id': previous.get('job_id')}
             if self.pending is not None:
                 self.audit('skipped_request', reason='planning_in_progress', requested_focus=focus)
-                return {'scheduled': False, 'reason': 'planning already in progress'}
+                return {'scheduled': False, 'reason': 'planning already in progress',
+                        'request_id': previous['request_id'], 'job_id': previous.get('job_id')}
             if self.resume():
-                return {'scheduled': True, 'resumed': True}
+                resumed = self.ctx.load('refine_state.json')
+                return {'scheduled': True, 'resumed': True,
+                        'request_id': resumed['request_id'], 'job_id': resumed['job_id']}
             if previous:
                 self._save_job(previous)
             snapshot = self.harness.snapshot()
@@ -272,7 +307,7 @@ class Refiner:
             self._save_job(job)
             self.ctx.trace.emit('Refine', 'scheduled', focus=focus, request_id=job['request_id'], job_id=job['job_id'])
             self.pending = self.pool.submit(copy_context().run, self._plan, job)
-            return {'scheduled': True}
+            return {'scheduled': True, 'request_id': job['request_id'], 'job_id': job['job_id']}
 
     def _plan(self, job):
         with self.ctx.trace.span('Refine', 'planning', focus=job['focus'], request_id=job['request_id'], job_id=job['job_id']):

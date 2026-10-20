@@ -20,6 +20,7 @@ from loop_research.repl_tools import normalized_url
 from loop_research.rlm_codex_client import transcript
 
 HARNESS_MARKER = '\nCURRENT RELEVANT HARNESS ENTRIES\n'
+REFINEMENT_MARKER = '\nCURRENT REFINEMENT STATUS\n'
 
 
 class ArchiveCorruptionError(ValueError):
@@ -76,7 +77,7 @@ def match_iterations(models, iterations):
         prefix = transcript(event['prompt'])
         candidates = [model for model in models if model['_line'] < iteration['_line']
             and model['_line'] not in used and model['prompt'].startswith(prefix)
-            and (model['prompt'] == prefix or model['prompt'][len(prefix):].startswith(HARNESS_MARKER))
+            and (model['prompt'] == prefix or model['prompt'][len(prefix):].startswith((HARNESS_MARKER, REFINEMENT_MARKER)))
             and model['response'] == event['response']]
         if not candidates:
             continue
@@ -91,6 +92,11 @@ def partition_prompt(model, iteration, task):
     serialized = transcript(messages)
     assert model['prompt'].startswith(serialized)
     suffix = model['prompt'][len(serialized):]
+    refinement_status = ''
+    if suffix.startswith(REFINEMENT_MARKER):
+        suffix = suffix[len(REFINEMENT_MARKER):]
+        _, end = json.JSONDecoder().raw_decode(suffix)
+        refinement_status, suffix = suffix[:end], suffix[end:]
     assert not suffix or suffix.startswith(HARNESS_MARKER)
     full = INSTRUCTION + model['prompt']
     parts = dict(system=len(INSTRUCTION), question_and_columns=0, other_task_instructions=0,
@@ -111,7 +117,7 @@ def partition_prompt(model, iteration, task):
     _, spec_chars = json.JSONDecoder().raw_decode(initial[spec_start:])
     question_and_columns = initial[:spec_start + spec_chars]
     parts['question_and_columns'] = len(question_and_columns)
-    parts['other_task_instructions'] = len(initial) - len(question_and_columns) - len(harness)
+    parts['other_task_instructions'] = len(initial) - len(question_and_columns) - len(harness) + len(refinement_status)
     details = []
     for index, message in enumerate(messages):
         content = message['content']
@@ -131,10 +137,11 @@ def partition_prompt(model, iteration, task):
         initial_input_path=str(initial_path), initial_input_chars=len(initial), initial_input_sha256=sha(initial),
         question_and_columns_sha256=sha(question_and_columns),
         initial_harness_chars=len(harness), current_harness_chars=len(current_harness),
+        current_refinement_status_chars=len(refinement_status),
         partition_policy=('Nonoverlapping attribution by origin: system includes backend instruction; question_and_columns '
             'is the exact initial TASK/question plus SPEC JSON prefix through the end of that JSON value; '
             'other_task_instructions is the remaining archived initial root input, including '
-            'language, as-of and learning policy, minus any initial harness payload; '
+            'language, as-of and learning policy, minus any initial harness payload, plus complete current refinement status; '
             'harness includes initial and current retrieved-entry payloads; code is earlier assistant REPL code; '
             'repl_output recognizes both REPL output: and REPL output (block N): headers and counts the complete '
             'formatted message content (including combined multi-block output), including its header, stdout, '

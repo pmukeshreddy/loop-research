@@ -1,0 +1,25 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_refinement_status_suffix_is_matched_and_counted_without_losing_entries __
+
+tmp_path = PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-ho1lrt4v/pytest-of-mukeshreddypochamreddy/pytest-0/test_refinement_status_suffix_0')
+
+    def test_refinement_status_suffix_is_matched_and_counted_without_losing_entries(tmp_path):
+        run, task, model, call, iteration = archive(tmp_path)
+        status = json.dumps({'state': 'applied', 'proposal': {'summary': 'Complete decline', 'edits': []},
+                             'commits': []})
+        entries = json.dumps([{'id': 'fresh', 'body': 'Complete newly committed procedure'}])
+        model['prompt'] += '\nCURRENT REFINEMENT STATUS\n' + status + module().HARNESS_MARKER + entries
+        full = INSTRUCTION + model['prompt']
+        call.update(prompt_chars=len(full), prompt_sha256=hashlib.sha256(full.encode()).hexdigest())
+        write_lines(task / 'trajectory.jsonl', [model, iteration])
+        write_lines(task / 'codex_calls.jsonl', [call])
+        audit = module().audit_task(task, run)
+        prompt = audit['largest_prompt']
+>       assert prompt['parts'] is not None
+E       assert None is not None
+
+tests/test_archive_audit.py:117: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_archive_audit.py::test_refinement_status_suffix_is_matched_and_counted_without_losing_entries
+1 failed, 28 deselected in 0.08s

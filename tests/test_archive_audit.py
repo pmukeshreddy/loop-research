@@ -102,6 +102,27 @@ def test_missing_trace_does_not_erase_verified_prompt_or_iteration(tmp_path):
     assert result['metrics']['unavailable']['wall_s']
 
 
+def test_refinement_status_suffix_is_matched_and_counted_without_losing_entries(tmp_path):
+    run, task, model, call, iteration = archive(tmp_path)
+    status = json.dumps({'state': 'applied', 'proposal': {'summary': 'Complete decline', 'edits': []},
+                         'commits': []})
+    entries = json.dumps([{'id': 'fresh', 'body': 'Complete newly committed procedure'}])
+    model['prompt'] += '\nCURRENT REFINEMENT STATUS\n' + status + module().HARNESS_MARKER + entries
+    full = INSTRUCTION + model['prompt']
+    call.update(prompt_chars=len(full), prompt_sha256=hashlib.sha256(full.encode()).hexdigest())
+    write_lines(task / 'trajectory.jsonl', [model, iteration])
+    write_lines(task / 'codex_calls.jsonl', [call])
+    audit = module().audit_task(task, run)
+    prompt = audit['largest_prompt']
+    assert prompt['parts'] is not None
+    assert prompt['current_harness_chars'] == len(entries)
+    assert prompt['current_refinement_status_chars'] == len(status)
+    assert prompt['parts']['harness'] == len(entries)
+    assert prompt['parts']['other_task_instructions'] >= len(status)
+    assert sum(prompt['parts'].values()) == len(full)
+    assert audit['_largest_prompt_text'] == full
+
+
 def test_early_manifest_only_archive_marks_metrics_unavailable(tmp_path):
     run = tmp_path / 'early'
     write_json(run / 'research.json', {'task_id': 'pending', 'status': 'running'})

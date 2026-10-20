@@ -1,0 +1,459 @@
+FFFFFFFF....                                                             [100%]
+=================================== FAILURES ===================================
+__________ test_status_observes_decline_without_applying_or_resuming ___________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-crn_02x_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_status_observes_decline_without_applying_or_resuming(ctx):
+        refiner = make_refiner(ctx, {'summary': 'Insufficient evidence for a reusable procedure', 'edits': []})
+        try:
+>           assert refiner.status()['state'] == 'idle'
+                   ^^^^^^^^^^^^^^
+E           AttributeError: 'Refiner' object has no attribute 'status'
+
+tests/test_refine_feedback.py:23: AttributeError
+___ test_status_reports_only_committed_operations_and_survives_host_restart ____
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-crn_02x_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_status_reports_only_committed_operations_and_survives_host_restart(ctx):
+        refiner = make_refiner(ctx, proposal())
+        try:
+            refiner.run()
+            job = refiner.pending.result(5)
+            # A file staged/written before Git commit is not application evidence.
+            path = refiner.harness.path / 'edits' / (job['operations'][0] + '.json')
+            path.parent.mkdir(exist_ok=True)
+            path.write_text(json.dumps({'id': job['operations'][0], 'key': 'memory:uncommitted'}))
+>           assert refiner.status()['commits'] == []
+                   ^^^^^^^^^^^^^^
+E           AttributeError: 'Refiner' object has no attribute 'status'
+
+tests/test_refine_feedback.py:54: AttributeError
+___________ test_status_returns_while_background_planner_is_blocked ____________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-crn_02x_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+
+    def test_status_returns_while_background_planner_is_blocked(ctx):
+        refiner = make_refiner(ctx, {'summary': 'No lesson', 'edits': []})
+        started, release = threading.Event(), threading.Event()
+        complete = refiner.backend.complete
+        def gated(*args, **kwargs):
+            started.set()
+            assert release.wait(5)
+            return complete(*args, **kwargs)
+        refiner.backend.complete = gated
+        try:
+            refiner.run()
+            assert started.wait(5)
+>           assert refiner.status()['state'] == 'planning'
+                   ^^^^^^^^^^^^^^
+E           AttributeError: 'Refiner' object has no attribute 'status'
+
+tests/test_refine_feedback.py:84: AttributeError
+__________ test_status_exposes_failed_plan_without_consuming_failure ___________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-crn_02x_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+task = Task(task_id='fixture', benchmark='widesearch', question='Hand-written fixture', spec={'columns': ['entity', 'value'], 'keys': ['entity']}, language='en', as_of_date=None, raw={})
+
+    def test_status_exposes_failed_plan_without_consuming_failure(ctx, task):
+        session = Session(task, ctx, Harness(ctx.root / 'harness'), backend=Replies())
+        session.refiner.backend = Replies('invalid proposal')
+        try:
+            session.refiner.run()
+            with pytest.raises(ValueError):
+                session.refiner.pending.result(5)
+>           status = session.dispatch('refine.status', [], {})
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_refine_feedback.py:99: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/loop_research/session.py:113: in dispatch
+    return self._dispatch(method, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/session.py:171: in _dispatch
+    return self._state_dispatch(method, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <loop_research.session.Session object at 0x10a2ccf50>
+method = 'refine.status', args = [], kwargs = {}
+
+    def _state_dispatch(self, method, args, kwargs):
+        if method == 'budget':
+            if args or kwargs:
+                raise ValueError('budget accepts no arguments')
+            result = self.budget.snapshot()
+            append_json(self.ctx.path / 'trajectory.jsonl', {'type': 'tool', 'tool': 'budget',
+                        'args': [], 'kwargs': {}, 'result': result})
+            return result
+        if method.startswith('harness.'):
+            name = method.removeprefix('harness.')
+            if name not in {'create', 'read', 'get', 'update', 'delete', 'list', 'search'}:
+                raise ValueError('Unknown harness operation')
+            if name in {'create', 'update', 'delete'}:
+                if not self.learning:
+                    raise ValueError('Harness writes disabled for no-learning comparison')
+                if set(kwargs) - {'id', 'module', 'trigger', 'evidence'}:
+                    raise ValueError('Unsupported harness edit fields')
+                kwargs['evidence'] = [self.run_id]
+                kwargs.setdefault('trigger', 'agent mid-task edit')
+            with self.ctx.trace.span('Harness', name, args=args, kwargs=kwargs) as details:
+                if self.ctx.trace.enabled:
+                    details['head_before'] = self.harness.head
+                result = getattr(self.harness, name)(*args, **kwargs)
+                if self.ctx.trace.enabled:
+                    details.update(head_after=self.harness.head, result=result)
+            if name == 'delete' and result is False:
+                self.refiner.audit('skipped_delete', reason='entry_missing', args=args, kwargs=kwargs)
+            if name in {'read', 'get', 'list', 'search'} and result:
+                self.harness.record_usage(result if isinstance(result, list) else [result], self.run_id)
+            return result
+        if method == 'refine.run':
+            if len(args) > 1 or set(kwargs) - {'focus'}:
+                raise ValueError('Refinement accepts only focus')
+            return self.refiner.run(*args, **kwargs)
+        if method == 'refine.rollback':
+            if not self.learning or len(args) != 1 or kwargs or not isinstance(args[0], str) or not args[0]:
+                raise ValueError('Rollback requires an id and enabled learning')
+            with self.turn_lock:
+                self.rollbacks.append({'id': args[0], 'operation_id': 'refine_' + uuid4().hex})
+                self.checkpoint()
+            return {'scheduled': True}
+        if method == 'trace':
+            if len(args) != 2 or args[0] not in {'RLM', 'RLM iteration', 'REPL'}:
+                raise ValueError('Invalid worker trace event')
+            self.ctx.trace.emit(*args, **kwargs)
+            return True
+        if method == 'iteration':
+            if len(args) != 1 or kwargs:
+                raise ValueError('Expected one trajectory event')
+            append_json(self.ctx.path / 'trajectory.jsonl', {'type': 'worker_iteration', 'event': args[0]})
+            return True
+>       raise ValueError('Unknown host operation')
+E       ValueError: Unknown host operation
+
+src/loop_research/session.py:224: ValueError
+_______ test_status_argument_validation_and_no_learning_do_not_schedule ________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-crn_02x_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+task = Task(task_id='fixture', benchmark='widesearch', question='Hand-written fixture', spec={'columns': ['entity', 'value'], 'keys': ['entity']}, language='en', as_of_date=None, raw={})
+
+    def test_status_argument_validation_and_no_learning_do_not_schedule(ctx, task):
+        session = Session(task, ctx, Harness(ctx.root / 'harness'), learning=False, backend=Replies())
+        try:
+>           status = session.dispatch('refine.status', [], {})
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_refine_feedback.py:112: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/loop_research/session.py:113: in dispatch
+    return self._dispatch(method, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/loop_research/session.py:171: in _dispatch
+    return self._state_dispatch(method, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <loop_research.session.Session object at 0x10a2cec60>
+method = 'refine.status', args = [], kwargs = {}
+
+    def _state_dispatch(self, method, args, kwargs):
+        if method == 'budget':
+            if args or kwargs:
+                raise ValueError('budget accepts no arguments')
+            result = self.budget.snapshot()
+            append_json(self.ctx.path / 'trajectory.jsonl', {'type': 'tool', 'tool': 'budget',
+                        'args': [], 'kwargs': {}, 'result': result})
+            return result
+        if method.startswith('harness.'):
+            name = method.removeprefix('harness.')
+            if name not in {'create', 'read', 'get', 'update', 'delete', 'list', 'search'}:
+                raise ValueError('Unknown harness operation')
+            if name in {'create', 'update', 'delete'}:
+                if not self.learning:
+                    raise ValueError('Harness writes disabled for no-learning comparison')
+                if set(kwargs) - {'id', 'module', 'trigger', 'evidence'}:
+                    raise ValueError('Unsupported harness edit fields')
+                kwargs['evidence'] = [self.run_id]
+                kwargs.setdefault('trigger', 'agent mid-task edit')
+            with self.ctx.trace.span('Harness', name, args=args, kwargs=kwargs) as details:
+                if self.ctx.trace.enabled:
+                    details['head_before'] = self.harness.head
+                result = getattr(self.harness, name)(*args, **kwargs)
+                if self.ctx.trace.enabled:
+                    details.update(head_after=self.harness.head, result=result)
+            if name == 'delete' and result is False:
+                self.refiner.audit('skipped_delete', reason='entry_missing', args=args, kwargs=kwargs)
+            if name in {'read', 'get', 'list', 'search'} and result:
+                self.harness.record_usage(result if isinstance(result, list) else [result], self.run_id)
+            return result
+        if method == 'refine.run':
+            if len(args) > 1 or set(kwargs) - {'focus'}:
+                raise ValueError('Refinement accepts only focus')
+            return self.refiner.run(*args, **kwargs)
+        if method == 'refine.rollback':
+            if not self.learning or len(args) != 1 or kwargs or not isinstance(args[0], str) or not args[0]:
+                raise ValueError('Rollback requires an id and enabled learning')
+            with self.turn_lock:
+                self.rollbacks.append({'id': args[0], 'operation_id': 'refine_' + uuid4().hex})
+                self.checkpoint()
+            return {'scheduled': True}
+        if method == 'trace':
+            if len(args) != 2 or args[0] not in {'RLM', 'RLM iteration', 'REPL'}:
+                raise ValueError('Invalid worker trace event')
+            self.ctx.trace.emit(*args, **kwargs)
+            return True
+        if method == 'iteration':
+            if len(args) != 1 or kwargs:
+                raise ValueError('Expected one trajectory event')
+            append_json(self.ctx.path / 'trajectory.jsonl', {'type': 'worker_iteration', 'event': args[0]})
+            return True
+>       raise ValueError('Unknown host operation')
+E       ValueError: Unknown host operation
+
+src/loop_research/session.py:224: ValueError
+_ test_retrieval_includes_full_committed_current_run_entries_without_query_overlap _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-crn_02x_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+task = Task(task_id='fixture', benchmark='widesearch', question='Hand-written fixture', spec={'columns': ['entity', 'value'], 'keys': ['entity']}, language='en', as_of_date=None, raw={})
+
+    def test_retrieval_includes_full_committed_current_run_entries_without_query_overlap(ctx, task):
+        harness = Harness(ctx.root / 'harness')
+        session = Session(task, ctx, harness, backend=Replies())
+        try:
+            prior = harness.create('memory', 'Hand-written fixture', 'Prior relevant procedure', id='prior')
+            unrelated = harness.create('memory', 'Retain provenance', 'Require verbatim quotation membership.', id='older')
+            current = harness.create('skill', 'Validate provenance', 'Check exact quotation membership.', id='current',
+                                     module='def check(quote, page):\n    return quote in page\n', evidence=[session.run_id])
+            harness.record_usage([current], 'previous-observation')
+            harness.record_outcome('previous-observation', {'ok': True, 'issues': [], 'signals': []})
+            current = harness.get('skill', 'current')
+            assert [entry['id'] for entry in harness.search(task.question + ' ' + json.dumps(task.spec))] == [prior['id']]
+            entries = session.retrieve()
+>           assert {entry['id'] for entry in entries} == {'prior', 'current'}
+E           AssertionError: assert {'prior'} == {'current', 'prior'}
+E             
+E             Extra items in the right set:
+E             'current'
+E             Use -v to get more diff
+
+tests/test_refine_feedback.py:136: AssertionError
+______ test_isolated_worker_uses_boundary_feedback_without_polling[True] _______
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-crn_02x_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+task = Task(task_id='fixture', benchmark='widesearch', question='Hand-written fixture', spec={'columns': ['entity', 'value'], 'keys': ['entity']}, language='en', as_of_date=None, raw={})
+benchmark = <loop_research.benchmarks.widesearch.data.WideSearchData object at 0x10a1ba360>
+output = {'rows': [{'entity': 'fixture-a', 'cells': {'entity': {'value': 'fixture-a', 'sources': ['https://example.org'], 'quote': 'fixture-a'}, 'value': {'value': 'fixture-value', 'sources': ['https://example.org'], 'quote': 'fixture-value'}}}]}
+session_factory = <function session_factory.<locals>.create at 0x10a2f2980>
+edit = True
+
+    @pytest.mark.parametrize('edit', [True, False])
+    def test_isolated_worker_uses_boundary_feedback_without_polling(ctx, task, benchmark, output, session_factory, edit):
+        """The next useful root turn sees an unrelated lesson or an honest completed decline."""
+        ctx.trace = Trace(ctx.run_dir)
+        roots = 0
+        content = 'Require verbatim quotation membership before citation emission.'
+        def reply(prompt, options):
+            nonlocal roots
+            if options['purpose'] == 'sub':
+                # Synchronize only the offline transport, never the worker's code or production scheduler.
+                session.refiner.pending.result(timeout=5)
+                return 'fixture-a fixture-value'
+            assert options['purpose'] == 'root'
+            roots += 1
+            if roots == 1:
+                return code_reply('request = refine.run(focus="Review collected provenance")\n'
+                                  'extracted = llm_query("Extract the collected evidence: fixture-a fixture-value")\n'
+                                  'print(extracted)')
+            status, entries = current_boundary(prompt)
+            assert status['state'] == 'applied' and status['fatal'] is None
+            if edit:
+                assert len(status['commits']) == 1
+                learned, = [entry for entry in entries if entry['body'] == content]
+                # The selected entry drives a later REPL action over the retained evidence.
+                action = ('lesson = harness.get("memory", ' + repr(learned['id']) + ')\n'
+                          'assert lesson["body"] == ' + repr(content) + '\n'
+                          'assert "fixture-value" in extracted\n'
+                          'print({"applied_procedure": lesson["id"], "quotation_validated": True})\n')
+            else:
+                assert status['proposal']['edits'] == [] and status['commits'] == []
+                assert status['proposal']['decisions'] and all(
+                    decision['decision'] == 'declined' and decision['reason']
+                    for decision in status['proposal']['decisions'])
+                assert entries == []
+                action = 'print({"completed_decline": True})\n'
+            return code_reply(action + final_code(output))
+        session = session_factory(reply)
+        session.learning = session.refiner.enabled = True
+        response = proposal(title='Validate provenance', content=content) if edit else {
+            'summary': 'The incomplete research snapshot does not establish a reusable lesson', 'edits': []}
+        session.refiner.backend = Planner(response)
+        # Trusted offline source evidence is independent of fetching transport and remains citation-checked.
+        session.tools.evidence['fetched']['https://example.org/'] = 'fixture-a fixture-value'
+>       result = run_task(task, benchmark, session)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_midtask_refine.py:62: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+task = Task(task_id='fixture', benchmark='widesearch', question='Hand-written fixture', spec={'columns': ['entity', 'value'], 'keys': ['entity']}, language='en', as_of_date=None, raw={})
+benchmark = <loop_research.benchmarks.widesearch.data.WideSearchData object at 0x10a1ba360>
+session = <loop_research.session.Session object at 0x10a2cec00>
+
+    def run_task(task, benchmark, session):
+        ctx, budget = session.ctx, session.budget
+        ctx.path.mkdir(parents=True, exist_ok=True)
+        contract = benchmark.output_contract(task)
+        entries = session.retrieve()
+        prompt, asof, source = make_prompt(task, contract, entries, as_of=ctx.config.agent.as_of,
+                                          config=ctx.config, date_archive=ctx.path / "as_of.json", learning=session.learning)
+        root_prompt = prompt
+        with ctx.trace.span("Prompt", "save", size_chars=len(prompt), size_bytes=len(prompt.encode()),
+                            sha256=hashlib.sha256(prompt.encode()).hexdigest(), path=str(ctx.path / "prompt.txt")):
+            (ctx.path / "prompt.txt").write_text(prompt)
+        with ctx.trace.span("Prompt", "root_save", size_chars=len(root_prompt),
+                            sha256=hashlib.sha256(root_prompt.encode()).hexdigest(),
+                            path=str(ctx.path / "root_prompt.txt")):
+            (ctx.path / "root_prompt.txt").write_text(root_prompt)
+        ctx.save("task.json", task.model_dump(mode="json"))
+        with tempfile.TemporaryDirectory(prefix="lr-", dir="/tmp") as directory:
+            work = Path(directory).resolve()
+            request = {"config": ctx.config.model_dump(), "prompt": prompt, "root_prompt": root_prompt, "entries": entries,
+                       "socket": str(work / "host.sock"), "timeout": budget.remaining(),
+                       "result_path": str(work / "result.json"), "trace": ctx.trace.enabled}
+            write_json(work / "request.json", request)
+            with Server(work / "host.sock", session.dispatch, socket_timeout_s=ctx.config.bridge.socket_timeout_s, trace=ctx.trace), (ctx.path / "worker.log").open("a") as log:
+                try:
+                    with ctx.trace.span("Worker", "run") as details:
+                        process = ctx.run_process(isolated_command(work, [sys.executable, "-m", "loop_research.agent", str(work / "request.json")]),
+                            cwd=work, env=worker_env(work), stdout=log, stderr=log, trace_component="Worker",
+                            start_new_session=True, timeout=budget.remaining())
+                        details["exit_code"] = process.returncode
+                except subprocess.TimeoutExpired as exc:
+                    session.status['timeout'] = True
+                    raise TimeoutError("Task hard deadline exceeded") from exc
+                finally:
+                    session.close_worker()
+            if process.returncode:
+                session.status['worker_error'] = True
+                if budget.count >= budget.limit:
+                    session.status['call_limit'] = True
+>               raise RuntimeError(f"Research worker failed ({process.returncode}); see {ctx.path / 'worker.log'}")
+E               RuntimeError: Research worker failed (1); see /private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-crn_02x_/pytest-of-mukeshreddypochamreddy/pytest-0/test_isolated_worker_uses_boun0/runs/unit/fixture/worker.log
+
+src/loop_research/agent.py:214: RuntimeError
+______ test_isolated_worker_uses_boundary_feedback_without_polling[False] ______
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-crn_02x_/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+task = Task(task_id='fixture', benchmark='widesearch', question='Hand-written fixture', spec={'columns': ['entity', 'value'], 'keys': ['entity']}, language='en', as_of_date=None, raw={})
+benchmark = <loop_research.benchmarks.widesearch.data.WideSearchData object at 0x10a1d3620>
+output = {'rows': [{'entity': 'fixture-a', 'cells': {'entity': {'value': 'fixture-a', 'sources': ['https://example.org'], 'quote': 'fixture-a'}, 'value': {'value': 'fixture-value', 'sources': ['https://example.org'], 'quote': 'fixture-value'}}}]}
+session_factory = <function session_factory.<locals>.create at 0x10a2f3b00>
+edit = False
+
+    @pytest.mark.parametrize('edit', [True, False])
+    def test_isolated_worker_uses_boundary_feedback_without_polling(ctx, task, benchmark, output, session_factory, edit):
+        """The next useful root turn sees an unrelated lesson or an honest completed decline."""
+        ctx.trace = Trace(ctx.run_dir)
+        roots = 0
+        content = 'Require verbatim quotation membership before citation emission.'
+        def reply(prompt, options):
+            nonlocal roots
+            if options['purpose'] == 'sub':
+                # Synchronize only the offline transport, never the worker's code or production scheduler.
+                session.refiner.pending.result(timeout=5)
+                return 'fixture-a fixture-value'
+            assert options['purpose'] == 'root'
+            roots += 1
+            if roots == 1:
+                return code_reply('request = refine.run(focus="Review collected provenance")\n'
+                                  'extracted = llm_query("Extract the collected evidence: fixture-a fixture-value")\n'
+                                  'print(extracted)')
+            status, entries = current_boundary(prompt)
+            assert status['state'] == 'applied' and status['fatal'] is None
+            if edit:
+                assert len(status['commits']) == 1
+                learned, = [entry for entry in entries if entry['body'] == content]
+                # The selected entry drives a later REPL action over the retained evidence.
+                action = ('lesson = harness.get("memory", ' + repr(learned['id']) + ')\n'
+                          'assert lesson["body"] == ' + repr(content) + '\n'
+                          'assert "fixture-value" in extracted\n'
+                          'print({"applied_procedure": lesson["id"], "quotation_validated": True})\n')
+            else:
+                assert status['proposal']['edits'] == [] and status['commits'] == []
+                assert status['proposal']['decisions'] and all(
+                    decision['decision'] == 'declined' and decision['reason']
+                    for decision in status['proposal']['decisions'])
+                assert entries == []
+                action = 'print({"completed_decline": True})\n'
+            return code_reply(action + final_code(output))
+        session = session_factory(reply)
+        session.learning = session.refiner.enabled = True
+        response = proposal(title='Validate provenance', content=content) if edit else {
+            'summary': 'The incomplete research snapshot does not establish a reusable lesson', 'edits': []}
+        session.refiner.backend = Planner(response)
+        # Trusted offline source evidence is independent of fetching transport and remains citation-checked.
+        session.tools.evidence['fetched']['https://example.org/'] = 'fixture-a fixture-value'
+>       result = run_task(task, benchmark, session)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_midtask_refine.py:62: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+task = Task(task_id='fixture', benchmark='widesearch', question='Hand-written fixture', spec={'columns': ['entity', 'value'], 'keys': ['entity']}, language='en', as_of_date=None, raw={})
+benchmark = <loop_research.benchmarks.widesearch.data.WideSearchData object at 0x10a1d3620>
+session = <loop_research.session.Session object at 0x10a1d1d60>
+
+    def run_task(task, benchmark, session):
+        ctx, budget = session.ctx, session.budget
+        ctx.path.mkdir(parents=True, exist_ok=True)
+        contract = benchmark.output_contract(task)
+        entries = session.retrieve()
+        prompt, asof, source = make_prompt(task, contract, entries, as_of=ctx.config.agent.as_of,
+                                          config=ctx.config, date_archive=ctx.path / "as_of.json", learning=session.learning)
+        root_prompt = prompt
+        with ctx.trace.span("Prompt", "save", size_chars=len(prompt), size_bytes=len(prompt.encode()),
+                            sha256=hashlib.sha256(prompt.encode()).hexdigest(), path=str(ctx.path / "prompt.txt")):
+            (ctx.path / "prompt.txt").write_text(prompt)
+        with ctx.trace.span("Prompt", "root_save", size_chars=len(root_prompt),
+                            sha256=hashlib.sha256(root_prompt.encode()).hexdigest(),
+                            path=str(ctx.path / "root_prompt.txt")):
+            (ctx.path / "root_prompt.txt").write_text(root_prompt)
+        ctx.save("task.json", task.model_dump(mode="json"))
+        with tempfile.TemporaryDirectory(prefix="lr-", dir="/tmp") as directory:
+            work = Path(directory).resolve()
+            request = {"config": ctx.config.model_dump(), "prompt": prompt, "root_prompt": root_prompt, "entries": entries,
+                       "socket": str(work / "host.sock"), "timeout": budget.remaining(),
+                       "result_path": str(work / "result.json"), "trace": ctx.trace.enabled}
+            write_json(work / "request.json", request)
+            with Server(work / "host.sock", session.dispatch, socket_timeout_s=ctx.config.bridge.socket_timeout_s, trace=ctx.trace), (ctx.path / "worker.log").open("a") as log:
+                try:
+                    with ctx.trace.span("Worker", "run") as details:
+                        process = ctx.run_process(isolated_command(work, [sys.executable, "-m", "loop_research.agent", str(work / "request.json")]),
+                            cwd=work, env=worker_env(work), stdout=log, stderr=log, trace_component="Worker",
+                            start_new_session=True, timeout=budget.remaining())
+                        details["exit_code"] = process.returncode
+                except subprocess.TimeoutExpired as exc:
+                    session.status['timeout'] = True
+                    raise TimeoutError("Task hard deadline exceeded") from exc
+                finally:
+                    session.close_worker()
+            if process.returncode:
+                session.status['worker_error'] = True
+                if budget.count >= budget.limit:
+                    session.status['call_limit'] = True
+>               raise RuntimeError(f"Research worker failed ({process.returncode}); see {ctx.path / 'worker.log'}")
+E               RuntimeError: Research worker failed (1); see /private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-crn_02x_/pytest-of-mukeshreddypochamreddy/pytest-0/test_isolated_worker_uses_boun1/runs/unit/fixture/worker.log
+
+src/loop_research/agent.py:214: RuntimeError
+=========================== short test summary info ============================
+FAILED tests/test_refine_feedback.py::test_status_observes_decline_without_applying_or_resuming
+FAILED tests/test_refine_feedback.py::test_status_reports_only_committed_operations_and_survives_host_restart
+FAILED tests/test_refine_feedback.py::test_status_returns_while_background_planner_is_blocked
+FAILED tests/test_refine_feedback.py::test_status_exposes_failed_plan_without_consuming_failure
+FAILED tests/test_refine_feedback.py::test_status_argument_validation_and_no_learning_do_not_schedule
+FAILED tests/test_refine_feedback.py::test_retrieval_includes_full_committed_current_run_entries_without_query_overlap
+FAILED tests/test_midtask_refine.py::test_isolated_worker_uses_boundary_feedback_without_polling[True]
+FAILED tests/test_midtask_refine.py::test_isolated_worker_uses_boundary_feedback_without_polling[False]
+8 failed, 4 passed in 7.91s

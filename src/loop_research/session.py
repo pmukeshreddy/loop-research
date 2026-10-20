@@ -71,10 +71,27 @@ class Session:
         query = self.task.question + ' ' + json.dumps(self.task.spec, ensure_ascii=False)
         trace = self.ctx.trace
         with trace.span('Harness', 'retrieve', query=query) as details:
-            if trace.enabled:
-                details['head_before'] = self.harness.head
-            options = {'on_retrieved': lambda entries: details.update(entries=entries)} if trace.enabled else {}
-            entries = self.harness.search(query, limit=self.ctx.config.harness.retrieval_limit, **options)
+            with self.harness.lock:
+                head = self.harness.head
+                if trace.enabled:
+                    details['head_before'] = head
+                ranked = []
+                relevant = self.harness.search(query, limit=self.ctx.config.harness.retrieval_limit,
+                                              on_retrieved=ranked.extend)
+                # A generic procedure learned here can have zero task-query overlap.
+                # Use committed provenance, never a planned edit or mutable edit file.
+                committed = json.loads(self.harness.git('show', head + ':harness_state.json'))
+                current = [entry for entry in committed['entries'].values() if self.run_id in entry['evidence']]
+                selected = {(entry['kind'], entry['id']): entry for entry in current}
+                for entry in relevant:
+                    selected.setdefault((entry['kind'], entry['id']), entry)
+                entries = list(selected.values())
+                if trace.enabled:
+                    scores = {entry['id']: entry['score'] for entry in ranked}
+                    current_keys = {(entry['kind'], entry['id']) for entry in current}
+                    details['entries'] = [{'id': entry['id'], 'title': entry['title'],
+                        'score': scores.get(entry['id'], 0.0),
+                        'current_run': (entry['kind'], entry['id']) in current_keys} for entry in entries]
             self.harness.record_usage(entries, self.run_id)
             if trace.enabled:
                 details['head_after'] = self.harness.head
@@ -127,6 +144,9 @@ class Session:
                     self.turns += 1
                     if self.turns > self.ctx.config.rlm.max_iterations:
                         self.status['iteration_limit'] = True
+                    feedback = {**self.refiner.status(), 'fatal': self.fatal}
+                    if feedback['state'] != 'idle':
+                        prompt += '\nCURRENT REFINEMENT STATUS\n' + json.dumps(feedback, ensure_ascii=False)
                     prompt += '\nCURRENT RELEVANT HARNESS ENTRIES\n' + json.dumps(self.retrieve(), ensure_ascii=False)
             options = {'schema': schema} if schema is not None else {}
             text = self.backend.complete(prompt, purpose=purpose, model=model, **options)
@@ -204,6 +224,10 @@ class Session:
             if len(args) > 1 or set(kwargs) - {'focus'}:
                 raise ValueError('Refinement accepts only focus')
             return self.refiner.run(*args, **kwargs)
+        if method == 'refine.status':
+            if args or kwargs:
+                raise ValueError('refine.status accepts no arguments')
+            return {**self.refiner.status(), 'fatal': self.fatal}
         if method == 'refine.rollback':
             if not self.learning or len(args) != 1 or kwargs or not isinstance(args[0], str) or not args[0]:
                 raise ValueError('Rollback requires an id and enabled learning')
