@@ -1,0 +1,98 @@
+{
+  "reviewer": "fetch_review",
+  "reviewed_at": "2026-10-20T04:14:52.527045+00:00",
+  "base_commit": "e9b1dcd9d2e1a81e8d37ba09cdc028a6dd49feed",
+  "source_commit": "e6f1cdb1665769174248e6ff46f14c1cfacb223d",
+  "worktree": "runs/round3/worktrees/permanent-input",
+  "worktree_clean_at_review": true,
+  "scope": "Independent offline review of permanent provider input rejection classification, archival, retry behavior, budgets and slot cleanup. No product edits, installation, models, web or commits.",
+  "source_files": [
+    {
+      "path": "src/loop_research/codex_backend.py",
+      "sha256": "0e27bcb9effd44f111d6117055127c17b80e47d3126dcf60547e4dc7b5f06841",
+      "bytes": 19176
+    },
+    {
+      "path": "tests/test_codex_permanent_input.py",
+      "sha256": "59d7a65437e3ddf8489e3987fb918e496a9c1296b024512b6313e3f1e98557b3",
+      "bytes": 6213
+    }
+  ],
+  "findings": [],
+  "conclusion": "No important defect found in the reviewed patch. The explicit immutable input rejection stops after its first archived failed attempt; transient and unknown errors retain the existing retry behavior.",
+  "evidence": [
+    {
+      "path": "src/loop_research/codex_backend.py",
+      "line": 24,
+      "note": "Exact anchored CLI envelope; parsed JSON data must contain input_error_code=input_too_large and provider code -32602. No payload length or task/site/model condition."
+    },
+    {
+      "path": "src/loop_research/codex_backend.py",
+      "line": 280,
+      "note": "Stderr classification only after nonzero process exit; output text is never classified."
+    },
+    {
+      "path": "src/loop_research/codex_backend.py",
+      "line": 311,
+      "note": "Only top-level error/turn.failed event error metadata is classified; model and web item contents are not searched."
+    },
+    {
+      "path": "src/loop_research/codex_backend.py",
+      "line": 332,
+      "note": "Call archive, exec.end, thread-local usage/web data and failed callback are preserved before CodexError is raised at line348."
+    },
+    {
+      "path": "src/loop_research/codex_backend.py",
+      "line": 349,
+      "note": "Existing finally closes the slot on the new early raise; reservation remains counted once. Retry delay/event code remains after cleanup and is bypassed only for the explicit permanent error."
+    },
+    {
+      "path": "tests/test_codex_permanent_input.py",
+      "line": 43,
+      "note": "Three positive terminal channels check one durable attempt, budget, callbacks, trace, error and prompt hash; max_concurrent=1 proves the occupied slot is released."
+    },
+    {
+      "path": "tests/test_codex_permanent_input.py",
+      "line": 79,
+      "note": "Capacity/unknown/malformed metadata retains retries, backoff, accounting; ordinary model/web/quoted stderr mentions do not disable retries; successful output is preserved."
+    }
+  ],
+  "verification": [
+    {
+      "kind": "independent_pytest",
+      "command": "PYTHONPATH=src /Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/python -m pytest -q tests/test_codex_permanent_input.py tests/test_codex_backend.py tests/test_codex_slot_fairness.py tests/test_baseline.py",
+      "cwd": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/permanent-input",
+      "result": "73 passed in 5.39s",
+      "exit_code": 0,
+      "evidence_kind": "retained tool output",
+      "tool_chunk_id": "994f60",
+      "raw_log_file": null,
+      "offline_guards": "Autouse fixture forbids live Codex/direct HTTP and isolates slot locks; pytest excludes live tests."
+    },
+    {
+      "kind": "independent_classifier_assertions",
+      "result": "10 cases passed",
+      "exit_code": 0,
+      "tool_chunk_id": "2d4d7b",
+      "evidence_kind": "retained tool output",
+      "raw_log_file": null,
+      "cases": [
+        "exact CLI metadata accepted independent of descriptive text and observed character lengths",
+        "structured code/data accepted",
+        "different RPC code rejected",
+        "unknown input code rejected",
+        "malformed JSON rejected",
+        "prefixed quoted CLI line rejected",
+        "JSON-quoted CLI line rejected",
+        "non-object data rejected",
+        "message-only metadata rejected",
+        "string RPC code rejected"
+      ]
+    }
+  ],
+  "limits": [
+    "The patch does not reduce or repair oversized input; the separate lossless codec change remains necessary.",
+    "Recognition deliberately covers the explicit observed CLI envelope and structured error metadata. Unknown future envelopes use prior retry behavior rather than inferred permanence.",
+    "No live provider validation or broad full-suite claim is made by this review. Existing archive error-tail length policy is unchanged."
+  ]
+}
