@@ -1,0 +1,406 @@
+{
+  "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d",
+  "analysis_contract": "answer-ready-v2",
+  "runs": {
+    "A": {
+      "run_id": "research-14a1aac50cd9414fb7d4d42011e4e016",
+      "metrics": {
+        "S1_pre_answer_ready_validation": {
+          "value": 1,
+          "reason": "Executed full schema, all5required columns, nonempty value/quote/source and exactquote membership for every cited URL on submitted28-rowversion before answer[\"ready\"]=True.140cellchecks plus28yearconstraints, no intervening candidate change. This observes a guard, not causal benefit.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+              "line": 103,
+              "note": "Exact submitting code: complete guard before readiness assignment.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 18541878,
+                "sha256": "d9efe661adaf532e0ce43a75e10286115f41ee0782d4c814d2d41551827eaaf6"
+              }
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+              "line": 273,
+              "note": "Executed guard output168constraints; submitted answer content matches output.json.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 18541878,
+                "sha256": "d9efe661adaf532e0ce43a75e10286115f41ee0782d4c814d2d41551827eaaf6"
+              }
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/trace.jsonl",
+              "line": 1724,
+              "note": "First depth0 code.end with answer_ready=true.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/trace.jsonl",
+                "bytes": 1173096,
+                "sha256": "9672b7b099e5c2a935574d61e23bbd2c6dc46b202b64724b8d63fd81c62b20c4"
+              }
+            }
+          ]
+        },
+        "S2_gap_exposed": {
+          "value": 1,
+          "reason": "Iteration5 executed checks printed25missing nationality fields and4quote mismatches; source review initeration6 confirmed missing explicit nationality in official releases.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+              "line": 37,
+              "note": "Actual29gap records, including25nationality omissions and4quote mismatches.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 18541878,
+                "sha256": "d9efe661adaf532e0ce43a75e10286115f41ee0782d4c814d2d41551827eaaf6"
+              }
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+              "line": 49,
+              "note": "Executed source-review results and supplementary search.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 18541878,
+                "sha256": "d9efe661adaf532e0ce43a75e10286115f41ee0782d4c814d2d41551827eaaf6"
+              }
+            }
+          ]
+        },
+        "S2_supplementary_unique_urls": {
+          "value": 28,
+          "reason": "After exposed gaps:3HTMLquote-repair URLs plus17nationality requests (15successful) and10targeted successful URLs;28distinct successful URLs.2HTTP403s retained.2015replacement beforegap excluded.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+              "line": 63,
+              "note": "Three repair pages and17nationality requests/results.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 18541878,
+                "sha256": "d9efe661adaf532e0ce43a75e10286115f41ee0782d4c814d2d41551827eaaf6"
+              }
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+              "line": 93,
+              "note": "Ten further nationality pages and complete check.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 18541878,
+                "sha256": "d9efe661adaf532e0ce43a75e10286115f41ee0782d4c814d2d41551827eaaf6"
+              }
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+              "line": 1,
+              "note": "Supplementary request list with IDs, URLs, status, timestamps.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                "bytes": 425794,
+                "sha256": "470047e2d63b8e81290605af1d8ecc416f89602379db859f90188594360dea62"
+              }
+            }
+          ]
+        },
+        "S3_quote_exception_blocks": {
+          "value": 0,
+          "reason": "No research REPL block terminated by exception; mismatches were printed list entries then repaired.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/trace.jsonl",
+              "line": 360,
+              "note": "Fourquote mismatches printed without error.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/trace.jsonl",
+                "bytes": 1173096,
+                "sha256": "9672b7b099e5c2a935574d61e23bbd2c6dc46b202b64724b8d63fd81c62b20c4"
+              }
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+              "line": 1,
+              "note": "Complete trace error and REPL exception inventory.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                "bytes": 425794,
+                "sha256": "470047e2d63b8e81290605af1d8ecc416f89602379db859f90188594360dea62"
+              }
+            }
+          ]
+        },
+        "S3_caught_printed_quote_failures": {
+          "value": 4,
+          "reason": "Four individual executed quote-not-found records initeration5. Later invalid_patches and unresolvedchecks empty. Subcall speculative diagnoses do not add observations.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+              "line": 37,
+              "note": "Sauvage, Arnold, Winter, Baker affiliationquote failures, one occurrence each.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 18541878,
+                "sha256": "d9efe661adaf532e0ce43a75e10286115f41ee0782d4c814d2d41551827eaaf6"
+              }
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+              "line": 73,
+              "note": "Invalid patches empty.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 18541878,
+                "sha256": "d9efe661adaf532e0ce43a75e10286115f41ee0782d4c814d2d41551827eaaf6"
+              }
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+              "line": 93,
+              "note": "Unresolved checks empty.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 18541878,
+                "sha256": "d9efe661adaf532e0ce43a75e10286115f41ee0782d4c814d2d41551827eaaf6"
+              }
+            }
+          ]
+        },
+        "S4_citation_violation_cells": {
+          "value": 0,
+          "reason": "All140finalcells have nonempty value, quote, source and exactquote in retainedoriginaltext at every cited URL. Semantic support concerns remain distinct.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/output.json",
+              "line": 1,
+              "note": "Final required cells.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/workspaces/A/runs/research-14a1aac50cd9414fb7d4d42011e4e016/289901ce021c28d56fdac993/output.json",
+                "bytes": 41090,
+                "sha256": "a9ab21bf052f019e65b3be8fdd4dad828f4492001c96dd37767f9101a9161e8f"
+              }
+            },
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+              "line": 1,
+              "note": "All140cell-sourcechecks and exact offsets.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                "bytes": 425794,
+                "sha256": "470047e2d63b8e81290605af1d8ecc416f89602379db859f90188594360dea62"
+              }
+            }
+          ]
+        },
+        "R1_failed_primary_urls": {
+          "value": null,
+          "reason": "A is training/reference run; no dedicated preregistered R/G scoring review performed. Qualitative semantic findings are retained in A.review.json.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+              "line": 1,
+              "note": "Training-run scope and full qualitative review.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                "bytes": 425794,
+                "sha256": "470047e2d63b8e81290605af1d8ecc416f89602379db859f90188594360dea62"
+              }
+            }
+          ]
+        },
+        "R1_official_alternate_recoveries": {
+          "value": null,
+          "reason": "A is training/reference run; no dedicated preregistered R/G scoring review performed. Qualitative semantic findings are retained in A.review.json.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+              "line": 1,
+              "note": "Training-run scope and full qualitative review.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                "bytes": 425794,
+                "sha256": "470047e2d63b8e81290605af1d8ecc416f89602379db859f90188594360dea62"
+              }
+            }
+          ]
+        },
+        "R1_official_alternate_recoveries_conditional": {
+          "value": null,
+          "reason": "A is training/reference run; no dedicated preregistered R/G scoring review performed. Qualitative semantic findings are retained in A.review.json.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+              "line": 1,
+              "note": "Training-run scope and full qualitative review.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                "bytes": 425794,
+                "sha256": "470047e2d63b8e81290605af1d8ecc416f89602379db859f90188594360dea62"
+              }
+            }
+          ]
+        },
+        "R2_retained_download_reuse_blocks": {
+          "value": null,
+          "reason": "A is training/reference run; no dedicated preregistered R/G scoring review performed. Qualitative semantic findings are retained in A.review.json.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+              "line": 1,
+              "note": "Training-run scope and full qualitative review.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                "bytes": 425794,
+                "sha256": "470047e2d63b8e81290605af1d8ecc416f89602379db859f90188594360dea62"
+              }
+            }
+          ]
+        },
+        "G1_semantic_findings_exposed": {
+          "value": null,
+          "reason": "A is training/reference run; no dedicated preregistered R/G scoring review performed. Qualitative semantic findings are retained in A.review.json.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+              "line": 1,
+              "note": "Training-run scope and full qualitative review.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                "bytes": 425794,
+                "sha256": "470047e2d63b8e81290605af1d8ecc416f89602379db859f90188594360dea62"
+              }
+            }
+          ]
+        },
+        "G2_unresolved_semantic_findings": {
+          "value": null,
+          "reason": "A is training/reference run; no dedicated preregistered R/G scoring review performed. Qualitative semantic findings are retained in A.review.json.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+              "line": 1,
+              "note": "Training-run scope and full qualitative review.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                "bytes": 425794,
+                "sha256": "470047e2d63b8e81290605af1d8ecc416f89602379db859f90188594360dea62"
+              }
+            }
+          ]
+        },
+        "G3_scope_narrowing_dismissals": {
+          "value": null,
+          "reason": "A is training/reference run; no dedicated preregistered R/G scoring review performed. Qualitative semantic findings are retained in A.review.json.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+              "line": 1,
+              "note": "Training-run scope and full qualitative review.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                "bytes": 425794,
+                "sha256": "470047e2d63b8e81290605af1d8ecc416f89602379db859f90188594360dea62"
+              }
+            }
+          ]
+        },
+        "G2_unresolved_semantic_findings_conditional": {
+          "value": null,
+          "reason": "A is training/reference run; no dedicated preregistered R/G scoring review performed. Qualitative semantic findings are retained in A.review.json.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+              "line": 1,
+              "note": "Training-run scope and full qualitative review.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                "bytes": 425794,
+                "sha256": "470047e2d63b8e81290605af1d8ecc416f89602379db859f90188594360dea62"
+              }
+            }
+          ]
+        },
+        "G3_scope_narrowing_dismissals_conditional": {
+          "value": null,
+          "reason": "A is training/reference run; no dedicated preregistered R/G scoring review performed. Qualitative semantic findings are retained in A.review.json.",
+          "evidence": [
+            {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+              "line": 1,
+              "note": "Training-run scope and full qualitative review.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                "bytes": 425794,
+                "sha256": "470047e2d63b8e81290605af1d8ecc416f89602379db859f90188594360dea62"
+              }
+            }
+          ]
+        }
+      },
+      "semantic_review": {
+        "summary": "140exactquote cells;136supported under stated award-affiliation/descriptive-nationality scope and4unresolved strict nationality citations. List all-concurrent affiliation omission separately retained. Automatic0citation violations does not imply semantic completeness.",
+        "counts": {
+          "semantically_supported_required_cells": {
+            "value": 136,
+            "reason": "Values supported under explicitly statedscope; not exhaustive legalcitizenship/concurrent employment.",
+            "evidence": [
+              {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                "line": 1,
+                "note": "140cellreview.",
+                "file": {
+                  "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                  "bytes": 425794,
+                  "sha256": "470047e2d63b8e81290605af1d8ecc416f89602379db859f90188594360dea62"
+                }
+              }
+            ]
+          },
+          "unresolved_semantic_cells": {
+            "value": 4,
+            "reason": "Three unlabeled countrytags and one USSR-to-Russia normalization.",
+            "evidence": [
+              {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                "line": 1,
+                "note": "Strict cited-support concerns.",
+                "file": {
+                  "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                  "bytes": 425794,
+                  "sha256": "470047e2d63b8e81290605af1d8ecc416f89602379db859f90188594360dea62"
+                }
+              }
+            ]
+          },
+          "concurrent_affiliation_scope_concerns": {
+            "value": 1,
+            "reason": "List officialawardaffiliation supported but broader all-concurrent scope narrowed.",
+            "evidence": [
+              {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                "line": 1,
+                "note": "List qualification.",
+                "file": {
+                  "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+                  "bytes": 425794,
+                  "sha256": "470047e2d63b8e81290605af1d8ecc416f89602379db859f90188594360dea62"
+                }
+              }
+            ]
+          }
+        },
+        "evidence": [
+          {
+            "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+            "line": 1,
+            "note": "Independent fullsemantic review with sourcehashes and140cellrows.",
+            "file": {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/A.review.json",
+              "bytes": 425794,
+              "sha256": "470047e2d63b8e81290605af1d8ecc416f89602379db859f90188594360dea62"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

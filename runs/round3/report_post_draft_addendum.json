@@ -1,0 +1,1078 @@
+{
+  "created_at": "2026-10-20T14:59:11.586978+00:00",
+  "kind": "Report preparation addendum; not final Round3 verdict or task completion",
+  "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d",
+  "product_tree": "586c39c5b7f6952e72d5b57eee32bffc595150ab",
+  "extends_without_rewriting": [
+    "runs/round3/report_draft_items.md",
+    "runs/round3/report_draft_items.evidence.json"
+  ],
+  "protected_before": {
+    "runs/round3/report_draft_items.md": "696741434746ab41f53fa41c055be47d4379d1ccf05584672fa16d5d1b124365",
+    "runs/round3/report_draft_items.evidence.json": "04198c154b2f0f6ff50a30967a1d8e77ca39cb4db9294c62940582629df48c75",
+    "runs/round3/proof_report.before_final_append.md": "1cb77b132ee3317753888f258fbba8e576e7e5baf38011dcd1de482fd033d94f",
+    "runs/round3/proof_report.before_round3.md": "cbd76f98200e77723ccf8ba5cfb1b396875637253722fe68558985916c747f27",
+    "runs/round3/predictions.md": "27fb99b2954aa4187e70241d848d011eed8756a6819b9538c44c376f02144c23"
+  },
+  "fixes": [
+    {
+      "id": "saved_case_admission",
+      "commit": "b1d7bee71c4ce31efa1091c21875a284f3b689c3",
+      "scope": "saved replay helper only",
+      "before": "Five independent case bodies started against four shared backend slots; the overflow planner aggregate deadline began while four direct cases occupied capacity.",
+      "after": "Admit min(case_count, common configured max_concurrent) case bodies; persist max_concurrent_cases. No product planner scheduling change.",
+      "tests": {
+        "red_failures": 2,
+        "focused_passed": 35,
+        "isolated_full_passed": 1004,
+        "isolated_full_deselected": 1
+      },
+      "limits": [
+        "Does not guarantee no contention among subcalls of admitted cases.",
+        "Does not repair host suspension, DNS failures or process permissions.",
+        "UTC gaps during sleep are not measured monotonic queue durations."
+      ],
+      "evidence": [
+        "admission_source",
+        "admission_doc",
+        "admission_verification",
+        "admission_red",
+        "admission_green",
+        "admission_full"
+      ]
+    },
+    {
+      "id": "process_cleanup",
+      "commit": "d03277e79793509a186c9790d2d3be49da8939d2",
+      "scope": "RunContext.run_process",
+      "before": "Unsynchronized timeout/cancellation stop paths could signal the owned process group twice before finished became true; three local probes saw a successful kill then duplicate EPERM.",
+      "after": "Serialize finished/stopped and signaling; mark stopped only after successful kill or ESRCH; preserve existing drain and genuine first-denial visibility.",
+      "tests": {
+        "red_failures": 4,
+        "red_passes": 5,
+        "focused_passed": 67,
+        "independent_new_tests_passed": 9,
+        "original_timer_probes_fixed": 3
+      },
+      "limits": [
+        "Original saved-model EPERM lacks a traceback; the reproduced cleanup defect does not locate that historical throwing line.",
+        "No universal PID-reuse or OS-cleanup recovery guarantee.",
+        "Reaped leader does not skip group cleanup when descendants retain pipes.",
+        "Genuine first PermissionError remains visible, including existing Future callback logging."
+      ],
+      "evidence": [
+        "cleanup_source",
+        "cleanup_doc",
+        "cleanup_red",
+        "cleanup_green",
+        "cleanup_review",
+        "cleanup_probe",
+        "cleanup_gap_probe",
+        "suspended_probe"
+      ]
+    },
+    {
+      "id": "whole_output_transport",
+      "commit": "80c9a7e7943f87628f862dde076682120bd1d6f4",
+      "scope": "oversized refinement REPL feedback representation",
+      "before": {
+        "stdout_chars": 2981867,
+        "rejected_backend_chars": 3039692,
+        "provider_limit_chars": 1048576,
+        "failed_attempts": 1,
+        "retries": 0
+      },
+      "after": "Preserve complete completed-iteration records; replace only profitable whole output messages with authoritative references when exact next planner input would overflow. Preserve model/control messages and fail visibly if remaining control input still cannot fit.",
+      "tests": {
+        "red_failures": 10,
+        "red_existing_passes": 10,
+        "first_green_passes": 19,
+        "first_green_test_setup_failures": 1,
+        "final_focused_passed": 46
+      },
+      "offline_projection": {
+        "new_instruction_delta_chars": 680,
+        "projected_backend_chars": [
+          5606,
+          58255,
+          59335
+        ],
+        "referenced_iteration": 2,
+        "status": "Offline reconstruction of old saved actions; distinct from the later real replay."
+      },
+      "limits": [
+        "Future overflow planner prompts intentionally change; full accessibility is not inline visibility.",
+        "No stream previews, prefix/suffix clipping or semantic summaries.",
+        "Arbitrarily large assistant/control messages can still fail atomically.",
+        "Code-selected subcalls are not automatically split or guaranteed semantically correct.",
+        "Research root prompts and small direct refinement path unchanged."
+      ],
+      "evidence": [
+        "feedback_source",
+        "feedback_read_source",
+        "planner_source",
+        "output_doc",
+        "output_verification",
+        "output_red",
+        "output_first_green",
+        "output_green",
+        "output_projection",
+        "awake_failure"
+      ]
+    },
+    {
+      "id": "output_audit",
+      "commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d",
+      "scope": "read-only archive verification",
+      "before": "The previous auditor did not reconstruct the new output-reference policy and complete planner history.",
+      "after": "Reconstruct initial conversation, code, complete outputs, responses and reference/read ordering; compare every actual planner prompt exactly; reject malformed or forged representations.",
+      "tests": {
+        "baseline_passed": 21,
+        "policy_red_failures": 3,
+        "history_red_failures": 1,
+        "audit_green_passed": 36,
+        "broader_focused_passed": 113,
+        "adversarial_archive_mutations_rejected": 10
+      },
+      "limits": [
+        "Legacy policy-absent archives retain the old interpretation.",
+        "Pointer/quote/hash membership is not proof of semantic truth or occurrence review.",
+        "Refinement planner/sub calls remain separate from research root/sub metrics."
+      ],
+      "evidence": [
+        "audit_source",
+        "audit_history_source",
+        "audit_doc",
+        "audit_verification",
+        "audit_policy_red",
+        "audit_history_red",
+        "audit_green",
+        "audit_focused"
+      ]
+    }
+  ],
+  "superseded_preflights": [
+    {
+      "cohort": "context_refiner_v1",
+      "source_commit": "42424491009371cc7063c2a88394e92c97e974a7",
+      "status": "failed; excluded from final comparisons",
+      "gates": {
+        "full_suite_passed": 1027,
+        "deselected": 1,
+        "helper_tests_passed": 59,
+        "installed_modules": 31,
+        "saved_archive_audits": 9
+      },
+      "replay": {
+        "direct_complete_after_retry": 4,
+        "overflow_failed": 1,
+        "model_attempts": 9,
+        "failed_attempts": 5,
+        "retries": 4
+      },
+      "host_evidence": {
+        "clamshell_sleep_utc": "2026-10-20T05:15:19+00:00",
+        "later_lid_user_wake_utc": "2026-10-20T08:26:29+00:00",
+        "limitation": "Maintenance wakes occurred; wall interval is not active computation or exact queue time."
+      },
+      "evidence": [
+        "suspended_summary",
+        "suspended_preservation",
+        "suspended_review",
+        "suspended_probe"
+      ]
+    },
+    {
+      "cohort": "context_refiner_awake_v1",
+      "source_commit": "5cd8fcbc3065a49717fd534ab3a804bd99d8090a",
+      "status": "failed; excluded from final comparisons",
+      "gates": {
+        "full_suite_passed": 1038,
+        "deselected": 1,
+        "helper_tests_passed": 59,
+        "installed_modules": 31
+      },
+      "replay": {
+        "direct_complete": 4,
+        "overflow_failed": 1,
+        "model_attempts": 7,
+        "failed_attempts": 1,
+        "retries": 0,
+        "overflow_proposal": null,
+        "overflow_candidates_incomplete": 3,
+        "overflow_candidate_occurrences": 46
+      },
+      "host_evidence": "No matching local sleep/wake event observed in bounded 08:40:38–09:01:30 UTC window; not universal uninterrupted-wake proof.",
+      "evidence": [
+        "awake_summary",
+        "awake_preservation",
+        "awake_failure",
+        "awake_power"
+      ]
+    }
+  ],
+  "saved_preflight": {
+    "cohort": "context_outputs_v1",
+    "execution_started_at": "2026-10-20T14:41:45.760722+00:00",
+    "execution_ended_at": "2026-10-20T14:47:07.415316+00:00",
+    "status": "Mechanism preflight passed; semantic review qualified",
+    "offline_tests": [
+      {
+        "label": "full_suite",
+        "command": [
+          "/Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q"
+        ],
+        "exit_code": 0,
+        "passed": 1065,
+        "deselected": 1,
+        "elapsed_s": 140.7713339580223,
+        "log": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/full_suite.log"
+      },
+      {
+        "label": "launcher_tests",
+        "command": [
+          "/Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "runs/round3/test_launch.py"
+        ],
+        "exit_code": 0,
+        "passed": 8,
+        "deselected": 0,
+        "elapsed_s": 1.223817499994766,
+        "log": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/launcher_tests.log"
+      },
+      {
+        "label": "explicit_launcher_tests",
+        "command": [
+          "/Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "runs/round3/test_explicit_launcher.py"
+        ],
+        "exit_code": 0,
+        "passed": 4,
+        "deselected": 0,
+        "elapsed_s": 0.1715372500475496,
+        "log": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/explicit_launcher_tests.log"
+      },
+      {
+        "label": "control_audit_tests",
+        "command": [
+          "/Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "runs/round3/test_control_audit.py"
+        ],
+        "exit_code": 0,
+        "passed": 23,
+        "deselected": 0,
+        "elapsed_s": 14.783541542012244,
+        "log": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/control_audit_tests.log"
+      },
+      {
+        "label": "metrics_tests",
+        "command": [
+          "/Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "runs/round3/test_metrics.py",
+          "runs/round3/test_metrics_contract.py"
+        ],
+        "exit_code": 0,
+        "passed": 24,
+        "deselected": 0,
+        "elapsed_s": 0.2807078749756329,
+        "log": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/context_outputs_v1/metrics_tests.log"
+      }
+    ],
+    "installed_modules": 32,
+    "saved_archive_audits": {
+      "count": 9,
+      "status": "passed",
+      "labels": [
+        "SI",
+        "A",
+        "B0",
+        "B1",
+        "B1-frozen",
+        "explicit",
+        "A_full_pages_failed",
+        "A_quoted_text",
+        "SI_quoted_text"
+      ]
+    },
+    "totals": {
+      "cases": 5,
+      "model_attempts": 21,
+      "successful_attempts": 21,
+      "failed_attempts": 0,
+      "retries": 0,
+      "worker_processes": 1,
+      "edits": 9,
+      "decisions": 24,
+      "evidence_references_resolved": 323,
+      "original_file_records_checked": 1159,
+      "original_file_bytes_checked": 141262196,
+      "installed_modules_checked": 32,
+      "non_refine_calls": 0,
+      "search_fetch_calls": 0,
+      "web_actions": 0
+    },
+    "rows": [
+      {
+        "label": "A_distinct_pages_midtask",
+        "status": "complete",
+        "model_attempts": 17,
+        "failed_attempts": 0,
+        "retries": 0,
+        "edits": 2,
+        "decisions": 6,
+        "prompt_chars": [
+          5606,
+          6624,
+          59376,
+          140837,
+          260358,
+          268268,
+          258516,
+          381183,
+          29790,
+          88964,
+          213776,
+          164640,
+          251594,
+          618114,
+          458397,
+          222980,
+          249991
+        ],
+        "run_id": "refine-replay-fcd166614bd64d4bbff447c8da39969c",
+        "task_id": "289901ce021c28d56fdac993"
+      },
+      {
+        "label": "A_full_pages_finalizer",
+        "status": "complete",
+        "model_attempts": 1,
+        "failed_attempts": 0,
+        "retries": 0,
+        "edits": 2,
+        "decisions": 5,
+        "prompt_chars": [
+          855991
+        ],
+        "run_id": "refine-replay-069dcf7f622d40caa9a1754895bfc852",
+        "task_id": "289901ce021c28d56fdac993"
+      },
+      {
+        "label": "B1_finalizer",
+        "status": "complete",
+        "model_attempts": 1,
+        "failed_attempts": 0,
+        "retries": 0,
+        "edits": 2,
+        "decisions": 4,
+        "prompt_chars": [
+          690910
+        ],
+        "run_id": "refine-replay-b452d1d3f2de405b89ed1a32d0ff05bf",
+        "task_id": "5f579a96530b9d0b8eaa08f9"
+      },
+      {
+        "label": "B1_fragments_finalizer",
+        "status": "complete",
+        "model_attempts": 1,
+        "failed_attempts": 0,
+        "retries": 0,
+        "edits": 2,
+        "decisions": 5,
+        "prompt_chars": [
+          757559
+        ],
+        "run_id": "refine-replay-bdc320d84bf64b25a9f7c87b3ac3a4d7",
+        "task_id": "5f579a96530b9d0b8eaa08f9"
+      },
+      {
+        "label": "SI_midtask",
+        "status": "complete",
+        "model_attempts": 1,
+        "failed_attempts": 0,
+        "retries": 0,
+        "edits": 1,
+        "decisions": 4,
+        "prompt_chars": [
+          52954
+        ],
+        "run_id": "refine-replay-72a87d0389804fa3839ee076931a8f01",
+        "task_id": "1109eb057f25ad2429b6e77e"
+      }
+    ],
+    "evidence": [
+      "offline",
+      "installed",
+      "execution",
+      "saved_audits",
+      "review_md",
+      "review_json"
+    ]
+  },
+  "live_saved_overflow": {
+    "run_id": "refine-replay-fcd166614bd64d4bbff447c8da39969c",
+    "task_id": "289901ce021c28d56fdac993",
+    "job_id": "758e92705e99406ebb105ffc01f83bb1",
+    "logical_chars": 3027914,
+    "logical_sha256": "2c9dd4b6c0a8aac815b784af57ca5501bbdd20fd3664d0b96204565c8499c663",
+    "schema_canonical_sha256": "4f3b234f6027ef98c081e384dd786732e0e9d8fc1a334ac213aa33e306811892",
+    "roles": {
+      "planner": 6,
+      "sub": 11
+    },
+    "model_attempts": 17,
+    "failed_attempts": 0,
+    "retries": 0,
+    "externalizations": 1,
+    "output_reads": 0,
+    "complete_first_stdout_chars": 3033076,
+    "complete_first_feedback_chars": 3033101,
+    "receipt_chars": 855,
+    "prospective_backend_chars": 3038870,
+    "actual_backend_chars_after_reference": 6624,
+    "planner_prompt_chars": [
+      5606,
+      6624,
+      59376,
+      140837,
+      222980,
+      249991
+    ],
+    "maximum_actual_backend_chars": 618114,
+    "field_hashes": {
+      "large_stdout": {
+        "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+        "line": 7,
+        "field": "stdout",
+        "characters": 3033076,
+        "utf8_bytes": 3067184,
+        "sha256": "efbbadbffb273f63f5b626ceb6148aeb6b5d1cc06d11de2e7a7288bc341afca0"
+      },
+      "reference_receipt": {
+        "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+        "line": 9,
+        "field": "receipt",
+        "characters": 855,
+        "utf8_bytes": 855,
+        "sha256": "060e15871275e98a68027caf135021b4657781e1cf453a5796df4aebaf102cf4"
+      },
+      "bounded_second_prompt": {
+        "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+        "line": 10,
+        "field": "backend_prompt",
+        "characters": 6624,
+        "utf8_bytes": 6624,
+        "sha256": "bd5d7924846c4300c3bfffb2420a7fae5b70bd9bfad551c324f28fffea723852"
+      }
+    },
+    "subreview": {
+      "complete_records_in_subcalls": 76,
+      "split_record": 68,
+      "split_results_checked": 75,
+      "split_record_omitted_metadata_keys": [
+        "type",
+        "tool"
+      ],
+      "quote_checks": 140,
+      "quote_failures": 0,
+      "semantic_use_evidence": [
+        {
+          "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+          "line": 28,
+          "note": "Executed iteration 4 creates review chunks from full context and dispatches llm_query_batched."
+        },
+        {
+          "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+          "line": 70,
+          "note": "Subreview identifies an exact-quote temporal ambiguity in record 76, distinguishing local extraction from unobserved finalization."
+        },
+        {
+          "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+          "line": 73,
+          "note": "All eleven actual subresponses are printed in original order, with focused original instructions and records."
+        },
+        {
+          "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+          "line": 79,
+          "note": "Coordinator follows up on reviews: inspects all 35 stalled-search cases and computes quote membership; prints the specific ambiguous extraction."
+        },
+        {
+          "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+          "line": 80,
+          "note": "Actual result is 140 quote checks, no membership failures, plus the temporal-ambiguity example."
+        },
+        {
+          "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+          "line": 86,
+          "note": "Final code explicitly validates schema, candidate uniqueness/coverage, finite anchors, edit links and no orphan edits before answer readiness."
+        },
+        {
+          "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+          "line": 87,
+          "note": "Terminal code result returns the same two-edit/six-decision proposal as the replay result."
+        }
+      ]
+    },
+    "applied_edits": 2,
+    "decisions": 6,
+    "applied_at": "2026-10-20T14:47:06.882374+00:00",
+    "apply_end_at": "2026-10-20T14:47:06.927939+00:00",
+    "replay_only_commits": [
+      "17df7c3de60679fee1f2777e2417c337332244c4",
+      "479c279baff23b0239104f45966ebb4c8bbffb73"
+    ],
+    "not_research_harness_seeds": true,
+    "evidence": [
+      "overflow_actions",
+      "overflow_trace",
+      "overflow_manifest",
+      "overflow_calls",
+      "overflow_result",
+      "overflow_input",
+      "large_stdout",
+      "output_reference",
+      "bounded_second_prompt",
+      "subcall_code",
+      "subcall_results",
+      "followup_check_code",
+      "followup_check_result",
+      "final_proposal_code",
+      "final_ready",
+      "overflow_applied",
+      "overflow_apply_end"
+    ]
+  },
+  "semantic_qualification": {
+    "id": "saved-rationale-absence-count",
+    "classification": "nonblocking model semantic rationale overstatement",
+    "case": "B1_fragments_finalizer",
+    "candidate_id": "trajectory:respect_explicit_field_absence",
+    "observed": "The reason and candidate description assert that all eight earlier page extractions explicitly reported field absence; seven have an explicit prior absence statement. The eighth (2016) has only short excerpts before its later absence result.",
+    "supported_prior_absence_count": 7,
+    "claimed_prior_absence_count": 8,
+    "later_explicit_absence_count": 8,
+    "decision_reason_exact": "Earlier saved extractions explicitly reported absent nationality/citizenship for all eight revisited announcement pages. Fetch records 49–56 and their trajectory results confirm that every subsequent nationality-only retrieval repeated that absence. Later alternative-source searches supplied the missing evidence. Extend entry 1 from transport availability to field coverage, allowing justified focused retries while avoiding this repeated unproductive batch.",
+    "committed_entry": {
+      "action": "update",
+      "kind": "memory",
+      "id": "8dfcffe1551c48b3954a432f98e1ddc9",
+      "title": "Probe source availability and track field coverage",
+      "content": "When prior run evidence reports uniform fetch failures on a host, test one or two returned URLs before committing another large batch to that host. Recheck availability rather than assuming a permanent outage. After a uniformly failed batch, inspect saved search hits for authoritative alternative hosts and probe one or two URLs before expanding fetching or repeating discovery searches. Preserve search results and successful fetched text, track failed URLs, and avoid unchanged failed batches. Changing to same-host PDFs does not establish recovery; ordinary URLs and unusual suffixes both failed, so the cause remains unknown. Treat FETCH_FAILED as unavailable evidence, never citation text. Track field coverage separately from fetch status: a successful retrieval can explicitly report that a requested field is absent. Consult those absence notes before another focused fetch; seek a different source unless there is a concrete reason to believe the earlier retrieval omitted relevant material. Preserve each successful retrieval separately, including its focus and field limitations, so later failures or narrower results do not overwrite usable evidence. Expand only after inspecting probe results; proposed fallback calls are not evidence of recovery.",
+      "module": null
+    },
+    "evidence": [
+      {
+        "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/B1_fragments_finalizer/evidence/original_logical_input.json",
+        "pointer": "/trajectory/23/result/1",
+        "text": "I can provide only a short verbatim excerpt from this page:\n\nPublished: 2016-10-04\nThe Nobel Prize in Physics 2016\n\n”for theoretical discoveries of topological phase transitions and topological phases of matter”.\n\n[Source page](https://www.kva.se/en/news/nobelpriset-i-fysik-2016-2/)"
+      },
+      {
+        "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/B1_fragments_finalizer/evidence/original_logical_input.json",
+        "pointer": "/trajectory/68/result/1",
+        "text": "[The Nobel Prize in Physics 2016](https://www.kva.se/en/news/nobelpriset-i-fysik-2016-2/)\n\nDavid J. Thouless, University of Washington\nF. Duncan M. Haldane, Princeton University\nJ. Michael Kosterlitz, Brown University"
+      },
+      {
+        "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/B1_fragments_finalizer/evidence/original_logical_input.json",
+        "pointer": "/trajectory/86/result/0",
+        "text": "The [page](https://www.kva.se/en/news/nobelpriset-i-fysik-2016-2/) contains no lines explicitly stating the laureates’ citizenship or nationality."
+      },
+      {
+        "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/B1_fragments_finalizer/evidence/original_logical_input.json",
+        "pointer": "/trajectory/42",
+        "note": "Prior results explicitly report nationality/citizenship absence for the other seven pages."
+      },
+      {
+        "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/B1_fragments_finalizer/evidence/original_logical_input.json",
+        "pointer": "/trajectory/68",
+        "note": "The other seven results repeat citizenship absence; the 2016 result only lists people and institutions."
+      },
+      {
+        "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/B1_fragments_finalizer/replay_result.json",
+        "pointer": "/proposal/decisions/3",
+        "note": "Accepted rationale contains the unsupported eight-of-eight claim; raw proposal was not changed."
+      }
+    ],
+    "impact": "The updated procedure is conditional on an explicit absence note and permits a focused retry when earlier retrieval may have omitted relevant material. Seven examples support it; its correctness does not require the erroneous eight-of-eight premise. This is not an input-loss, schema/accounting or transport failure. It prevents an unqualified semantic pass for saved rationales. These saved proposals do not seed new A/B harnesses."
+  },
+  "semantic_qualification_evidence": [
+    "review_caveat",
+    "review_caveat_md",
+    "caveat_original_0",
+    "caveat_original_1",
+    "caveat_original_2",
+    "caveat_original_3",
+    "caveat_original_4",
+    "caveat_original_5"
+  ],
+  "interpretation_limits": [
+    "This addendum reports archived verification and saved replays only; it evaluates no new main A/SI/B/explicit research result.",
+    "The old ten-check definitions and historical Boolean-verdict memory distinction remain unchanged; these saved replays do not prove same-run research reuse or A/B benefit.",
+    "Saved replay entries remain isolated and do not seed fresh A/B harnesses.",
+    "The old failed cohorts remain failures; passing later saved replays do not rewrite them.",
+    "The old-output projection holds old code/output fixed; the real corrected replay made different model choices and is not a controlled performance comparison.",
+    "No new tests, models, network calls, installs, source changes, or commits were performed for this addendum."
+  ],
+  "evidence": {
+    "old_draft": {
+      "path": "runs/round3/report_draft_items.md",
+      "bytes": 46756,
+      "sha256": "696741434746ab41f53fa41c055be47d4379d1ccf05584672fa16d5d1b124365"
+    },
+    "old_draft_json": {
+      "path": "runs/round3/report_draft_items.evidence.json",
+      "bytes": 112186,
+      "sha256": "04198c154b2f0f6ff50a30967a1d8e77ca39cb4db9294c62940582629df48c75"
+    },
+    "admission_source": {
+      "path": "runs/round2/replay_saved_refine.py",
+      "bytes": 35794,
+      "sha256": "d67ff47906f5573722b4f5f55ff1a5877b93989ee1ff7e571d2e099bf8324b32",
+      "line": 567,
+      "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d"
+    },
+    "cleanup_source": {
+      "path": "src/loop_research/archive.py",
+      "bytes": 6589,
+      "sha256": "b66c43f0348ad0868774dcd9548473002c9e23ff50de592ef4384aca86018b0c",
+      "line": 109,
+      "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d"
+    },
+    "feedback_source": {
+      "path": "src/loop_research/refine_feedback.py",
+      "bytes": 6097,
+      "sha256": "0c5e0688d10d7d7d775122c996cfdda03105e515aa54eb4617f3e47ff2fb8cb7",
+      "line": 90,
+      "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d"
+    },
+    "feedback_read_source": {
+      "path": "src/loop_research/refine_feedback.py",
+      "bytes": 6097,
+      "sha256": "0c5e0688d10d7d7d775122c996cfdda03105e515aa54eb4617f3e47ff2fb8cb7",
+      "line": 85,
+      "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d"
+    },
+    "planner_source": {
+      "path": "src/loop_research/refine_context.py",
+      "bytes": 16428,
+      "sha256": "72226e864b91922f78d269e4c2be0494823eb31b4ab71ff5dd8fe6fa2f0574db",
+      "line": 132,
+      "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d"
+    },
+    "audit_source": {
+      "path": "src/loop_research/archive_audit.py",
+      "bytes": 76776,
+      "sha256": "49053d88d2812d12865b4655e45d9e2ee9c3ef15019f528c08d14406927b3128",
+      "line": 413,
+      "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d"
+    },
+    "audit_history_source": {
+      "path": "src/loop_research/archive_audit.py",
+      "bytes": 76776,
+      "sha256": "49053d88d2812d12865b4655e45d9e2ee9c3ef15019f528c08d14406927b3128",
+      "line": 527,
+      "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d"
+    },
+    "admission_doc": {
+      "path": "runs/round3/saved_replay_admission.md",
+      "bytes": 2772,
+      "sha256": "fd4fd3a8f65178e47cb0913fb8e40634aa54a96bd9c2ec7a923a4e522874330f",
+      "line": 3
+    },
+    "admission_verification": {
+      "path": "runs/round3/saved_replay_admission_verification.json",
+      "bytes": 1841,
+      "sha256": "2825c13bcf677a33a0e5e5426cab0e1c4273af6c64ba2bfc19c853e59380a2e5",
+      "line": 1
+    },
+    "admission_red": {
+      "path": "runs/round3/saved_replay_admission_red.log",
+      "bytes": 3872,
+      "sha256": "51f66d1942480947fef84915238454ca98b75d3fe3c6ba4947ede040b698e095"
+    },
+    "admission_green": {
+      "path": "runs/round3/saved_replay_admission_green.log",
+      "bytes": 99,
+      "sha256": "58d672b760067a192382ebbad75283ce7d24a610d62b3d2cd46ac766c37bbed4",
+      "line": 2
+    },
+    "admission_full": {
+      "path": "runs/round3/saved_replay_admission_full.log",
+      "bytes": 1167,
+      "sha256": "258b14226ca235d0c7d414bae590ca793200995542966a3e9e61653e72d478bd"
+    },
+    "cleanup_doc": {
+      "path": "runs/round3/process_cleanup/rootcause.md",
+      "bytes": 6287,
+      "sha256": "7520c74cf99ed187a5983c952493ae34df4cb7b0a5f552810063f9d06a0ea13b",
+      "line": 7
+    },
+    "cleanup_red": {
+      "path": "runs/round3/process_cleanup/red_count.log",
+      "bytes": 20218,
+      "sha256": "48ba6e583863f527134034fba5c7594962041640625f067da629f8e9c0173514"
+    },
+    "cleanup_green": {
+      "path": "runs/round3/process_cleanup/focused_green.log",
+      "bytes": 100,
+      "sha256": "cbf50bb94c8e698435933c32c45e7fe2511fda7fccb4e1e7092e274eaa25e68d",
+      "line": 2
+    },
+    "cleanup_review": {
+      "path": "runs/round3/process_cleanup_fetch_review.md",
+      "bytes": 2487,
+      "sha256": "245a9387cd13c5b0658143259a185cd96d4fb6bedbca7e95c1089610ca861422",
+      "line": 7
+    },
+    "cleanup_probe": {
+      "path": "runs/round3/process_cleanup_fetch_probe.json",
+      "bytes": 5431,
+      "sha256": "2dc76c7da5f1e843c6dc83de0558718160f847762c64dfdf9e7935e17805a427",
+      "line": 1
+    },
+    "cleanup_gap_probe": {
+      "path": "runs/round3/process_cleanup_completion_gap_probe.json",
+      "bytes": 1406,
+      "sha256": "36f6eabdf66c0be9eda5d17b255025e572375fb6b852586ca02e25ac0dcfdfe8",
+      "line": 1
+    },
+    "output_doc": {
+      "path": "runs/round3/refiner_output_transport.md",
+      "bytes": 7259,
+      "sha256": "1d092cbf4f3b8016caccc1d6f0736dad99b9aa587ffb7351fc48984d377e7986",
+      "line": 5
+    },
+    "output_verification": {
+      "path": "runs/round3/refiner_output_verification.json",
+      "bytes": 1603,
+      "sha256": "263ed895a40b137736bc55ef89a093bfcb38589298fe68ea4289dff47b60ddd1",
+      "line": 1
+    },
+    "output_red": {
+      "path": "runs/round3/refiner_output_red.log",
+      "bytes": 40884,
+      "sha256": "16cec4dc88bba4e68e26443f807aa60bd7ba8b91ca298660b3cbf0773f746943"
+    },
+    "output_first_green": {
+      "path": "runs/round3/refiner_output_first_green.log",
+      "bytes": 13858,
+      "sha256": "75391a1f145f59acbb453feaaa0b924c6db0355bd01fcfd4c15d8ccab438243b"
+    },
+    "output_green": {
+      "path": "runs/round3/refiner_output_final_green.log",
+      "bytes": 100,
+      "sha256": "8e238bfbe9d74e7f2f62b57bd61a809b3e61328f23eb8ef38a13e7bfac52ce7f",
+      "line": 2
+    },
+    "output_projection": {
+      "path": "runs/round3/refiner_output_saved_projection.json",
+      "bytes": 5830,
+      "sha256": "c5da1f588e5481708ac1ad616adc88c9909f65a88be0704efac155a6135d78ad",
+      "line": 1
+    },
+    "audit_doc": {
+      "path": "runs/round3/refiner_feedback_audit/README.md",
+      "bytes": 2833,
+      "sha256": "3dd26c2b2d7f8969fb24cbcefc3616ca1f7e4dc535df164cc7ce75f2bfff280a",
+      "line": 5
+    },
+    "audit_verification": {
+      "path": "runs/round3/refiner_feedback_audit/verification.json",
+      "bytes": 1173,
+      "sha256": "212948e3914bc609698599be407c67b0084875618e4e6fab94c7c3546517a45a",
+      "line": 1
+    },
+    "audit_policy_red": {
+      "path": "runs/round3/refiner_feedback_audit/policy_red.log",
+      "bytes": 4901,
+      "sha256": "8626d0700d176b1b75cd0b64c6aa5fb1734b830814b342c16095c950851808fe"
+    },
+    "audit_history_red": {
+      "path": "runs/round3/refiner_feedback_audit/history_red.log",
+      "bytes": 1985,
+      "sha256": "d1511379d1318fff7ee0cca15b974210046a17866c1de553ccd78dad35c2a788"
+    },
+    "audit_green": {
+      "path": "runs/round3/refiner_feedback_audit/integration_green.log",
+      "bytes": 99,
+      "sha256": "1b571e4491a9ad7577d4ce4342fe3ecef9f3ffc92f472b98ae811e0092bd1ab7",
+      "line": 2
+    },
+    "audit_focused": {
+      "path": "runs/round3/refiner_feedback_audit/focused.log",
+      "bytes": 181,
+      "sha256": "2d3c80fda533d2009b410681b4a4a693d46f5f39fb6026146bf8ce7be3ac2b43"
+    },
+    "suspended_summary": {
+      "path": "runs/round3/cohorts/context_refiner_v1/superseded.md",
+      "bytes": 3929,
+      "sha256": "c16fc1039bef5cb8b9613d8a38744c814bb64d2c4ed94ac628c65710565954b9",
+      "line": 1
+    },
+    "suspended_preservation": {
+      "path": "runs/round3/cohorts/context_refiner_v1/failed_preflight_archive_hashes.json",
+      "bytes": 50310,
+      "sha256": "561b1c65dc268439d71b74dc087370e81b6f22db917747ae11817704ed7c51bd",
+      "line": 1
+    },
+    "suspended_review": {
+      "path": "runs/round3/cohorts/context_refiner_v1/saved_refine_review.json",
+      "bytes": 61125,
+      "sha256": "b89f740f28ab3b53bd3ba6574f39638f7684111bd54b511b46483b9626c54394",
+      "line": 1
+    },
+    "suspended_probe": {
+      "path": "runs/round3/cohorts/context_refiner_v1/saved_refine_local_cancel_probe.json",
+      "bytes": 8404,
+      "sha256": "b2396928ab15ea360a34d0554e5f485642b49bfb62a0f0dcc905109fcaebcc67",
+      "line": 1
+    },
+    "awake_summary": {
+      "path": "runs/round3/cohorts/context_refiner_awake_v1/superseded.md",
+      "bytes": 3384,
+      "sha256": "0a890153f48b313965f5994ec2fe40d83abf185de1aab6a5f43e590b218fb5a0",
+      "line": 1
+    },
+    "awake_preservation": {
+      "path": "runs/round3/cohorts/context_refiner_awake_v1/superseded_archive_hashes.json",
+      "bytes": 248332,
+      "sha256": "fa1750f492863c70044cffb49b0b55d395e5cef030939848ad7efe3268ea22d0",
+      "line": 1
+    },
+    "awake_failure": {
+      "path": "runs/round3/cohorts/context_refiner_awake_v1/overflow_failure.json",
+      "bytes": 58356,
+      "sha256": "c19a37d692f740631968467b14027d375f48950c7a8fa9203c682b5af9205074",
+      "line": 1
+    },
+    "awake_power": {
+      "path": "runs/round3/cohorts/context_refiner_awake_v1/power_log_observation.json",
+      "bytes": 1355,
+      "sha256": "316dd718874138eee665e88cbebad10e3156c47bb533f3172cb29b63db6b5d53",
+      "line": 1
+    },
+    "offline": {
+      "path": "runs/round3/cohorts/context_outputs_v1/offline_verification.json",
+      "bytes": 6092,
+      "sha256": "acb8f0d877670d844aa435fb5347f568f2811f3e9fc4951972a301a4e73c3675",
+      "line": 1
+    },
+    "full_suite": {
+      "path": "runs/round3/cohorts/context_outputs_v1/full_suite.log",
+      "bytes": 1247,
+      "sha256": "82c66769583a886ae573bf755798631b0ec1addbc70785a634b769a694222b1b",
+      "line": 1
+    },
+    "installed": {
+      "path": "runs/round3/cohorts/context_outputs_v1/installed_verification.json",
+      "bytes": 10231,
+      "sha256": "0e368e2cd3d4cad56f624372f5e8c5f0330c6872fe0be33ba6dc108d51559865",
+      "line": 1
+    },
+    "execution": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/execution.json",
+      "bytes": 74125,
+      "sha256": "a56baa616c5b92d62f368354ac6b4f47985282df5c3e3943eed121b7297b322d",
+      "line": 1
+    },
+    "saved_audits": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_audit/result.json",
+      "bytes": 10774,
+      "sha256": "fd4198de6b9eaeb5333964b74ff1987f9a78586670021669e521522772e4e0ae",
+      "line": 1
+    },
+    "review_md": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine_review.md",
+      "bytes": 9215,
+      "sha256": "1e65b24eaafbf9806b3d2e20615da80b56c96173bfbf055a6408de3167c8f19d",
+      "line": 1
+    },
+    "review_json": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine_review.json",
+      "bytes": 113436,
+      "sha256": "d20d2c62f08e5c6da864b14627e8f4f7605acaeace8b6b348448b94a55b4e451",
+      "line": 1
+    },
+    "environment": {
+      "path": "runs/round3/cohorts/context_outputs_v1/environment_protocol.json",
+      "bytes": 1104,
+      "sha256": "4ba0cc1ff85f0b7d2d1ec7e62f0203ac3729e85226a3d8bee1e8d7a0970101b0",
+      "line": 1
+    },
+    "review_caveat": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine_review.json",
+      "bytes": 113436,
+      "sha256": "d20d2c62f08e5c6da864b14627e8f4f7605acaeace8b6b348448b94a55b4e451",
+      "pointer": "/findings/0"
+    },
+    "review_caveat_md": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine_review.md",
+      "bytes": 9215,
+      "sha256": "1e65b24eaafbf9806b3d2e20615da80b56c96173bfbf055a6408de3167c8f19d",
+      "line": 45
+    },
+    "overflow_actions": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+      "bytes": 11309932,
+      "sha256": "ab851e83b6b4429ad971e18cdce335bd93f0742c38bbfedf3692cd66a82a9f01",
+      "line": 1
+    },
+    "overflow_trace": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/trace.jsonl",
+      "bytes": 51266,
+      "sha256": "05fad022e6aa7bfd62c151233f5b3ed3ddcd548a74754f1ea3358fa56759165b",
+      "line": 1
+    },
+    "overflow_manifest": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/manifest.json",
+      "bytes": 477,
+      "sha256": "89b292c2b7579e3ffc82930949dc3a206e0775eef4ca40115d89bc672ff77a4c",
+      "line": 1
+    },
+    "overflow_calls": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/codex_calls.jsonl",
+      "bytes": 3956913,
+      "sha256": "3fc00e24161f03d8086dab422db974bcd35774022a3e0fd03d28e9077c1f7035",
+      "line": 1
+    },
+    "overflow_result": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/replay_result.json",
+      "bytes": 15713,
+      "sha256": "ef5aa586b3847ba551ee2622607758b4cdfd8f59a842acf03baabf26c52ceb99",
+      "line": 1
+    },
+    "overflow_input": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/input_verification.json",
+      "bytes": 4177,
+      "sha256": "549fceec0a3d3bfcf53fb453b1e929e42418a67788c2b111c997c26171ffe28c",
+      "line": 1
+    },
+    "large_stdout": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+      "bytes": 11309932,
+      "sha256": "ab851e83b6b4429ad971e18cdce335bd93f0742c38bbfedf3692cd66a82a9f01",
+      "line": 7,
+      "note": "Complete first-iteration stdout"
+    },
+    "output_reference": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+      "bytes": 11309932,
+      "sha256": "ab851e83b6b4429ad971e18cdce335bd93f0742c38bbfedf3692cd66a82a9f01",
+      "line": 9,
+      "note": "Authoritative complete-output reference before affected dispatch"
+    },
+    "bounded_second_prompt": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+      "bytes": 11309932,
+      "sha256": "ab851e83b6b4429ad971e18cdce335bd93f0742c38bbfedf3692cd66a82a9f01",
+      "line": 10,
+      "note": "6,624-character backend prompt"
+    },
+    "subcall_code": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+      "bytes": 11309932,
+      "sha256": "ab851e83b6b4429ad971e18cdce335bd93f0742c38bbfedf3692cd66a82a9f01",
+      "line": 28,
+      "note": "Executed model-selected semantic chunking and batched calls"
+    },
+    "subcall_results": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+      "bytes": 11309932,
+      "sha256": "ab851e83b6b4429ad971e18cdce335bd93f0742c38bbfedf3692cd66a82a9f01",
+      "line": 73,
+      "note": "Complete results printed"
+    },
+    "followup_check_code": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+      "bytes": 11309932,
+      "sha256": "ab851e83b6b4429ad971e18cdce335bd93f0742c38bbfedf3692cd66a82a9f01",
+      "line": 79,
+      "note": "Coordinator adjudicates semantic review"
+    },
+    "followup_check_result": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+      "bytes": 11309932,
+      "sha256": "ab851e83b6b4429ad971e18cdce335bd93f0742c38bbfedf3692cd66a82a9f01",
+      "line": 80,
+      "note": "140 checks and no quote-membership failures"
+    },
+    "final_proposal_code": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+      "bytes": 11309932,
+      "sha256": "ab851e83b6b4429ad971e18cdce335bd93f0742c38bbfedf3692cd66a82a9f01",
+      "line": 86,
+      "note": "Strict proposal validation"
+    },
+    "final_ready": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/289901ce021c28d56fdac993/refine_planners/758e92705e99406ebb105ffc01f83bb1/actions.jsonl",
+      "bytes": 11309932,
+      "sha256": "ab851e83b6b4429ad971e18cdce335bd93f0742c38bbfedf3692cd66a82a9f01",
+      "line": 87,
+      "note": "Final proposal returned"
+    },
+    "overflow_applied": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/trace.jsonl",
+      "bytes": 51266,
+      "sha256": "05fad022e6aa7bfd62c151233f5b3ed3ddcd548a74754f1ea3358fa56759165b",
+      "line": 65
+    },
+    "overflow_apply_end": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/A_distinct_pages_midtask/workspace/runs/refine-replay-fcd166614bd64d4bbff447c8da39969c/trace.jsonl",
+      "bytes": 51266,
+      "sha256": "05fad022e6aa7bfd62c151233f5b3ed3ddcd548a74754f1ea3358fa56759165b",
+      "line": 66
+    },
+    "caveat_original_0": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/B1_fragments_finalizer/evidence/original_logical_input.json",
+      "bytes": 1231486,
+      "sha256": "8ee33048ad1a5ddefdf69f0048e58f0b7bf4df578ec5e50933032d7e5bdf2df7",
+      "pointer": "/trajectory/23/result/1"
+    },
+    "caveat_original_1": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/B1_fragments_finalizer/evidence/original_logical_input.json",
+      "bytes": 1231486,
+      "sha256": "8ee33048ad1a5ddefdf69f0048e58f0b7bf4df578ec5e50933032d7e5bdf2df7",
+      "pointer": "/trajectory/68/result/1"
+    },
+    "caveat_original_2": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/B1_fragments_finalizer/evidence/original_logical_input.json",
+      "bytes": 1231486,
+      "sha256": "8ee33048ad1a5ddefdf69f0048e58f0b7bf4df578ec5e50933032d7e5bdf2df7",
+      "pointer": "/trajectory/86/result/0"
+    },
+    "caveat_original_3": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/B1_fragments_finalizer/evidence/original_logical_input.json",
+      "bytes": 1231486,
+      "sha256": "8ee33048ad1a5ddefdf69f0048e58f0b7bf4df578ec5e50933032d7e5bdf2df7",
+      "pointer": "/trajectory/42",
+      "note": "Prior results explicitly report nationality/citizenship absence for the other seven pages."
+    },
+    "caveat_original_4": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/B1_fragments_finalizer/evidence/original_logical_input.json",
+      "bytes": 1231486,
+      "sha256": "8ee33048ad1a5ddefdf69f0048e58f0b7bf4df578ec5e50933032d7e5bdf2df7",
+      "pointer": "/trajectory/68",
+      "note": "The other seven results repeat citizenship absence; the 2016 result only lists people and institutions."
+    },
+    "caveat_original_5": {
+      "path": "runs/round3/cohorts/context_outputs_v1/saved_refine/B1_fragments_finalizer/replay_result.json",
+      "bytes": 13738,
+      "sha256": "db04680e84328d34c814e33ac98a906bdc6954e51a894d309b565e974f6e6a25",
+      "pointer": "/proposal/decisions/3",
+      "note": "Accepted rationale contains the unsupported eight-of-eight claim; raw proposal was not changed."
+    }
+  }
+}
