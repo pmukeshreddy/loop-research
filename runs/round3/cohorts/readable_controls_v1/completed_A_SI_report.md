@@ -41,14 +41,14 @@ A requested refinement itself while substantive work remained. The duplicate-rec
 
 | A event | UTC on 2026-10-20 | Trace line |
 |---|---|---:|
-| Agent requests midtask refinement | 18:05:23.411616 | 778 |
-| Proposal recorded | 18:06:07.285170 | 867 |
-| Exact-span v1 committed, `08e662ec…` | 18:06:35.688619 | 941 |
-| Duplicate memory committed, `b78f2307…` | 18:06:35.730884 | 944 |
-| Later retrieval returns both | 18:06:35.815765 | 948 |
-| Worker completes | 18:09:25.914474 | 1948 |
-| Finalizer updates exact-span memory to v2 | 18:13:03.606842 | 2003 |
-| Finalizer commits partial-fetch recovery skill | 18:13:03.653204 | 2006 |
+| Agent requests midtask refinement | 18:05:23.411616 | [778](workspaces/A/runs/research-a685a2c37ca948fa9d7ab1a551451ff2/trace.jsonl:778) |
+| Proposal recorded | 18:06:07.285170 | [867](workspaces/A/runs/research-a685a2c37ca948fa9d7ab1a551451ff2/trace.jsonl:867) |
+| Exact-span v1 committed, `08e662ec…` | 18:06:35.688619 | [941](workspaces/A/runs/research-a685a2c37ca948fa9d7ab1a551451ff2/trace.jsonl:941) |
+| Duplicate memory committed, `b78f2307…` | 18:06:35.730884 | [944](workspaces/A/runs/research-a685a2c37ca948fa9d7ab1a551451ff2/trace.jsonl:944) |
+| Later retrieval returns both | 18:06:35.815765 | [948](workspaces/A/runs/research-a685a2c37ca948fa9d7ab1a551451ff2/trace.jsonl:948) |
+| Worker completes | 18:09:25.914474 | [1948](workspaces/A/runs/research-a685a2c37ca948fa9d7ab1a551451ff2/trace.jsonl:1948) |
+| Finalizer updates exact-span memory to v2 | 18:13:03.606842 | [2003](workspaces/A/runs/research-a685a2c37ca948fa9d7ab1a551451ff2/trace.jsonl:2003) |
+| Finalizer commits partial-fetch recovery skill | 18:13:03.653204 | [2006](workspaces/A/runs/research-a685a2c37ca948fa9d7ab1a551451ff2/trace.jsonl:2006) |
 
 After retrieval, iteration 10 (trajectory line 93) prints duplicate counts and a per-source quotation diagnostic. Iteration 11 (line 100) asks for one reconciled record per entity, validates the batch before mutation and restores supported components. This is a verified commit→retrieval→compatible action chain. It is **not isolated causal proof**: quotation guards and targeted Stoddart/Bawendi searches already appeared before the commits. The final v2 changes and recovery skill committed after worker exit and had no A worker reuse. Complete prompt-object comparisons and raw trace links are in [A entry review](A.entry_review.md).
 
