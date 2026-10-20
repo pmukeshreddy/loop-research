@@ -32,4 +32,4 @@ All six retrievals were empty and preceded the request: trace lines 9, 28, 52, 1
 
 The complete saved trace has zero events carrying an error; evidence records zero failed downloads, and executed blocks have no stderr. This statement covers the archived run through Research.run.end, trace 324. It is not an independent semantic-quality verdict on the answer.
 
-[SI.refinement_review.json](SI.refinement_review.json) preserves full proposals, candidate inventories, additional candidates, decisions, committed content, root boundaries, retrievals, final executed code and archive hashes. The cohort-level [refinement_timeline.json](refinement_timeline.json) remains partial while A runs.
+[SI.refinement_review.json](SI.refinement_review.json) preserves full proposals, candidate inventories, additional candidates, decisions, committed content, root boundaries, retrievals, final executed code and archive hashes. The cohort-level [refinement_timeline.json](refinement_timeline.json) is now closed: SI completed, while A failed naturally during mid-task planning.

@@ -1,0 +1,181 @@
+{
+  "source_commit": "09c77902babb879abe2b0dcc8cab7cf5209bf5ae",
+  "analysis_contract": "answer-ready-v2",
+  "status": "failed_cohort_descriptive_only",
+  "runs": {
+    "A": {
+      "run_id": "research-f43c96b33c5d43b299e491341eb65216",
+      "metrics": {
+        "S1_pre_answer_ready_validation": {
+          "value": null,
+          "reason": "No root submission exists: all ten executed code.end events have answer_ready=false, the last answer remains empty/not ready, and no output.json exists. Guard scoring is not exercised.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/trace.jsonl",
+              "note": "Complete terminal trace; no readiness event. First refiner rejection1165 and final Research.run.end1204.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/trace.jsonl",
+                "bytes": 1115934,
+                "sha256": "44635e39be74380432e68569368c5bfec31e5e29fb50f4246175d8ba00502c59"
+              }
+            },
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+              "note": "Last executed block leaves answer content empty and ready false.",
+              "line": 81,
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 20723334,
+                "sha256": "157559147b6a251d2c66cae5ebc685b77ec17e7aeaa88559a6517f182a4ca8f9"
+              }
+            }
+          ]
+        },
+        "S2_gap_exposed": {
+          "value": 1,
+          "reason": "Partial execution exposed 25 missing nationality cells before supplementary research. This is an observed failed-run diagnostic, not a completed comparison.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+              "note": "Executed extraction prints all 25 missing nationality fields and an empty quote-error list.",
+              "line": 34,
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 20723334,
+                "sha256": "157559147b6a251d2c66cae5ebc685b77ec17e7aeaa88559a6517f182a4ca8f9"
+              }
+            }
+          ]
+        },
+        "S2_supplementary_unique_urls": {
+          "value": 75,
+          "reason": "After gap exposure, nine supplementary official PDFs and 66 successful distinct biography URLs were fetched. Nine failed biography fetches are excluded from this successful-URL count but preserved in the error review; the initial ten requests are excluded.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+              "note": "Nine PDFs fetched after initial missing-field output.",
+              "line": 38,
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 20723334,
+                "sha256": "157559147b6a251d2c66cae5ebc685b77ec17e7aeaa88559a6517f182a4ca8f9"
+              }
+            },
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+              "note": "75 distinct biography URL requests return 66 successes and nine failures.",
+              "line": 71,
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 20723334,
+                "sha256": "157559147b6a251d2c66cae5ebc685b77ec17e7aeaa88559a6517f182a4ca8f9"
+              }
+            },
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/A.quality_review.json",
+              "note": "Exact supplementary URL/request list and verified receipts are preserved in partial_gap_review.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/A.quality_review.json",
+                "bytes": 327333,
+                "sha256": "6d3ffe8c43229d09fc559d1e2bf8d67fb7b23abcc72731a0725e79466a5c9db0"
+              }
+            }
+          ]
+        },
+        "S3_quote_exception_blocks": {
+          "value": 0,
+          "reason": "All ten executed root REPL blocks finish without error or stderr. The fatal error is a refiner input-limit failure at the next boundary, not a quotation exception.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/trace.jsonl",
+              "note": "All ten code.end events have null error; all19 error events are retained separately.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/trace.jsonl",
+                "bytes": 1115934,
+                "sha256": "44635e39be74380432e68569368c5bfec31e5e29fb50f4246175d8ba00502c59"
+              }
+            },
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+              "note": "All ten executed blocks and their stderr retained.",
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 20723334,
+                "sha256": "157559147b6a251d2c66cae5ebc685b77ec17e7aeaa88559a6517f182a4ca8f9"
+              }
+            }
+          ]
+        },
+        "S3_caught_printed_quote_failures": {
+          "value": 0,
+          "reason": "Executed quote-error lists are empty at iterations5 and9; iteration7 quote assertions pass and iteration10 asserts no nationality quote errors. No individual quote-failure record was printed.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+              "note": "quote_errors=[] for initial extraction.",
+              "line": 34,
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 20723334,
+                "sha256": "157559147b6a251d2c66cae5ebc685b77ec17e7aeaa88559a6517f182a4ca8f9"
+              }
+            },
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+              "note": "2015 quote assertions complete successfully.",
+              "line": 42,
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 20723334,
+                "sha256": "157559147b6a251d2c66cae5ebc685b77ec17e7aeaa88559a6517f182a4ca8f9"
+              }
+            },
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+              "note": "quote_errors=[] for25 nationality candidates.",
+              "line": 78,
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 20723334,
+                "sha256": "157559147b6a251d2c66cae5ebc685b77ec17e7aeaa88559a6517f182a4ca8f9"
+              }
+            },
+            {
+              "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+              "note": "assert not nat_errors executes successfully before semantic review.",
+              "line": 81,
+              "file": {
+                "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/289901ce021c28d56fdac993/trajectory.jsonl",
+                "bytes": 20723334,
+                "sha256": "157559147b6a251d2c66cae5ebc685b77ec17e7aeaa88559a6517f182a4ca8f9"
+              }
+            }
+          ]
+        }
+      },
+      "semantic_review": {
+        "summary": "Unavailable for a final answer: the run failed with no submission. The last REPL snapshot contains28 partial rows/140 cells; exact membership checks are retained as diagnostics, alongside uncorrected Lindahl affiliation and Yekimov nationality caveats. No final semantic-success count is assigned.",
+        "evidence": [
+          {
+            "path": "runs/round3/cohorts/quoted_text_v1/A.quality_review.json",
+            "note": "Failed-cohort review, partial mechanical checks, known caveats, all errors and raw receipts.",
+            "file": {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/A.quality_review.json",
+              "bytes": 327333,
+              "sha256": "6d3ffe8c43229d09fc559d1e2bf8d67fb7b23abcc72731a0725e79466a5c9db0"
+            }
+          },
+          {
+            "path": "runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/research.json",
+            "note": "Terminal interrupted status with exact input-too-large error.",
+            "file": {
+              "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/quoted_text_v1/workspaces/A/runs/research-f43c96b33c5d43b299e491341eb65216/research.json",
+              "bytes": 1734,
+              "sha256": "71c7ad8ecbee3a36d7642cc6b4e611cba5a1311c3f3eeae7fda5eeef9748c130"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
