@@ -1,0 +1,33 @@
+F
+======================================================================
+FAIL: test_prompt_task_date_header_must_agree_with_archive (test_control_audit.ControlAuditTests.test_prompt_task_date_header_must_agree_with_archive)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/control_audit.py", line 386, in audit_directory
+    arms[label], inputs[label], bases[label] = audit_arm(plan, execution, label, constants, config, task)
+                                               ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/control_audit.py", line 351, in audit_arm
+    inputs = parse_inputs(context, model['prompt'], constants['instruction'], before, identity)
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/control_audit.py", line 138, in parse_inputs
+    require(model_prompt.count(context) == 1, 'Saved context must appear exactly once in actual initial root prompt')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/control_audit.py", line 32, in require
+    raise AuditError(message)
+control_audit.AuditError: Saved context must appear exactly once in actual initial root prompt
+
+The above exception was the direct cause of the following exception:
+
+control_audit.AuditError: B0-1: Saved context must appear exactly once in actual initial root prompt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/test_control_audit.py", line 312, in test_prompt_task_date_header_must_agree_with_archive
+    with self.assertRaisesRegex(audit.AuditError, 'task/date header'):
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "task/date header" does not match "B0-1: Saved context must appear exactly once in actual initial root prompt"
+
+----------------------------------------------------------------------
+Ran 1 test in 0.553s
+
+FAILED (failures=1)

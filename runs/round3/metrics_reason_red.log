@@ -1,0 +1,16 @@
+F
+======================================================================
+FAIL: test_defined_metric_does_not_claim_it_is_unavailable (test_metrics.MetricTests.test_defined_metric_does_not_claim_it_is_unavailable)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/test_metrics.py", line 102, in test_defined_metric_does_not_claim_it_is_unavailable
+    self.assertEqual(m.metric(42,reason='Unavailable'), {'value':42})
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'value': 42, 'reason': 'Unavailable'} != {'value': 42}
+- {'reason': 'Unavailable', 'value': 42}
++ {'value': 42}
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (failures=1)

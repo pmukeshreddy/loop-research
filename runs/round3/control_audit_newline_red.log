@@ -1,0 +1,21 @@
+E
+======================================================================
+ERROR: test_context_newlines_are_not_normalized (test_control_audit.ControlAuditTests.test_context_newlines_are_not_normalized)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/test_control_audit.py", line 296, in test_context_newlines_are_not_normalized
+    report, _, _ = audit.audit_arm(self.plan, self.execution, 'B0-1',
+                   ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        {'instruction': self.instruction, 'fetch_path': 'direct-readable-v1'}, self.config, self.task)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/control_audit.py", line 346, in audit_arm
+    require(read(task / 'prompt_metadata.json') == metadata, 'Saved true context-size metadata mismatch')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/control_audit.py", line 33, in require
+    raise AuditError(message)
+control_audit.AuditError: Saved true context-size metadata mismatch
+
+----------------------------------------------------------------------
+Ran 1 test in 0.557s
+
+FAILED (errors=1)

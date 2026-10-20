@@ -1,0 +1,17 @@
+E
+======================================================================
+ERROR: test_invalid_search_query_error_is_retained_without_crashing_counts (test_metrics.MetricTests.test_invalid_search_query_error_is_retained_without_crashing_counts)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/test_metrics.py", line 81, in test_invalid_search_query_error_is_retained_without_crashing_counts
+    values,proof=m.discovery_metrics(trace)
+                 ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/metrics.py", line 89, in discovery_metrics
+    for row in starts.values() if row['details']['query'] in first_success and row['line'] > first_success[row['details']['query']]]
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: unhashable type: 'dict'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (errors=1)
