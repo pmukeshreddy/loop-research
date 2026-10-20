@@ -19,6 +19,21 @@ LABELS = ('A', 'SI', 'B1', *CONTROLS)
 MANUAL = ('S1_preadd_validation', 'S2_gap_exposed', 'S2_supplementary_unique_urls',
           'S3_quote_exception_blocks', 'S3_caught_printed_quote_failures',
           'posthoc_fullcell_validation_before_answer_ready')
+DEFAULT_CONTRACT = 'records-add-v1'
+CONTRACTS = {
+    'records-add-v1': {
+        'id': 'records-add-v1', 'version': 1, 's1_metric': 'S1_preadd_validation',
+        'boundary': 'first records.add (unavailable API)',
+        'definition': 'Literal S1 remains N/A because records.add is not an exposed API. The separate posthoc_fullcell_validation_before_answer_ready measure cannot count as preregistered success.',
+        'manual_fields': MANUAL,
+    },
+    'answer-ready-v2': {
+        'id': 'answer-ready-v2', 'version': 2, 's1_metric': 'S1_pre_answer_ready_validation',
+        'boundary': 'first root submission setting answer["ready"] = True',
+        'definition': 'Binary 1 only when executed code before the first root submission setting answer["ready"] = True verifies a nonempty value, source list, and quote for every required cell in the nonempty candidate row set submitted, and verifies exact quote membership in retained original fetched text for every cited URL. Locate the submitting block using the first depth-0 REPL code.end event with answer_ready=true; checks must execute before the readiness assignment within that block or an earlier block and cover the actual submitted version. An earlier failed guard followed by repairs and a successful complete guard before submission can score 1. Partial checks, checks of an earlier candidate version, checks after submission, and unsupported assurances score 0. Cite executed code, output, coverage, and submission. If no root submission exists, report N/A with evidence and a reason; missing review evidence fails extraction. This measures an observed guard, not causal benefit.',
+        'manual_fields': ('S1_pre_answer_ready_validation', *MANUAL[1:5]),
+    },
+}
 DEFINITIONS = {
  'M1': 'Successful individual tools.search call.end events, including batch children/cache/shared calls. Match original exact query to successful discovery strictly after search completion and no later than the first depth-0 REPL code.end. Each completed request counted once. A single matching discovery can satisfy duplicate requests in its interval; shared matches are disclosed. Missing later root boundary makes late count/fraction N/A, not zero.',
  'M2': 'Each successful empty discovery event counted once if a later successful nonempty discovery has the identical original query. Uncorrected empties are not classified as wrong.',
@@ -32,6 +47,11 @@ DEFINITIONS = {
  'manual': 'S1 is N/A: preregistration named nonexistent records.add API. The separately labeled posthoc_fullcell_validation_before_answer_ready diagnostic is excluded from directional prediction success. S2 gap exposure/counts and S3 quote-specific classification require cited independent review. S3 caught/printed counts are individual failure records actually printed, retaining repeated observations.',
  'aggregation': 'Each scalar metric: individual controls, count of defined runs, mean, min, max, range. Delta=mean(frozen)-mean(B0). Spread=max(within-arm max-min). Exceeds iff abs(delta)>spread, strictly. N/A contributes no zero. Three repeats are not statistical evidence.',
 }
+
+
+def contract_definition(contract=DEFAULT_CONTRACT):
+    require(contract in CONTRACTS, 'Unknown analysis scoring contract: ' + str(contract))
+    return {key: value for key, value in CONTRACTS[contract].items() if key != 'manual_fields'}
 
 
 def metric(value, *, reason=None, **details):
@@ -207,21 +227,26 @@ def cited_evidence(items):
     return result
 
 
-def manual_metrics(review, run_id):
+def manual_metrics(review, run_id, *, contract=DEFAULT_CONTRACT):
+    definition = contract_definition(contract)
+    required = CONTRACTS[contract]['manual_fields']
     require(review.get('run_id') == run_id, 'Manual review run identity mismatch')
     values = dict(review.get('metrics',{}))
     alias = 'fullcell_validation_before_answer_ready'
     if alias in values:
         require('posthoc_' + alias not in values, 'Duplicate post-hoc diagnostic aliases')
         values['posthoc_' + alias] = values.pop(alias)
-    require(all(key in values for key in MANUAL), 'Missing required manual metrics: ' + ', '.join(key for key in MANUAL if key not in values))
+    require(all(key in values for key in required), 'Missing required manual metrics: ' + ', '.join(key for key in required if key not in values))
+    other_s1 = {'S1_preadd_validation', 'S1_pre_answer_ready_validation'} - {definition['s1_metric']}
+    require(not (other_s1 & values.keys()), 'S1 metric belongs to a different scoring contract')
     for key, value in values.items():
         require(value.get('value') is None or (type(value['value']) is int and value['value'] >= 0), 'Manual count must be nonnegative integer or N/A')
-        if key in ('S1_preadd_validation','S2_gap_exposed','posthoc_fullcell_validation_before_answer_ready'):
+        if key in ('S1_preadd_validation','S1_pre_answer_ready_validation','S2_gap_exposed','posthoc_fullcell_validation_before_answer_ready'):
             require(value.get('value') in (None,0,1), 'Manual binary metric outside 0/1')
         values[key] = {**metric(value.get('value'),reason=value.get('reason')), 'review_reason':value.get('reason'),
                        'evidence':cited_evidence(value.get('evidence'))}
-    require(values['S1_preadd_validation']['value'] is None, 'Literal preregistered records.add boundary is unavailable; S1 must be N/A')
+    if contract == DEFAULT_CONTRACT:
+        require(values['S1_preadd_validation']['value'] is None, 'Literal preregistered records.add boundary is unavailable; S1 must be N/A')
     exposed, count = values['S2_gap_exposed']['value'], values['S2_supplementary_unique_urls']['value']
     require(exposed != 0 or count == 0, 'No exposed gap requires zero raw supplementary URLs')
     values['S2_supplementary_unique_urls_conditional'] = metric(count if exposed == 1 else None,
@@ -234,7 +259,8 @@ def manual_metrics(review, run_id):
     return values, semantic
 
 
-def aggregate_controls(runs):
+def aggregate_controls(runs, *, contract=DEFAULT_CONTRACT):
+    contract_definition(contract)
     require(all(label in runs for label in CONTROLS), 'All six controls required for aggregate table')
     keys = sorted({key for label in CONTROLS for key in runs[label]['metrics']})
     result = {}
@@ -255,21 +281,38 @@ def aggregate_controls(runs):
         row['directional_claim_allowed'] = key in {'M1_late_requests','M1_late_fraction','M2_corrected_empty_records',
             'S2_supplementary_unique_urls_conditional','S3_quote_exception_blocks','S4_citation_violation_cells',
             'Q1_output_rows','Q1_self_check_issues','Q1_uncited_cells','Q1_identity_symmetric_difference'}
+        if contract != DEFAULT_CONTRACT:
+            row['directional_claim_allowed'] = None
+            row['directional_claim_reason'] = 'Consult this cohort’s committed preregistration; the scoring contract does not select directional predictions.'
         result[key] = row
     return result
 
 
-def load_manual(paths, source):
+def load_manual(paths, source, *, contract=DEFAULT_CONTRACT):
+    contract_definition(contract)
     result, receipts = {}, []
     for path in paths:
         data = read(path)
         require(data['source_commit'] == source, 'Manual review source commit mismatch')
+        require(data.get('analysis_contract', DEFAULT_CONTRACT) == contract, 'Manual review scoring contract mismatch')
         require(not (set(result)&set(data['runs'])), 'Duplicate manual run review across files')
         result.update(data['runs']); receipts.append(file_record(path))
     return result, receipts
 
 
-def archive_metrics(label, arm, audit_path, review, reference, aliases):
+def submission_boundary(trace, values, *, contract=DEFAULT_CONTRACT):
+    contract_definition(contract)
+    if contract == DEFAULT_CONTRACT:
+        return None
+    boundary = next((row for row in selected(trace, 'REPL', 'code.end')
+                     if row['details'].get('depth') == 0 and row['details'].get('answer_ready') is True), None)
+    score = values['S1_pre_answer_ready_validation']['value']
+    require(boundary is not None or score is None, 'No root submission exists; S1 must be justified N/A')
+    require(boundary is None or score is not None, 'S1 requires an explicit 0/1 review for an observed submission')
+    return boundary
+
+
+def archive_metrics(label, arm, audit_path, review, reference, aliases, *, contract=DEFAULT_CONTRACT):
     require(arm.get('status')=='complete' and arm.get('exit_code')==0 and arm.get('source_unchanged') is True,
             'Metrics require completed run with source verification: ' + label)
     run=Path(arm['run_path']); task=run/arm['task_id']
@@ -322,11 +365,13 @@ def archive_metrics(label, arm, audit_path, review, reference, aliases):
     require(read(reference/'task.json')['spec']['keys']==specification['keys'], 'Identity reference keys differ')
     more, identity=identity_metrics(output,prior,specification['keys'],aliases); values.update(more)
     identity['reference_output']=file_record(reference/'output.json')
-    more, semantic=manual_metrics(review,arm['run_id']); values.update(more)
+    more, semantic=manual_metrics(review,arm['run_id'],contract=contract); values.update(more)
+    boundary=submission_boundary(trace,values,contract=contract)
     require(values['S3_quote_exception_blocks']['value'] is None or values['S3_quote_exception_blocks']['value']<=len(repl_errors), 'Manual quote-error blocks exceed all REPL error blocks')
     return {'run_id':arm['run_id'],'task_id':arm['task_id'],'source_commit':arm['source_commit'],'metrics':values,
             'archive_inventory':inventory,'full_audit':file_record(audit_path),'discovery':discovery,'fetches':fetches,
             'citation_violations':violations,'identity':identity,'semantic_review':semantic,
+            'submission_boundary':boundary,
             'all_component_error_events':errors,'all_unsuccessful_component_events_without_error':failures,
             'all_repl_error_blocks':repl_errors,'all_self_check_issues':checks['issues'],'all_self_check_signals':checks['signals'],
             'all_uncited':agent['uncited'],'all_model_call_records':list(calls.values()),'all_model_dispatch_records':list(attempts.values()),
@@ -336,10 +381,11 @@ def archive_metrics(label, arm, audit_path, review, reference, aliases):
             'fetch_paths':audited['fetch_paths']}
 
 
-def build(directory, audit_dir, manual_paths, reference_manifest, aliases_path=None, labels=LABELS):
+def build(directory, audit_dir, manual_paths, reference_manifest, aliases_path=None, labels=LABELS, *, contract=DEFAULT_CONTRACT):
+    definition = contract_definition(contract)
     plan, execution=read(directory/'plan.json'),read(directory/'execution.json')
     require(plan['source_commit']==execution['source_commit'],'Plan/execution source mismatch')
-    reviews, receipts=load_manual(manual_paths,plan['source_commit'])
+    reviews, receipts=load_manual(manual_paths,plan['source_commit'],contract=contract)
     require(all(label in reviews for label in labels),'Missing manual review for: '+', '.join(label for label in labels if label not in reviews))
     aliases=read(aliases_path)['aliases'] if aliases_path else []
     for row in aliases:
@@ -352,20 +398,29 @@ def build(directory, audit_dir, manual_paths, reference_manifest, aliases_path=N
         reference=reference_run/read(reference_run/'research.json')['task_id']
         arm=execution['arms'][label]
         require(arm['source_commit']==plan['source_commit'],'Run source mismatch: '+label)
-        runs[label]=archive_metrics(label,arm,audit_dir/(label+'.audit.json'),reviews[label],reference,aliases)
-    controls=aggregate_controls(runs) if all(label in runs for label in CONTROLS) else None
+        runs[label]=archive_metrics(label,arm,audit_dir/(label+'.audit.json'),reviews[label],reference,aliases,contract=contract)
+    controls=aggregate_controls(runs,contract=contract) if all(label in runs for label in CONTROLS) else None
     return {'status':'complete' if set(labels)==set(LABELS) else 'selected_completed_runs_only',
             'generated_at':datetime.now(timezone.utc).isoformat(),'source_commit':plan['source_commit'],
-            'definitions':DEFINITIONS,'runs':runs,'control_aggregates':controls,
+            'analysis_contract':definition,
+            'definitions':{**DEFINITIONS, 'manual': definition['definition'] + ' S2/S3 still require cited manual review; caught/printed quote failures count individual printed records, including repeats.'},
+            'runs':runs,'control_aggregates':controls,
             'inputs':{'plan':file_record(directory/'plan.json'),'execution':file_record(directory/'execution.json'),
                       'manual_reviews':receipts,'reference_manifest':file_record(reference_manifest),
                       'aliases':file_record(aliases_path) if aliases_path else None,
                       'predictions':execution.get('predictions'), 'extractor':file_record(Path(__file__))},
-            'limitations':'Three repeats per base are descriptive, not statistical evidence. New direct-readable-v1 fetch transport. Literal preregistered S1 is N/A; post-hoc submission-boundary diagnostic cannot count as preregistered success. Full historical harness metadata belongs to the intervention. Nine main runs serve ten report checks; an explicit-refinement run is separate.'}
+            'limitations':'Three repeats per base are descriptive, not statistical evidence. New direct-readable-v1 fetch transport. ' +
+                ('Literal preregistered S1 is N/A; post-hoc submission-boundary diagnostic cannot count as preregistered success. ' if contract == DEFAULT_CONTRACT else
+                 'The answer["ready"] assignment scoring contract defines an available measure; it does not select or establish a directional prediction for a new learned entry. Only that cohort’s committed preregistration can do so. ') +
+                'Full historical harness metadata belongs to the intervention. Nine main runs serve ten report checks; an explicit-refinement run is separate.'}
 
 
 def markdown(report):
     lines=['# Round 3 metrics','',report['limitations'],'','All values below have complete event-level evidence in metrics.json. N/A is never zero.','']
+    if 'analysis_contract' in report:
+        definition = report['analysis_contract']
+        lines += [f"Scoring contract: `{definition['id']}`. S1 boundary: `{definition['boundary']}`.",
+                  '', definition['definition'], '']
     for title, data in [('Directional and descriptive control metrics',report['control_aggregates'])]:
         if data is None:
             continue
@@ -393,6 +448,7 @@ def main():
     parser.add_argument('--reference-manifest',type=Path,default=Path(__file__).resolve().parent.parent/'round2/manifest.json')
     parser.add_argument('--aliases',type=Path)
     parser.add_argument('--labels',nargs='+',choices=LABELS,default=list(LABELS))
+    parser.add_argument('--contract', choices=CONTRACTS, default=DEFAULT_CONTRACT)
     parser.add_argument('--output-dir',type=Path)
     args=parser.parse_args()
     try:
@@ -400,7 +456,7 @@ def main():
         require(not output.exists() or not any(output.iterdir()),'Metrics output directory must be new or empty')
         execution=read(directory/'execution.json')
         require(all(not output.is_relative_to(Path(arm['workspace']).resolve()) for arm in execution['arms'].values()),'Metrics output must remain outside run workspaces')
-        report=build(directory,args.audits or directory/'audits',args.manual,args.reference_manifest,args.aliases,tuple(args.labels))
+        report=build(directory,args.audits or directory/'audits',args.manual,args.reference_manifest,args.aliases,tuple(args.labels),contract=args.contract)
         output.mkdir(parents=True,exist_ok=True)
         (output/'metrics.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
         (output/'metrics.md').write_text(markdown(report))

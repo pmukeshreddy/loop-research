@@ -1,0 +1,22 @@
+test_contracts_do_not_silently_accept_each_others_s1 (test_metrics_contract.ContractTests.test_contracts_do_not_silently_accept_each_others_s1) ... ok
+test_default_preserves_legacy_null_and_separate_diagnostic (test_metrics_contract.ContractTests.test_default_preserves_legacy_null_and_separate_diagnostic) ... ok
+test_new_contract_does_not_preselect_future_directional_claims (test_metrics_contract.ContractTests.test_new_contract_does_not_preselect_future_directional_claims) ... ERROR
+test_new_output_names_actual_boundary_without_relabeling_legacy (test_metrics_contract.ContractTests.test_new_output_names_actual_boundary_without_relabeling_legacy) ... ok
+test_review_file_requires_v2_contract_receipt_and_legacy_default_is_accepted (test_metrics_contract.ContractTests.test_review_file_requires_v2_contract_receipt_and_legacy_default_is_accepted) ... ok
+test_v2_binary_score_and_justified_unavailable_are_distinct (test_metrics_contract.ContractTests.test_v2_binary_score_and_justified_unavailable_are_distinct) ... ok
+test_v2_explicit_zero_is_observed_and_missing_score_fails (test_metrics_contract.ContractTests.test_v2_explicit_zero_is_observed_and_missing_score_fails) ... ok
+test_v2_submission_witness_uses_first_successful_root_boundary (test_metrics_contract.ContractTests.test_v2_submission_witness_uses_first_successful_root_boundary) ... ok
+
+======================================================================
+ERROR: test_new_contract_does_not_preselect_future_directional_claims (test_metrics_contract.ContractTests.test_new_contract_does_not_preselect_future_directional_claims)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/test_metrics_contract.py", line 127, in test_new_contract_does_not_preselect_future_directional_claims
+    report = m.aggregate_controls(runs, contract='answer-ready-v2')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: aggregate_controls() got an unexpected keyword argument 'contract'
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.007s
+
+FAILED (errors=1)

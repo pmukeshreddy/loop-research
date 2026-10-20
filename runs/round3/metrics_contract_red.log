@@ -1,0 +1,94 @@
+test_contracts_do_not_silently_accept_each_others_s1 (test_metrics_contract.ContractTests.test_contracts_do_not_silently_accept_each_others_s1) ... ERROR
+test_default_preserves_legacy_null_and_separate_diagnostic (test_metrics_contract.ContractTests.test_default_preserves_legacy_null_and_separate_diagnostic) ... ERROR
+test_new_contract_does_not_preselect_future_directional_claims (test_metrics_contract.ContractTests.test_new_contract_does_not_preselect_future_directional_claims) ... ok
+test_new_output_names_actual_boundary_without_relabeling_legacy (test_metrics_contract.ContractTests.test_new_output_names_actual_boundary_without_relabeling_legacy) ... ERROR
+test_review_file_requires_v2_contract_receipt_and_legacy_default_is_accepted (test_metrics_contract.ContractTests.test_review_file_requires_v2_contract_receipt_and_legacy_default_is_accepted) ... ERROR
+test_v2_binary_score_and_justified_unavailable_are_distinct (test_metrics_contract.ContractTests.test_v2_binary_score_and_justified_unavailable_are_distinct) ... 
+  test_v2_binary_score_and_justified_unavailable_are_distinct (test_metrics_contract.ContractTests.test_v2_binary_score_and_justified_unavailable_are_distinct) (score=0) ... ERROR
+  test_v2_binary_score_and_justified_unavailable_are_distinct (test_metrics_contract.ContractTests.test_v2_binary_score_and_justified_unavailable_are_distinct) (score=1) ... ERROR
+  test_v2_binary_score_and_justified_unavailable_are_distinct (test_metrics_contract.ContractTests.test_v2_binary_score_and_justified_unavailable_are_distinct) (score=None) ... ERROR
+test_v2_binary_score_and_justified_unavailable_are_distinct (test_metrics_contract.ContractTests.test_v2_binary_score_and_justified_unavailable_are_distinct) ... ERROR
+test_v2_explicit_zero_is_observed_and_missing_score_fails (test_metrics_contract.ContractTests.test_v2_explicit_zero_is_observed_and_missing_score_fails) ... ERROR
+
+======================================================================
+ERROR: test_contracts_do_not_silently_accept_each_others_s1 (test_metrics_contract.ContractTests.test_contracts_do_not_silently_accept_each_others_s1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/test_metrics_contract.py", line 68, in test_contracts_do_not_silently_accept_each_others_s1
+    m.manual_metrics(review(1, 1), 'synthetic', contract='answer-ready-v2')
+TypeError: manual_metrics() got an unexpected keyword argument 'contract'
+
+======================================================================
+ERROR: test_default_preserves_legacy_null_and_separate_diagnostic (test_metrics_contract.ContractTests.test_default_preserves_legacy_null_and_separate_diagnostic)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/test_metrics_contract.py", line 34, in test_default_preserves_legacy_null_and_separate_diagnostic
+    explicit, _ = m.manual_metrics(old, 'synthetic', contract='records-add-v1')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: manual_metrics() got an unexpected keyword argument 'contract'
+
+======================================================================
+ERROR: test_new_output_names_actual_boundary_without_relabeling_legacy (test_metrics_contract.ContractTests.test_new_output_names_actual_boundary_without_relabeling_legacy)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/test_metrics_contract.py", line 91, in test_new_output_names_actual_boundary_without_relabeling_legacy
+    new = m.contract_definition('answer-ready-v2')
+          ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'metrics' has no attribute 'contract_definition'
+
+======================================================================
+ERROR: test_review_file_requires_v2_contract_receipt_and_legacy_default_is_accepted (test_metrics_contract.ContractTests.test_review_file_requires_v2_contract_receipt_and_legacy_default_is_accepted)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/test_metrics_contract.py", line 83, in test_review_file_requires_v2_contract_receipt_and_legacy_default_is_accepted
+    m.load_manual([path], 'source', contract='answer-ready-v2')
+TypeError: load_manual() got an unexpected keyword argument 'contract'
+
+======================================================================
+ERROR: test_v2_binary_score_and_justified_unavailable_are_distinct (test_metrics_contract.ContractTests.test_v2_binary_score_and_justified_unavailable_are_distinct) (score=0)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/test_metrics_contract.py", line 55, in test_v2_binary_score_and_justified_unavailable_are_distinct
+    values, _ = m.manual_metrics(review(2, score), 'synthetic', contract='answer-ready-v2')
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: manual_metrics() got an unexpected keyword argument 'contract'
+
+======================================================================
+ERROR: test_v2_binary_score_and_justified_unavailable_are_distinct (test_metrics_contract.ContractTests.test_v2_binary_score_and_justified_unavailable_are_distinct) (score=1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/test_metrics_contract.py", line 55, in test_v2_binary_score_and_justified_unavailable_are_distinct
+    values, _ = m.manual_metrics(review(2, score), 'synthetic', contract='answer-ready-v2')
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: manual_metrics() got an unexpected keyword argument 'contract'
+
+======================================================================
+ERROR: test_v2_binary_score_and_justified_unavailable_are_distinct (test_metrics_contract.ContractTests.test_v2_binary_score_and_justified_unavailable_are_distinct) (score=None)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/test_metrics_contract.py", line 55, in test_v2_binary_score_and_justified_unavailable_are_distinct
+    values, _ = m.manual_metrics(review(2, score), 'synthetic', contract='answer-ready-v2')
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: manual_metrics() got an unexpected keyword argument 'contract'
+
+======================================================================
+ERROR: test_v2_binary_score_and_justified_unavailable_are_distinct (test_metrics_contract.ContractTests.test_v2_binary_score_and_justified_unavailable_are_distinct)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/test_metrics_contract.py", line 60, in test_v2_binary_score_and_justified_unavailable_are_distinct
+    m.manual_metrics(missing_reason, 'synthetic', contract='answer-ready-v2')
+TypeError: manual_metrics() got an unexpected keyword argument 'contract'
+
+======================================================================
+ERROR: test_v2_explicit_zero_is_observed_and_missing_score_fails (test_metrics_contract.ContractTests.test_v2_explicit_zero_is_observed_and_missing_score_fails)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/test_metrics_contract.py", line 45, in test_v2_explicit_zero_is_observed_and_missing_score_fails
+    values, _ = m.manual_metrics(supplied, 'synthetic', contract='answer-ready-v2')
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: manual_metrics() got an unexpected keyword argument 'contract'
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.002s
+
+FAILED (errors=9)
