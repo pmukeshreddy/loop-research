@@ -1,6 +1,6 @@
 # Independent process-cleanup review
 
-Reviewer `fetch_review`; 2026-10-20T08:48:04.579308+00:00; base `42424491009371cc7063c2a88394e92c97e974a7`. No blocking finding for this narrow cleanup change. This is an offline source/test review, not a live-preflight success claim.
+Reviewer `fetch_review`; 2026-10-20T08:48:04.579308+00:00; base `42424491009371cc7063c2a88394e92c97e974a7`. Reviewed commit `8a45fe2ff8e5b6468f6fcbd1f96ec22828a778db` retains the exact tested source bytes. No blocking finding for this narrow cleanup change. This is an offline source/test review, not a live-preflight success claim.
 
 Reviewed source SHA-256: `b66c43f0348ad0868774dcd9548473002c9e23ff50de592ef4384aca86018b0c`. Tests SHA-256: `7ab9b215e0c7046506a27824e73655c18a0e757dba6b23663473518e6a78b97c`. Both pytest and probes explicitly asserted that `archive.__file__` resolved to the isolated `process-cleanup` worktree, avoiding the older installed source.
 

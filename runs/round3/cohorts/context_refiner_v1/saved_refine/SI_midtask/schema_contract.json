@@ -1,0 +1,614 @@
+{
+  "mode": "legacy_anchor_restriction",
+  "original_schema": {
+    "$defs": {
+      "Candidate": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "evidence_refs": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Evidence Refs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "evidence_refs"
+        ],
+        "title": "Candidate",
+        "type": "object"
+      },
+      "Decision": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "minLength": 1,
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "accepted",
+              "declined"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "reason": {
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "evidence_refs": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "edit_indexes": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Edit Indexes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "decision",
+          "reason",
+          "evidence_refs",
+          "edit_indexes"
+        ],
+        "title": "Decision",
+        "type": "object"
+      },
+      "Edit": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "create",
+              "update",
+              "delete"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "prompt",
+              "memory",
+              "skill",
+              "subagent"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "module": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Module"
+          }
+        },
+        "required": [
+          "action",
+          "kind",
+          "id",
+          "title",
+          "content",
+          "module"
+        ],
+        "title": "Edit",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "summary": {
+        "title": "Summary",
+        "type": "string"
+      },
+      "edits": {
+        "items": {
+          "$ref": "#/$defs/Edit"
+        },
+        "title": "Edits",
+        "type": "array",
+        "maxItems": 2
+      },
+      "additional_candidates": {
+        "items": {
+          "$ref": "#/$defs/Candidate"
+        },
+        "title": "Additional Candidates",
+        "type": "array"
+      },
+      "decisions": {
+        "items": {
+          "$ref": "#/$defs/Decision"
+        },
+        "title": "Decisions",
+        "type": "array"
+      }
+    },
+    "required": [
+      "summary",
+      "edits",
+      "additional_candidates",
+      "decisions"
+    ],
+    "title": "Proposal",
+    "type": "object"
+  },
+  "current_schema": {
+    "$defs": {
+      "Candidate": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "evidence_refs": {
+            "items": {
+              "$ref": "#/$defs/EvidenceRef"
+            },
+            "minItems": 1,
+            "title": "Evidence Refs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "evidence_refs"
+        ],
+        "title": "Candidate",
+        "type": "object"
+      },
+      "Decision": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "minLength": 1,
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "accepted",
+              "declined"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "reason": {
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "evidence_refs": {
+            "items": {
+              "$ref": "#/$defs/EvidenceRef"
+            },
+            "minItems": 1,
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "edit_indexes": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Edit Indexes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "decision",
+          "reason",
+          "evidence_refs",
+          "edit_indexes"
+        ],
+        "title": "Decision",
+        "type": "object"
+      },
+      "Edit": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "create",
+              "update",
+              "delete"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "prompt",
+              "memory",
+              "skill",
+              "subagent"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "module": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Module"
+          }
+        },
+        "required": [
+          "action",
+          "kind",
+          "id",
+          "title",
+          "content",
+          "module"
+        ],
+        "title": "Edit",
+        "type": "object"
+      },
+      "EvidenceRef": {
+        "type": "string",
+        "enum": [
+          "/trajectory",
+          "/self_check",
+          "/entries",
+          "/trajectory/0",
+          "/trajectory/1",
+          "/trajectory/2",
+          "/trajectory/3",
+          "/trajectory/4",
+          "/trajectory/5",
+          "/trajectory/6",
+          "/trajectory/7",
+          "/trajectory/8",
+          "/trajectory/9",
+          "/trajectory/10",
+          "/trajectory/11",
+          "/trajectory/12",
+          "/trajectory/13",
+          "/trajectory/14",
+          "/trajectory/15",
+          "/trajectory/16",
+          "/trajectory/17",
+          "/trajectory/18",
+          "/trajectory/19",
+          "/trajectory/20",
+          "/trajectory/21",
+          "/trajectory/22",
+          "/trajectory/23",
+          "/trajectory/24",
+          "/trajectory/25",
+          "/trajectory/26",
+          "/trajectory/27",
+          "/trajectory/28",
+          "/trajectory/29",
+          "/trajectory/30",
+          "/trajectory/31",
+          "/trajectory/32",
+          "/trajectory/33",
+          "/trajectory/34",
+          "/trajectory/35",
+          "/trajectory/36",
+          "/trajectory/37",
+          "/trajectory/38",
+          "/trajectory/39",
+          "/trajectory/40",
+          "/self_check/ok",
+          "/self_check/issues",
+          "/self_check/signals",
+          "/self_check/citations",
+          "/self_check/constraint_coverage",
+          "/self_check/searches",
+          "/self_check/discoveries",
+          "/self_check/fetches",
+          "/self_check/dropped_search_hits",
+          "/self_check/status",
+          "/self_check/issues/0",
+          "/self_check/signals/0",
+          "/self_check/signals/1"
+        ]
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "summary": {
+        "title": "Summary",
+        "type": "string"
+      },
+      "edits": {
+        "items": {
+          "$ref": "#/$defs/Edit"
+        },
+        "title": "Edits",
+        "type": "array",
+        "maxItems": 2
+      },
+      "additional_candidates": {
+        "items": {
+          "$ref": "#/$defs/Candidate"
+        },
+        "title": "Additional Candidates",
+        "type": "array"
+      },
+      "decisions": {
+        "items": {
+          "$ref": "#/$defs/Decision"
+        },
+        "title": "Decisions",
+        "type": "array"
+      }
+    },
+    "required": [
+      "summary",
+      "edits",
+      "additional_candidates",
+      "decisions"
+    ],
+    "title": "Proposal",
+    "type": "object"
+  },
+  "changes": [
+    {
+      "path": "/$defs/EvidenceRef",
+      "before": null,
+      "after": {
+        "type": "string",
+        "enum": [
+          "/trajectory",
+          "/self_check",
+          "/entries",
+          "/trajectory/0",
+          "/trajectory/1",
+          "/trajectory/2",
+          "/trajectory/3",
+          "/trajectory/4",
+          "/trajectory/5",
+          "/trajectory/6",
+          "/trajectory/7",
+          "/trajectory/8",
+          "/trajectory/9",
+          "/trajectory/10",
+          "/trajectory/11",
+          "/trajectory/12",
+          "/trajectory/13",
+          "/trajectory/14",
+          "/trajectory/15",
+          "/trajectory/16",
+          "/trajectory/17",
+          "/trajectory/18",
+          "/trajectory/19",
+          "/trajectory/20",
+          "/trajectory/21",
+          "/trajectory/22",
+          "/trajectory/23",
+          "/trajectory/24",
+          "/trajectory/25",
+          "/trajectory/26",
+          "/trajectory/27",
+          "/trajectory/28",
+          "/trajectory/29",
+          "/trajectory/30",
+          "/trajectory/31",
+          "/trajectory/32",
+          "/trajectory/33",
+          "/trajectory/34",
+          "/trajectory/35",
+          "/trajectory/36",
+          "/trajectory/37",
+          "/trajectory/38",
+          "/trajectory/39",
+          "/trajectory/40",
+          "/self_check/ok",
+          "/self_check/issues",
+          "/self_check/signals",
+          "/self_check/citations",
+          "/self_check/constraint_coverage",
+          "/self_check/searches",
+          "/self_check/discoveries",
+          "/self_check/fetches",
+          "/self_check/dropped_search_hits",
+          "/self_check/status",
+          "/self_check/issues/0",
+          "/self_check/signals/0",
+          "/self_check/signals/1"
+        ]
+      }
+    },
+    {
+      "path": "/$defs/Candidate/properties/evidence_refs/items",
+      "before": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "after": {
+        "$ref": "#/$defs/EvidenceRef"
+      }
+    },
+    {
+      "path": "/$defs/Decision/properties/evidence_refs/items",
+      "before": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "after": {
+        "$ref": "#/$defs/EvidenceRef"
+      }
+    }
+  ],
+  "original_schema_sha256": "feb9724ff30afeefc4c7907c05cf143d9a903fedcb394786b4f052982dec5b09",
+  "current_schema_sha256": "2605795ef936dd60a86acbfeca954ffe98091f2e0be2d8ef4d4280c317c03902",
+  "current_evidence_index": [
+    "/trajectory",
+    "/self_check",
+    "/entries",
+    "/trajectory/0",
+    "/trajectory/1",
+    "/trajectory/2",
+    "/trajectory/3",
+    "/trajectory/4",
+    "/trajectory/5",
+    "/trajectory/6",
+    "/trajectory/7",
+    "/trajectory/8",
+    "/trajectory/9",
+    "/trajectory/10",
+    "/trajectory/11",
+    "/trajectory/12",
+    "/trajectory/13",
+    "/trajectory/14",
+    "/trajectory/15",
+    "/trajectory/16",
+    "/trajectory/17",
+    "/trajectory/18",
+    "/trajectory/19",
+    "/trajectory/20",
+    "/trajectory/21",
+    "/trajectory/22",
+    "/trajectory/23",
+    "/trajectory/24",
+    "/trajectory/25",
+    "/trajectory/26",
+    "/trajectory/27",
+    "/trajectory/28",
+    "/trajectory/29",
+    "/trajectory/30",
+    "/trajectory/31",
+    "/trajectory/32",
+    "/trajectory/33",
+    "/trajectory/34",
+    "/trajectory/35",
+    "/trajectory/36",
+    "/trajectory/37",
+    "/trajectory/38",
+    "/trajectory/39",
+    "/trajectory/40",
+    "/self_check/ok",
+    "/self_check/issues",
+    "/self_check/signals",
+    "/self_check/citations",
+    "/self_check/constraint_coverage",
+    "/self_check/searches",
+    "/self_check/discoveries",
+    "/self_check/fetches",
+    "/self_check/dropped_search_hits",
+    "/self_check/status",
+    "/self_check/issues/0",
+    "/self_check/signals/0",
+    "/self_check/signals/1"
+  ],
+  "original_constraints_preserved": true,
+  "final_validation_required": [
+    "original_schema",
+    "current_schema",
+    "complete_candidate_accounting"
+  ]
+}

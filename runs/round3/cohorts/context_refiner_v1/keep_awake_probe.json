@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/usr/bin/caffeinate",
+    "-i",
+    "/bin/sleep",
+    "2"
+  ],
+  "exit_code": 0,
+  "observed_owned_idle_assertions": [
+    "   pid 37678(caffeinate): [0x0003f6c400018d5d] 00:00:00 PreventUserIdleSystemSleep named: \"caffeinate command-line tool\"  "
+  ],
+  "released_after_command": true,
+  "limits": "Prevents idle system sleep only; does not override lid closure, explicit sleep, battery shutdown or network failure."
+}
