@@ -1,0 +1,170 @@
+{
+  "reviewer": "fetch_review",
+  "reviewed_at": "2026-10-20T04:21:09.126347+00:00",
+  "base_commit": "e9b1dcd9d2e1a81e8d37ba09cdc028a6dd49feed",
+  "worktree_head_at_review": "e9b1dcd9d2e1a81e8d37ba09cdc028a6dd49feed",
+  "worktree": "runs/round3/worktrees/quoted-text",
+  "source_state": "Author-owned uncommitted final source, bound by exact SHA-256; author reported no further product/test edits planned.",
+  "source_files": [
+    {
+      "path": "src/loop_research/shared_text.py",
+      "sha256": "21f8f633a5042ca7bcf23831a394326ec380b83b2579c9e1e5f38fb76a1849cf",
+      "bytes": 13210
+    },
+    {
+      "path": "src/loop_research/refine.py",
+      "sha256": "9e37d099ae0c8e22077a54ceb36b72eb9778ff670e1cc986d4867553278634c0",
+      "bytes": 25640
+    },
+    {
+      "path": "tests/test_shared_text_quotes.py",
+      "sha256": "438a9b130d20a8393b2d05228ccc3869d1861eb3460237cfd3c214b676f297d2",
+      "bytes": 6098
+    },
+    {
+      "path": "tests/test_shared_text_fragments.py",
+      "sha256": "9a8b0d7f30c2069ef4fa71e9e344fa53af61c1dc0dff9b8ddb896d8b15f04897",
+      "bytes": 3991
+    },
+    {
+      "path": "tests/test_saved_refine_input.py",
+      "sha256": "389f10c174b7668f1f3739f171aa2276e7dd7df55bf28a2c276dbbd1f92393c8",
+      "bytes": 4576
+    }
+  ],
+  "scope": "Independent read-only review plus offline tests and in-memory archived-payload verification. Only these review files written to main; no product edits, install, live model, web, research mutation or commit.",
+  "findings": [],
+  "conclusion": "No important defect found. The v3 option preserves exact logical data and reduces the retained failing planner request below its observed provider limit. No live execution or general future-fit claim.",
+  "review_points": [
+    {
+      "topic": "Generality and scope",
+      "path": "src/loop_research/shared_text.py",
+      "lines": [
+        158,
+        168,
+        180,
+        236
+      ],
+      "assessment": "Double-quoted token boundaries prevent prose apostrophes from swallowing embedded JSON evidence. Candidates are determined by exact text and actual JSON serialization cost, without task IDs, sites, model names, payload-length thresholds or provider-limit constants. Product diff changes only the codec and its refiner representation instructions. Root prompt assembly, research field selection, budgets, models, schemas and evaluator logic are unchanged."
+    },
+    {
+      "topic": "Raw-versus-escaped identity",
+      "path": "src/loop_research/shared_text.py",
+      "lines": [
+        168,
+        175,
+        211,
+        281
+      ],
+      "assessment": "A quoted fragment is canonicalized only when json.loads returns a string and one json.dumps(..., ensure_ascii=False) exactly reproduces its original spelling. $json_quote applies that operation exactly once; Unicode, quotes, backslashes, controls and noncanonical escaped spellings round-trip without normalization."
+    },
+    {
+      "topic": "Complete cost and fallback",
+      "path": "src/loop_research/shared_text.py",
+      "lines": [
+        189,
+        218,
+        229,
+        246,
+        249
+      ],
+      "assessment": "Entry candidates include actual reference indices and escaped literal costs. Local concatenation must shrink, unused table entries are removed, then full v3 wrapper must be strictly smaller than both compact original payload and unchanged v2 wrapper. V2 wins ties. Candidate selection is not claimed globally optimal."
+    },
+    {
+      "topic": "Compatibility and malformed values",
+      "path": "src/loop_research/shared_text.py",
+      "lines": [
+        261,
+        265,
+        268,
+        276,
+        282,
+        297
+      ],
+      "assessment": "Existing v1/v2 semantics remain version-gated; their $json_quote keys stay literal. V3 marker-shaped original objects are escaped. Decoder validates exact marker keys, integer indices excluding bool, bounds, literal-only table, legal parts, JSON types and container cycles. No recursive table graph or user-selected quote depth exists."
+    },
+    {
+      "topic": "Prompt instructions",
+      "path": "src/loop_research/refine.py",
+      "lines": [
+        192,
+        198,
+        203,
+        206
+      ],
+      "assessment": "Instructions accurately identify v2/v3, define the one-step quote operation including outer quotes, allow quote references in parts, preserve literal-object keys, and direct evidence pointers to decoded logical payload. Every table entry remains literal readable text."
+    },
+    {
+      "topic": "Test changes",
+      "path": "tests/test_shared_text_fragments.py",
+      "lines": [
+        14,
+        32
+      ],
+      "assessment": "Old tests now exercise both unchanged private v2 encoding and selected v3 encoding, rather than deleting old-format assertions. New tests cover apostrophe boundaries, Unicode/control exactness, collisions, malformed references, old marker compatibility, complete-wrapper profitability and index widths. Saved-input helper fixture accepts v3 while retaining v1/v2 cases."
+    }
+  ],
+  "verification": [
+    {
+      "kind": "independent_focused_pytest",
+      "command": "PYTHONPATH=src /Users/mukeshreddypochamreddy/Desktop/loop-research/.venv/bin/python -m pytest -q tests/test_shared_text_quotes.py tests/test_shared_text_fragments.py tests/test_saved_refine_input.py tests/test_shared_text.py tests/test_refine.py tests/test_refine_candidates.py tests/test_refine_representation.py tests/test_refine_evidence_anchors.py",
+      "cwd": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/quoted-text",
+      "result": "193 passed in 4.96s",
+      "exit_code": 0,
+      "tool_chunk_id": "02d63f",
+      "evidence_kind": "retained tool output",
+      "raw_log_file": null
+    },
+    {
+      "kind": "independent_seeded_properties",
+      "seed": 821551,
+      "cases": 300,
+      "result": "All passed",
+      "exit_code": 0,
+      "tool_chunk_id": "6dfcae",
+      "evidence_kind": "retained tool output",
+      "raw_log_file": null,
+      "assertions": [
+        "Exact compact-JSON roundtrip of mixed raw/canonical/noncanonical strings, controls, Unicode, apostrophes and all reserved marker keys",
+        "Input not mutated",
+        "New _encode_v2 output exactly equals legacy encode_shared_text loaded from git e9b1dcd source",
+        "New decoder exactly decodes legacy encoding",
+        "Selected serialized output no larger than legacy v2; selected v3 strictly smaller than compact logical input"
+      ]
+    }
+  ],
+  "archived_payload_verification": {
+    "tool_chunk_id": "6dfcae",
+    "evidence_kind": "retained tool output; independent inline Python, no separate raw log",
+    "job": "runs/round3/cohorts/fair_slots_v1/workspaces/A/runs/research-0fd1b020f55e4155989dcd8c40c418f1/289901ce021c28d56fdac993/refine_state.json",
+    "job_sha256": "5ecca81175881e538d8f63d24e24480b4e0c6c929d0697fc4633bb5eace302d0",
+    "logical_chars": 1984123,
+    "logical_sha256": "2cd53600de561fdfad4d7ce8832de41e756cbadec841ccc2ca522c5a3e37bcd2",
+    "trajectory_records": 292,
+    "evidence_anchors": 344,
+    "old_wire_chars": 1588531,
+    "new_wire_chars": 851924,
+    "new_wire_sha256": "6471ec961a5268a3a4e3b00d47eede7264c766a9d4285ccb8d393c0a0148b133",
+    "old_backend_chars": 1592078,
+    "new_backend_chars": 855991,
+    "new_backend_sha256": "a1275aeead23e7d4bcc10e6da32e3048a89cb6b0aaff0086830bf24a9f9cdb88",
+    "new_instructions_plus_backend_prefix_chars": 4067,
+    "observed_limit_chars": 1048576,
+    "headroom_chars": 192585,
+    "schema_chars": 8959,
+    "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542",
+    "schema_exactly_unchanged": true,
+    "old_and_new_decoders_agree": true,
+    "roundtrip_exact_default_json_serialization": true,
+    "deterministic_reencoding": true,
+    "original_archive_bytes_unchanged": true,
+    "encode_elapsed_s_single_observation": 0.3294700830010697,
+    "method": "Load legacy codec directly from git e9b1dcd, validate saved wire hash, independently decode original payload, compare new decoder, encode with reviewed source, serialize/decode and compare exact original logical JSON including scalar spelling. Rebuild Proposal schema with original max_edits/evidence_index and assert identical serialized schema; hash archived bytes again."
+  },
+  "limits": [
+    "Exact lossless compression cannot guarantee an arbitrary unique or larger future input fits a finite provider limit. The patch does not truncate or silently project fields; permanent rejection must remain visible.",
+    "The measured request fits with new instructions included, but no live provider acceptance or downstream scientific result has been established by this review.",
+    "The 193-test run is targeted; author/parent own broad full-suite and integration verification.",
+    "The 0.329-second encoding measurement is one observation, not a performance guarantee."
+  ]
+}
