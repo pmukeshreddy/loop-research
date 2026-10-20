@@ -1,0 +1,191 @@
+..........F..................................F.......................... [ 44%]
+...................FFFFFFFF............................................. [ 88%]
+..................                                                       [100%]
+=================================== FAILURES ===================================
+___ test_v3_escapes_literal_new_marker_and_keeps_nested_references_distinct ____
+
+    def test_v3_escapes_literal_new_marker_and_keeps_nested_references_distinct():
+        source = 'Evidence with "quotes", 雪 and newlines\n' * 100
+        payload = {'$json_quote': {'$shared_text': 0}, 'source': source,
+                   'prompts': ['read ' + json.dumps(source, ensure_ascii=False) for _ in range(3)]}
+        encoded = encode_shared_text(payload)
+>       assert encoded['format'] == 'shared-text-v3'
+E       AssertionError: assert 'shared-text-v2' == 'shared-text-v3'
+E         
+E         - shared-text-v3
+E         ?              ^
+E         + shared-text-v2
+E         ?              ^
+
+tests/test_shared_text_quotes.py:57: AssertionError
+____ test_savings_must_cover_complete_wrapper_not_just_references_and_table ____
+
+    def test_savings_must_cover_complete_wrapper_not_just_references_and_table():
+        payload = ["x" * 60, "x" * 60]
+        candidate = wire([{"$shared_text": 0}, {"$shared_text": 0}], ["x" * 60])
+        assert len(compact(candidate)) >= len(compact(payload))
+>       assert encode(payload) == wire(payload)
+E       AssertionError: assert {'format': 's...ed_text': 0}]} == {'format': 's...xxxxxxxxxxx']}
+E         
+E         Differing items:
+E         {'format': 'shared-text-v3'} != {'format': 'shared-text-v2'}
+E         {'payload': [{'$shared_text': 0}, {'$shared_text': 0}]} != {'payload': ['xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx']}
+E         {'shared_texts': ['xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx']} != {'shared_texts': []}
+E         Use -v to get more diff
+
+tests/test_shared_text.py:60: AssertionError
+__ test_different_prompts_share_embedded_quoted_text_without_losing_wrappers ___
+
+    def test_different_prompts_share_embedded_quoted_text_without_losing_wrappers():
+        passage = 'Exact evidence with 雪, "quotes", slash \\, and newline\n' * 30
+        payload = {'prompts': [f'Request {i}: ' + compact({'text': passage, 'record': i})
+                               + f'\nEnd {i}.' for i in range(8)], 'number': 1.0}
+        original = copy.deepcopy(payload)
+        encoded = encode_shared_text(payload)
+>       assert encoded['format'] == 'shared-text-v2'
+E       AssertionError: assert 'shared-text-v3' == 'shared-text-v2'
+E         
+E         - shared-text-v2
+E         ?              ^
+E         + shared-text-v3
+E         ?              ^
+
+tests/test_shared_text_fragments.py:20: AssertionError
+__ test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\n] ___
+
+ending = '\n'
+
+    @pytest.mark.parametrize('ending', ['\n', '\r\n', '\r', '\v', '\f', '\u2028', '\u2029'])
+    def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending):
+        value = ('  exact \\ "quoted" 雪 e\u0301' + ending) * 20
+        payload = [f'prefix-{i} ' + compact(value) + ending + f'suffix-{i}' for i in range(5)]
+        encoded = encode_shared_text(payload)
+>       assert encoded['format'] == 'shared-text-v2'
+E       AssertionError: assert 'shared-text-v3' == 'shared-text-v2'
+E         
+E         - shared-text-v2
+E         ?              ^
+E         + shared-text-v3
+E         ?              ^
+
+tests/test_shared_text_fragments.py:33: AssertionError
+_ test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\r\n] __
+
+ending = '\r\n'
+
+    @pytest.mark.parametrize('ending', ['\n', '\r\n', '\r', '\v', '\f', '\u2028', '\u2029'])
+    def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending):
+        value = ('  exact \\ "quoted" 雪 e\u0301' + ending) * 20
+        payload = [f'prefix-{i} ' + compact(value) + ending + f'suffix-{i}' for i in range(5)]
+        encoded = encode_shared_text(payload)
+>       assert encoded['format'] == 'shared-text-v2'
+E       AssertionError: assert 'shared-text-v3' == 'shared-text-v2'
+E         
+E         - shared-text-v2
+E         ?              ^
+E         + shared-text-v3
+E         ?              ^
+
+tests/test_shared_text_fragments.py:33: AssertionError
+__ test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\r] ___
+
+ending = '\r'
+
+    @pytest.mark.parametrize('ending', ['\n', '\r\n', '\r', '\v', '\f', '\u2028', '\u2029'])
+    def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending):
+        value = ('  exact \\ "quoted" 雪 e\u0301' + ending) * 20
+        payload = [f'prefix-{i} ' + compact(value) + ending + f'suffix-{i}' for i in range(5)]
+        encoded = encode_shared_text(payload)
+>       assert encoded['format'] == 'shared-text-v2'
+E       AssertionError: assert 'shared-text-v3' == 'shared-text-v2'
+E         
+E         - shared-text-v2
+E         ?              ^
+E         + shared-text-v3
+E         ?              ^
+
+tests/test_shared_text_fragments.py:33: AssertionError
+_ test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\x0b] __
+
+ending = '\x0b'
+
+    @pytest.mark.parametrize('ending', ['\n', '\r\n', '\r', '\v', '\f', '\u2028', '\u2029'])
+    def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending):
+        value = ('  exact \\ "quoted" 雪 e\u0301' + ending) * 20
+        payload = [f'prefix-{i} ' + compact(value) + ending + f'suffix-{i}' for i in range(5)]
+        encoded = encode_shared_text(payload)
+>       assert encoded['format'] == 'shared-text-v2'
+E       AssertionError: assert 'shared-text-v3' == 'shared-text-v2'
+E         
+E         - shared-text-v2
+E         ?              ^
+E         + shared-text-v3
+E         ?              ^
+
+tests/test_shared_text_fragments.py:33: AssertionError
+_ test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\x0c] __
+
+ending = '\x0c'
+
+    @pytest.mark.parametrize('ending', ['\n', '\r\n', '\r', '\v', '\f', '\u2028', '\u2029'])
+    def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending):
+        value = ('  exact \\ "quoted" 雪 e\u0301' + ending) * 20
+        payload = [f'prefix-{i} ' + compact(value) + ending + f'suffix-{i}' for i in range(5)]
+        encoded = encode_shared_text(payload)
+>       assert encoded['format'] == 'shared-text-v2'
+E       AssertionError: assert 'shared-text-v3' == 'shared-text-v2'
+E         
+E         - shared-text-v2
+E         ?              ^
+E         + shared-text-v3
+E         ?              ^
+
+tests/test_shared_text_fragments.py:33: AssertionError
+_ test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\u2028] _
+
+ending = '\u2028'
+
+    @pytest.mark.parametrize('ending', ['\n', '\r\n', '\r', '\v', '\f', '\u2028', '\u2029'])
+    def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending):
+        value = ('  exact \\ "quoted" 雪 e\u0301' + ending) * 20
+        payload = [f'prefix-{i} ' + compact(value) + ending + f'suffix-{i}' for i in range(5)]
+        encoded = encode_shared_text(payload)
+>       assert encoded['format'] == 'shared-text-v2'
+E       AssertionError: assert 'shared-text-v3' == 'shared-text-v2'
+E         
+E         - shared-text-v2
+E         ?              ^
+E         + shared-text-v3
+E         ?              ^
+
+tests/test_shared_text_fragments.py:33: AssertionError
+_ test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\u2029] _
+
+ending = '\u2029'
+
+    @pytest.mark.parametrize('ending', ['\n', '\r\n', '\r', '\v', '\f', '\u2028', '\u2029'])
+    def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending):
+        value = ('  exact \\ "quoted" 雪 e\u0301' + ending) * 20
+        payload = [f'prefix-{i} ' + compact(value) + ending + f'suffix-{i}' for i in range(5)]
+        encoded = encode_shared_text(payload)
+>       assert encoded['format'] == 'shared-text-v2'
+E       AssertionError: assert 'shared-text-v3' == 'shared-text-v2'
+E         
+E         - shared-text-v2
+E         ?              ^
+E         + shared-text-v3
+E         ?              ^
+
+tests/test_shared_text_fragments.py:33: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_shared_text_quotes.py::test_v3_escapes_literal_new_marker_and_keeps_nested_references_distinct
+FAILED tests/test_shared_text.py::test_savings_must_cover_complete_wrapper_not_just_references_and_table
+FAILED tests/test_shared_text_fragments.py::test_different_prompts_share_embedded_quoted_text_without_losing_wrappers
+FAILED tests/test_shared_text_fragments.py::test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\n]
+FAILED tests/test_shared_text_fragments.py::test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\r\n]
+FAILED tests/test_shared_text_fragments.py::test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\r]
+FAILED tests/test_shared_text_fragments.py::test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\x0b]
+FAILED tests/test_shared_text_fragments.py::test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\x0c]
+FAILED tests/test_shared_text_fragments.py::test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\u2028]
+FAILED tests/test_shared_text_fragments.py::test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes[\u2029]
+10 failed, 152 passed in 2.98s

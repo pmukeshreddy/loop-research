@@ -4,21 +4,24 @@ import json
 
 import pytest
 
-from loop_research.shared_text import decode_shared_text, encode_shared_text
+from loop_research.shared_text import _encode_v2, decode_shared_text, encode_shared_text
 
 
 def compact(value):
     return json.dumps(value, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
 
 
-def test_different_prompts_share_embedded_quoted_text_without_losing_wrappers():
+@pytest.mark.parametrize('encoder,version', [
+    (_encode_v2, 'shared-text-v2'), (encode_shared_text, 'shared-text-v3'),
+])
+def test_different_prompts_share_embedded_quoted_text_without_losing_wrappers(encoder, version):
     passage = 'Exact evidence with 雪, "quotes", slash \\, and newline\n' * 30
     payload = {'prompts': [f'Request {i}: ' + compact({'text': passage, 'record': i})
                            + f'\nEnd {i}.' for i in range(8)], 'number': 1.0}
     original = copy.deepcopy(payload)
-    encoded = encode_shared_text(payload)
-    assert encoded['format'] == 'shared-text-v2'
-    assert compact(passage) in encoded['shared_texts']
+    encoded = encoder(payload)
+    assert encoded['format'] == version
+    assert (compact(passage) if version == 'shared-text-v2' else passage) in encoded['shared_texts']
     assert compact(encoded).count('$shared_text_parts') == len(payload['prompts'])
     assert len(compact(encoded)) < len(compact(payload)) - 6 * len(compact(passage))
     assert compact(decode_shared_text(json.loads(compact(encoded)))) == compact(original)
@@ -26,12 +29,15 @@ def test_different_prompts_share_embedded_quoted_text_without_losing_wrappers():
 
 
 @pytest.mark.parametrize('ending', ['\n', '\r\n', '\r', '\v', '\f', '\u2028', '\u2029'])
-def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending):
+@pytest.mark.parametrize('encoder,version', [
+    (_encode_v2, 'shared-text-v2'), (encode_shared_text, 'shared-text-v3'),
+])
+def test_fragment_round_trip_preserves_all_line_endings_and_quote_escapes(ending, encoder, version):
     value = ('  exact \\ "quoted" 雪 e\u0301' + ending) * 20
     payload = [f'prefix-{i} ' + compact(value) + ending + f'suffix-{i}' for i in range(5)]
-    encoded = encode_shared_text(payload)
-    assert encoded['format'] == 'shared-text-v2'
-    assert compact(value) in encoded['shared_texts']
+    encoded = encoder(payload)
+    assert encoded['format'] == version
+    assert (compact(value) if version == 'shared-text-v2' else value) in encoded['shared_texts']
     assert compact(decode_shared_text(json.loads(compact(encoded)))) == compact(payload)
 
 

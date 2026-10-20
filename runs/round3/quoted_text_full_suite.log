@@ -1,0 +1,196 @@
+........................................................................ [  7%]
+........................................................................ [ 15%]
+........................................................................ [ 22%]
+........................................................................ [ 30%]
+........................................................................ [ 37%]
+........................................................................ [ 45%]
+........................................................................ [ 52%]
+........................................................................ [ 60%]
+........................................................................ [ 67%]
+........................................................................ [ 75%]
+........................................................................ [ 82%]
+........................................................................ [ 90%]
+.............................................F.........F....F..........F [ 98%]
+....F..............                                                      [100%]
+=================================== FAILURES ===================================
+___________________ test_release_and_canonical_instructions ____________________
+
+wandr = <loop_research.benchmarks.wandr.grader.WandrBenchmark object at 0x116f4ffb0>
+
+    def test_release_and_canonical_instructions(wandr):
+>       wandr.verify_sources()
+
+tests/test_wandr.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <loop_research.benchmarks.wandr.grader.WandrBenchmark object at 0x116f4ffb0>
+
+    def verify_sources(self):
+        sha = subprocess.check_output(["git", "-C", str(self.code), "rev-parse", "HEAD"], text=True).strip()
+        dirty = subprocess.check_output(["git", "-C", str(self.code), "status", "--porcelain", "--untracked-files=no"], text=True)
+        if sha != CODE_REVISION or dirty:
+>           raise ValueError("WANDR harness must be clean at its pinned revision")
+E           ValueError: WANDR harness must be clean at its pinned revision
+
+src/loop_research/benchmarks/wandr/data.py:31: ValueError
+________________ test_browser_readiness_uses_configured_timeout ________________
+
+wandr = <loop_research.benchmarks.wandr.grader.WandrBenchmark object at 0x116eaf590>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x117084980>
+
+    def test_browser_readiness_uses_configured_timeout(wandr, monkeypatch):
+        wandr.config.verify.browser_timeout_s = 19
+        real_run = __import__('subprocess').run
+        def probe(command, **kwargs):
+            if command[0] == 'git':
+                return real_run(command, **kwargs)
+            assert kwargs['timeout'] == 19
+            return SimpleNamespace(returncode=0, stdout='fixture browser ready', stderr='')
+        monkeypatch.setattr('loop_research.benchmarks.wandr.grader.subprocess.run', probe)
+>       assert wandr.verify()[1][1] is True
+               ^^^^^^^^^^^^^^
+
+tests/test_wandr.py:343: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/loop_research/benchmarks/wandr/grader.py:173: in verify
+    self.verify_sources()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <loop_research.benchmarks.wandr.grader.WandrBenchmark object at 0x116eaf590>
+
+    def verify_sources(self):
+        sha = subprocess.check_output(["git", "-C", str(self.code), "rev-parse", "HEAD"], text=True).strip()
+        dirty = subprocess.check_output(["git", "-C", str(self.code), "status", "--porcelain", "--untracked-files=no"], text=True)
+        if sha != CODE_REVISION or dirty:
+>           raise ValueError("WANDR harness must be clean at its pinned revision")
+E           ValueError: WANDR harness must be clean at its pinned revision
+
+src/loop_research/benchmarks/wandr/data.py:31: ValueError
+________________ test_adapter_grade_preserves_metrics_and_label ________________
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-gs6v1s50/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+benchmark = <loop_research.benchmarks.widesearch.data.WideSearchData object at 0x119191820>
+task = Task(task_id='fixture', benchmark='widesearch', question='Hand-written fixture', spec={'columns': ['entity', 'value'], 'keys': ['entity']}, language='en', as_of_date=None, raw={})
+output = {'rows': [{'entity': 'fixture-a', 'cells': {'entity': {'value': 'fixture-a', 'sources': ['https://example.org'], 'quote': 'fixture-a'}, 'value': {'value': 'fixture-value', 'sources': ['https://example.org'], 'quote': 'fixture-value'}}}]}
+capsys = <_pytest.capture.CaptureFixture object at 0x11935c110>
+
+    def test_adapter_grade_preserves_metrics_and_label(ctx, benchmark, task, output, capsys):
+        from loop_research.benchmarks.widesearch.grader import WideSearchBenchmark
+    
+        ctx.config.models.root = "fixture-root"
+        ctx.config.models.judge = "fixture-judge"
+        graded = WideSearchBenchmark(ctx.root, ctx.config)
+        graded.code = benchmark.code
+        graded.download.mkdir(parents=True)
+        modules = official_modules(graded.code)
+        query = fixture_query(modules)
+        row = {"instance_id": "fixture", "query": task.question,
+               "evaluation": json.dumps(query.evaluation), "language": "en"}
+        (graded.download / "widesearch.jsonl").write_text(json.dumps(row) + "\n")
+        gold = graded.download / "widesearch_gold"
+        gold.mkdir()
+        query.answer.to_csv(gold / "fixture.csv", index=False)
+>       result = graded.grade(task, graded.to_submission(task, output), ctx)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_widesearch.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/loop_research/benchmarks/widesearch/grader.py:109: in grade
+    self.verify_code()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <loop_research.benchmarks.widesearch.grader.WideSearchBenchmark object at 0x11935caa0>
+
+    def verify_code(self):
+        sha = subprocess.check_output(["git", "-C", str(self.code), "rev-parse", "HEAD"], text=True).strip()
+        dirty = subprocess.check_output(["git", "-C", str(self.code), "status", "--porcelain", "--untracked-files=no"], text=True)
+        if sha != CODE_REVISION or dirty:
+>           raise ValueError("Official WideSearch checkout is not clean at the pinned revision")
+E           ValueError: Official WideSearch checkout is not clean at the pinned revision
+
+src/loop_research/benchmarks/widesearch/data.py:115: ValueError
+______ test_preparation_exposes_complete_release_without_saved_partitions ______
+
+benchmark = <loop_research.benchmarks.widesearch.data.WideSearchData object at 0x118e69ca0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x118eb24b0>
+widesearch_download = PosixPath('/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/worktrees/quoted-text/data/downloads/widesearch')
+
+    def test_preparation_exposes_complete_release_without_saved_partitions(benchmark, monkeypatch, widesearch_download):
+        import shutil
+        from loop_research.archive import read_json
+        from loop_research.benchmarks.widesearch import data
+    
+        shutil.copytree(widesearch_download, benchmark.download)
+        def no_network(*args, **kwargs):
+            raise AssertionError('The pinned release is already downloaded')
+        monkeypatch.setattr(data.urllib.request, 'urlopen', no_network)
+>       benchmark.prepare()
+
+tests/test_widesearch.py:154: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/loop_research/benchmarks/widesearch/data.py:103: in prepare
+    self.verify_code()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <loop_research.benchmarks.widesearch.data.WideSearchData object at 0x118e69ca0>
+
+    def verify_code(self):
+        sha = subprocess.check_output(["git", "-C", str(self.code), "rev-parse", "HEAD"], text=True).strip()
+        dirty = subprocess.check_output(["git", "-C", str(self.code), "status", "--porcelain", "--untracked-files=no"], text=True)
+        if sha != CODE_REVISION or dirty:
+>           raise ValueError("Official WideSearch checkout is not clean at the pinned revision")
+E           ValueError: Official WideSearch checkout is not clean at the pinned revision
+
+src/loop_research/benchmarks/widesearch/data.py:115: ValueError
+_ test_empty_grade_uses_official_absent_response_without_judge_or_stale_alignment _
+
+ctx = RunContext(root=PosixPath('/private/var/folders/9z/37tfwz3j0v9dlsykj19f5c600000gn/T/loop-unit-gs6v1s50/pytest-of-mukes... bridge=Bridge(socket_timeout_s=5.0), verify=Verify(codex_timeout_s=30.0, browser_timeout_s=120.0)), task_id='fixture')
+benchmark = <loop_research.benchmarks.widesearch.data.WideSearchData object at 0x1172da570>
+task = Task(task_id='fixture', benchmark='widesearch', question='Hand-written fixture', spec={'columns': ['entity', 'value'], 'keys': ['entity']}, language='en', as_of_date=None, raw={})
+
+    def test_empty_grade_uses_official_absent_response_without_judge_or_stale_alignment(ctx, benchmark, task):
+        from loop_research.benchmarks.widesearch.grader import WideSearchBenchmark
+        graded = WideSearchBenchmark(ctx.root, ctx.config)
+        graded.code = benchmark.code
+        graded.download.mkdir(parents=True)
+        query = fixture_query(official_modules(graded.code))
+        # Even judge-based criteria must not invoke a model for an absent response.
+        query.evaluation['eval_pipeline']['value']['metric'] = ['llm_judge']
+        row = {'instance_id': task.task_id, 'query': task.question,
+               'evaluation': json.dumps(query.evaluation), 'language': 'en'}
+        (graded.download / 'widesearch.jsonl').write_text(json.dumps(row) + '\n')
+        gold = graded.download / 'widesearch_gold'
+        gold.mkdir()
+        query.answer.to_csv(gold / 'fixture.csv', index=False)
+        ctx.path.mkdir(parents=True)
+        (ctx.path / 'alignment.csv').write_text('stale alignment from previous attempt')
+        class NoJudge:
+            def complete(self, *args, **kwargs):
+                raise AssertionError('Empty official submissions need no model call')
+        submission = graded.to_submission(task, graded.output_contract(task).empty)
+>       grade = graded.grade(task, submission, ctx, backend=NoJudge())
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_widesearch.py:203: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/loop_research/benchmarks/widesearch/grader.py:109: in grade
+    self.verify_code()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <loop_research.benchmarks.widesearch.grader.WideSearchBenchmark object at 0x1174ed220>
+
+    def verify_code(self):
+        sha = subprocess.check_output(["git", "-C", str(self.code), "rev-parse", "HEAD"], text=True).strip()
+        dirty = subprocess.check_output(["git", "-C", str(self.code), "status", "--porcelain", "--untracked-files=no"], text=True)
+        if sha != CODE_REVISION or dirty:
+>           raise ValueError("Official WideSearch checkout is not clean at the pinned revision")
+E           ValueError: Official WideSearch checkout is not clean at the pinned revision
+
+src/loop_research/benchmarks/widesearch/data.py:115: ValueError
+=========================== short test summary info ============================
+FAILED tests/test_wandr.py::test_release_and_canonical_instructions - ValueEr...
+FAILED tests/test_wandr.py::test_browser_readiness_uses_configured_timeout - ...
+FAILED tests/test_widesearch.py::test_adapter_grade_preserves_metrics_and_label
+FAILED tests/test_widesearch.py::test_preparation_exposes_complete_release_without_saved_partitions
+FAILED tests/test_widesearch.py::test_empty_grade_uses_official_absent_response_without_judge_or_stale_alignment
+5 failed, 950 passed, 1 deselected in 118.49s (0:01:58)

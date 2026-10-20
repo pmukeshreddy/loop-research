@@ -1,0 +1,1431 @@
+{
+  "created_at": "2026-10-20T04:09:35.912992+00:00",
+  "source_commit": "dab5cf89963805d20d3d305ba14d8c8611cd8cf4",
+  "scope": "Read-only disk diagnosis; no product edits, installations, model/network calls, original archive mutations or research runs.",
+  "run_id": "research-0fd1b020f55e4155989dcd8c40c418f1",
+  "task_id": "289901ce021c28d56fdac993",
+  "job_id": "b07049d849e54bad8ece2a1237c8606d",
+  "request_id": "e526f2d58c344551b9af464ae640f659",
+  "run_record": {
+    "run_id": "research-0fd1b020f55e4155989dcd8c40c418f1",
+    "created_at": "2026-10-20T03:34:25.475608+00:00",
+    "learning": true,
+    "base_sha": "2a423027212fe1c430dfd200bdd55f3a27b22d70",
+    "lineage": "lineage-778a7f19258b44bdb580f6a3b1f3ac30",
+    "return_branch": "round3-start",
+    "task_id": "289901ce021c28d56fdac993",
+    "config": {
+      "models": {
+        "root": "gpt-6-astra",
+        "sub": "gpt-6-astra",
+        "refine": "gpt-6-astra",
+        "judge": "gpt-6-astra",
+        "reasoning_effort": null
+      },
+      "codex": {
+        "bin": "codex",
+        "max_concurrent": 4,
+        "timeout_s": 600.0,
+        "max_retries": 4,
+        "retry_delay_cap_s": 60.0,
+        "log_full_text": false
+      },
+      "rlm": {
+        "max_iterations": 30,
+        "max_depth": 2
+      },
+      "agent": {
+        "task_timeout_s": 3600.0,
+        "max_codex_calls": 300,
+        "as_of": "2026-10-18"
+      },
+      "data": {
+        "seed": 42,
+        "languages": [
+          "en",
+          "zh"
+        ]
+      },
+      "wandr": {
+        "final_n_tasks": 50,
+        "seed": 42
+      },
+      "harness": {
+        "retrieval_limit": 10
+      },
+      "stream": {
+        "rolling_window": 10
+      },
+      "refine": {
+        "max_edits": 2
+      },
+      "bridge": {
+        "socket_timeout_s": 5.0
+      },
+      "verify": {
+        "codex_timeout_s": 30.0,
+        "browser_timeout_s": 120.0
+      }
+    },
+    "status": "interrupted",
+    "harness_head": "3b1af3ff4b4e2635d64ab09b4ed54d9f7453f36a",
+    "error": "RuntimeError: Refinement failed: CodexError: Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message"
+  },
+  "files": [
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/fair_slots_v1/workspaces/A/runs/research-0fd1b020f55e4155989dcd8c40c418f1/289901ce021c28d56fdac993/refine_state.json",
+      "bytes": 3865136,
+      "sha256": "5ecca81175881e538d8f63d24e24480b4e0c6c929d0697fc4633bb5eace302d0"
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/fair_slots_v1/workspaces/A/runs/research-0fd1b020f55e4155989dcd8c40c418f1/research.json",
+      "bytes": 1734,
+      "sha256": "2744c288ec2153aa1e27fa244b509c4894b225e8ded039cb7ab79034a2b2f20f"
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/fair_slots_v1/workspaces/A/runs/research-0fd1b020f55e4155989dcd8c40c418f1/trace.jsonl",
+      "bytes": 1230099,
+      "sha256": "9639ab348e39ca69d358372b99c9f0c0c616518a6c8e9cd19095f02470640528"
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round3/cohorts/fair_slots_v1/workspaces/A/runs/research-0fd1b020f55e4155989dcd8c40c418f1/289901ce021c28d56fdac993/trajectory.jsonl",
+      "bytes": 16740290,
+      "sha256": "bbf2c17eb022cd033bfa915a8b59e4b05b253ca8d4a1ce1273e60e805896dd5e"
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/src/loop_research/shared_text.py",
+      "bytes": 8590,
+      "sha256": "df3e834422ba1b4728ac4c5029ff88f517afa93d97f0bfa69f751e3bab8b3d14"
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/src/loop_research/refine.py",
+      "bytes": 25120,
+      "sha256": "7fa3a2be7a19c905033edaa8f21e2cd19670b545bf3afd135594459ba8ee8cdb"
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/src/loop_research/codex_backend.py",
+      "bytes": 17651,
+      "sha256": "b8f46de7dd14ee64143adbc4683cf6752233a1d3a81205116873537ee38106ac"
+    },
+    {
+      "path": "/Users/mukeshreddypochamreddy/Desktop/loop-research/runs/round2/fix_quality_review.md",
+      "bytes": 28072,
+      "sha256": "7fc72eecee833cc789b014c0a319acf42cb0bb142a21e80409399b97f681af6e"
+    }
+  ],
+  "sizes": {
+    "logical_default_json_chars": 1984123,
+    "logical_compact_json_chars": 1970560,
+    "wire_payload_chars": 1588531,
+    "refiner_instructions_chars": 3365,
+    "archived_planner_prompt_chars": 1591896,
+    "backend_prefix_chars": 182,
+    "full_backend_prompt_chars": 1592078,
+    "provider_limit_chars": 1048576,
+    "excess_chars": 543502,
+    "separate_schema_chars": 8959,
+    "evidence_anchors_count": 344,
+    "evidence_anchor_list_compact_chars": 6359,
+    "wire_table_chars": 257567,
+    "wire_payload_member_chars": 1330910,
+    "table_only_factoring_lower_bound_backend_chars": 1334457
+  },
+  "logical_sha256": "2cd53600de561fdfad4d7ce8832de41e756cbadec841ccc2ca522c5a3e37bcd2",
+  "wire_sha256": "a62e20e36b22b86d793182e24d63508106de4912a19d1d45a926642f15b3896a",
+  "logical_roundtrip_exact": true,
+  "logical_member_compact_chars": {
+    "focus": 4,
+    "candidate_inventory": 1138,
+    "entries": 16367,
+    "trajectory": 1867667,
+    "self_check": 78921,
+    "max_edits": 1,
+    "evidence_index": 6359
+  },
+  "trajectory_type_counts": {
+    "model": 61,
+    "tool": 219,
+    "worker_iteration": 12
+  },
+  "trajectory_type_compact_chars": {
+    "model": 1203204,
+    "tool": 523438,
+    "worker_iteration": 140732
+  },
+  "trajectory_field_compact_chars": {
+    "model/type": 427,
+    "model/purpose": 317,
+    "model/model": 793,
+    "model/prompt": 1115913,
+    "model/response": 62653,
+    "tool/type": 1314,
+    "tool/tool": 3833,
+    "tool/args": 7696,
+    "tool/kwargs": 34056,
+    "tool/result": 466684,
+    "worker_iteration/type": 216,
+    "worker_iteration/event": 140300,
+    "model/schema": 19820
+  },
+  "preserved_content": {
+    "entries": 3,
+    "trajectory_records": 292,
+    "self_check_issues": 0,
+    "self_check_signals": 36,
+    "candidate_inventory": [
+      {
+        "id": "self_check:signals:stalled_search",
+        "source": "self_check.signals",
+        "type": "stalled_search",
+        "count": 34,
+        "evidence_refs": [
+          "/self_check/signals/0",
+          "/self_check/signals/1",
+          "/self_check/signals/2",
+          "/self_check/signals/3",
+          "/self_check/signals/4",
+          "/self_check/signals/5",
+          "/self_check/signals/6",
+          "/self_check/signals/7",
+          "/self_check/signals/8",
+          "/self_check/signals/9",
+          "/self_check/signals/10",
+          "/self_check/signals/11",
+          "/self_check/signals/12",
+          "/self_check/signals/13",
+          "/self_check/signals/14",
+          "/self_check/signals/15",
+          "/self_check/signals/16",
+          "/self_check/signals/17",
+          "/self_check/signals/18",
+          "/self_check/signals/19",
+          "/self_check/signals/20",
+          "/self_check/signals/21",
+          "/self_check/signals/22",
+          "/self_check/signals/23",
+          "/self_check/signals/24",
+          "/self_check/signals/25",
+          "/self_check/signals/26",
+          "/self_check/signals/27",
+          "/self_check/signals/28",
+          "/self_check/signals/29",
+          "/self_check/signals/30",
+          "/self_check/signals/31",
+          "/self_check/signals/32",
+          "/self_check/signals/33"
+        ]
+      },
+      {
+        "id": "self_check:signals:failed_fetch",
+        "source": "self_check.signals",
+        "type": "failed_fetch",
+        "count": 2,
+        "evidence_refs": [
+          "/self_check/signals/34",
+          "/self_check/signals/35"
+        ]
+      }
+    ],
+    "max_edits": 2,
+    "entry_keys": [
+      [
+        "id",
+        "kind",
+        "created_at",
+        "usage",
+        "outcomes",
+        "version",
+        "module",
+        "title",
+        "body",
+        "trigger",
+        "evidence",
+        "updated_at",
+        "refinement_id"
+      ],
+      [
+        "id",
+        "kind",
+        "created_at",
+        "usage",
+        "outcomes",
+        "version",
+        "module",
+        "title",
+        "body",
+        "trigger",
+        "evidence",
+        "updated_at",
+        "refinement_id"
+      ],
+      [
+        "id",
+        "kind",
+        "created_at",
+        "usage",
+        "outcomes",
+        "version",
+        "module",
+        "title",
+        "body",
+        "trigger",
+        "evidence",
+        "updated_at",
+        "refinement_id"
+      ]
+    ]
+  },
+  "failed_dispatches": [
+    {
+      "timestamp": "2026-10-20T04:02:44.393490+00:00",
+      "component": "Codex backend (refine)",
+      "event": "exec.start",
+      "details": {
+        "call_id": "af957713d9ff49269efdc1fb5dc4d4e0",
+        "timestamp": "2026-10-20T04:02:44.392103+00:00",
+        "purpose": "refine",
+        "model": "gpt-6-astra",
+        "attempt": 0,
+        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
+        "prompt_chars": 1592078,
+        "schema_chars": 8959,
+        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542"
+      },
+      "parent": "Refine",
+      "line": 1865
+    },
+    {
+      "timestamp": "2026-10-20T04:02:46.695426+00:00",
+      "component": "Codex backend (refine)",
+      "event": "exec.start",
+      "details": {
+        "call_id": "6b35d4645f774ee4981f9d60d2bc65f8",
+        "timestamp": "2026-10-20T04:02:46.693891+00:00",
+        "purpose": "refine",
+        "model": "gpt-6-astra",
+        "attempt": 1,
+        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
+        "prompt_chars": 1592078,
+        "schema_chars": 8959,
+        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542"
+      },
+      "parent": "Refine",
+      "line": 1868
+    },
+    {
+      "timestamp": "2026-10-20T04:02:49.582152+00:00",
+      "component": "Codex backend (refine)",
+      "event": "exec.start",
+      "details": {
+        "call_id": "ad71e27ff70743b9ad8602048ab058a3",
+        "timestamp": "2026-10-20T04:02:49.580742+00:00",
+        "purpose": "refine",
+        "model": "gpt-6-astra",
+        "attempt": 2,
+        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
+        "prompt_chars": 1592078,
+        "schema_chars": 8959,
+        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542"
+      },
+      "parent": "Refine",
+      "line": 1871
+    },
+    {
+      "timestamp": "2026-10-20T04:02:54.613572+00:00",
+      "component": "Codex backend (refine)",
+      "event": "exec.start",
+      "details": {
+        "call_id": "befaf9031ada436e9f68929886d3f296",
+        "timestamp": "2026-10-20T04:02:54.612161+00:00",
+        "purpose": "refine",
+        "model": "gpt-6-astra",
+        "attempt": 3,
+        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
+        "prompt_chars": 1592078,
+        "schema_chars": 8959,
+        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542"
+      },
+      "parent": "Refine",
+      "line": 1874
+    },
+    {
+      "timestamp": "2026-10-20T04:03:04.098515+00:00",
+      "component": "Codex backend (refine)",
+      "event": "exec.start",
+      "details": {
+        "call_id": "5d87720cc8d7407c9a8f8c9bf50a5547",
+        "timestamp": "2026-10-20T04:03:04.095428+00:00",
+        "purpose": "refine",
+        "model": "gpt-6-astra",
+        "attempt": 4,
+        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
+        "prompt_chars": 1592078,
+        "schema_chars": 8959,
+        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542"
+      },
+      "parent": "Refine",
+      "line": 1877
+    }
+  ],
+  "failed_completions": [
+    {
+      "timestamp": "2026-10-20T04:02:45.309831+00:00",
+      "component": "Codex backend (refine)",
+      "event": "exec.end",
+      "details": {
+        "call_id": "af957713d9ff49269efdc1fb5dc4d4e0",
+        "purpose": "refine",
+        "model": "gpt-6-astra",
+        "attempt": 0,
+        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
+        "prompt_chars": 1592078,
+        "schema_chars": 8959,
+        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542",
+        "exit_code": 1,
+        "response_chars": 0,
+        "web_actions": [],
+        "web_events": [],
+        "usage": null,
+        "usage_status": "unavailable",
+        "error": "Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message",
+        "web_action_count": 0,
+        "retries": 0
+      },
+      "duration_s": 0.9169106250046752,
+      "line": 1866
+    },
+    {
+      "timestamp": "2026-10-20T04:02:47.276186+00:00",
+      "component": "Codex backend (refine)",
+      "event": "exec.end",
+      "details": {
+        "call_id": "6b35d4645f774ee4981f9d60d2bc65f8",
+        "purpose": "refine",
+        "model": "gpt-6-astra",
+        "attempt": 1,
+        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
+        "prompt_chars": 1592078,
+        "schema_chars": 8959,
+        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542",
+        "exit_code": 1,
+        "response_chars": 0,
+        "web_actions": [],
+        "web_events": [],
+        "usage": null,
+        "usage_status": "unavailable",
+        "error": "Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message",
+        "web_action_count": 0,
+        "retries": 1
+      },
+      "duration_s": 0.5814634589769412,
+      "line": 1869
+    },
+    {
+      "timestamp": "2026-10-20T04:02:50.292249+00:00",
+      "component": "Codex backend (refine)",
+      "event": "exec.end",
+      "details": {
+        "call_id": "ad71e27ff70743b9ad8602048ab058a3",
+        "purpose": "refine",
+        "model": "gpt-6-astra",
+        "attempt": 2,
+        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
+        "prompt_chars": 1592078,
+        "schema_chars": 8959,
+        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542",
+        "exit_code": 1,
+        "response_chars": 0,
+        "web_actions": [],
+        "web_events": [],
+        "usage": null,
+        "usage_status": "unavailable",
+        "error": "Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message",
+        "web_action_count": 0,
+        "retries": 2
+      },
+      "duration_s": 0.7104234169819392,
+      "line": 1872
+    },
+    {
+      "timestamp": "2026-10-20T04:02:55.420467+00:00",
+      "component": "Codex backend (refine)",
+      "event": "exec.end",
+      "details": {
+        "call_id": "befaf9031ada436e9f68929886d3f296",
+        "purpose": "refine",
+        "model": "gpt-6-astra",
+        "attempt": 3,
+        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
+        "prompt_chars": 1592078,
+        "schema_chars": 8959,
+        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542",
+        "exit_code": 1,
+        "response_chars": 0,
+        "web_actions": [],
+        "web_events": [],
+        "usage": null,
+        "usage_status": "unavailable",
+        "error": "Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message",
+        "web_action_count": 0,
+        "retries": 3
+      },
+      "duration_s": 0.8068230409990065,
+      "line": 1875
+    },
+    {
+      "timestamp": "2026-10-20T04:03:04.850430+00:00",
+      "component": "Codex backend (refine)",
+      "event": "exec.end",
+      "details": {
+        "call_id": "5d87720cc8d7407c9a8f8c9bf50a5547",
+        "purpose": "refine",
+        "model": "gpt-6-astra",
+        "attempt": 4,
+        "prompt_sha256": "109048b0a26256192448e141ca917146ef77f19078ea9cf3cf72564f37f36564",
+        "prompt_chars": 1592078,
+        "schema_chars": 8959,
+        "schema_sha256": "ffd3283e4bfe33a41a65207df8717e0bb51325114b47d79f9a06bf5040383542",
+        "exit_code": 1,
+        "response_chars": 0,
+        "web_actions": [],
+        "web_events": [],
+        "usage": null,
+        "usage_status": "unavailable",
+        "error": "Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message",
+        "web_action_count": 0,
+        "retries": 4
+      },
+      "duration_s": 0.7539946670003701,
+      "line": 1878
+    }
+  ],
+  "retries": [
+    {
+      "timestamp": "2026-10-20T04:02:45.310410+00:00",
+      "component": "Codex backend (refine)",
+      "event": "retry",
+      "details": {
+        "attempt": 0,
+        "next_attempt": 1,
+        "delay_s": 1.380526584979112,
+        "error": "Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message"
+      },
+      "line": 1867
+    },
+    {
+      "timestamp": "2026-10-20T04:02:47.277698+00:00",
+      "component": "Codex backend (refine)",
+      "event": "retry",
+      "details": {
+        "attempt": 1,
+        "next_attempt": 2,
+        "delay_s": 2.2969268269173133,
+        "error": "Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message"
+      },
+      "line": 1870
+    },
+    {
+      "timestamp": "2026-10-20T04:02:50.295933+00:00",
+      "component": "Codex backend (refine)",
+      "event": "retry",
+      "details": {
+        "attempt": 2,
+        "next_attempt": 3,
+        "delay_s": 4.310657378011017,
+        "error": "Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message"
+      },
+      "line": 1873
+    },
+    {
+      "timestamp": "2026-10-20T04:02:55.429989+00:00",
+      "component": "Codex backend (refine)",
+      "event": "retry",
+      "details": {
+        "attempt": 3,
+        "next_attempt": 4,
+        "delay_s": 8.661895186895354,
+        "error": "Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message"
+      },
+      "line": 1876
+    }
+  ],
+  "refinement_failure_events": [
+    {
+      "timestamp": "2026-10-20T04:03:04.892940+00:00",
+      "component": "Refine",
+      "event": "discarded",
+      "details": {
+        "focus": null,
+        "request_id": "e526f2d58c344551b9af464ae640f659",
+        "job_id": "b07049d849e54bad8ece2a1237c8606d",
+        "reason": "planning_failed",
+        "error": "Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message",
+        "proposal": null
+      },
+      "line": 1879
+    },
+    {
+      "timestamp": "2026-10-20T04:03:04.894018+00:00",
+      "component": "Refine",
+      "event": "planning.end",
+      "details": {
+        "span_id": "834fc68eb24a4a4a97e543e184df49de",
+        "focus": null,
+        "request_id": "e526f2d58c344551b9af464ae640f659",
+        "job_id": "b07049d849e54bad8ece2a1237c8606d",
+        "error": "CodexError: Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message"
+      },
+      "duration_s": 20.74807512498228,
+      "line": 1880
+    },
+    {
+      "timestamp": "2026-10-20T04:03:04.894246+00:00",
+      "component": "Refine",
+      "event": "failed",
+      "details": {
+        "focus": null,
+        "reason": "refinement",
+        "error": "Refinement failed: CodexError: Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message"
+      },
+      "line": 1881
+    },
+    {
+      "timestamp": "2026-10-20T04:03:04.917107+00:00",
+      "component": "Harness",
+      "event": "head_after",
+      "details": {
+        "sha": "3b1af3ff4b4e2635d64ab09b4ed54d9f7453f36a"
+      },
+      "line": 1882
+    },
+    {
+      "timestamp": "2026-10-20T04:03:04.917402+00:00",
+      "component": "Research",
+      "event": "run.end",
+      "details": {
+        "span_id": "a71358784e454ddda31e69f970f9d9a7",
+        "error": "RuntimeError: Refinement failed: CodexError: Codex failed (exit=1): Error: turn/start: turn/start failed: Input exceeds the maximum length of 1048576 characters. (code -32602), data: {\"input_error_code\":\"input_too_large\",\"max_chars\":1048576,\"actual_chars\":1592078}\n\nMissing or empty final message"
+      },
+      "duration_s": 1558.4513554159785,
+      "line": 1883
+    }
+  ],
+  "root_submission": [
+    {
+      "timestamp": "2026-10-20T04:02:43.137263+00:00",
+      "component": "REPL",
+      "event": "code.end",
+      "details": {
+        "depth": 0,
+        "first_lines": "jsonschema.validate(your_output, output_schema)\nassert len(your_output[\"rows\"]) == 28\nchecks_completed = 0\nfor i, row in enumerate(your_output[\"rows\"]):\n    for j, column in enumerate(columns):\n        cell = row[\"cells\"][column]\n        assert cell[\"value\"] and cell[\"quote\"] and cell[\"sources\"]\n        assert all(cell[\"quote\"] in evidence[u] for u in cell[\"sources\"])",
+        "rlm_id": "c61c14c15e4647349593f4f7b3e75318",
+        "parent_rlm_id": null,
+        "stdout": "",
+        "error": null,
+        "answer_ready": true
+      },
+      "duration_s": 1.6793103749805596,
+      "line": 1844
+    }
+  ],
+  "mixed_quote_example": {
+    "logical_path": "/trajectory/99/prompt",
+    "chars": 85585,
+    "sha256": "a686349f075f137729b26b52fa923a862b482614b17e87599602662ba62a51d6",
+    "json_object_start": 482,
+    "old_lexer_spans": [
+      {
+        "start": 180,
+        "end": 18087,
+        "chars": 17907,
+        "opening_quote": "'"
+      },
+      {
+        "start": 18601,
+        "end": 85583,
+        "chars": 66982,
+        "opening_quote": "\""
+      }
+    ],
+    "first_span_context": "\naffiliations, and each person's exact prize motivation. Distinguish curren"
+  },
+  "raw_and_canonical_json_quote_occurrences": [
+    {
+      "source_trajectory": 27,
+      "result_index": 0,
+      "raw_chars": 9633,
+      "quoted_chars": 9723,
+      "sha256": "3b85e8a4df2c3488ca152a51cfde560695b83ff061dec490eca688768ef0b073",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 35,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 46,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 97,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 27,
+      "result_index": 1,
+      "raw_chars": 8899,
+      "quoted_chars": 8981,
+      "sha256": "ddf0b7f22ee406e13fc7124c805f4ad7b782d5c930912b702de9f6dda9e58a08",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 34,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 44,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 95,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 27,
+      "result_index": 2,
+      "raw_chars": 7712,
+      "quoted_chars": 7854,
+      "sha256": "78eba2f0581d0c227833d3de976fa4df03bcc14e049b54afa1cc883e25115ac1",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 33,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 45,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 100,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 27,
+      "result_index": 3,
+      "raw_chars": 10129,
+      "quoted_chars": 10214,
+      "sha256": "ebc434b0a32a65ecfe7ae1afd79624a2fc2993e72667dba851692956ed9b7e05",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 32,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 47,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 96,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 108,
+          "occurrences": 2
+        }
+      ]
+    },
+    {
+      "source_trajectory": 27,
+      "result_index": 4,
+      "raw_chars": 9109,
+      "quoted_chars": 9186,
+      "sha256": "5c599561592a294617a33d98e575ea3f6f02ce82e29a85de7abe52b88ee8ca04",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 39,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 50,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 102,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 27,
+      "result_index": 5,
+      "raw_chars": 9059,
+      "quoted_chars": 9139,
+      "sha256": "7e54e1be8a9695d400da2ea6d5ac6dbb73c3a6d41284fcc271c3917fe5c2efc2",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 37,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 48,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 99,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 27,
+      "result_index": 6,
+      "raw_chars": 8482,
+      "quoted_chars": 8558,
+      "sha256": "f358d54ffcb9c8b6a0b288ddf0644afcbef4d8e6059e023d9c48b70d2775820b",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 36,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 49,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 98,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 108,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 27,
+      "result_index": 7,
+      "raw_chars": 8657,
+      "quoted_chars": 8734,
+      "sha256": "9a8cf6a7149aa984cec92196543837b86f3a59947e175cdfb6fb440b807ca644",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 38,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 51,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 101,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 27,
+      "result_index": 8,
+      "raw_chars": 9192,
+      "quoted_chars": 9272,
+      "sha256": "2ebd4e3f4e61cf11ac53cb3bf322bc1030b14817efd710e34bde2379c6dbf5d4",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 40,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 53,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 104,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 108,
+          "occurrences": 2
+        }
+      ]
+    },
+    {
+      "source_trajectory": 27,
+      "result_index": 9,
+      "raw_chars": 9638,
+      "quoted_chars": 9719,
+      "sha256": "0a65e53f3fc59ce0696d4f2e1eb412e6c736c40c12e6b359b4dbaa3c52be452d",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 41,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 52,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 103,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 0,
+      "raw_chars": 2109,
+      "quoted_chars": 2207,
+      "sha256": "57ca627ee48a20569aca2a06181249d710aba90381891ee7bd28773876c3aaa3",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 87,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 95,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 1,
+      "raw_chars": 37706,
+      "quoted_chars": 38619,
+      "sha256": "d287b1cc025d3303dbe5897e9883cffa4f9fc65fc11473213465fdee892429af",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 87,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 95,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 2,
+      "raw_chars": 2774,
+      "quoted_chars": 2894,
+      "sha256": "418f102f3d19d65a19311c799e0bbc7a58384cd7960304fdecc1029253d3ee28",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 87,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 95,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 3,
+      "raw_chars": 2222,
+      "quoted_chars": 2320,
+      "sha256": "e2243246357591c03b44762a06651d66399c8de6d172309d9729f2b86bfa657f",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 87,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 100,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 4,
+      "raw_chars": 2177,
+      "quoted_chars": 2279,
+      "sha256": "e491e9d021f47534d17939be5c74af629d41e2d0dc331fc09d38358251f1078c",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 87,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 100,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 5,
+      "raw_chars": 12493,
+      "quoted_chars": 13128,
+      "sha256": "2fdea3f99d0c9411b60bf940c13bc9b7082c6836ae7ae6bcdaee416de1c0c047",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 88,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 100,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 6,
+      "raw_chars": 2112,
+      "quoted_chars": 2217,
+      "sha256": "74d5b05d7de494ee8ed711ab7804772d3c020561ecc03c2d8f24f47722efb978",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 88,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 96,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 7,
+      "raw_chars": 2110,
+      "quoted_chars": 2208,
+      "sha256": "d92cf755731261f8eb068a132e8f6135b7ef87a8a55eef21cf5daa5e56540415",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 88,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 96,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 8,
+      "raw_chars": 2073,
+      "quoted_chars": 2172,
+      "sha256": "00d787b569fe647de6df93eb023949612a8d3276c3cd4605fdd1318c3fc37422",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 88,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 96,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 9,
+      "raw_chars": 49662,
+      "quoted_chars": 51409,
+      "sha256": "ee7bb06de1ee0e6add83ca93426fa795cd683498ccff3e35adf51ea0d2703bf3",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 88,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 102,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 10,
+      "raw_chars": 24383,
+      "quoted_chars": 24985,
+      "sha256": "91b6cddd3f083d760692fdded1cbb346137b1efe88d3a28effec279b48cff065",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 86,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 102,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 11,
+      "raw_chars": 5969,
+      "quoted_chars": 6217,
+      "sha256": "d29495eb13b2d02235b78fc4103b6e7a9d31b9158579d0a547567bf0daa4d406",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 86,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 102,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 12,
+      "raw_chars": 2298,
+      "quoted_chars": 2401,
+      "sha256": "5e2add384653610c986de3ea9f5d61cbcbee3ce2f58f05f42984998d499bf6d1",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 86,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 99,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 13,
+      "raw_chars": 7229,
+      "quoted_chars": 7333,
+      "sha256": "bc051ab35e2bc59b7f482a3649744ca4b6b2862f29d9fd83ed7dd8f5a01e62b7",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 86,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 14,
+      "raw_chars": 2119,
+      "quoted_chars": 2221,
+      "sha256": "5409106898552453492d9154214073ac2dfafb00bfaddd34a84d076cf37c99e2",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 86,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 98,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 15,
+      "raw_chars": 12,
+      "quoted_chars": 14,
+      "sha256": "566d6a4021d6e4062b59b6ed14779c243b4fbf24a19ae636afca35ca2d1a130f",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 89,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 115,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 16,
+      "raw_chars": 39134,
+      "quoted_chars": 40115,
+      "sha256": "9f338b807589993b30b5149c8ec76767fd23b175678dfe7d26413863e324f6dd",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 89,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 101,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 17,
+      "raw_chars": 2165,
+      "quoted_chars": 2265,
+      "sha256": "0e2d2500db33944f55127a6d1dacb5986e78f268be53ac5e2223d7d844641fe3",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 89,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 101,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 18,
+      "raw_chars": 2255,
+      "quoted_chars": 2356,
+      "sha256": "48d012c208402f43bb2003be45fbd1d3cea00cea45eba0b2a4d6b0a267ee1fb8",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 89,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 101,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 19,
+      "raw_chars": 7875,
+      "quoted_chars": 8150,
+      "sha256": "f6de23468b94f26a370dd3df14ab6ad31820017e438cfa707f89ca48cead1753",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 89,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 104,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 20,
+      "raw_chars": 2025,
+      "quoted_chars": 2116,
+      "sha256": "b02f1ea2f4ed4c2ad91017aa0552abf56fcbc9624231585a4e3cbfded0c946b6",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 90,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 104,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 21,
+      "raw_chars": 2050,
+      "quoted_chars": 2141,
+      "sha256": "eb3e32a7b6b818e23f83bdb3c9b0ea2886eaedb20ed0d0ad405987e00ab70537",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 90,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 104,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 22,
+      "raw_chars": 21273,
+      "quoted_chars": 21875,
+      "sha256": "6cb6b27fd12b826c1eb46dfd41119e8aa69741307390f96d282d9748f07fd8db",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 90,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 103,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 23,
+      "raw_chars": 1860,
+      "quoted_chars": 1895,
+      "sha256": "1aeb0879a9352f2c5268ce66057e6333b6339ed2d2d18ede94a86c16d31d3012",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 90,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 103,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 84,
+      "result_index": 24,
+      "raw_chars": 1725,
+      "quoted_chars": 1806,
+      "sha256": "bcfa8bb495963d5022d9666aec7ae16d561be2068dd670bc80722bb2e1cac287",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 90,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 103,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 93,
+      "result_index": 0,
+      "raw_chars": 69601,
+      "quoted_chars": 71105,
+      "sha256": "a53629c8913b4756311a40989027fd26ddeb973c4a804e80cd0fc6b74099b4e0",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 94,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 99,
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "source_trajectory": 93,
+      "result_index": 1,
+      "raw_chars": 2285,
+      "quoted_chars": 2391,
+      "sha256": "b63b62cd638f7bac0f866c59563c7657f4a8deb4629e670f2acf6d3a9910902b",
+      "embedded_quoted_occurrences": [
+        {
+          "trajectory_index": 94,
+          "occurrences": 1
+        },
+        {
+          "trajectory_index": 98,
+          "occurrences": 1
+        }
+      ]
+    }
+  ],
+  "offline_measured_representation_trials": [
+    {
+      "name": "original_v2",
+      "wire_chars": 1588531,
+      "same_overhead_backend_chars": 1592078,
+      "wire_saving_vs_original": 0,
+      "exact_decode_equals_logical": true,
+      "fits_observed_limit_with_old_instructions": false
+    },
+    {
+      "name": "fragment_only_selection",
+      "wire_chars": 1594460,
+      "same_overhead_backend_chars": 1598007,
+      "wire_saving_vs_original": -5929,
+      "exact_decode_equals_logical": true,
+      "fits_observed_limit_with_old_instructions": false
+    },
+    {
+      "name": "double_quoted_partition_only",
+      "wire_chars": 1266200,
+      "same_overhead_backend_chars": 1269747,
+      "wire_saving_vs_original": 322331,
+      "exact_decode_equals_logical": true,
+      "fits_observed_limit_with_old_instructions": false
+    },
+    {
+      "name": "single_quoted_partition_only",
+      "wire_chars": 1787887,
+      "same_overhead_backend_chars": 1791434,
+      "wire_saving_vs_original": -199356,
+      "exact_decode_equals_logical": true,
+      "fits_observed_limit_with_old_instructions": false
+    },
+    {
+      "name": "actual_newline_partition",
+      "wire_chars": 1811835,
+      "same_overhead_backend_chars": 1815382,
+      "wire_saving_vs_original": -223304,
+      "exact_decode_equals_logical": true,
+      "fits_observed_limit_with_old_instructions": false
+    },
+    {
+      "name": "actual_and_escaped_newline_partition",
+      "wire_chars": 1484574,
+      "same_overhead_backend_chars": 1488121,
+      "wire_saving_vs_original": 103957,
+      "exact_decode_equals_logical": true,
+      "fits_observed_limit_with_old_instructions": false
+    },
+    {
+      "name": "content_defined_exact_chunks_6_bits",
+      "wire_chars": 1336273,
+      "same_overhead_backend_chars": 1339820,
+      "wire_saving_vs_original": 252258,
+      "exact_decode_equals_logical": true,
+      "fits_observed_limit_with_old_instructions": false
+    },
+    {
+      "name": "content_defined_exact_chunks_7_bits",
+      "wire_chars": 1326807,
+      "same_overhead_backend_chars": 1330354,
+      "wire_saving_vs_original": 261724,
+      "exact_decode_equals_logical": true,
+      "fits_observed_limit_with_old_instructions": false
+    },
+    {
+      "name": "content_defined_exact_chunks_8_bits",
+      "wire_chars": 1360725,
+      "same_overhead_backend_chars": 1364272,
+      "wire_saving_vs_original": 227806,
+      "exact_decode_equals_logical": true,
+      "fits_observed_limit_with_old_instructions": false
+    },
+    {
+      "name": "content_defined_exact_chunks_9_bits",
+      "wire_chars": 1382882,
+      "same_overhead_backend_chars": 1386429,
+      "wire_saving_vs_original": 205649,
+      "exact_decode_equals_logical": true,
+      "fits_observed_limit_with_old_instructions": false
+    }
+  ],
+  "other_reviewer_candidate": {
+    "attribution": "fetch_review reported independently measured prototype; see its separate report for implementation/equality proof",
+    "strategy": "Independent double-quoted lexer plus canonical JSON-quoted reference to raw shared strings",
+    "wire_chars": 846191,
+    "backend_chars_with_old_instructions": 849738,
+    "headroom_with_old_instructions": 198838,
+    "reported_exact_logical_sha256": "2cd53600de561fdfad4d7ce8832de41e756cbadec841ccc2ca522c5a3e37bcd2",
+    "outer_v2_factoring_wire_chars": 796049,
+    "implemented_product_fix": false
+  },
+  "constraints": [
+    "Preserve exact complete supplied logical planner payload, full initial task prompt, all trajectory observations, self-check, complete entries and candidate accounting.",
+    "Preserve current candidate schema and validation; schema is not the observed over-limit input.",
+    "Preserve v1/v2 decoding and reserved-marker collision safety; any new references must be explicit, inspectable and exactly reversible.",
+    "Do not claim the inherited c944f51 planner-observation policy or upstream root formatter is globally lossless; this codec acts on the existing supplied logical payload.",
+    "Cost-select complete representations generically; do not select evidence using provider limits or task/site identifiers.",
+    "No codec can guarantee an arbitrary irreducible input fits a finite provider bound; preserve and fail visibly rather than omit content."
+  ]
+}

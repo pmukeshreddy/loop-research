@@ -40,7 +40,7 @@ def fixture(version):
     return job, expected
 
 
-@pytest.mark.parametrize('version', ['shared-text-v1', 'shared-text-v2'])
+@pytest.mark.parametrize('version', ['shared-text-v1', 'shared-text-v2', 'shared-text-v3'])
 def test_saved_encoded_prompt_matches_original_logical_fields_and_index(version):
     job, expected = fixture(version)
     before = copy.deepcopy(job)

@@ -189,11 +189,17 @@ No answer keys or grades are available. Preserve procedures and failure modes, n
 Skills may include a standalone Python module as source text; it will execute only in the isolated REPL.
 Use create/update/delete, the existing bare ids, and full title/content for create/update.
 For delete use null title/content/module. For create use null id. Return the requested JSON schema.
-The input is a lossless shared-text-v2 representation, not a summary. Its shared_texts array
+The input uses a lossless shared-text-v2 or shared-text-v3 representation, not a summary.
+The format field identifies the selected version. Its shared_texts array
 contains exact literal strings. In payload, {"$shared_text": N} means that complete string
 at zero-based index N. {"$shared_text_parts": PARTS} means concatenate the listed literal
 strings and shared-text references in order, with no added separators or normalization.
 This preserves repeated text embedded inside otherwise different prompts and code blocks.
+In v3 only, {"$json_quote": N} means apply json.dumps(shared_texts[N], ensure_ascii=False)
+exactly once, including the surrounding double quotes and JSON escapes. This reference can
+also be a part in $shared_text_parts. It preserves a JSON-quoted occurrence of the same
+raw text; it does not change the original string's spelling. All table entries remain
+literal strings. V1/v2 have no $json_quote marker; that key is an ordinary literal key there.
 {"$literal_object": OBJECT} escapes an original object with a reserved
 marker shape: keep that object's keys and recursively decode its values. Decode references
 recursively; every original field and string occurrence is retained. Evidence pointers address

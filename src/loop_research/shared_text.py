@@ -12,8 +12,10 @@ import re
 
 
 _FORMAT = "shared-text-v2"
+_QUOTED_FORMAT = "shared-text-v3"
 _MARKERS = {"$shared_text", "$shared_text_parts", "$literal_object"}
 _QUOTED = re.compile(r'''"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*' ''', re.DOTALL | re.VERBOSE)
+_JSON_QUOTED = re.compile(r'"(?:\\.|[^"\\])*"', re.DOTALL)
 
 
 def _compact(value):
@@ -114,7 +116,7 @@ def _add_profitable(counts, strings, indices):
             strings.append(value)
 
 
-def encode_shared_text(payload):
+def _encode_v2(payload):
     """Return a shared-text-v2 wrapper, without modifying the JSON payload.
 
     Repeated strings are considered in first-occurrence order. Each selected
@@ -153,6 +155,102 @@ def encode_shared_text(payload):
     return wrapper
 
 
+def _json_fragments(value):
+    """Prose apostrophes cannot consume a later double-quoted JSON string."""
+    position = 0
+    for match in _JSON_QUOTED.finditer(value):
+        yield from value[position:match.start()].splitlines(keepends=True)
+        yield match[0]
+        position = match.end()
+    yield from value[position:].splitlines(keepends=True)
+
+
+def _unquote_canonical(value):
+    if value.startswith('"'):
+        try:
+            decoded = json.loads(value)
+        except ValueError:
+            pass
+        else:
+            if type(decoded) is str and json.dumps(decoded, ensure_ascii=False) == value:
+                return decoded, True
+    return value, False
+
+
+def _encode_quoted(payload):
+    counts = _string_counts(payload)
+    quoted_counts = Counter()
+    for value, count in counts.items():
+        for part in _json_fragments(value):
+            base, quoted = _unquote_canonical(part)
+            if quoted:
+                quoted_counts[base] += count
+    strings, indices = [], {}
+    for value in dict.fromkeys([*counts, *quoted_counts]):
+        index = len(strings)
+        literal_chars = len(_compact(value))
+        raw_reference = len(_compact({"$shared_text": index}))
+        quoted_reference = len(_compact({"$json_quote": index}))
+        quoted_chars = len(_compact(json.dumps(value, ensure_ascii=False)))
+        saving = (counts[value] * (literal_chars - raw_reference)
+                  + quoted_counts[value] * (quoted_chars - quoted_reference))
+        if saving > literal_chars + bool(strings):
+            indices[value] = index
+            strings.append(value)
+
+    def visit(value, used):
+        if type(value) is str:
+            if value in indices:
+                used.add(indices[value])
+                return {"$shared_text": indices[value]}
+            parts, references = [], set()
+            for part in _json_fragments(value):
+                base, quoted = _unquote_canonical(part)
+                if base in indices:
+                    index = indices[base]
+                    parts.append({"$json_quote" if quoted else "$shared_text": index})
+                    references.add(index)
+                elif parts and type(parts[-1]) is str:
+                    parts[-1] += part
+                else:
+                    parts.append(part)
+            candidate = {"$shared_text_parts": parts}
+            if references and len(_compact(candidate)) < len(_compact(value)):
+                used.update(references)
+                return candidate
+            return value
+        if type(value) is list:
+            return [visit(item, used) for item in value]
+        if type(value) is dict:
+            mapping = {key: visit(item, used) for key, item in value.items()}
+            return {"$literal_object": mapping} if (_MARKERS | {"$json_quote"}).intersection(value) else mapping
+        return value
+
+    used = set()
+    visit(payload, used)
+    strings = [value for index, value in enumerate(strings) if index in used]
+    indices = {value: index for index, value in enumerate(strings)}
+    return {"format": _QUOTED_FORMAT, "shared_texts": strings, "payload": visit(payload, set())}
+
+
+def encode_shared_text(payload):
+    """Select the smaller complete lossless v2/v3 representation.
+
+    V3 can share raw text with an exact canonical JSON-quoted occurrence.
+    Its table still contains literal strings; $json_quote applies exactly one
+    json.dumps(..., ensure_ascii=False), including quotes and escapes. No
+    depth counters, summaries, input limits, or content-specific rules apply.
+    Candidate costs include actual index widths, escaped literals, table
+    entries, parts wrappers, and the complete serialized result. V2 wins ties.
+    """
+    original = _encode_v2(payload)
+    quoted = _encode_quoted(payload)
+    quoted_chars = len(_compact(quoted))
+    if quoted_chars < len(_compact(payload)) and quoted_chars < len(_compact(original)):
+        return quoted
+    return original
+
+
 def decode_shared_text(wrapper):
     """Restore the exact JSON value; reject malformed wrappers with ValueError.
 
@@ -164,22 +262,30 @@ def decode_shared_text(wrapper):
     if (type(wrapper) is not dict
             or set(wrapper) != {"format", "shared_texts", "payload"}
             or type(wrapper['format']) is not str
-            or wrapper["format"] not in {"shared-text-v1", _FORMAT}):
+            or wrapper["format"] not in {"shared-text-v1", _FORMAT, _QUOTED_FORMAT}):
         raise ValueError("Expected a supported shared-text wrapper")
     strings = wrapper["shared_texts"]
     if type(strings) is not list or any(type(value) is not str for value in strings):
         raise ValueError("shared_texts must be a list of literal strings")
+    quoted_format = wrapper["format"] == _QUOTED_FORMAT
 
     def decode(value):
         if isinstance(value, list):
             return [decode(item) for item in value]
         if isinstance(value, dict):
-            if wrapper['format'] == _FORMAT and '$shared_text_parts' in value:
+            if quoted_format and "$json_quote" in value:
+                index = value["$json_quote"]
+                if (set(value) != {"$json_quote"} or type(index) is not int
+                        or not 0 <= index < len(strings)):
+                    raise ValueError("Invalid JSON-quoted shared-text reference")
+                return json.dumps(strings[index], ensure_ascii=False)
+            if wrapper['format'] in {_FORMAT, _QUOTED_FORMAT} and '$shared_text_parts' in value:
                 parts = value['$shared_text_parts']
                 if set(value) != {'$shared_text_parts'} or type(parts) is not list:
                     raise ValueError('Invalid shared-text parts')
                 if any(type(part) is not str and
-                       not (type(part) is dict and set(part) == {'$shared_text'}) for part in parts):
+                       not (type(part) is dict and (set(part) == {'$shared_text'} or
+                            (quoted_format and set(part) == {'$json_quote'}))) for part in parts):
                     raise ValueError('String parts require literals or shared-text references')
                 return ''.join(decode(part) for part in parts)
             if "$shared_text" in value:

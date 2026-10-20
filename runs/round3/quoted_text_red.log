@@ -1,0 +1,299 @@
+FFFFFFFF..F.................                                             [100%]
+=================================== FAILURES ===================================
+___ test_prose_apostrophe_does_not_hide_json_evidence_shared_with_raw_source ___
+
+    def test_prose_apostrophe_does_not_hide_json_evidence_shared_with_raw_source():
+        source = ('Exact page: 雪, "quoted", apostrophe\'s, backslash\\, newline\n' * 100)
+        payload = {'source': source, 'again': source,
+                   'prompts': ["Check each person's evidence.\n" + compact({'text': source, 'i': i})
+                               for i in range(4)]}
+        original = copy.deepcopy(payload)
+        encoded = encode_shared_text(payload)
+>       assert encoded['format'] == 'shared-text-v3'
+E       AssertionError: assert 'shared-text-v2' == 'shared-text-v3'
+E         
+E         - shared-text-v3
+E         ?              ^
+E         + shared-text-v2
+E         ?              ^
+
+tests/test_shared_text_quotes.py:25: AssertionError
+______ test_v3_quote_reference_is_exactly_one_json_string_serialization[] ______
+
+source = ''
+
+    @pytest.mark.parametrize('source', [
+        '', '雪 😀 e\u0301', '"quoted" and \\\\slashes', '\n\r\t\b\f\x00',
+        '\\u2603 is literal; ☃ is actual', 'already "quoted" /', 'apostrophe\'s',
+    ])
+    def test_v3_quote_reference_is_exactly_one_json_string_serialization(source):
+        encoded = wrapper({'$shared_text_parts': [
+            'before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}, [source])
+        original = copy.deepcopy(encoded)
+>       assert decode_shared_text(encoded) == 'before:' + source + '/' + json.dumps(source, ensure_ascii=False) + ':after'
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_shared_text_quotes.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+wrapper = {'format': 'shared-text-v3', 'shared_texts': [''], 'payload': {'$shared_text_parts': ['before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}}
+
+    def decode_shared_text(wrapper):
+        """Restore the exact JSON value; reject malformed wrappers with ValueError.
+    
+        A reference must be exactly {"$shared_text": integer_index}; booleans are
+        not indices. A literal-object escape decodes the values of its mapping,
+        while preserving that mapping's own keys without interpreting them again.
+        """
+        _string_counts(wrapper)
+        if (type(wrapper) is not dict
+                or set(wrapper) != {"format", "shared_texts", "payload"}
+                or type(wrapper['format']) is not str
+                or wrapper["format"] not in {"shared-text-v1", _FORMAT}):
+>           raise ValueError("Expected a supported shared-text wrapper")
+E           ValueError: Expected a supported shared-text wrapper
+
+src/loop_research/shared_text.py:168: ValueError
+_ test_v3_quote_reference_is_exactly_one_json_string_serialization[\u96ea \U0001f600 e\u0301] _
+
+source = '雪 😀 é'
+
+    @pytest.mark.parametrize('source', [
+        '', '雪 😀 e\u0301', '"quoted" and \\\\slashes', '\n\r\t\b\f\x00',
+        '\\u2603 is literal; ☃ is actual', 'already "quoted" /', 'apostrophe\'s',
+    ])
+    def test_v3_quote_reference_is_exactly_one_json_string_serialization(source):
+        encoded = wrapper({'$shared_text_parts': [
+            'before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}, [source])
+        original = copy.deepcopy(encoded)
+>       assert decode_shared_text(encoded) == 'before:' + source + '/' + json.dumps(source, ensure_ascii=False) + ':after'
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_shared_text_quotes.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+wrapper = {'format': 'shared-text-v3', 'shared_texts': ['雪 😀 é'], 'payload': {'$shared_text_parts': ['before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}}
+
+    def decode_shared_text(wrapper):
+        """Restore the exact JSON value; reject malformed wrappers with ValueError.
+    
+        A reference must be exactly {"$shared_text": integer_index}; booleans are
+        not indices. A literal-object escape decodes the values of its mapping,
+        while preserving that mapping's own keys without interpreting them again.
+        """
+        _string_counts(wrapper)
+        if (type(wrapper) is not dict
+                or set(wrapper) != {"format", "shared_texts", "payload"}
+                or type(wrapper['format']) is not str
+                or wrapper["format"] not in {"shared-text-v1", _FORMAT}):
+>           raise ValueError("Expected a supported shared-text wrapper")
+E           ValueError: Expected a supported shared-text wrapper
+
+src/loop_research/shared_text.py:168: ValueError
+_ test_v3_quote_reference_is_exactly_one_json_string_serialization["quoted" and \\\\slashes] _
+
+source = '"quoted" and \\\\slashes'
+
+    @pytest.mark.parametrize('source', [
+        '', '雪 😀 e\u0301', '"quoted" and \\\\slashes', '\n\r\t\b\f\x00',
+        '\\u2603 is literal; ☃ is actual', 'already "quoted" /', 'apostrophe\'s',
+    ])
+    def test_v3_quote_reference_is_exactly_one_json_string_serialization(source):
+        encoded = wrapper({'$shared_text_parts': [
+            'before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}, [source])
+        original = copy.deepcopy(encoded)
+>       assert decode_shared_text(encoded) == 'before:' + source + '/' + json.dumps(source, ensure_ascii=False) + ':after'
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_shared_text_quotes.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+wrapper = {'format': 'shared-text-v3', 'shared_texts': ['"quoted" and \\\\slashes'], 'payload': {'$shared_text_parts': ['before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}}
+
+    def decode_shared_text(wrapper):
+        """Restore the exact JSON value; reject malformed wrappers with ValueError.
+    
+        A reference must be exactly {"$shared_text": integer_index}; booleans are
+        not indices. A literal-object escape decodes the values of its mapping,
+        while preserving that mapping's own keys without interpreting them again.
+        """
+        _string_counts(wrapper)
+        if (type(wrapper) is not dict
+                or set(wrapper) != {"format", "shared_texts", "payload"}
+                or type(wrapper['format']) is not str
+                or wrapper["format"] not in {"shared-text-v1", _FORMAT}):
+>           raise ValueError("Expected a supported shared-text wrapper")
+E           ValueError: Expected a supported shared-text wrapper
+
+src/loop_research/shared_text.py:168: ValueError
+_ test_v3_quote_reference_is_exactly_one_json_string_serialization[\n\r\t\x08\x0c\x00] _
+
+source = '\n\r\t\x08\x0c\x00'
+
+    @pytest.mark.parametrize('source', [
+        '', '雪 😀 e\u0301', '"quoted" and \\\\slashes', '\n\r\t\b\f\x00',
+        '\\u2603 is literal; ☃ is actual', 'already "quoted" /', 'apostrophe\'s',
+    ])
+    def test_v3_quote_reference_is_exactly_one_json_string_serialization(source):
+        encoded = wrapper({'$shared_text_parts': [
+            'before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}, [source])
+        original = copy.deepcopy(encoded)
+>       assert decode_shared_text(encoded) == 'before:' + source + '/' + json.dumps(source, ensure_ascii=False) + ':after'
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_shared_text_quotes.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+wrapper = {'format': 'shared-text-v3', 'shared_texts': ['\n\r\t\x08\x0c\x00'], 'payload': {'$shared_text_parts': ['before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}}
+
+    def decode_shared_text(wrapper):
+        """Restore the exact JSON value; reject malformed wrappers with ValueError.
+    
+        A reference must be exactly {"$shared_text": integer_index}; booleans are
+        not indices. A literal-object escape decodes the values of its mapping,
+        while preserving that mapping's own keys without interpreting them again.
+        """
+        _string_counts(wrapper)
+        if (type(wrapper) is not dict
+                or set(wrapper) != {"format", "shared_texts", "payload"}
+                or type(wrapper['format']) is not str
+                or wrapper["format"] not in {"shared-text-v1", _FORMAT}):
+>           raise ValueError("Expected a supported shared-text wrapper")
+E           ValueError: Expected a supported shared-text wrapper
+
+src/loop_research/shared_text.py:168: ValueError
+_ test_v3_quote_reference_is_exactly_one_json_string_serialization[\\u2603 is literal; \u2603 is actual] _
+
+source = '\\u2603 is literal; ☃ is actual'
+
+    @pytest.mark.parametrize('source', [
+        '', '雪 😀 e\u0301', '"quoted" and \\\\slashes', '\n\r\t\b\f\x00',
+        '\\u2603 is literal; ☃ is actual', 'already "quoted" /', 'apostrophe\'s',
+    ])
+    def test_v3_quote_reference_is_exactly_one_json_string_serialization(source):
+        encoded = wrapper({'$shared_text_parts': [
+            'before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}, [source])
+        original = copy.deepcopy(encoded)
+>       assert decode_shared_text(encoded) == 'before:' + source + '/' + json.dumps(source, ensure_ascii=False) + ':after'
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_shared_text_quotes.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+wrapper = {'format': 'shared-text-v3', 'shared_texts': ['\\u2603 is literal; ☃ is actual'], 'payload': {'$shared_text_parts': ['before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}}
+
+    def decode_shared_text(wrapper):
+        """Restore the exact JSON value; reject malformed wrappers with ValueError.
+    
+        A reference must be exactly {"$shared_text": integer_index}; booleans are
+        not indices. A literal-object escape decodes the values of its mapping,
+        while preserving that mapping's own keys without interpreting them again.
+        """
+        _string_counts(wrapper)
+        if (type(wrapper) is not dict
+                or set(wrapper) != {"format", "shared_texts", "payload"}
+                or type(wrapper['format']) is not str
+                or wrapper["format"] not in {"shared-text-v1", _FORMAT}):
+>           raise ValueError("Expected a supported shared-text wrapper")
+E           ValueError: Expected a supported shared-text wrapper
+
+src/loop_research/shared_text.py:168: ValueError
+_ test_v3_quote_reference_is_exactly_one_json_string_serialization[already "quoted" /] _
+
+source = 'already "quoted" /'
+
+    @pytest.mark.parametrize('source', [
+        '', '雪 😀 e\u0301', '"quoted" and \\\\slashes', '\n\r\t\b\f\x00',
+        '\\u2603 is literal; ☃ is actual', 'already "quoted" /', 'apostrophe\'s',
+    ])
+    def test_v3_quote_reference_is_exactly_one_json_string_serialization(source):
+        encoded = wrapper({'$shared_text_parts': [
+            'before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}, [source])
+        original = copy.deepcopy(encoded)
+>       assert decode_shared_text(encoded) == 'before:' + source + '/' + json.dumps(source, ensure_ascii=False) + ':after'
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_shared_text_quotes.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+wrapper = {'format': 'shared-text-v3', 'shared_texts': ['already "quoted" /'], 'payload': {'$shared_text_parts': ['before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}}
+
+    def decode_shared_text(wrapper):
+        """Restore the exact JSON value; reject malformed wrappers with ValueError.
+    
+        A reference must be exactly {"$shared_text": integer_index}; booleans are
+        not indices. A literal-object escape decodes the values of its mapping,
+        while preserving that mapping's own keys without interpreting them again.
+        """
+        _string_counts(wrapper)
+        if (type(wrapper) is not dict
+                or set(wrapper) != {"format", "shared_texts", "payload"}
+                or type(wrapper['format']) is not str
+                or wrapper["format"] not in {"shared-text-v1", _FORMAT}):
+>           raise ValueError("Expected a supported shared-text wrapper")
+E           ValueError: Expected a supported shared-text wrapper
+
+src/loop_research/shared_text.py:168: ValueError
+_ test_v3_quote_reference_is_exactly_one_json_string_serialization[apostrophe's] _
+
+source = "apostrophe's"
+
+    @pytest.mark.parametrize('source', [
+        '', '雪 😀 e\u0301', '"quoted" and \\\\slashes', '\n\r\t\b\f\x00',
+        '\\u2603 is literal; ☃ is actual', 'already "quoted" /', 'apostrophe\'s',
+    ])
+    def test_v3_quote_reference_is_exactly_one_json_string_serialization(source):
+        encoded = wrapper({'$shared_text_parts': [
+            'before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}, [source])
+        original = copy.deepcopy(encoded)
+>       assert decode_shared_text(encoded) == 'before:' + source + '/' + json.dumps(source, ensure_ascii=False) + ':after'
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_shared_text_quotes.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+wrapper = {'format': 'shared-text-v3', 'shared_texts': ["apostrophe's"], 'payload': {'$shared_text_parts': ['before:', {'$shared_text': 0}, '/', {'$json_quote': 0}, ':after']}}
+
+    def decode_shared_text(wrapper):
+        """Restore the exact JSON value; reject malformed wrappers with ValueError.
+    
+        A reference must be exactly {"$shared_text": integer_index}; booleans are
+        not indices. A literal-object escape decodes the values of its mapping,
+        while preserving that mapping's own keys without interpreting them again.
+        """
+        _string_counts(wrapper)
+        if (type(wrapper) is not dict
+                or set(wrapper) != {"format", "shared_texts", "payload"}
+                or type(wrapper['format']) is not str
+                or wrapper["format"] not in {"shared-text-v1", _FORMAT}):
+>           raise ValueError("Expected a supported shared-text wrapper")
+E           ValueError: Expected a supported shared-text wrapper
+
+src/loop_research/shared_text.py:168: ValueError
+___ test_v3_escapes_literal_new_marker_and_keeps_nested_references_distinct ____
+
+    def test_v3_escapes_literal_new_marker_and_keeps_nested_references_distinct():
+        source = 'Evidence with "quotes", 雪 and newlines\n' * 100
+        payload = {'$json_quote': {'$shared_text': 0}, 'source': source,
+                   'prompts': ['read ' + json.dumps(source, ensure_ascii=False) for _ in range(3)]}
+        encoded = encode_shared_text(payload)
+>       assert encoded['format'] == 'shared-text-v3'
+E       AssertionError: assert 'shared-text-v2' == 'shared-text-v3'
+E         
+E         - shared-text-v3
+E         ?              ^
+E         + shared-text-v2
+E         ?              ^
+
+tests/test_shared_text_quotes.py:57: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_shared_text_quotes.py::test_prose_apostrophe_does_not_hide_json_evidence_shared_with_raw_source
+FAILED tests/test_shared_text_quotes.py::test_v3_quote_reference_is_exactly_one_json_string_serialization[]
+FAILED tests/test_shared_text_quotes.py::test_v3_quote_reference_is_exactly_one_json_string_serialization[\u96ea \U0001f600 e\u0301]
+FAILED tests/test_shared_text_quotes.py::test_v3_quote_reference_is_exactly_one_json_string_serialization["quoted" and \\\\slashes]
+FAILED tests/test_shared_text_quotes.py::test_v3_quote_reference_is_exactly_one_json_string_serialization[\n\r\t\x08\x0c\x00]
+FAILED tests/test_shared_text_quotes.py::test_v3_quote_reference_is_exactly_one_json_string_serialization[\\u2603 is literal; \u2603 is actual]
+FAILED tests/test_shared_text_quotes.py::test_v3_quote_reference_is_exactly_one_json_string_serialization[already "quoted" /]
+FAILED tests/test_shared_text_quotes.py::test_v3_quote_reference_is_exactly_one_json_string_serialization[apostrophe's]
+FAILED tests/test_shared_text_quotes.py::test_v3_escapes_literal_new_marker_and_keeps_nested_references_distinct
+9 failed, 19 passed in 0.07s
