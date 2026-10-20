@@ -1,0 +1,490 @@
+{
+  "source_commit": "9251c8e8925f57cf9fc924e0fd57b1bd0d74bd6d",
+  "analysis_contract": "answer-ready-v2",
+  "prediction_commit": "49b2a90",
+  "runs": {
+    "B0-1": {
+      "run_id": "research-29fbc2ecc3954ba6b5a653b0f41e6b84",
+      "metrics": {
+        "S1_pre_answer_ready_validation": {
+          "value": 1,
+          "reason": "Actual nonempty 28-row submitted candidate checked for every required cell, nonempty value/sources/quote and exact membership for every cited URL before the first readiness assignment.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Executed complete guard and readiness assignment",
+              "line": 272
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/trace.jsonl",
+              "sha256": "101e3173f5b6e42b75ad72f19de47ecc9956682f30692b7bcac8cf9fcf90ebea",
+              "note": "First depth-0 code.end answer_ready=true",
+              "line": 1850
+            }
+          ]
+        },
+        "S2_gap_exposed": {
+          "value": 1,
+          "reason": "Executed initial extraction prints 26 wholly missing nationality cells.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "All 26 combined validation records",
+              "line": 32
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Explicit empty nationality cell diagnostics",
+              "line": 34
+            }
+          ]
+        },
+        "S2_supplementary_unique_urls": {
+          "value": 39,
+          "reason": "39 distinct successful URLs after the missing-nationality gap, all directed at nationality filling/clarification; initial ten PDFs excluded, cached Wikidata counted once.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Initial supplementary nationality downloads",
+              "line": 68
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Alternate nationality sources",
+              "line": 75
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Citizenship clarification",
+              "line": 87
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Thouless citizenship repair",
+              "line": 99
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/fetch_telemetry.json",
+              "sha256": "273193aae0c7dd88d5ec690c09e792960025045d3517be7f37b3df199fa557a4",
+              "note": "Every request and outcome"
+            }
+          ]
+        },
+        "S2_supplementary_unique_urls_conditional": {
+          "value": 39,
+          "reason": "Defined because a missing-field gap is exposed.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Gap",
+              "line": 32
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/fetch_telemetry.json",
+              "sha256": "273193aae0c7dd88d5ec690c09e792960025045d3517be7f37b3df199fa557a4",
+              "note": "39 successful supplementary unique URLs"
+            }
+          ]
+        },
+        "S3_quote_exception_blocks": {
+          "value": 0,
+          "reason": "All 14 executed depth-0 blocks have empty stderr; no block terminated in quote validation.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "All executed blocks"
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/trace.jsonl",
+              "sha256": "101e3173f5b6e42b75ad72f19de47ecc9956682f30692b7bcac8cf9fcf90ebea",
+              "note": "Complete terminal trace"
+            }
+          ]
+        },
+        "S3_caught_printed_quote_failures": {
+          "value": 0,
+          "reason": "The 26 combined missing-or-nonverbatim records are wholly empty nationality cells, not established quote-specific failures. Later quote-membership checks pass. The Kajita full-value support gap is semantic, not an exact-membership failure.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "26 raw combined records retained",
+              "line": 32
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Empty cell diagnostics",
+              "line": 34
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Evidence failures empty",
+              "line": 75
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Final complete guard",
+              "line": 272
+            }
+          ]
+        },
+        "S4_citation_violation_cells": {
+          "value": 0,
+          "reason": "All 140 final quotes are nonempty and occur exactly in every cited URL’s retained text.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/output.json",
+              "sha256": "484433f384a0d2c95f03a08209fd7a2e0e65302d953674768c09613efefbd9ce",
+              "note": "Complete retained output.json"
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/evidence.json",
+              "sha256": "dde0fb2c765a53f28c242d63d217311c276ab53be23066afd573dc03c7923665",
+              "note": "Complete retained evidence.json"
+            }
+          ]
+        },
+        "R1_failed_primary_urls": {
+          "value": 7,
+          "reason": "Seven failed URLs are institutional/personal-profile official evidence hosts: Birmingham, Michigan, Princeton twice, Geneva, Vienna and Lincei. AP and Washington Post reporting excluded from official subset; all nine failures remain in review.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Actual source hits identify official institutional pages",
+              "line": 38
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Executed failures",
+              "line": 68
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/fetch_telemetry.json",
+              "sha256": "273193aae0c7dd88d5ec690c09e792960025045d3517be7f37b3df199fa557a4",
+              "note": "Complete retained fetch_telemetry.json"
+            }
+          ]
+        },
+        "R1_official_alternate_recoveries": {
+          "value": 0,
+          "reason": "No failed official URL is followed by a successful same-publisher/official-host alternate selected from search and used. Other-publisher replacements and already-admitted sources are not counted.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Different-publisher alternates",
+              "line": 75
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Different-publisher clarification",
+              "line": 87
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Different-publisher Thouless repair",
+              "line": 99
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/fetch_telemetry.json",
+              "sha256": "273193aae0c7dd88d5ec690c09e792960025045d3517be7f37b3df199fa557a4",
+              "note": "Complete retained fetch_telemetry.json"
+            }
+          ]
+        },
+        "R1_official_alternate_recoveries_conditional": {
+          "value": 0,
+          "reason": "Defined because seven official primary URLs failed; no qualifying same-publisher recovery.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/fetch_telemetry.json",
+              "sha256": "273193aae0c7dd88d5ec690c09e792960025045d3517be7f37b3df199fa557a4",
+              "note": "Complete retained fetch_telemetry.json"
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Final recovery",
+              "line": 99
+            }
+          ]
+        },
+        "R2_retained_download_reuse_blocks": {
+          "value": 9,
+          "reason": "Nine distinct executed blocks use previously downloaded text or derived structured evidence without refetch of the reused URL. Includes retained-name query construction and prior structured-evidence application; excludes same-block initial use, length-only printing and cached-Wikidata refetch block.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "passes ten complete retained PDFs to extraction",
+              "line": 32
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "searches retained PDF text for citizenship descriptions",
+              "line": 34
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "reads retained extracted laureate-name cells to form directed missing-nationality searches",
+              "line": 38
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "passes previously fetched nationality sources to extraction alongside new alternate URLs",
+              "line": 75
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "checks and applies prior validated structured nationality evidence to candidate rows",
+              "line": 79
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "passes retained candidate cells and full original sources to semantic audit",
+              "line": 94
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "reads retained 2017 PDF to inspect collaboration context, alongside new Thouless URLs",
+              "line": 99
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "passes complete retained 2015 PDF for Kajita quote repair",
+              "line": 102
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "validates every current cell against retained original text and submits",
+              "line": 272
+            }
+          ]
+        },
+        "G1_semantic_findings_exposed": {
+          "value": 13,
+          "reason": "Nine concrete affiliation pairs plus four nationality omission/dated-conflict pairs. Interpretation-only legal-citizenship cautions and quote excerpt repair remain separately documented.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Nationality findings",
+              "line": 75
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Mourou US citizenship search result",
+              "line": 79
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Affiliation findings and dated nationality conflict",
+              "line": 94
+            }
+          ]
+        },
+        "G2_unresolved_semantic_findings": {
+          "value": 9,
+          "reason": "Nine affiliation pairs remain unresolved under broad requested scope; four nationality cases receive supported correction/reconciliation. A model’s omission claim is not proof of an actual missing appointment.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Exposed findings",
+              "line": 94
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Scope narrowing",
+              "line": 99
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Final submission",
+              "line": 272
+            }
+          ]
+        },
+        "G3_scope_narrowing_dismissals": {
+          "value": 9,
+          "reason": "All nine exposed affiliation pairs were handled by explicit Nobel-listed/institutional narrowing, without dated inclusion/exclusion addressing them.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Explicit narrowing comment",
+              "line": 99
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Final affiliation listing",
+              "line": 102
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Submitted unchanged scope",
+              "line": 272
+            }
+          ]
+        },
+        "G2_unresolved_semantic_findings_conditional": {
+          "value": 9,
+          "reason": "Defined: G1=13.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Findings",
+              "line": 94
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Submission",
+              "line": 272
+            }
+          ]
+        },
+        "G3_scope_narrowing_dismissals_conditional": {
+          "value": 9,
+          "reason": "Defined: G1=13.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Explicit scope narrowing",
+              "line": 99
+            }
+          ]
+        },
+        "combined_validation_missing_cell_records": {
+          "value": 26,
+          "reason": "Diagnostic: all 26 raw combined missing-or-nonverbatim records are retained and classified as missing-field exposure; not silently removed from S3.",
+          "evidence": [
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Complete raw failure list",
+              "line": 32
+            },
+            {
+              "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+              "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+              "note": "Representative wholly empty cells",
+              "line": 34
+            }
+          ]
+        }
+      },
+      "semantic_review": {
+        "summary": "140/140 submitted values are supported in retained source context, with nine unresolved concurrent-affiliation scope concerns. This is a qualified listed-value support result, not exhaustive affiliation/citizenship completeness or a legal-citizenship certification. No established false submitted value found.",
+        "counts": {
+          "semantically_supported_required_cells": {
+            "value": 140,
+            "reason": "All final values supported by their quoted source context; scope concerns recorded separately.",
+            "evidence": [
+              {
+                "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/output.json",
+                "sha256": "484433f384a0d2c95f03a08209fd7a2e0e65302d953674768c09613efefbd9ce",
+                "note": "Complete retained output.json"
+              },
+              {
+                "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/evidence.json",
+                "sha256": "dde0fb2c765a53f28c242d63d217311c276ab53be23066afd573dc03c7923665",
+                "note": "Complete retained evidence.json"
+              }
+            ]
+          },
+          "unresolved_semantic_cells": {
+            "value": 0,
+            "reason": "No strict cited-value support failure identified; broad completeness concerns remain separate.",
+            "evidence": [
+              {
+                "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/output.json",
+                "sha256": "484433f384a0d2c95f03a08209fd7a2e0e65302d953674768c09613efefbd9ce",
+                "note": "Complete retained output.json"
+              },
+              {
+                "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/evidence.json",
+                "sha256": "dde0fb2c765a53f28c242d63d217311c276ab53be23066afd573dc03c7923665",
+                "note": "Complete retained evidence.json"
+              }
+            ]
+          },
+          "concurrent_affiliation_scope_concerns": {
+            "value": 9,
+            "reason": "Nine exposed affiliation pairs remain unresolved after narrower field interpretation.",
+            "evidence": [
+              {
+                "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+                "note": "Findings",
+                "line": 94
+              },
+              {
+                "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+                "note": "Narrowing",
+                "line": 99
+              },
+              {
+                "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+                "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+                "note": "Final candidate",
+                "line": 272
+              }
+            ]
+          }
+        },
+        "evidence": [
+          {
+            "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/output.json",
+            "sha256": "484433f384a0d2c95f03a08209fd7a2e0e65302d953674768c09613efefbd9ce",
+            "note": "Complete retained output.json"
+          },
+          {
+            "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/evidence.json",
+            "sha256": "dde0fb2c765a53f28c242d63d217311c276ab53be23066afd573dc03c7923665",
+            "note": "Complete retained evidence.json"
+          },
+          {
+            "path": "runs/round3/cohorts/context_outputs_v1/workspaces/B0-1/runs/research-29fbc2ecc3954ba6b5a653b0f41e6b84/5f579a96530b9d0b8eaa08f9/trajectory.jsonl",
+            "sha256": "ca8a83eb3fb50ccdd1f44641fa301bd2a66f0bfd916ecaa2c3300edda9c77cdf",
+            "note": "Semantic warnings",
+            "line": 94
+          }
+        ]
+      }
+    }
+  }
+}
